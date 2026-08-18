@@ -78,7 +78,6 @@
 #include <io.h>
 #include "../meta/MetadataManager.h" 
 #include "../meta/BatchRenameEngine.h" 
-#include "../meta/CategoryRepo.h" 
 #include "../meta/StatisticsService.h"
 #include "../crypto/EncryptionManager.h" 
 #include "CategoryLockDialog.h" 
@@ -96,7 +95,6 @@
 using namespace QuarkMeta::Style;
 #include "../util/ShellHelper.h"
 #include "DiskScanService.h"
-#include "CategoryLoadService.h"
 #include "../ui/MediaColorExtractor.h"
 #include "../meta/MetaCacheDecorator.h"
  
@@ -2465,7 +2463,7 @@ void ContentPanel::performBatchRename() {
         selectedPaths,
         QString("成功处理 %1 个项目").arg(selectedPaths.size()),
         [this, originalPaths]() {
-            BatchRenameDialog dlg(originalPaths, isMirrorSource(), this); 
+            BatchRenameDialog dlg(originalPaths, this);
             if (dlg.exec() == QDialog::Accepted) { 
                 // 🚨 极致自愈高亮：如果对话框成功重命名，将其返回的首个新名称作为 pendingSelectName
                 QString firstNew = dlg.getFirstNewName();
@@ -2497,7 +2495,7 @@ ContentPanel::DataSourceType ContentPanel::dataSourceType() const {
 }
 
 bool ContentPanel::isMirrorSource() const {
-    return dataSourceType() != DataSourceType::DiskNav;
+    return false; // 纯磁盘模式，彻底锁定为 false
 }
 
 bool ContentPanel::isManagedContext() const { 

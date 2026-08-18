@@ -34,7 +34,6 @@
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
-#include "../meta/CategoryRepo.h"
 
 #include "SearchHistoryPanel.h"
 #include "SvgIcons.h"
@@ -434,23 +433,8 @@ void MainWindow::initUi() {
             m_metaPanel->setNote(rm.note);
             m_metaPanel->setURL(rm.url);
 
-            bool isDiskMode = !m_contentPanel->isMirrorSource() && !MetadataManager::isInsideManagedLibrary(path.toStdWString());
+            bool isDiskMode = true;
             m_metaPanel->setDiskPathMode(isDiskMode, path);
-
-            if (!isDiskMode) {
-                // 托管库模式：拉取文件绑定的真实分类列表并转为胶囊展示
-                std::string fid = MetadataManager::instance().getFolderIdSync(path.toStdWString());
-                std::vector<int> catIds = CategoryRepo::getItemCategoryIds(fid, path.toStdWString());
-                std::vector<std::pair<int, QString>> catPills;
-                
-                for (int cid : catIds) {
-                    Category c = CategoryRepo::getById(cid);
-                    if (c.id > 0) {
-                        catPills.push_back({c.id, QString::fromStdWString(c.name)});
-                    }
-                }
-                m_metaPanel->setCategoryPills(catPills);
-            }
 
             // 将色板数据转换为 QVector<QPair<QColor, float>>
             QVector<QPair<QColor, float>> pal;
@@ -780,20 +764,6 @@ void MainWindow::initUi() {
         }
     });
 
-    // 解绑分类事件响应
-    connect(m_metaPanel, &MetaPanel::unbindCategoryRequested, this, [this](const QString& path, int catId) {
-        std::string fid = MetadataManager::instance().getFolderIdSync(path.toStdWString());
-        if (!fid.empty()) {
-            CategoryRepo::removeItemFromCategory(catId, fid);
-            m_contentPanel->updateItemMetadata(path);
-        }
-    });
-
-    // 绑定分类事件响应
-    connect(m_metaPanel, &MetaPanel::bindCategoryRequested, this, [this](const QString& path) {
-        // 触发绑定逻辑，弹出分类选择列表
-        Q_UNUSED(path);
-    });
 
     // 9. 2026-03-xx 响应元数据全局变更，同步刷新 UI (合并优化，消除重复连接与性能损耗)
     connect(&MetadataManager::instance(), &MetadataManager::metaChanged, this, [this](const QString& path) {
@@ -1642,13 +1612,8 @@ void MainWindow::unifiedNavigateTo(const QString& url, bool record) {
         }
     }
 
-    // 2026-07-xx 按照 Plan-118：通知筛选面板当前数据源性质
     if (m_filterPanel && m_contentPanel) {
-        bool isMirror = m_contentPanel->isMirrorSource();
-        if (!isMirror && !m_currentPath.isEmpty() && m_currentPath != "computer://") {
-            isMirror = MetadataManager::isInsideManagedLibrary(m_currentPath.toStdWString());
-        }
-        m_filterPanel->setMirrorSource(isMirror);
+        m_filterPanel->setMirrorSource(false);
     }
 
     updateNavButtons();
@@ -1787,8 +1752,6 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     }
     AppConfig::instance().sync();
 
-    // 2026-06-xx 物理加固：退出前强制所有分类数据落盘，彻底解决因防抖计时器导致的重启回滚问题
-    CategoryRepo::saveImmediately();
 
     QMainWindow::closeEvent(event);
 }
@@ -1965,27 +1928,6 @@ void MainWindow::onDriveButtonContextMenu(const QPoint& pos) {
         if (QDir().mkpath(managedPath)) {
             btn->setState(DriveButton::Active);
             
-            std::wstring wPath = QDir::toNativeSeparators(managedPath).toStdWString();
-            
-            // 1. 构造半静态托管库分类记录
-            Category cat;
-            cat.name = QFileInfo(managedPath).fileName().toStdWString();
-            cat.parentId = 0;
-            cat.kind = CategoryKind::SystemLibrary;
-            cat.physicalPath = wPath;
-            cat.color = CategoryRepo::getDefaultColor();
-            
-            // 2. 尝试锚定 Win32 物理 FRN (如果可用)
-            std::string fid;
-            std::wstring frnStr;
-            if (MetadataManager::fetchWinApiMetadataDirect(wPath, fid, &frnStr)) {
-                try { cat.physicalFrn = std::stoull(frnStr, nullptr, 16); } catch (...) {}
-            }
-
-            // 3. 写入分类表并通知侧边栏 UI 1:1 重建刷新
-            if (CategoryRepo::add(cat)) {
-                MetadataManager::instance().notifyUI(MetadataManager::RefreshLevel::FullRebuild);
-            }
 
             ToolTipOverlay::instance()->showText(QCursor::pos(), "资源库创建成功", 1500, Style::SuccessGreen);
         }
