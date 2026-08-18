@@ -176,6 +176,27 @@ bool DiskItemModel::setData(const QModelIndex& index, const QVariant& value, int
     auto& record = m_allRecords[index.row()];
     QString path = record.path;
     QFileInfo fileInfo(path);
+
+    // 【盘符根目录处理】：若为盘符根路径（如 C:\、D:\），写操作安全重定向至 MetadataManager (写入 global.db)
+    if (fileInfo.isRoot() || path.endsWith(":\\") || path.endsWith(":/")) {
+        std::wstring wPath = path.toStdWString();
+        if (role == RatingRole) {
+            int newRating = value.toInt();
+            record.rating = newRating;
+            MetadataManager::instance().setRating(wPath, newRating);
+        } else if (role == ColorRole) {
+            QString newColor = value.toString();
+            record.manualColor = newColor;
+            MetadataManager::instance().setColor(wPath, newColor.toStdWString());
+        } else if (role == IsLockedRole || role == PinnedRole) {
+            bool pinned = value.toBool();
+            record.pinned = pinned;
+            MetadataManager::instance().setPinned(wPath, pinned);
+        }
+        emit dataChanged(this->index(index.row(), 0), this->index(index.row(), columnCount() - 1));
+        return true;
+    }
+
     QString parentDir = QDir::toNativeSeparators(fileInfo.absolutePath());
     QString fileName = fileInfo.fileName();
 
