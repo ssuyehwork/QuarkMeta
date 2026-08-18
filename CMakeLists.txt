@@ -195,6 +195,8 @@ set(SOURCES
     src/ui/components/ColorPill.cpp
     src/ui/NavPanel.cpp
     src/ui/NavPanel.h
+    src/ui/FavoritePanel.cpp
+    src/ui/FavoritePanel.h
     src/ui/BatchProgressDialog.h
     src/ui/QuickLookWindow.cpp
     src/ui/QuickLookWindow.h

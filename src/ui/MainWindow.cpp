@@ -15,6 +15,7 @@
 #include "../core/CoreController.h"
 #include "ColorPicker.h"
 #include "NavPanel.h"
+#include "FavoritePanel.h"
 #include "ContentPanel.h"
 #include "MetaPanel.h"
 #include "FilterPanel.h"
@@ -328,9 +329,9 @@ void MainWindow::initUi() {
             m_mainSplitter->restoreState(state);
         });
     } else {
-        // 初始默认分配: 250 (第一栏 NavPanel) | 650 (第二栏 ContentPanel) | 250 (元数据/筛选)
+        // 初始默认分配: 200 << 200 << 550 << 200 << 200
         QList<int> sizes;
-        sizes << 250 << 650 << 250 << 200;
+        sizes << 200 << 200 << 550 << 200 << 200;
         m_mainSplitter->setSizes(sizes);
     }
 
@@ -341,29 +342,27 @@ void MainWindow::initUi() {
         unifiedNavigateTo(path);
     });
 
-    // 2026-xx-xx 按照 Plan-95：实现收藏文件定位逻辑
-    connect(m_navPanel, &NavPanel::requestLocateFile, this, [this](const QString& path) {
-        QFileInfo fi(path);
-        QString parentDir = fi.absolutePath();
-        
-        // 1. 设置待定位的文件名 (不开启编辑模式)
-        m_contentPanel->setPendingSelectName(fi.fileName(), false);
+    connect(m_favoritePanel, &FavoritePanel::directorySelected, this, [this](const QString& path) {
+        unifiedNavigateTo(path);
+    });
 
-        // 2. 跳转到父目录
-        unifiedNavigateTo(parentDir);
+    connect(m_favoritePanel, &FavoritePanel::requestLocateFile, this, [this](const QString& path) {
+        QFileInfo fi(path);
+        m_contentPanel->setPendingSelectName(fi.fileName(), false);
+        unifiedNavigateTo(fi.absolutePath());
     });
 
     connect(m_contentPanel, &ContentPanel::directorySelected, this, [this](const QString& path) {
         unifiedNavigateTo(path);
     });
 
-    // 监听内容容器的右键添加至收藏夹信号 (对应用户原话：“选中某个项目单击右键选择该选项“添加至收藏夹”时，则把选中的项目收藏到收藏区里”)
+    // 监听内容容器的右键添加至收藏夹信号
     connect(m_contentPanel, &ContentPanel::requestAddFavorite, this, [this](const QStringList& paths) {
-        if (m_navPanel) {
+        if (m_favoritePanel) {
             for (const QString& p : paths) {
-                m_navPanel->addFavoriteItem(p);
+                m_favoritePanel->addFavoriteItem(p);
             }
-            m_navPanel->saveFavorites();
+            m_favoritePanel->saveFavorites();
         }
     });
 
@@ -593,9 +592,9 @@ void MainWindow::initUi() {
     });
 
     connect(&QuickLookWindow::instance(), &QuickLookWindow::favoriteRequested, this, [this](const QString& path) {
-        if (!path.isEmpty() && m_navPanel) {
-            m_navPanel->addFavoriteItem(path);
-            m_navPanel->saveFavorites();
+        if (!path.isEmpty() && m_favoritePanel) {
+            m_favoritePanel->addFavoriteItem(path);
+            m_favoritePanel->saveFavorites();
             ToolTipOverlay::instance()->showText(QCursor::pos(), "已成功添加至收藏夹", 1500, Style::SuccessGreen);
         }
     });
@@ -1248,6 +1247,9 @@ void MainWindow::setupSplitters() {
 
     m_navPanel = new NavPanel(this);
     m_navPanel->setObjectName("SidebarContainer");
+
+    m_favoritePanel = new FavoritePanel(this);
+    m_favoritePanel->setObjectName("FavoriteContainer");
     
     m_contentPanel = new ContentPanel(this);
     m_contentPanel->setObjectName("EditorContainer");
@@ -1269,8 +1271,9 @@ void MainWindow::setupSplitters() {
         // 其他来源（搜索、筛选等）不显示焦点线
     });
 
-    // 纯磁盘模式三栏布局：第一栏导航(NavPanel)，第二栏内容区(ContentPanel)，第三栏元数据/筛选
+    // 5栏平铺布局：1. 目录导航 | 2. 收藏夹 | 3. 内容展示区 | 4. 元数据属性栏 | 5. 条件筛选栏
     m_mainSplitter->addWidget(m_navPanel);
+    m_mainSplitter->addWidget(m_favoritePanel);
     m_mainSplitter->addWidget(m_contentPanel);
     m_mainSplitter->addWidget(m_metaPanel);
     m_mainSplitter->addWidget(m_filterPanel);
@@ -1810,6 +1813,7 @@ void MainWindow::populatePanelMenu(QMenu* menu) {
     };
 
     addToggleAction("显示目录导航", m_navPanel);
+    addToggleAction("显示收藏夹", m_favoritePanel);
     addToggleAction("显示内容区", m_contentPanel, false); // 核心区锁定不可隐藏
     addToggleAction("显示元数据栏", m_metaPanel);
     addToggleAction("显示筛选栏", m_filterPanel);
@@ -1826,14 +1830,15 @@ void MainWindow::resetSplitterLayout() {
     m_tagManagerView->hide();
 
     m_navPanel->show();
+    m_favoritePanel->show();
     m_contentPanel->show();
     m_metaPanel->show();
     m_filterPanel->show();
 
     // 2. 物理恢复尺寸比例
     QList<int> sizes;
-    sizes << 250 << 650 << 250 << 250;
-    if (m_mainSplitter->count() > 4) sizes << 0;
+    sizes << 200 << 200 << 550 << 200 << 200;
+    if (m_mainSplitter->count() > 5) sizes << 0;
 
     m_mainSplitter->setSizes(sizes);
 
@@ -1851,6 +1856,7 @@ void MainWindow::loadPanelVisibility() {
 
     QStringList hiddenPanels = val.toStringList();
     if (hiddenPanels.contains("nav"))      m_navPanel->hide();
+    if (hiddenPanels.contains("favorite")) m_favoritePanel->hide();
     if (hiddenPanels.contains("meta"))     m_metaPanel->hide();
     if (hiddenPanels.contains("filter"))   m_filterPanel->hide();
 }
@@ -1862,6 +1868,7 @@ void MainWindow::savePanelVisibility() {
 
     QStringList hiddenPanels;
     if (!m_navPanel->isVisible())      hiddenPanels << "nav";
+    if (!m_favoritePanel->isVisible()) hiddenPanels << "favorite";
     if (!m_metaPanel->isVisible())     hiddenPanels << "meta";
     if (!m_filterPanel->isVisible())   hiddenPanels << "filter";
     
