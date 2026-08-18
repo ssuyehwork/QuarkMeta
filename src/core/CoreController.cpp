@@ -172,6 +172,7 @@ void CoreController::startSystem() {
 
             // 在系统顶层统一提取一次“上次是否正常关闭”状态，提取后立刻置脏
             bool wasCleanShutdown = AppConfig::instance().getValue("System/LastCleanShutdown", false).toBool();
+            Q_UNUSED(wasCleanShutdown);
             AppConfig::instance().setValue("System/LastCleanShutdown", false);
             AppConfig::instance().sync();
 
