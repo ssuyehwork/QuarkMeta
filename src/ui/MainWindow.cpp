@@ -28,7 +28,6 @@
 #include "../util/DiskMediaExtractor.h"
 #include "DuplicateConflictDialog.h"
 #include "TaskProgressToolBar.h"
-#include "../core/CategoryDropProcessor.h"
 #include "../core/VolumeOnlineManager.h"
 
 #ifdef Q_OS_WIN
