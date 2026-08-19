@@ -446,6 +446,11 @@ QImage FormatDecoders::renderGhostscriptSafely(const QString& filePath, int targ
          << QDir::toNativeSeparators(filePath);
 
     QProcess process;
+#ifdef Q_OS_WIN
+    process.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* args) {
+        args->flags |= CREATE_NO_WINDOW;
+    });
+#endif
     process.start(gsExec, args);
 
     if (process.waitForFinished(5000)) {
