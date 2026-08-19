@@ -833,8 +833,8 @@ void ContentPanel::refreshVisibleThumbnails() {
     if (topIdx.isValid()) top = topIdx.row();
     if (bottomIdx.isValid()) bottom = bottomIdx.row();
 
-    // 稍微向外扩大缓冲页，防止滑动假白 (Precache padding)
-    int padding = 25;
+    // 精简预加载缓冲 (Precache padding)，严格限制在当前视口可见的 ~10 项批次，阻断任务堆积
+    int padding = 2;
     top = std::max(0, top - padding);
     bottom = std::min(m_proxyModel->rowCount() - 1, bottom + padding);
 
