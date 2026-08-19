@@ -77,18 +77,8 @@ QImage CapsuleMediaExtractor::getCapsuleThumbnail(const QString& mainAssetPath, 
         if (img.isNull()) img.load(mainAssetPath);
     }
 
-    // 区分双轨落盘
     if (!img.isNull()) {
-        QString containerDir = fi.absolutePath();
-        if (containerDir.endsWith(".arc", Qt::CaseInsensitive)) {
-            // A 模式：写入 .arc 胶囊内部
-            QString thumbPath = containerDir + "/" + fi.completeBaseName() + "_thumbnail.png";
-            img.save(thumbPath, "PNG");
-        } else {
-            // B 模式：统一写入 .QuarkMeta/disk_thumbs/ 目录
-            QString diskCachePath = getDiskThumbCachePath(mainAssetPath);
-            img.save(diskCachePath, "PNG");
-        }
+        saveDiskThumbnail(mainAssetPath, img);
     }
     return img;
 }
