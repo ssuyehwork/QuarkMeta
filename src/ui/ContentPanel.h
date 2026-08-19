@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDateTime>
+#include "ScanStats.h"
 #include "../core/ItemRecord.h"
 #include "../core/ModelContract.h"
 #include <QMap>

@@ -13,6 +13,7 @@
 #include "../DiskBatchRenameService.h"
 #include "../../meta/CapsuleMediaExtractor.h"
 #include "../../meta/MetadataManager.h"
+#include "../../meta/FileOperationHelper.h"
 
 using namespace QuarkMeta;
 

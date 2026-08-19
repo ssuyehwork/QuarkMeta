@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "MainWindow.h"
+#include "StyleLibrary.h"
 #include <QDateTime>
 #include <algorithm>
 #include "../meta/DiskNavigatorService.h"

@@ -1,4 +1,5 @@
 #include "TagManagerView.h"
+#include "StyleLibrary.h"
 #include "UiHelper.h"
 #include "../core/CentralEventHub.h"
 #include "../core/CoreEngine.h"

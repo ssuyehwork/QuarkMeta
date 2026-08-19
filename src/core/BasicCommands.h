@@ -2,6 +2,7 @@
 #include "ActionCommand.h"
 #include "../meta/MetadataManager.h"
 #include "../meta/DatabaseManager.h"
+#include "../meta/FileOperationHelper.h"
 #include "sqlite3.h"
 #include "../util/ShellHelper.h"
 #include <QString>

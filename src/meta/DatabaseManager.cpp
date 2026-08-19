@@ -1,5 +1,6 @@
 #include "DatabaseManager.h"
 #include "DatabaseMigrator.h"
+#include "../util/AppDirectoryInitializer.h"
 #include "DriveMetaDao.h"
 #include <chrono>
 #include <QDir>

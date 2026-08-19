@@ -1,4 +1,5 @@
 #include "AssetImporter.h" 
+#include "../ui/BatchProgressDialog.h"
 #include "ShellHelper.h" 
 #include "../ui/Logger.h" 
 #include "../ui/ToolTipOverlay.h" 

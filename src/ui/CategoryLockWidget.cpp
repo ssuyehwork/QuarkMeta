@@ -1,4 +1,5 @@
 #include "CategoryLockWidget.h"
+#include "../core/CategoryLockManager.h"
 #include "UiHelper.h"
 #include <QGraphicsDropShadowEffect>
 #include <QKeyEvent>

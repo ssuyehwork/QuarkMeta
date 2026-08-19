@@ -2,6 +2,9 @@
 #define NOMINMAX
 #endif
 #include "ContentPanel.h"
+#include "BatchProgressDialog.h"
+#include "../util/SecureFileEraser.h"
+#include "../util/DiskIoService.h"
 #include "../meta/TrashRepository.h" 
 #include "../meta/DiskTrashRepo.h"
 #include "ColorPicker.h"

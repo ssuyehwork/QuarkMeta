@@ -1,4 +1,5 @@
 #include "DriveButton.h"
+#include "StyleLibrary.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QFileInfo>
