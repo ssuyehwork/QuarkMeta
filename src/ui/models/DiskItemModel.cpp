@@ -260,10 +260,10 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
 
     uint64_t thisGen = m_currentGen.load(std::memory_order_relaxed);
 
-    // 收集待提取路径，严格限制单批次最多 2 张！
+    // 1. 收集当前视口内所有未生成缩略图的卡片（单批次最大并发上限设为 16，完全覆盖整屏）
     QStringList pathsToLoad;
     for (int r : rows) {
-        if (pathsToLoad.size() >= 2) break; // 🚨 物理红线：单次最多派发 2 张！
+        if (pathsToLoad.size() >= 16) break;
 
         if (r < 0 || r >= static_cast<int>(m_allRecords.size())) continue;
         const auto& rec = m_allRecords[r];

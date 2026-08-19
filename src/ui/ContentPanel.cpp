@@ -821,7 +821,7 @@ void ContentPanel::updateStatusBarStats() {
 void ContentPanel::refreshVisibleThumbnails() {
     QWidget* current = m_viewStack->currentWidget();
     QAbstractItemView* view = qobject_cast<QAbstractItemView*>(current);
-    if (!view || !m_model) return;
+    if (!view || !m_model || CoreController::isShuttingDown()) return;
 
     int top = 0;
     int bottom = m_proxyModel->rowCount() - 1;
@@ -833,10 +833,9 @@ void ContentPanel::refreshVisibleThumbnails() {
     if (topIdx.isValid()) top = topIdx.row();
     if (bottomIdx.isValid()) bottom = bottomIdx.row();
 
-    // 精简预加载缓冲 (Precache padding)，严格限制在当前视口可见的 ~10 项批次，阻断任务堆积
-    int padding = 2;
-    top = std::max(0, top - padding);
-    bottom = std::min(m_proxyModel->rowCount() - 1, bottom + padding);
+    // 稍微向外预加载 4 行缓冲，消除白块
+    top = std::max(0, top - 4);
+    bottom = std::min(m_proxyModel->rowCount() - 1, bottom + 4);
 
     QList<int> visibleRows;
     for (int r = top; r <= bottom; ++r) {
@@ -847,6 +846,7 @@ void ContentPanel::refreshVisibleThumbnails() {
         }
     }
 
+    // 触发本批次加载
     m_model->loadThumbnailsForRows(visibleRows);
 }
 
