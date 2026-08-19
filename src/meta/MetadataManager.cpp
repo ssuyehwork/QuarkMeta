@@ -23,7 +23,6 @@
 #include "MetadataDefs.h"
 #include "DatabaseManager.h"
 #include "DriveMetaDao.h"
-#include "IngestionProgressEngine.h"
 #include "../core/AppConfig.h"
 #include "../ui/MediaColorExtractor.h"
 #include "StatisticsService.h"

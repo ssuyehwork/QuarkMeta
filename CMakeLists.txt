@@ -55,6 +55,7 @@ set(SOURCES
     src/meta/StatisticsService.h
     src/meta/MetaCacheDecorator.cpp
     src/meta/MetaCacheDecorator.h
+    src/core/CategoryLockManager.h
     src/core/CentralEventHub.cpp
     src/core/CentralEventHub.h
     src/core/CoreEngine.cpp
@@ -88,8 +89,9 @@ set(SOURCES
     src/crypto/EncryptionManager.h
     src/meta/DiskTrashRepo.cpp
     src/meta/DiskTrashRepo.h
-    src/meta/DriveMetaDao.cpp
     src/meta/DriveMetaDao.h
+    src/meta/DriveMetaDao.cpp
+    src/meta/FileOperationHelper.h
     src/meta/TagRepository.cpp
     src/meta/TagRepository.h
     src/meta/TrashRepository.cpp
@@ -120,6 +122,7 @@ set(SOURCES
     src/ui/UndoToastOverlay.h
     src/ui/BreadcrumbBar.cpp
     src/ui/BreadcrumbBar.h
+    src/ui/BatchProgressDialog.h
     src/ui/CategoryLockDialog.cpp
     src/ui/CategoryLockDialog.h
     src/ui/CategoryLockWidget.cpp
@@ -159,6 +162,8 @@ set(SOURCES
     src/ui/TrayController.h
     src/ui/HoverEventFilter.cpp
     src/ui/HoverEventFilter.h
+    src/ui/ScanStats.h
+    src/ui/StyleLibrary.h
     src/ui/ResizeEventFilter.cpp
     src/ui/ResizeEventFilter.h
     src/ui/AddressBar.cpp
@@ -224,10 +229,13 @@ set(SOURCES
     src/ui/ImageDecoderFacade.cpp
     src/ui/ColorAlgorithmEngine.h
     src/ui/ColorAlgorithmEngine.cpp
+    src/util/AppDirectoryInitializer.h
+    src/util/DiskIoService.h
     src/util/DiskMediaExtractor.h
     src/util/DiskMediaExtractor.cpp
     src/meta/CapsuleMediaExtractor.h
     src/meta/CapsuleMediaExtractor.cpp
+    src/util/SecureFileEraser.h
     src/util/ShellHelper.cpp
     src/util/ShellHelper.h
     src/util/ImportHelper.cpp
