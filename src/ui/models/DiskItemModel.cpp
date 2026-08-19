@@ -52,6 +52,7 @@ QVariant DiskItemModel::headerData(int section, Qt::Orientation orientation, int
 }
 
 void DiskItemModel::setRecords(const std::vector<ItemRecord>& records) {
+    incrementGeneration(); // 🚨 代际递增：瞬间废除上一目录的所有在途任务！
     beginResetModel();
     m_allRecords = records;
     m_pathToIndex.clear();
@@ -65,6 +66,7 @@ void DiskItemModel::setRecords(const std::vector<ItemRecord>& records) {
 }
 
 void DiskItemModel::clear() {
+    incrementGeneration(); // 🚨 代际递增
     beginResetModel();
     m_allRecords.clear();
     m_pathToIndex.clear();
@@ -256,9 +258,13 @@ void DiskItemModel::clearCacheForFolder(const QString& folderPath) {
 void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
     if (rows.isEmpty() || CoreController::isShuttingDown()) return;
 
-    // 收集待提取路径
+    uint64_t thisGen = m_currentGen.load(std::memory_order_relaxed);
+
+    // 收集待提取路径，严格限制单批次最多 2 张！
     QStringList pathsToLoad;
     for (int r : rows) {
+        if (pathsToLoad.size() >= 2) break; // 🚨 物理红线：单次最多派发 2 张！
+
         if (r < 0 || r >= static_cast<int>(m_allRecords.size())) continue;
         const auto& rec = m_allRecords[r];
         if (rec.isDir || !UiHelper::isGraphicsFile(rec.suffix)) continue;
@@ -274,13 +280,20 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
 
     QPointer<DiskItemModel> weakThis(this);
 
-    // 多线程并发分发：每个工作线程并发处理单张图片
     for (const QString& path : pathsToLoad) {
-        QThreadPool::globalInstance()->start([weakThis, path]() {
-            if (!weakThis || CoreController::isShuttingDown()) return;
+        QThreadPool::globalInstance()->start([weakThis, path, thisGen]() {
+            // 🚨 核心熔断第 1 关：检查代际号，若已切走目录或正在停机，0 毫秒直接退出！
+            if (!weakThis || weakThis->currentGeneration() != thisGen || CoreController::isShuttingDown()) {
+                return;
+            }
 
-            // 1. 查/解缩略图
+            // 执行解码与缓存写入 (PNG)
             QImage img = CapsuleMediaExtractor::getCapsuleThumbnail(path, 512);
+
+            // 🚨 核心熔断第 2 关：解码完成后再次检查代际号，防止把旧数据塞回新目录
+            if (!weakThis || weakThis->currentGeneration() != thisGen || CoreController::isShuttingDown()) {
+                return;
+            }
 
             double ar = 1.0;
             bool hasThumb = false;
@@ -289,9 +302,8 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
                 hasThumb = true;
             }
 
-            // 2. 回到主线程更新 UI Model
-            QMetaObject::invokeMethod(weakThis.data(), [weakThis, path, img, ar, hasThumb]() {
-                if (weakThis) {
+            QMetaObject::invokeMethod(weakThis.data(), [weakThis, path, img, ar, hasThumb, thisGen]() {
+                if (weakThis && weakThis->currentGeneration() == thisGen) {
                     QIcon icon = img.isNull() ? ShellIconManager::getFileIcon(path, 128) : QIcon(QPixmap::fromImage(img));
                     weakThis->m_iconCache.insert(path, new QIcon(icon));
                     weakThis->m_aspectRatios[QDir::toNativeSeparators(path)] = hasThumb ? ar : -1.0;

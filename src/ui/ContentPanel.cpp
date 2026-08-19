@@ -2544,8 +2544,13 @@ void ContentPanel::restoreSelections() {
 void ContentPanel::loadDirectory(const QString& path, bool recursive) { 
     restoreActiveView(); // 🚨 强行切离开锁屏页，恢复卡片网格/列表页！
 
-    // 切换目录时立即熔断并清空前一次目录的后台提图任务队列
+    // 1. 切换目录时立即熔断并清空前一次目录的后台提图任务队列
     MediaExtractorPipeline::instance().cancelAll();
+
+    // 2. 递增模型代际号，废止前一个目录正在跑的所有子任务
+    if (m_diskModel) {
+        m_diskModel->incrementGeneration();
+    }
 
     if (m_model != m_diskModel) {
         m_model = m_diskModel;
