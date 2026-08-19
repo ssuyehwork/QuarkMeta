@@ -6,6 +6,7 @@
 #include <QDateTime>
 #include <QFileInfo>
 #include <QDir>
+#include <QThreadPool>
 #include "../../meta/QuarkMetaJson.h"
 #include "../MediaColorExtractor.h"
 #include "../../core/CoreController.h"
@@ -253,30 +254,33 @@ void DiskItemModel::clearCacheForFolder(const QString& folderPath) {
 }
 
 void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
-    std::vector<std::pair<QString, QString>> newQueue;
+    if (rows.isEmpty() || CoreController::isShuttingDown()) return;
+
+    // 收集待提取路径
+    QStringList pathsToLoad;
     for (int r : rows) {
         if (r < 0 || r >= static_cast<int>(m_allRecords.size())) continue;
         const auto& rec = m_allRecords[r];
-        if (rec.isDir) continue;
-        
-        QString path = rec.path;
-        if (!UiHelper::isGraphicsFile(rec.suffix)) continue;
+        if (rec.isDir || !UiHelper::isGraphicsFile(rec.suffix)) continue;
 
+        QString path = rec.path;
         if (m_iconCache.contains(path) || m_requestedPaths.contains(path)) continue;
 
         m_requestedPaths.insert(path);
-        newQueue.push_back({path, path});
+        pathsToLoad << path;
     }
 
-    if (newQueue.empty()) return;
+    if (pathsToLoad.isEmpty()) return;
 
     QPointer<DiskItemModel> weakThis(this);
-    (void)QtConcurrent::run([weakThis, newQueue]() {
-        for (const auto& task : newQueue) {
-            if (!weakThis || CoreController::isShuttingDown()) break;
-            QString path = task.first;
 
-            QImage img = DiskMediaExtractor::getDiskThumbnail(path, 512);
+    // 多线程并发分发：每个工作线程并发处理单张图片
+    for (const QString& path : pathsToLoad) {
+        QThreadPool::globalInstance()->start([weakThis, path]() {
+            if (!weakThis || CoreController::isShuttingDown()) return;
+
+            // 1. 查/解缩略图
+            QImage img = CapsuleMediaExtractor::getCapsuleThumbnail(path, 512);
 
             double ar = 1.0;
             bool hasThumb = false;
@@ -285,6 +289,7 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
                 hasThumb = true;
             }
 
+            // 2. 回到主线程更新 UI Model
             QMetaObject::invokeMethod(weakThis.data(), [weakThis, path, img, ar, hasThumb]() {
                 if (weakThis) {
                     QIcon icon = img.isNull() ? ShellIconManager::getFileIcon(path, 128) : QIcon(QPixmap::fromImage(img));
@@ -298,13 +303,14 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
                         if (weakThis->isSuspended()) {
                             weakThis->m_pendingUpdateRows.insert(rIdx);
                         } else {
-                            emit weakThis->dataChanged(weakThis->index(rIdx, 0), weakThis->index(rIdx, 0), {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
+                            emit weakThis->dataChanged(weakThis->index(rIdx, 0), weakThis->index(rIdx, 0),
+                                                      {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
                         }
                     }
                 }
-            });
-        }
-    });
+            }, Qt::QueuedConnection);
+        });
+    }
 }
 
 Qt::ItemFlags DiskItemModel::flags(const QModelIndex& index) const {
