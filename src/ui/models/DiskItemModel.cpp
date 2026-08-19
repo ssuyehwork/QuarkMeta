@@ -260,10 +260,10 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
 
     uint64_t thisGen = m_currentGen.load(std::memory_order_relaxed);
 
-    // 1. 收集当前视口内所有未生成缩略图的卡片（单批次最大并发上限设为 16，完全覆盖整屏）
+    // 1. 严格锁定单批次只取 2 张！
     QStringList pathsToLoad;
     for (int r : rows) {
-        if (pathsToLoad.size() >= 16) break;
+        if (pathsToLoad.size() >= 2) break; // 🚨 物理红线：严格死锁 2 张！
 
         if (r < 0 || r >= static_cast<int>(m_allRecords.size())) continue;
         const auto& rec = m_allRecords[r];
@@ -276,24 +276,19 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
         pathsToLoad << path;
     }
 
+    // 如果视口内没有需要加载的，直接退出
     if (pathsToLoad.isEmpty()) return;
 
     QPointer<DiskItemModel> weakThis(this);
 
+    // 2. 并发处理这 2 张
     for (const QString& path : pathsToLoad) {
         QThreadPool::globalInstance()->start([weakThis, path, thisGen]() {
-            // 🚨 核心熔断第 1 关：检查代际号，若已切走目录或正在停机，0 毫秒直接退出！
-            if (!weakThis || weakThis->currentGeneration() != thisGen || CoreController::isShuttingDown()) {
-                return;
-            }
+            if (!weakThis || weakThis->currentGeneration() != thisGen || CoreController::isShuttingDown()) return;
 
-            // 执行解码与缓存写入 (PNG)
             QImage img = CapsuleMediaExtractor::getCapsuleThumbnail(path, 512);
 
-            // 🚨 核心熔断第 2 关：解码完成后再次检查代际号，防止把旧数据塞回新目录
-            if (!weakThis || weakThis->currentGeneration() != thisGen || CoreController::isShuttingDown()) {
-                return;
-            }
+            if (!weakThis || weakThis->currentGeneration() != thisGen || CoreController::isShuttingDown()) return;
 
             double ar = 1.0;
             bool hasThumb = false;
@@ -318,6 +313,16 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
                             emit weakThis->dataChanged(weakThis->index(rIdx, 0), weakThis->index(rIdx, 0),
                                                       {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
                         }
+                    }
+
+                    // 🚨【核心自驱动接力】：解完这一张后，如果还没切走目录，自动触发一个 20ms 延时去接力解下 2 张！
+                    auto* panel = qobject_cast<ContentPanel*>(weakThis->parent());
+                    if (panel && !CoreController::isShuttingDown()) {
+                        QTimer::singleShot(20, panel, [panel, thisGen, weakThis]() {
+                            if (weakThis && weakThis->currentGeneration() == thisGen) {
+                                panel->refreshVisibleThumbnails();
+                            }
+                        });
                     }
                 }
             }, Qt::QueuedConnection);
