@@ -1,5 +1,5 @@
 #include "CategoryModel.h"
-#include "../meta/CategoryRepo.h"
+#include "../core/ModelContract.h"
 #include "../meta/MetadataManager.h"
 #include "../meta/StatisticsService.h"
 #include "../core/VolumeOnlineManager.h"

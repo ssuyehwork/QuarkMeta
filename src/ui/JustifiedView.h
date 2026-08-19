@@ -2,6 +2,7 @@
 
 #include <QAbstractItemView>
 #include <QList>
+#include "../core/ModelContract.h"
 #include <vector>
 
 namespace QuarkMeta {

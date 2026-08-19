@@ -9,6 +9,8 @@
 #include <QTimer>
 #include "../core/AppConfig.h"
 
+using namespace QuarkMeta::Style;
+
 namespace QuarkMeta {
 
 DriveButton::DriveButton(const QString& driveLetter, QWidget* parent)
@@ -42,18 +44,18 @@ void DriveButton::paintEvent(QPaintEvent* event) {
     // 1. 背景绘制 (严格对齐 Plan-108 视觉规范)
     QColor bgColor;
     QColor borderColor;
-    QColor textColor = Style::TextMain;
+    QColor textColor = TextMain;
 
     switch (m_state) {
         case Inactive:
             bgColor = QColor("#333333");
             borderColor = QColor("#444444");
-            textColor = Style::TextDim;
+            textColor = TextDim;
             break;
         case Active:
         case Running:
-            bgColor = Style::PrimaryBlue;
-            borderColor = Style::PrimaryBlue.lighter(110);
+            bgColor = PrimaryBlue;
+            borderColor = PrimaryBlue.lighter(110);
             break;
         case Paused:
             bgColor = QColor("#555555");
@@ -164,7 +166,7 @@ void FolderButton::paintEvent(QPaintEvent* event) {
     
     QColor folderColor = QColor(colorStr);
     if (!folderColor.isValid()) {
-        folderColor = Style::TextMain;
+        folderColor = TextMain;
     }
 
     // 绘制自定义矢量图标 (SvgIcons)

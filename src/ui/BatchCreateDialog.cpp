@@ -1,4 +1,5 @@
 #include "BatchCreateDialog.h"
+#include "StyleLibrary.h"
 #include "ToolTipOverlay.h"
 #include "UiHelper.h"
 #include "../core/AppConfig.h"
@@ -14,6 +15,8 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+
+using namespace QuarkMeta::Style;
 
 namespace QuarkMeta {
 
@@ -446,7 +449,7 @@ void BatchCreateDialog::onExecute() {
         }
 
         QString msg = QString("成功创建 %1 个项目").arg(itemsCreated);
-        ToolTipOverlay::instance()->showText(QCursor::pos(), msg, 2000, Style::SuccessGreen);
+        ToolTipOverlay::instance()->showText(QCursor::pos(), msg, 2000, SuccessGreen);
     }
 
     // 按照用户最新要求：成功创建后，自动递增累加序列数字的起始值，并落盘保存
