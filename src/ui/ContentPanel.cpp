@@ -2544,6 +2544,9 @@ void ContentPanel::restoreSelections() {
 void ContentPanel::loadDirectory(const QString& path, bool recursive) { 
     restoreActiveView(); // 🚨 强行切离开锁屏页，恢复卡片网格/列表页！
 
+    // 切换目录时立即熔断并清空前一次目录的后台提图任务队列
+    MediaExtractorPipeline::instance().cancelAll();
+
     if (m_model != m_diskModel) {
         m_model = m_diskModel;
         m_proxyModel->setSourceModel(m_model);
@@ -2583,9 +2586,9 @@ void ContentPanel::loadDirectory(const QString& path, bool recursive) {
 
     QPointer<ContentPanel> panelPtr(this); 
 
-    // 【物理隔离】纯磁盘扫描已迁出至 DiskScanService，本函数只负责调度与 UI 状态维护，
-    // 不再直接持有任何扫描细节，DiskScanService.cpp 中不可能出现 MetadataManager/CategoryRepo 调用
-    (void)QThreadPool::globalInstance()->start([panelPtr, path, recursive, reqId]() { 
+    // 通道隔离：使用 QtConcurrent::run 代替 QThreadPool::globalInstance()->start，
+    // 防止 UI 导航与目录扫描任务被后台大量缩略图提取慢任务死死霸占而排队卡死
+    (void)QtConcurrent::run([panelPtr, path, recursive, reqId]() {
         if (!panelPtr) return; 
 
         std::vector<ItemRecord> allItems = DiskScanService::scanDirectory(
