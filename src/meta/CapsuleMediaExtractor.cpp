@@ -39,10 +39,10 @@ static bool fetchPhysicalFileId(const QString& filePath, uint32_t& outVol, uint6
 }
 
 QString CapsuleMediaExtractor::getDiskThumbCachePathByFileId(uint32_t volSerial, uint64_t fileId) {
-    // 结构：.QuarkMeta/disk_thumbs/<卷ID_Hex>/<前2位子分桶>/<FileId_Hex>.jpg
+    // 结构：.QuarkMeta/disk_thumbs/<卷ID_Hex>/<前2位子分桶>/<FileId_Hex>.png
     QString volStr = QString("%1").arg(volSerial, 8, 16, QChar('0')).toUpper();
     QString bucket = QString("%1").arg((fileId >> 8) & 0xFF, 2, 16, QChar('0')).toUpper();
-    QString fileKey = QString("%1.jpg").arg(fileId, 16, 16, QChar('0')).toUpper();
+    QString fileKey = QString("%1.png").arg(fileId, 16, 16, QChar('0')).toUpper();
 
     QString cacheDir = QCoreApplication::applicationDirPath() + "/.QuarkMeta/disk_thumbs/" + volStr + "/" + bucket;
     QDir().mkpath(cacheDir);
@@ -59,7 +59,7 @@ QString CapsuleMediaExtractor::getDiskThumbCachePath(const QString& filePath) {
     // 极端退化兜底：无法获取 FileID 时使用轻量哈希
     quint64 h = qHash(QDir::toNativeSeparators(filePath).toLower(), 0);
     QString bucket = QString("%1").arg((h >> 32) & 0xFF, 2, 16, QChar('0'));
-    QString fileKey = QString("%1.jpg").arg(h, 16, 16, QChar('0'));
+    QString fileKey = QString("%1.png").arg(h, 16, 16, QChar('0'));
     QString cacheDir = QCoreApplication::applicationDirPath() + "/.QuarkMeta/disk_thumbs/fallback/" + bucket;
     QDir().mkpath(cacheDir);
     return cacheDir + "/" + fileKey;
@@ -68,8 +68,8 @@ QString CapsuleMediaExtractor::getDiskThumbCachePath(const QString& filePath) {
 bool CapsuleMediaExtractor::saveDiskThumbnail(const QString& filePath, const QImage& img512) {
     if (img512.isNull()) return false;
     QString diskCachePath = getDiskThumbCachePath(filePath);
-    // 强制使用 JPEG Quality 85 落盘，单张耗时 < 1ms，画质极高
-    return img512.save(diskCachePath, "JPG", 85);
+    // 严格锁定 PNG 格式落盘，完美保留 alpha 透明通道
+    return img512.save(diskCachePath, "PNG");
 }
 
 QImage CapsuleMediaExtractor::getCapsuleThumbnailReadOnly(const QString& filePath) {
