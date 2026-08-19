@@ -17,7 +17,7 @@ QString CapsuleMediaExtractor::getDiskThumbCachePath(const QString& mainAssetPat
     if (mainAssetPath.isEmpty()) return "";
     
     QString normPath = QDir::toNativeSeparators(mainAssetPath).toLower();
-    quint64 h = qHash(normPath);
+    quint64 h = qHash(normPath, 0);
 
     // 两级哈希存储桶，防止单一目录下文件过多引起 NTFS 检索变慢
     QString bucket = QString("%1").arg((h >> 32) & 0xFF, 2, 16, QChar('0'));
