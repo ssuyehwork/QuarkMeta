@@ -1,6 +1,7 @@
 #include "TagSelectorOverlay.h"
 #include "UiHelper.h"
 #include "../meta/MetadataManager.h"
+#include "../core/AppConfig.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QMouseEvent>
@@ -43,13 +44,11 @@ void TagSelectorOverlay::initUi() {
     mainL->setContentsMargins(10, 10, 10, 10);
     mainL->setSpacing(8);
 
-    // 顶部拖拽手柄栏
-    QWidget* topHandle = new QWidget(this);
-    topHandle->setFixedHeight(8);
-    topHandle->setStyleSheet("background: transparent;");
-    mainL->addWidget(topHandle);
+    // 1. 顶部操作栏（搜索框 + 右侧侧边栏折叠按钮）
+    QHBoxLayout* topSearchLayout = new QHBoxLayout();
+    topSearchLayout->setContentsMargins(0, 0, 0, 0);
+    topSearchLayout->setSpacing(6);
 
-    // 搜索与创建栏
     m_searchEdit = new QLineEdit(this);
     m_searchEdit->setPlaceholderText("搜索或新建标签...");
     m_searchEdit->setClearButtonEnabled(true);
@@ -61,9 +60,28 @@ void TagSelectorOverlay::initUi() {
     connect(m_searchEdit, &QLineEdit::textChanged, this, [this]() {
         filterTags();
     });
-    mainL->addWidget(m_searchEdit);
+    topSearchLayout->addWidget(m_searchEdit, 1);
 
-    // 中部双视口（左侧群组、右侧标签）
+    m_btnToggleSidebar = new QPushButton(this);
+    m_btnToggleSidebar->setFixedSize(26, 26);
+    m_btnToggleSidebar->setCheckable(true);
+    m_btnToggleSidebar->setChecked(true);
+    m_btnToggleSidebar->setIcon(UiHelper::getIcon("sidebar", QColor("#AAAAAA"), 16));
+    m_btnToggleSidebar->setIconSize(QSize(16, 16));
+    m_btnToggleSidebar->setCursor(Qt::PointingHandCursor);
+    m_btnToggleSidebar->setStyleSheet(
+        "QPushButton { background: transparent; border: none; border-radius: 4px; padding: 0; }"
+        "QPushButton:hover { background-color: #3E3E42; }"
+        "QPushButton:pressed { background-color: #4E4E52; }"
+    );
+    connect(m_btnToggleSidebar, &QPushButton::toggled, this, [this](bool checked) {
+        m_groupList->setVisible(checked);
+    });
+    topSearchLayout->addWidget(m_btnToggleSidebar);
+
+    mainL->addLayout(topSearchLayout);
+
+    // 2. 中部双视口（左侧群组、右侧标签）
     QHBoxLayout* bodyL = new QHBoxLayout();
     bodyL->setSpacing(8);
 
@@ -106,27 +124,9 @@ void TagSelectorOverlay::initUi() {
 
     mainL->addLayout(bodyL, 1);
 
-    // 底部快捷键提示栏
-    QWidget* bottomBar = new QWidget(this);
-    bottomBar->setFixedHeight(22);
-    bottomBar->setStyleSheet("background-color: #151515; border-radius: 3px;");
-    QHBoxLayout* bottomL = new QHBoxLayout(bottomBar);
-    bottomL->setContentsMargins(8, 0, 8, 0);
-
-    QLabel* helpTips = new QLabel(bottomBar);
-    helpTips->setText("切换 <font color='#1C97EA'><b>Tab</b></font>    移动 <font color='#1C97EA'><b>↑↓←→</b></font>    选中/新建 <font color='#1C97EA'><b>⏎</b></font>");
-    helpTips->setStyleSheet("color: #888; font-size: 10px;");
-    bottomL->addWidget(helpTips);
-
-    bottomL->addStretch();
-
-    QLabel* closeTips = new QLabel("关闭 ESC", bottomBar);
-    closeTips->setStyleSheet("color: #888; font-size: 10px;");
-    bottomL->addWidget(closeTips);
-
-    mainL->addWidget(bottomBar);
-
-    resize(400, 240); // 初始大小
+    // 从配置中恢复持久化的窗口尺寸
+    QSize savedSize = AppConfig::instance().getValue("TagSelectorOverlay/Size", QSize(400, 240)).toSize();
+    resize(savedSize.expandedTo(QSize(250, 150)));
 }
 
 void TagSelectorOverlay::loadTagsAndGroups() {
@@ -341,10 +341,20 @@ void TagSelectorOverlay::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void TagSelectorOverlay::mouseReleaseEvent(QMouseEvent* event) {
+    if (m_resizeDir != 0) {
+        AppConfig::instance().setValue("TagSelectorOverlay/Size", size());
+    }
     m_isDragging = false;
     m_resizeDir = 0;
     setCursor(Qt::ArrowCursor);
     QFrame::mouseReleaseEvent(event);
+}
+
+void TagSelectorOverlay::resizeEvent(QResizeEvent* event) {
+    QFrame::resizeEvent(event);
+    if (isVisible()) {
+        AppConfig::instance().setValue("TagSelectorOverlay/Size", size());
+    }
 }
 
 // -------------------------------------------------------------------------
