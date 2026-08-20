@@ -151,8 +151,6 @@ set(SOURCES
     src/ui/CardPainterHelper.h
     src/ui/ThumbnailDelegate.cpp
     src/ui/ThumbnailDelegate.h
-    src/ui/LoadingWindow.cpp
-    src/ui/LoadingWindow.h
     src/ui/Logger.h
     src/ui/MainWindow.cpp
     src/ui/MainWindow.h
