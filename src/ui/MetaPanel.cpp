@@ -122,7 +122,6 @@ void MetaPanel::initUi() {
         QPoint globalPos = m_btnAddTag->mapToGlobal(QPoint(0, m_btnAddTag->height() + 4)); 
         QPoint parentPos = this->topLevelWidget()->mapFromGlobal(globalPos); 
         m_tagSelectorOverlay->move(parentPos); 
-        m_tagSelectorOverlay->resize(320, 360); 
         m_tagSelectorOverlay->show(); 
         
         connect(m_tagSelectorOverlay, &TagSelectorOverlay::selectionChanged, this, [this](const QStringList& selectedTags) { 
