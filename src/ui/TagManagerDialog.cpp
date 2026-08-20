@@ -125,12 +125,22 @@ void TagManagerDialog::initContent() {
     m_sidebarLayout->addStretch();
     bodyL->addWidget(m_sidebar);
 
-    // B. 右侧标签流式容器区
+    // B. 右侧标签流式容器区（彻底锁定暗黑背景，杜绝系统白底穿透）
     m_scrollArea = new QScrollArea(bodyWidget);
     m_scrollArea->setWidgetResizable(true);
-    m_scrollArea->setStyleSheet("QScrollArea { border: none; background: transparent; }");
+    m_scrollArea->setStyleSheet(
+        "QScrollArea { border: none; background-color: #1E1E1E; }"
+        "QScrollBar:vertical { border: none; background: transparent; width: 8px; }"
+        "QScrollBar::handle:vertical { background: #333333; min-height: 20px; border-radius: 4px; }"
+        "QScrollBar::handle:vertical:hover { background: #444444; }"
+    );
+    if (m_scrollArea->viewport()) {
+        m_scrollArea->viewport()->setStyleSheet("background-color: #1E1E1E; border: none;");
+    }
 
     m_contentWidget = new QWidget();
+    m_contentWidget->setAttribute(Qt::WA_StyledBackground, true);
+    m_contentWidget->setStyleSheet("background-color: #1E1E1E;");
     m_contentLayout = new QVBoxLayout(m_contentWidget);
     m_contentLayout->setContentsMargins(15, 15, 15, 15);
     m_contentLayout->setSpacing(15);
@@ -364,7 +374,16 @@ void TagManagerDialog::resizeEvent(QResizeEvent* event) {
 }
 
 void TagManagerDialog::applyTheme() {
-    setStyleSheet("QDialog { background-color: #1E1E1E; color: #BBB; }");
+    // 全窗口无死角应用深色主题，覆盖所有子容器与视口
+    setStyleSheet(
+        "TagManagerDialog, QDialog, QWidget#CentralWidget {"
+        "  background-color: #1E1E1E;"
+        "  color: #EEEEEE;"
+        "}"
+        "QFrame#TagDialogBody, QWidget#TagScrollContainer {"
+        "  background-color: #1E1E1E;"
+        "}"
+    );
 }
 
 } // namespace QuarkMeta
