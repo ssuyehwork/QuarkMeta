@@ -21,9 +21,9 @@ void TagManagerDialog::showDialog(QWidget* parent, const QString& currentPath, b
 TagManagerDialog::TagManagerDialog(const QString& currentPath, bool isMirrorSource, QWidget* parent)
     : FramelessDialog("标签管理", parent), m_currentPath(currentPath), m_isMirrorSource(isMirrorSource) {
     
-    // 尺寸硬性约束：显示 180px 侧边栏时最小宽度 400px
-    setMinimumSize(400, 350);
-    resize(580, 480);
+    // 严格锁定：默认 1000x800，最小尺寸限制为 800x600，支持自由拖拽缩放
+    setMinimumSize(800, 600);
+    resize(1000, 800);
 
     initContent();
     applyTheme();
@@ -182,11 +182,8 @@ void TagManagerDialog::initContent() {
 
 void TagManagerDialog::onSidebarToggled(bool checked) {
     m_sidebar->setVisible(checked);
-    if (checked) {
-        setMinimumWidth(400); // 180px 侧边栏 + >=220px 内容区
-    } else {
-        setMinimumWidth(200); // 隐藏侧边栏后，最小宽度可缩小至 200px
-    }
+    // 侧边栏折叠/展开时，统一锁定全局最小宽度 800 像素，防止窗口被过度挤压变形
+    setMinimumSize(800, 600);
 }
 
 void TagManagerDialog::onSidebarItemClicked(int id) {
