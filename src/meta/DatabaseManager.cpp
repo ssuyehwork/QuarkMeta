@@ -399,6 +399,28 @@ bool DatabaseManager::loadDb(const std::wstring& diskPath, DbConnection& conn) {
         sqlite3_exec(conn.memDb, "ALTER TABLE disk_trash ADD COLUMN created_at INTEGER DEFAULT 0", nullptr, nullptr, nullptr);
     }
 
+    // 物理磁盘回收站平滑迁移：自动补全 file_id 与 created_at 字段
+    bool hasTrashFileIdColumn = false;
+    bool hasTrashCreatedAtColumn = false;
+    sqlite3_stmt* trashCheckStmt = nullptr;
+    if (sqlite3_prepare_v2(conn.memDb, "PRAGMA table_info(disk_trash)", -1, &trashCheckStmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(trashCheckStmt) == SQLITE_ROW) {
+            const char* name = reinterpret_cast<const char*>(sqlite3_column_text(trashCheckStmt, 1));
+            if (name) {
+                std::string sName(name);
+                if (sName == "file_id") hasTrashFileIdColumn = true;
+                if (sName == "created_at") hasTrashCreatedAtColumn = true;
+            }
+        }
+        sqlite3_finalize(trashCheckStmt);
+    }
+    if (!hasTrashFileIdColumn) {
+        sqlite3_exec(conn.memDb, "ALTER TABLE disk_trash ADD COLUMN file_id TEXT DEFAULT ''", nullptr, nullptr, nullptr);
+    }
+    if (!hasTrashCreatedAtColumn) {
+        sqlite3_exec(conn.memDb, "ALTER TABLE disk_trash ADD COLUMN created_at INTEGER DEFAULT 0", nullptr, nullptr, nullptr);
+    }
+
     // 2026-08-xx 新增字段：持久化基名与后缀名，避免每次启动现算并优化回填
     bool hasBaseNameColumn = false;
     bool hasExtColumn = false;

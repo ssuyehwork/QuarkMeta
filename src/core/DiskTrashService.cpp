@@ -30,6 +30,11 @@ bool DiskTrashService::moveToDiskTrash(const QStringList& paths) {
         QDir().mkpath(trashDir);
 #endif
 
+        // 🚨 关键修复：在物理移动前提前抓取原文件的各项属性，避免移动后 p 不存在导致 info.isDir() 错判为 0！
+        bool isFolder = info.isDir();
+        qint64 fileSize = info.size();
+        qint64 createdAt = info.birthTime().isValid() ? info.birthTime().toMSecsSinceEpoch() : info.lastModified().toMSecsSinceEpoch();
+
         QString fileId = QUuid::createUuid().toString(QUuid::WithoutBraces);
         QString itemContainerDir = trashDir + "/" + fileId;
         QDir().mkpath(itemContainerDir);
@@ -44,8 +49,6 @@ bool DiskTrashService::moveToDiskTrash(const QStringList& paths) {
                 continue;
             }
 
-            qint64 createdAt = info.birthTime().isValid() ? info.birthTime().toMSecsSinceEpoch() : info.lastModified().toMSecsSinceEpoch();
-
             SqlTransaction trans(db);
             sqlite3_stmt* stmt = nullptr;
             const char* sql = "INSERT INTO disk_trash (file_id, trash_path, original_path, drive_letter, file_name, is_folder, file_size, created_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -57,8 +60,8 @@ bool DiskTrashService::moveToDiskTrash(const QStringList& paths) {
                 sqlite3_bind_text16(stmt, 3, p.toStdWString().c_str(), -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text16(stmt, 4, driveLetter.toStdWString().c_str(), -1, SQLITE_TRANSIENT);
                 sqlite3_bind_text16(stmt, 5, info.fileName().toStdWString().c_str(), -1, SQLITE_TRANSIENT);
-                sqlite3_bind_int(stmt, 6, info.isDir() ? 1 : 0);
-                sqlite3_bind_int64(stmt, 7, info.size());
+                sqlite3_bind_int(stmt, 6, isFolder ? 1 : 0);
+                sqlite3_bind_int64(stmt, 7, fileSize);
                 sqlite3_bind_int64(stmt, 8, createdAt);
                 sqlite3_bind_int64(stmt, 9, QDateTime::currentMSecsSinceEpoch());
 
@@ -165,7 +168,7 @@ bool DiskTrashService::restoreFromDiskTrash(int id, const QString& trashPath) {
         }
         if (success) return true;
     } else {
-        qWarning() << "[DiskTrashService] Failed to physically move back trash item to original path:" << originalPath;
+        qWarning() << "[DiskTrashService] Failed to physically move back trash item to target path:" << targetPath;
     }
 
     return false;
