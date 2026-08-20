@@ -61,7 +61,6 @@
 #include "../core/SearchHistoryService.h"
 #include "../core/SyncStatusService.h"
 #include "DriveButton.h"
-#include "TagManagerDialog.h"
 #include "../util/ShellHelper.h"
 #include "../util/ImportHelper.h"
 #include "../util/AssetImporter.h"
@@ -1791,7 +1790,14 @@ void MainWindow::initDriveBar() {
      .arg(qssColor(PressedBackground)));
 
     connect(m_btnTagManager, &QPushButton::clicked, this, [this]() {
-        TagManagerDialog::showDialog(this, m_currentPath, false);
+        if (m_tagManagerView) {
+            m_isTagManagerMode = !m_isTagManagerMode;
+            m_tagManagerView->setVisible(m_isTagManagerMode);
+            m_contentPanel->setVisible(!m_isTagManagerMode);
+            if (m_isTagManagerMode) {
+                m_tagManagerView->refresh();
+            }
+        }
     });
 
     m_driveBarLayout->addWidget(m_btnTagManager);
