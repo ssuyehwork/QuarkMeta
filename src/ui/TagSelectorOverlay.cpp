@@ -82,15 +82,25 @@ void TagSelectorOverlay::initUi() {
     });
     bodyL->addWidget(m_groupList);
 
-    // 右侧标签面板 (支持纯键盘操作网格)
+    // 右侧标签面板（彻底锁定暗黑背景，杜绝系统白底穿透）
     m_tagGridWidget = new QWidget(this);
+    m_tagGridWidget->setAttribute(Qt::WA_StyledBackground, true);
+    m_tagGridWidget->setStyleSheet("background-color: #1E1E1E;");
     m_tagGridWidget->setFocusPolicy(Qt::StrongFocus);
     m_gridFlowLayout = new FlowLayout(m_tagGridWidget, 0, 4, 4);
     m_tagGridWidget->setLayout(m_gridFlowLayout);
 
     m_scrollArea = new QScrollArea(this);
     m_scrollArea->setWidgetResizable(true);
-    m_scrollArea->setStyleSheet("QScrollArea { border: 1px solid #333; background: transparent; border-radius: 4px; }");
+    m_scrollArea->setStyleSheet(
+        "QScrollArea { border: 1px solid #333; background-color: #1E1E1E; border-radius: 4px; }"
+        "QScrollBar:vertical { border: none; background: transparent; width: 6px; }"
+        "QScrollBar::handle:vertical { background: #333333; min-height: 15px; border-radius: 3px; }"
+        "QScrollBar::handle:vertical:hover { background: #444444; }"
+    );
+    if (m_scrollArea->viewport()) {
+        m_scrollArea->viewport()->setStyleSheet("background-color: #1E1E1E; border: none;");
+    }
     m_scrollArea->setWidget(m_tagGridWidget);
     bodyL->addWidget(m_scrollArea, 1);
 
