@@ -20,7 +20,7 @@ void TagManagerDialog::showDialog(QWidget* parent, const QString& currentPath, b
 
 TagManagerDialog::TagManagerDialog(const QString& currentPath, bool isMirrorSource, QWidget* parent)
     : FramelessDialog("标签管理", parent), m_currentPath(currentPath), m_isMirrorSource(isMirrorSource) {
-    
+
     // 尺寸硬性约束：显示 180px 侧边栏时最小宽度 400px
     setMinimumSize(400, 350);
     resize(580, 480);
@@ -215,7 +215,7 @@ void TagManagerDialog::createTag(const QString& tagName) {
         QuarkMetaJson amJson(info.absolutePath().toStdWString());
         amJson.load();
         ItemMeta& item = amJson.items()[info.fileName().toStdWString()];
-        
+
         bool exists = false;
         for (const auto& t : item.tags) {
             if (QString::fromStdWString(t) == tagName) { exists = true; break; }
