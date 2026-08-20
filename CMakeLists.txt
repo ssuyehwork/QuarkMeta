@@ -200,8 +200,6 @@ set(SOURCES
     src/ui/TagManagerView.h
     src/ui/TagManagerController.cpp
     src/ui/TagManagerController.h
-    src/ui/TagManagerDialog.cpp
-    src/ui/TagManagerDialog.h
     src/core/ActionCommand.h
     src/core/UndoManager.h
     src/core/BasicCommands.h
