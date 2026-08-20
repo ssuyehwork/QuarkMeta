@@ -192,6 +192,8 @@ set(SOURCES
     src/ui/CreateRuleRow.h
     src/ui/BatchCreateDialog.cpp
     src/ui/BatchCreateDialog.h
+    src/ui/TagManagerDialog.cpp
+    src/ui/TagManagerDialog.h
     src/ui/SearchHistoryPanel.cpp
     src/ui/SearchHistoryPanel.h
     src/ui/AddressHistoryPanel.cpp
