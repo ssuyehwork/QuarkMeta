@@ -2947,7 +2947,7 @@ static std::vector<ItemRecord> loadTrashItemsInternal() {
         rec.filename = QString::fromStdWString(raw.fileName);
         rec.isDir = raw.isFolder;
         rec.size = raw.fileSize;
-        rec.ctime = raw.deletedAt;
+        rec.ctime = raw.createdAt > 0 ? raw.createdAt : raw.deletedAt;
         rec.mtime = raw.deletedAt;
         records.push_back(rec);
     }
