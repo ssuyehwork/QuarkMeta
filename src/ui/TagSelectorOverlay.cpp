@@ -229,9 +229,9 @@ void TagSelectorOverlay::updateSelectionHighlight() {
 
         QString style;
         if (isSelected) {
-            style = "QPushButton { background-color: #1C97EA; color: #FFF; border: 1px solid #1C97EA; border-radius: 11px; padding: 0 10px; font-size: 11px; }";
+            style = "QPushButton { background-color: #1C97EA; color: #FFF; border: 1px solid #1C97EA; border-radius: 4px; padding: 0 8px; font-size: 11px; }";
         } else {
-            style = "QPushButton { background-color: transparent; color: #BBB; border: 1px solid #333; border-radius: 11px; padding: 0 10px; font-size: 11px; }";
+            style = "QPushButton { background-color: transparent; color: #BBB; border: 1px solid #333; border-radius: 4px; padding: 0 8px; font-size: 11px; }";
         }
 
         if (isFocused) {

@@ -449,7 +449,7 @@ void MetaPanel::setTags(const QStringList& tags) {
             connect(pill, &TagPill::deleteRequested, this, &MetaPanel::onTagDeleted);
         }
         pill->setProperty("tagText", tag);
-        pill->setStyleSheet("QFrame { background-color: #2D2D30; border: 1px solid #3E3E42; border-radius: 2px; }");
+        pill->setStyleSheet("QFrame { background-color: #2D2D30; border: 1px solid #3E3E42; border-radius: 4px; }");
         pill->show();
         m_tagFlowLayout->addWidget(pill);
     }

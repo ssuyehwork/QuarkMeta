@@ -303,7 +303,7 @@ void TagManagerDialog::refreshTags() {
             QPushButton* btn = new QPushButton(QString("• %1 (%2)").arg(tag).arg(count), flowContainer);
             btn->setCursor(Qt::PointingHandCursor);
             btn->setStyleSheet(
-                "QPushButton { background: transparent; border: 1px solid #333; color: #3498DB; border-radius: 12px; padding: 3px 10px; font-size: 11px; }"
+                "QPushButton { background: transparent; border: 1px solid #333; color: #3498DB; border-radius: 4px; padding: 3px 8px; font-size: 11px; }"
                 "QPushButton:hover { border-color: #3498DB; background-color: #2D2D30; }"
             );
             connect(btn, &QPushButton::clicked, [this, tag]() {
@@ -360,7 +360,7 @@ void TagManagerDialog::refreshTags() {
             QPushButton* btn = new QPushButton(QString("• %1 (%2)").arg(tag).arg(count), flowContainer);
             btn->setCursor(Qt::PointingHandCursor);
             btn->setStyleSheet(
-                "QPushButton { background: transparent; border: 1px solid #333; color: #BBB; border-radius: 12px; padding: 3px 10px; font-size: 11px; }"
+                "QPushButton { background: transparent; border: 1px solid #333; color: #BBB; border-radius: 4px; padding: 3px 8px; font-size: 11px; }"
                 "QPushButton:hover { border-color: #1ABC9C; color: #1ABC9C; background-color: #252526; }"
             );
             connect(btn, &QPushButton::clicked, [this, tag]() {
