@@ -1784,11 +1784,11 @@ void MainWindow::initDriveBar() {
         "QPushButton { background-color: %1; border: 1px solid %2; border-radius: 4px; padding: 0 12px; color: %3; font-weight: bold; font-size: 13px; }"
         "QPushButton:hover { background-color: %4; border-color: #1abc9c; color: #FFFFFF; }"
         "QPushButton:pressed { background-color: %5; }"
-    ).arg(qssColor(BackgroundSecondary))
+    ).arg(qssColor(BackgroundHeader))
      .arg(qssColor(BorderColor))
      .arg(qssColor(TextMain))
      .arg(qssColor(BackgroundHover))
-     .arg(qssColor(BackgroundActive)));
+     .arg(qssColor(PressedBackground)));
 
     connect(m_btnTagManager, &QPushButton::clicked, this, [this]() {
         TagManagerDialog::showDialog(this, m_currentPath, false);
