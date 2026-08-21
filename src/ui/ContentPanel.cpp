@@ -2023,7 +2023,7 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
             break;
         }
         case ActionBatchCreate: {
-            BatchCreateDialog dlg(m_currentPath, false, this);
+            BatchCreateDialog dlg(m_currentPath, this);
             if (dlg.exec() == QDialog::Accepted) {
                 refreshAll();
             }
