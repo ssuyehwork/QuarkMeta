@@ -104,67 +104,21 @@ void MetaPanel::initUi() {
         "QPushButton:pressed { background-color: #333333; }" 
     )); 
     
-    connect(m_btnAddTag, &QPushButton::clicked, this, [this]() { 
-        if (m_tagSelectorOverlay) { 
-            m_tagSelectorOverlay->close(); 
-            return; 
-        } 
-        
-        // 收集当前已有标签 
-        QStringList currentTags; 
-        for (int i = 0; i < m_tagFlowLayout->count(); ++i) { 
-            TagPill* pill = qobject_cast<TagPill*>(m_tagFlowLayout->itemAt(i)->widget()); 
-            if (pill) { 
-                QString tagStr = pill->property("tagText").toString(); 
-                if (!tagStr.isEmpty()) currentTags.append(tagStr); 
-            } 
-        } 
-        
-        m_tagSelectorOverlay = new TagSelectorOverlay(currentTags, this->topLevelWidget()); 
-        int panelLeftX = this->mapToGlobal(QPoint(0, 0)).x();
-        int btnBottomY = m_btnAddTag->mapToGlobal(QPoint(0, m_btnAddTag->height() + 4)).y();
-
-        QScreen* screen = QApplication::screenAt(QPoint(panelLeftX, btnBottomY));
-        if (screen) {
-            QRect screenGeo = screen->availableGeometry();
-            if (btnBottomY + m_tagSelectorOverlay->height() > screenGeo.bottom()) {
-                int btnTopY = m_btnAddTag->mapToGlobal(QPoint(0, 0)).y();
-                btnBottomY = btnTopY - m_tagSelectorOverlay->height() - 4;
+    connect(m_btnAddTag, &QPushButton::clicked, this, [this]() {
+        // 1. 收集当前已有标签
+        QStringList currentTags;
+        for (int i = 0; i < m_tagFlowLayout->count(); ++i) {
+            TagPill* pill = qobject_cast<TagPill*>(m_tagFlowLayout->itemAt(i)->widget());
+            if (pill) {
+                QString tagStr = pill->property("tagText").toString();
+                if (!tagStr.isEmpty()) currentTags.append(tagStr);
             }
         }
 
-        QPoint globalPos(panelLeftX, btnBottomY);
-        QPoint parentPos = this->topLevelWidget()->mapFromGlobal(globalPos); 
-        m_tagSelectorOverlay->move(parentPos); 
-        m_tagSelectorOverlay->show(); 
-        
-        connect(m_tagSelectorOverlay, &TagSelectorOverlay::selectionChanged, this, [this](const QStringList& selectedTags) { 
-            // 实时对比与渲染更新 
-            QStringList oldTags; 
-            for (int i = 0; i < m_tagFlowLayout->count(); ++i) { 
-                TagPill* pill = qobject_cast<TagPill*>(m_tagFlowLayout->itemAt(i)->widget()); 
-                if (pill) oldTags.append(pill->property("tagText").toString()); 
-            } 
-            
-            // 找出新增与删除的标签 
-            for (const QString& tag : selectedTags) { 
-                if (!oldTags.contains(tag)) { 
-                    TagPill* pill = new TagPill(tag, m_tagContainer); 
-                    pill->setProperty("tagText", tag); 
-                    connect(pill, &TagPill::deleteRequested, this, &MetaPanel::onTagDeleted); 
-                    m_tagFlowLayout->addWidget(pill); 
-                    emit tagAddRequested(m_selectedPaths, tag); 
-                } 
-            } 
-            for (const QString& oldTag : oldTags) { 
-                if (!selectedTags.contains(oldTag)) { 
-                    onTagDeleted(oldTag); 
-                } 
-            } 
-            adjustFlowHeights(); 
-            if (m_container) m_container->adjustSize(); 
-        }); 
-    }); 
+        // 2. 获取按钮底部的屏幕物理 Y 坐标并向上发射
+        int btnBottomY = m_btnAddTag->mapToGlobal(QPoint(0, m_btnAddTag->height() + 4)).y();
+        emit tagSelectorRequested(currentTags, btnBottomY);
+    });
     tagL->addWidget(m_btnAddTag); 
  
     // 2. 下半部分：已打上的标签展示区 

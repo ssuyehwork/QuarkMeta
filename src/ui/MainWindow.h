@@ -15,6 +15,8 @@
 #include <QDateTime>
 
 #include "FramelessDialog.h"
+#include "TagSelectorOverlay.h"
+#include <QPointer>
 
 namespace QuarkMeta {
 
@@ -130,6 +132,7 @@ private:
     ContentPanel* m_contentPanel = nullptr;
     MetaPanel* m_metaPanel = nullptr;
     FilterPanel* m_filterPanel = nullptr;
+    QPointer<TagSelectorOverlay> m_tagSelectorOverlay;
 
     QSplitter* m_mainSplitter = nullptr;
 

@@ -595,6 +595,60 @@ void MainWindow::initUi() {
 
     // 2026-06-xx 物理清理：移除 prefetchDirectory 调用。中心化缓存已在启动时加载，无需手动预取。
 
+    // 标签选择浮层统一中枢调度（100% 绝对对齐内容面板左边框）
+    connect(m_metaPanel, &MetaPanel::tagSelectorRequested, this, [this](const QStringList& currentTags, int btnBottomY) {
+        if (m_tagSelectorOverlay) {
+            m_tagSelectorOverlay->close();
+            return;
+        }
+
+        m_tagSelectorOverlay = new TagSelectorOverlay(currentTags, this);
+
+        // 1. 物理直取【内容面板】在屏幕上的全局绝对 X 坐标
+        int startX = m_contentPanel ? m_contentPanel->mapToGlobal(QPoint(0, 0)).x() : this->mapToGlobal(QPoint(0, 0)).x();
+        int startY = btnBottomY;
+
+        // 2. 屏幕底部防溢出保护
+        QScreen* screen = QGuiApplication::screenAt(QPoint(startX, startY));
+        if (!screen) screen = QGuiApplication::primaryScreen();
+        if (screen) {
+            int overlayH = m_tagSelectorOverlay->height();
+            int screenBottom = screen->availableGeometry().bottom();
+            if (startY + overlayH > screenBottom) {
+                startY = screenBottom - overlayH - 10;
+            }
+        }
+
+        // 3. 顶级窗口直接全局坐标定位
+        m_tagSelectorOverlay->move(startX, startY);
+        m_tagSelectorOverlay->show();
+
+        // 4. 监听选中变化并回传
+        connect(m_tagSelectorOverlay, &TagSelectorOverlay::selectionChanged, this, [this](const QStringList& selectedTags) {
+            if (m_metaPanel) {
+                m_metaPanel->setTags(selectedTags);
+            }
+            // 触发全系统元数据更新指令
+            if (m_contentPanel) {
+                auto indexes = m_contentPanel->getSelectedIndexes();
+                QStringList targetPaths;
+                for (const auto& idx : indexes) {
+                    if (idx.column() == 0) {
+                        QString p = idx.data(PathRole).toString();
+                        if (!p.isEmpty()) targetPaths << p;
+                    }
+                }
+                if (!targetPaths.isEmpty()) {
+                    AppCommand cmd;
+                    cmd.type = AppCommandType::SetTags;
+                    cmd.targetPaths = targetPaths;
+                    cmd.params["tags"] = selectedTags;
+                    CoreEngine::instance().executeCommand(cmd);
+                }
+            }
+        });
+    });
+
     // 8. 响应元数据面板自己的星级/颜色变更
     // 2026-05-27 物理加固：补全 this 上下文
     connect(m_metaPanel, &MetaPanel::metadataChanged, this, [this](int rating, const std::wstring& color) {

@@ -9,7 +9,6 @@
 #include <QResizeEvent>
 #include <QShowEvent>
 #include "components/ElasticEdit.h"
-#include "TagSelectorOverlay.h"
 #include <QPointer>
 #include <QPushButton>
 #include "components/TagPill.h"
@@ -56,6 +55,7 @@ signals:
     void renameRequested(const QString& oldPath, const QString& newPath);
     void unbindCategoryRequested(const QString& path, int categoryId);
     void bindCategoryRequested(const QString& path);
+    void tagSelectorRequested(const QStringList& currentTags, int btnBottomGlobalY);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -87,7 +87,6 @@ private:
     QWidget* m_tagContainer = nullptr;
     FlowLayout* m_tagFlowLayout = nullptr;
     QPushButton* m_btnAddTag = nullptr;
-    QPointer<TagSelectorOverlay> m_tagSelectorOverlay;
     
     ElasticEdit* m_noteEdit = nullptr;
     ElasticEdit* m_linkEdit = nullptr;
