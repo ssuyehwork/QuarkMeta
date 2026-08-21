@@ -10,6 +10,7 @@
 #include <QSemaphore>
 #include <QRegularExpression>
 #include <QCryptographicHash>
+#include <QImageReader>
 #include <QDebug>
 
 #ifdef Q_OS_WIN
@@ -478,11 +479,17 @@ QImage FormatDecoders::renderGhostscriptSafely(const QString& filePath, int targ
 
     if (process.waitForFinished(timeoutMs)) {
         if (QFile::exists(tempPng)) {
-            QImage img(tempPng);
+            QImageReader reader(tempPng);
+            reader.setAllocationLimit(512); // 放宽Qt默认256MB安全上限，避免大幅面AI文件渲染出的高分辨率PNG被直接拒收
+            QSize origSize = reader.size();
+            if (origSize.isValid() && (origSize.width() > targetSize || origSize.height() > targetSize)) {
+                reader.setScaledSize(origSize.scaled(targetSize, targetSize, Qt::KeepAspectRatio));
+            }
+            QImage img = reader.read();
             QFile::remove(tempPng);
 
             if (!img.isNull()) {
-                return img.scaled(targetSize, targetSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                return img;
             }
             qWarning() << "[GS诊断] 进程正常结束但输出图片解码为空，文件:" << filePath;
         } else {
