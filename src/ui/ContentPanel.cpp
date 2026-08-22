@@ -503,11 +503,18 @@ ContentPanel::ContentPanel(QWidget* parent)
     m_visibleTimer->setInterval(60); 
     connect(m_visibleTimer, &QTimer::timeout, this, &ContentPanel::refreshVisibleThumbnails);
     
-    auto onDataChanged = [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+    // 建立 300ms 统计防抖定时器
+    QTimer* statsDebounceTimer = new QTimer(this);
+    statsDebounceTimer->setSingleShot(true);
+    statsDebounceTimer->setInterval(300);
+    connect(statsDebounceTimer, &QTimer::timeout, this, &ContentPanel::recalculateAndEmitStats);
+
+    auto onDataChanged = [statsDebounceTimer](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
         Q_UNUSED(topLeft); Q_UNUSED(bottomRight);
         if (roles.isEmpty() || roles.contains(ColorRole) || roles.contains(RatingRole) ||
             roles.contains(TagsRole) || roles.contains(AspectRatioRole)) {
-            recalculateAndEmitStats();
+            // 🚨 核心止血点：重置防抖定时器，300ms 内只允许计算 1 次！
+            statsDebounceTimer->start();
         }
     };
     connect(m_diskModel, &ItemModelBase::dataChanged, this, onDataChanged);
