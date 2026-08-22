@@ -1,5 +1,4 @@
 #include "DatabaseManager.h"
-#include "DatabaseMigrator.h"
 #include "DriveMetaDao.h"
 #include <chrono>
 #include <QDir>
@@ -8,7 +7,6 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <windows.h>
-#include "../util/AppDirectoryInitializer.h"
 
 namespace {
 #ifdef Q_OS_WIN
@@ -233,9 +231,9 @@ void DatabaseManager::closeDb(DbConnection& conn) {
 
 bool DatabaseManager::init() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    AppDirectoryInitializer::initializeStoragePath(getAppDir());
 
     QString metaDir = getAppDir() + "/.QuarkMeta";
+    QDir().mkpath(metaDir);
 
     // 加载全局库
     std::wstring globalPath = (metaDir + "/global.db").toStdWString();
