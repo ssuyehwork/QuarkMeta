@@ -94,7 +94,6 @@ set(SOURCES
     src/meta/TrashRepository.h
     src/meta/DatabaseManager.cpp
     src/meta/DatabaseManager.h
-    src/meta/DatabaseMigrator.h
     src/meta/BatchRenameEngine.cpp
     src/meta/BatchRenameEngine.h
     src/meta/DuplicateDetectorService.h
