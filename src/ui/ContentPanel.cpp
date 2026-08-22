@@ -183,9 +183,17 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         if (!currentFilter.ratings.contains(r)) return false; 
     } 
  
-    // 2. 颜色标记过滤（基础名称/标签精准匹配）
+    // 2. 颜色标记过滤（支持标准色值与中文名称双向匹配）
     if (!currentFilter.colors.isEmpty()) {
         bool matchColor = false;
+
+        // 建立标准色名与 Hex 的权威映射表
+        static const QMap<QString, QString> s_colorHexMap = {
+            {"红色", "#E24B4A"}, {"橙色", "#EF9F27"}, {"黄色", "#FECF0E"},
+            {"绿色", "#639922"}, {"青色", "#1D9E75"}, {"蓝色", "#378ADD"},
+            {"紫色", "#7F77DD"}, {"灰色", "#5F5E5A"}
+        };
+
         for (const QString& colName : currentFilter.colors) {
             if (colName == "无色标" || colName.isEmpty()) {
                 if (record.manualColor.isEmpty() && record.autoColor.isEmpty()) {
@@ -193,7 +201,9 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
                     break;
                 }
             } else {
-                if (record.manualColor.contains(colName, Qt::CaseInsensitive) ||
+                QString targetHex = s_colorHexMap.value(colName, colName); // 将"红色"转换为"#E24B4A"
+                if (record.manualColor.compare(targetHex, Qt::CaseInsensitive) == 0 ||
+                    record.manualColor.contains(colName, Qt::CaseInsensitive) ||
                     record.autoColor.contains(colName, Qt::CaseInsensitive)) {
                     matchColor = true;
                     break;
