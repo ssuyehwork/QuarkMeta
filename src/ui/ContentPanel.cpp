@@ -505,7 +505,8 @@ ContentPanel::ContentPanel(QWidget* parent)
     
     auto onDataChanged = [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
         Q_UNUSED(topLeft); Q_UNUSED(bottomRight);
-        if (roles.isEmpty() || roles.contains(ColorRole) || roles.contains(RatingRole) || roles.contains(TagsRole)) {
+        if (roles.isEmpty() || roles.contains(ColorRole) || roles.contains(RatingRole) ||
+            roles.contains(TagsRole) || roles.contains(AspectRatioRole)) {
             recalculateAndEmitStats();
         }
     };

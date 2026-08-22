@@ -919,7 +919,7 @@ void FilterPanel::rebuildGroups() {
         QButtonGroup* ratioGroup = new QButtonGroup(g);
         ratioGroup->setExclusive(false);
 
-        static const QList<std::tuple<FilterState::AspectRatio, QString, int>> ratioItems = {
+        const QList<std::tuple<FilterState::AspectRatio, QString, int>> ratioItems = {
             {FilterState::Horizontal, "横图", m_currentStats.ratioHorizontalCount},
             {FilterState::Vertical, "竖图", m_currentStats.ratioVerticalCount},
             {FilterState::Square, "方形", m_currentStats.ratioSquareCount},
@@ -949,7 +949,7 @@ void FilterPanel::rebuildGroups() {
         QButtonGroup* dupGroup = new QButtonGroup(g);
         dupGroup->setExclusive(false);
 
-        static const QList<std::tuple<FilterState::DuplicatePresence, QString, int>> dupItems = {
+        const QList<std::tuple<FilterState::DuplicatePresence, QString, int>> dupItems = {
             {FilterState::DuplicateOnly, "重复项", m_currentStats.duplicateCount},
             {FilterState::UniqueOnly, "未重复", m_currentStats.uniqueCount}
         };
