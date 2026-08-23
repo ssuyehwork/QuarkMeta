@@ -60,15 +60,15 @@ namespace QuarkMeta {
 static const char* kSqlSelectAllMeta = 
     "SELECT path, is_folder, rating, color, tags, note, url, "
     "ctime, mtime, atime, file_size, palettes, is_trash, original_path, "
-    "width, height, ingestion_status, auto_color, base_name, ext, added_at, sha256 "
+    "width, height, auto_color, base_name, ext, added_at, sha256 "
     "FROM metadata";
 
 // 🚨 全系统权威插入/更新 SQL
 static const char* kSqlInsertMeta = 
     "INSERT OR REPLACE INTO metadata (path, is_folder, rating, color, tags, note, url, "
     "ctime, mtime, atime, file_size, palettes, is_trash, original_path, "
-    "width, height, ingestion_status, auto_color, base_name, ext, added_at, sha256) "
-    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    "width, height, auto_color, base_name, ext, added_at, sha256) "
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 static void bindMetaHelper(sqlite3_stmt* stmt, const std::wstring& path, const RuntimeMeta& meta) {
     sqlite3_bind_text16(stmt, 1, path.c_str(), -1, SQLITE_TRANSIENT);
@@ -96,12 +96,11 @@ static void bindMetaHelper(sqlite3_stmt* stmt, const std::wstring& path, const R
     sqlite3_bind_text16(stmt, 14, meta.originalPath.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 15, meta.width);
     sqlite3_bind_int(stmt, 16, meta.height);
-    sqlite3_bind_int(stmt, 17, meta.ingestionStatus);
-    sqlite3_bind_text16(stmt, 18, meta.autoColor.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text16(stmt, 19, meta.baseName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text16(stmt, 20, meta.ext.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, 21, meta.added_at);
-    sqlite3_bind_text(stmt, 22, meta.sha256.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text16(stmt, 17, meta.autoColor.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text16(stmt, 18, meta.baseName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text16(stmt, 19, meta.ext.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, 20, meta.added_at);
+    sqlite3_bind_text(stmt, 21, meta.sha256.c_str(), -1, SQLITE_TRANSIENT);
 }
 
 // --- Helper Functions ---
@@ -246,20 +245,19 @@ void MetadataManager::initFromDatabase() {
 
                 rm.width = sqlite3_column_int(stmt, 14);
                 rm.height = sqlite3_column_int(stmt, 15);
-                rm.ingestionStatus = sqlite3_column_int(stmt, 16);
 
-                const wchar_t* autoColor = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 17));
+                const wchar_t* autoColor = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 16));
                 if (autoColor) rm.autoColor = autoColor;
 
-                const wchar_t* wBaseName = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 18));
+                const wchar_t* wBaseName = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 17));
                 if (wBaseName) rm.baseName = wBaseName;
 
-                const wchar_t* wExt = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 19));
+                const wchar_t* wExt = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 18));
                 if (wExt) rm.ext = wExt;
 
-                rm.added_at = sqlite3_column_int64(stmt, 20);
+                rm.added_at = sqlite3_column_int64(stmt, 19);
 
-                const char* hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 21));
+                const char* hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
                 if (hash) rm.sha256 = hash;
 
                 tempCache[path] = rm;
@@ -282,7 +280,6 @@ void MetadataManager::initFromDatabase() {
     {
         std::unique_lock<std::shared_mutex> lock(m_mutex);
         m_parentToChildren = tempParentToChildren;
-        m_folderProgressCache = tempFolderProgressCache;
 
         for (auto& entry : m_parentToChildren) {
             std::sort(entry.second.begin(), entry.second.end());
@@ -361,8 +358,7 @@ void MetadataManager::registerItem(const std::wstring& path, bool authorized) {
             std::shared_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
             auto it = m_shards[idx].items.find(nPath);
             if (it != m_shards[idx].items.end()) {
-                // 只有当文件指纹一致、曾经被置为1，且色彩和尺寸物理属性都确切存在、非残缺时，才允许返回跳过！
-                // 这杜绝了历史解析失败时留下空元数据、又因状态为 1 无法再次扫描提取的致命 Bug 
+                // 只有当文件指纹一致，且色彩和尺寸物理属性都确切存在、非残缺时，才允许返回跳过！
                 bool metadataValid = true;
                 QFileInfo info(QString::fromStdWString(nPath));
                 if (info.isFile() && MediaColorExtractor::isGraphicsFile(info.suffix().toLower())) {
@@ -370,7 +366,7 @@ void MetadataManager::registerItem(const std::wstring& path, bool authorized) {
                         metadataValid = false;
                     }
                 }
-                if (it->second.ingestionStatus == 1 && it->second.fileSize == pSize && it->second.mtime == pMtime && metadataValid) {
+                if (it->second.fileSize == pSize && it->second.mtime == pMtime && metadataValid) {
                     return; // 物理指纹及高级多媒体特征完备且未发生改变，安全返回
                 }
             }
@@ -389,209 +385,8 @@ void MetadataManager::registerItem(const std::wstring& path, bool authorized) {
     }
     ensureActivated(nPath);
 
-    // 2. 登记项目（待处理状态 0）
-    updateIngestionStatus(nPath, 0);
-
-    // 3. 投递至后台抽取流水线
+    // 2. 投递至后台抽取流水线
     MediaExtractorPipeline::instance().enqueue(nPath);
-}
-
-void MetadataManager::markAsRegistered(const std::wstring& path) { 
-    std::wstring nPath = normalizePath(path); 
-     
-    (void)QtConcurrent::run([this, nPath]() { 
-        std::wstring volSerial = getVolumeSerialNumber(nPath); 
-        QString letter = (nPath.length() >= 2 && nPath[1] == L':') ? QString::fromWCharArray(&nPath[0], 1) : ""; 
-        sqlite3* db = DatabaseManager::instance().getGlobalDb(); 
-        if (!db) return; 
- 
-        // 🚨 一键自动清退历史上误写入的 is_folder = 1 的 .arc 外壳垃圾记录 
-        { 
-            SqlTransaction cleanTrans(db); 
-            sqlite3_stmt* cleanStmt; 
-            if (sqlite3_prepare_v2(db, "DELETE FROM metadata WHERE is_folder = 1 AND path LIKE '%.arc'", -1, &cleanStmt, nullptr) == SQLITE_OK) { 
-                sqlite3_step(cleanStmt); 
-                sqlite3_finalize(cleanStmt); 
-            } 
-            cleanTrans.commit(); 
-        } 
- 
-        std::vector<std::wstring> pathsToRegister; 
- 
-        QFileInfo info(QString::fromStdWString(nPath)); 
-        if (info.isDir()) { 
-            std::function<void(const QDir&)> recursiveScan = [&](const QDir& targetDir) {
-                QFileInfoList entries = targetDir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-                for (const QFileInfo& entry : entries) {
-                    QString fn = entry.fileName();
-                    
-                    // 🚨 穿透 .arc 胶囊，直接提取内部的主资产文件，绝不将 .arc 目录入库
-                    if (entry.isDir() && fn.endsWith(".arc", Qt::CaseInsensitive)) {
-                        QDir arcDir(entry.absoluteFilePath());
-                        QFileInfoList innerFiles = arcDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
-                        for (const QFileInfo& inner : innerFiles) {
-                            QString innerFn = inner.fileName();
-                            if (!innerFn.endsWith("_thumbnail.png", Qt::CaseInsensitive)) {
-                                pathsToRegister.push_back(normalizePath(inner.absoluteFilePath().toStdWString()));
-                            }
-                        }
-                    }
-                    else if (entry.isDir()) {
-                        // 递归深入普通子目录
-                        recursiveScan(QDir(entry.absoluteFilePath()));
-                    }
-                    else if (entry.isFile() && !fn.endsWith("_thumbnail.png", Qt::CaseInsensitive)) {
-                        pathsToRegister.push_back(normalizePath(entry.absoluteFilePath().toStdWString()));
-                    }
-                }
-            };
-            recursiveScan(QDir(info.absoluteFilePath()));
-        } else { 
-            pathsToRegister.push_back(nPath); 
-        } 
- 
-        if (pathsToRegister.empty()) return; 
- 
-        std::vector<std::wstring> actualEnqueues; 
-        SqlTransaction trans(db); 
-        for (const auto& p : pathsToRegister) { 
-            ensureActivated(p); 
-            RuntimeMeta meta = getMeta(p);
-            QString qp = QString::fromStdWString(p);
-            QFileInfo fi(qp);
-
-            // 🚨 缩略图缺失检测器 (Thumbnail Missing Detector)
-            bool missingThumbnail = false;
-            if (MediaColorExtractor::isGraphicsFile(fi.suffix().toLower())) {
-                QImage cached = DiskMediaExtractor::getCapsuleThumbnailReadOnly(qp);
-                if (cached.isNull()) {
-                    missingThumbnail = true;
-                }
-            }
-
-            // 🚨 增量准入准则：只有在已解析完成 (ingestionStatus == 1)、物理修改时间与大小未变，且缩略图未缺失时，才跳过
-            if (!missingThumbnail && meta.ingestionStatus == 1 && meta.mtime == fi.lastModified().toMSecsSinceEpoch() && meta.fileSize == fi.size()) {
-                continue;
-            }
-            updateIngestionStatus(p, 0); 
-            actualEnqueues.push_back(p); 
-        } 
-         
-        if (trans.commit() && !actualEnqueues.empty()) { 
-            MediaExtractorPipeline::instance().enqueueBatch(actualEnqueues); 
-        } 
-    }); 
-} 
-
-void MetadataManager::markAsIngested(const std::wstring& path) {
-    updateIngestionStatus(path, 1);
-}
-
-void MetadataManager::updateIngestionStatus(const std::wstring& path, int newStatus) {
-    std::wstring nPath = normalizePath(path);
-    bool changed = false;
-    {
-        size_t idx = getShardIndex(nPath);
-        std::unique_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
-        auto it = m_shards[idx].items.find(nPath);
-        if (it != m_shards[idx].items.end()) {
-            if (it->second.ingestionStatus != newStatus) {
-                it->second.ingestionStatus = newStatus;
-                changed = true;
-            }
-        }
-    }
-
-    if (changed) {
-        persistAsync(nPath, false, true);
-
-        // 异步更新父目录进度，避免阻塞
-        std::wstring parentPath = QDir::toNativeSeparators(QFileInfo(QString::fromStdWString(nPath)).absolutePath()).toStdWString();
-        if (!parentPath.empty()) {
-            QThreadPool::globalInstance()->start([this, parentPath]() {
-                calculateAndPersistProgress(parentPath);
-            });
-        }
-    }
-}
-
-void MetadataManager::calculateAndPersistProgress(const std::wstring& folderPath) {
-    std::wstring nFolder = normalizePath(folderPath);
-    
-    // 1. 获取库归属数据库
-    std::wstring volSerial = getVolumeSerialNumber(nFolder);
-    QString letter = (nFolder.length() >= 2 && nFolder[1] == L':') ? QString::fromWCharArray(&nFolder[0], 1) : "";
-    sqlite3* db = DatabaseManager::instance().getGlobalDb();
-    if (!db) {
-        return;
-    }
-
-    // 互斥锁定该物理分库递归句柄，解决高并发下在同一个 sqlite3 连接中冲突导致的死锁，确保重入安全
-    
-    std::lock_guard<std::mutex> lockConn(DatabaseManager::instance().getGlobalMutex());
-
-    // 2. 统计状态（严禁物理读盘，仅使用数据库标记）
-    // 进度 = (该目录下状态为 1 的项目数) / (该目录下状态为 0 和 1 的项目总数)
-    int count0 = 0;
-    int count1 = 0;
-
-    sqlite3_stmt* stmt;
-    const char* sql = "SELECT ingestion_status, COUNT(*) FROM metadata WHERE path LIKE ? GROUP BY ingestion_status";
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
-        std::wstring pattern = nFolder;
-        if (pattern.back() != L'\\' && pattern.back() != L'/') pattern += L'\\';
-        pattern += L"%";
-
-        sqlite3_bind_text16(stmt, 1, pattern.c_str(), -1, SQLITE_TRANSIENT);
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            int status = sqlite3_column_int(stmt, 0);
-            int count = sqlite3_column_int(stmt, 1);
-            if (status == 0) count0 = count;
-            else if (status == 1) count1 = count;
-        }
-        sqlite3_finalize(stmt);
-    }
-
-    double progress = 0.0;
-    if (count0 + count1 > 0) {
-        progress = (double)count1 / (count0 + count1);
-    }
-
-
-    // Plan-124: 更新内存缓存
-    {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
-        m_folderProgressCache[nFolder] = progress;
-    }
-
-    // 通知 UI 更新
-    notifyUI(RefreshLevel::PathUpdate, QString::fromStdWString(nFolder));
-}
-
-double MetadataManager::getProgressFromDb(const std::wstring& folderPath) {
-    std::wstring nFolder = normalizePath(folderPath);
-    
-    // Plan-124: 优先从内存缓存获取
-    {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
-        auto it = m_folderProgressCache.find(nFolder);
-        if (it != m_folderProgressCache.end()) return it->second;
-    }
-
-    std::wstring volSerial = getVolumeSerialNumber(nFolder);
-    QString letter = (nFolder.length() >= 2 && nFolder[1] == L':') ? QString::fromWCharArray(&nFolder[0], 1) : "";
-    sqlite3* db = DatabaseManager::instance().getGlobalDb();
-    if (!db) return -1.0;
-
-    double progress = -1.0;
-
-    // 回填缓存
-    if (progress >= 0) {
-        std::unique_lock<std::shared_mutex> lock(m_mutex);
-        m_folderProgressCache[nFolder] = progress;
-    }
-
-    return progress;
 }
 
 bool MetadataManager::hasChildrenInCache(const std::wstring& folderPath) {
@@ -630,7 +425,6 @@ void MetadataManager::registerItemsAsync(const QStringList& paths, bool authoriz
         for (const auto& qp : paths) {
             std::wstring nPath = normalizePath(qp.toStdWString());
             ensureActivated(nPath);
-            updateIngestionStatus(nPath, 0);
             stdPaths.push_back(nPath);
         }
         MediaExtractorPipeline::instance().enqueueBatch(stdPaths);
@@ -755,7 +549,6 @@ void MetadataManager::updateExtractedMediaFeaturesBatch(const std::vector<Extrac
             if (item.mtime > 0) meta.mtime = item.mtime;
             if (item.fileSize > 0) meta.fileSize = item.fileSize;
             meta.autoColor = item.autoColor;
-            meta.ingestionStatus = item.ingestionStatus;
             meta.palettes.clear();
             for (const auto& p : item.palettes) {
                 meta.palettes.emplace_back(p.first, p.second);
@@ -769,8 +562,7 @@ void MetadataManager::updateExtractedMediaFeatures(
     int width,  
     int height,  
     const std::wstring& autoColor,  
-    const QVector<QPair<QColor, float>>& palettes,  
-    int ingestionStatus)  
+    const QVector<QPair<QColor, float>>& palettes)
 { 
     std::wstring nPath = normalizePath(path); 
     RuntimeMeta metaCopy; 
@@ -783,7 +575,6 @@ void MetadataManager::updateExtractedMediaFeatures(
         meta.width = width; 
         meta.height = height; 
         meta.autoColor = autoColor; 
-        meta.ingestionStatus = ingestionStatus; 
          
         meta.palettes.clear(); 
         for (const auto& p : palettes) { 
@@ -798,7 +589,7 @@ void MetadataManager::updateExtractedMediaFeatures(
         if (!db) return; 
 
         SqlTransaction trans(db); 
-        const char* sql = "UPDATE metadata SET width = ?, height = ?, auto_color = ?, palettes = ?, ingestion_status = ? WHERE path = ?"; 
+        const char* sql = "UPDATE metadata SET width = ?, height = ?, auto_color = ?, palettes = ? WHERE path = ?";
         sqlite3_stmt* stmt = nullptr; 
         if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) { 
             sqlite3_bind_int(stmt, 1, metaCopy.width); 
@@ -812,8 +603,7 @@ void MetadataManager::updateExtractedMediaFeatures(
             } 
             QByteArray ba = QJsonDocument(arr).toJson(QJsonDocument::Compact); 
             sqlite3_bind_blob(stmt, 4, ba.constData(), ba.size(), SQLITE_TRANSIENT); 
-            sqlite3_bind_int(stmt, 5, metaCopy.ingestionStatus); 
-            sqlite3_bind_text16(stmt, 6, nPath.c_str(), -1, SQLITE_TRANSIENT); 
+            sqlite3_bind_text16(stmt, 5, nPath.c_str(), -1, SQLITE_TRANSIENT);
 
             sqlite3_step(stmt); 
             sqlite3_finalize(stmt); 
@@ -1316,12 +1106,6 @@ void MetadataManager::renameItem(const std::wstring& oldPath, const std::wstring
                     }
                 }
 
-                // [进度缓存迁移]
-                if (isFolder && m_folderProgressCache.count(curOld)) {
-                    double prog = m_folderProgressCache[curOld];
-                    m_folderProgressCache.erase(curOld);
-                    m_folderProgressCache[curNew] = prog;
-                }
 
                 ioTasks.push_back(pair);
             }
@@ -1429,7 +1213,6 @@ void MetadataManager::removeMetadataSync(const std::wstring& path) {
                         StatisticsService::instance().purgeAsset({}, !it->second.tags.isEmpty(), it->second.isTrash); 
                     }
                     m_parentToChildren.erase(curPath);
-                    m_folderProgressCache.erase(curPath);
                     it = m_shards[i].items.erase(it);
                 } else {
                     ++it;

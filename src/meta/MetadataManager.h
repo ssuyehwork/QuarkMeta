@@ -32,7 +32,6 @@ struct RuntimeMeta {
     bool encrypted;
     bool isFolder; // 2026-06-xx 物理标记：区分文件夹与文件，用于侧边栏精准统计
     bool isTrash;  // 2026-06-xx 状态标记：是否处于回收站
-    int ingestionStatus; // 2026-07-xx 状态标记：-1: 未知, 0: 待处理, 1: 已完成
     int width;      // 2026-07-xx 物理尺寸：宽 (像素)
     int height;     // 2026-07-xx 物理尺寸：高 (像素)
     int thumbStatus; // 2026-08-xx 0: 正常/未处理, 1: 提取失败/跳过
@@ -50,7 +49,7 @@ struct RuntimeMeta {
 
     std::vector<PaletteEntry> palettes;
 
-    RuntimeMeta() : rating(0), pinned(false), encrypted(false), isFolder(false), isTrash(false), ingestionStatus(-1), width(0), height(0), thumbStatus(0), ctime(0), mtime(0), atime(0), fileSize(0), added_at(0) {}
+    RuntimeMeta() : rating(0), pinned(false), encrypted(false), isFolder(false), isTrash(false), width(0), height(0), thumbStatus(0), ctime(0), mtime(0), atime(0), fileSize(0), added_at(0) {}
 
     /**
      * @brief 判定是否有用户操作过的信息
@@ -150,36 +149,6 @@ public:
     void registerItemsAsync(const QStringList& paths, bool authorized = false);
 
     /**
-     * @brief 登记项目（待处理状态 0）
-     * 2026-07-xx 按照 Plan-117：标记项目并递归标记子项
-     */
-    void markAsRegistered(const std::wstring& path);
-
-    /**
-     * @brief 标记项目已完成解析（完成状态 1）
-     */
-    void markAsIngested(const std::wstring& path);
-
-    /**
-     * @brief 原子化更新项目的登记状态并同步父目录进度
-     * 2026-07-xx 按照 Development_Plan 3.3：专属原子函数负责标记值更新与比例值同步
-     * @param path 物理路径
-     * @param newStatus 新状态 (0: 待处理, 1: 已完成)
-     */
-    void updateIngestionStatus(const std::wstring& path, int newStatus);
-
-    /**
-     * @brief 计算并持久化指定目录的进度百分比
-     * 2026-07-xx 按照 Development_Plan 3.1 & 3.2
-     */
-    void calculateAndPersistProgress(const std::wstring& folderPath);
-
-    /**
-     * @brief 从数据库加载持久化的进度值
-     */
-    double getProgressFromDb(const std::wstring& folderPath);
-
-    /**
      * @brief 判定指定目录在缓存中是否存在子项 (Plan-124)
      * 依靠 m_parentToChildren 索引实现 O(1) 判定，用于废除物理磁盘空判定
      */
@@ -213,7 +182,6 @@ public:
         int64_t fileSize{0};
         std::wstring autoColor;
         QVector<QPair<QColor, float>> palettes;
-        int ingestionStatus{1};
     };
 
     void updateExtractedMediaFeatures(
@@ -221,8 +189,7 @@ public:
         int width, 
         int height, 
         const std::wstring& autoColor, 
-        const QVector<QPair<QColor, float>>& palettes, 
-        int ingestionStatus = 1
+        const QVector<QPair<QColor, float>>& palettes
     );
 
     void updateExtractedMediaFeaturesBatch(const std::vector<ExtractedFeatureItem>& items);
@@ -425,10 +392,9 @@ private:
         return std::hash<std::wstring>{}(normalizePath(path)) % NUM_SHARDS;
     }
 
-    // 2026-xx-xx 按照 Plan-124：快速层级倒排索引与进度缓存
+    // 2026-xx-xx 按照 Plan-124：快速层级倒排索引
     // Key: 标准化父级目录路径 (结尾不含斜杠), Value: 直接子项的完整标准化路径集合
     std::unordered_map<std::wstring, std::vector<std::wstring>> m_parentToChildren;
-    std::unordered_map<std::wstring, double> m_folderProgressCache;
 
     // 2026-08-xx Sliding window for recently_visited
     std::deque<std::wstring> m_recentVisitedQueue;
