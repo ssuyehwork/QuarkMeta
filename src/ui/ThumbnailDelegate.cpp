@@ -75,29 +75,6 @@ ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptio
 void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     if (!index.isValid()) return;
 
-    // 双轨回收站与分组展示：如果该项为组标题，独立精美绘制
-    if (index.data(IsGroupHeaderRole).toBool()) {
-        painter->save();
-        painter->setRenderHint(QPainter::Antialiasing, true);
-
-        QRect rect = option.rect;
-        
-        // 绘制一条精美的分界线
-        painter->setPen(QPen(QColor("#333333"), 1, Qt::SolidLine));
-        painter->drawLine(rect.left(), rect.bottom() - 2, rect.right(), rect.bottom() - 2);
-
-        // 绘制大标题文字，使用青蓝色/青绿色以突出主题
-        QFont font("Microsoft YaHei", 11, QFont::Bold);
-        painter->setFont(font);
-        painter->setPen(QColor("#1abc9c"));
-
-        QString text = index.data(Qt::DisplayRole).toString();
-        // 缩进 10 像素避免紧贴边缘
-        painter->drawText(rect.adjusted(10, 0, 0, 0), Qt::AlignVCenter | Qt::AlignLeft, text);
-
-        painter->restore();
-        return;
-    }
 
     Metrics m = calculateMetrics(option);
     bool isSelected = (option.state & QStyle::State_Selected);
@@ -133,12 +110,11 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     // ② 绘制卡片边框
     CardPainterHelper::drawCardBorder(painter, m.cardRect, isSelected);
 
-    // ③ 绘制状态互斥标记及进度环
+    // ③ 绘制置顶状态标记
     if (m_pinnedRole != -1) {
         bool isPinned = index.data(m_pinnedRole).toBool();
-        bool isDir = index.data(m_typeRole).toString() == "folder";
 
-        CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned, false, isDir, -1.0);
+        CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned);
     }
 
     // ④ 绘制自适应扩展名徽章（直接从内存模型取值，零 QFileInfo 磁盘 I/O）

@@ -152,9 +152,6 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
     const auto* sourceModelPtr = qobject_cast<const ItemModelBase*>(sourceModel()); 
     if (!sourceModelPtr) return true; 
 
-    // 双轨回收站与分组展示：组标题项始终展示，不被任何检索或过滤排除
-    if (idx.data(IsGroupHeaderRole).toBool()) return true;
- 
     const auto& records = sourceModelPtr->allRecords(); 
     if (sourceRow < 0 || sourceRow >= (int)records.size()) return false; 
     const auto& record = records[sourceRow]; 
@@ -1424,10 +1421,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
  
     QModelIndex currentIndex = view->indexAt(pos); 
     bool onItem = currentIndex.isValid(); 
-    // 双轨回收站与分组展示：右键组标题视为空白处点击，避免触发文件操作
-    if (onItem && currentIndex.data(IsGroupHeaderRole).toBool()) {
-        onItem = false;
-    }
     bool isFolder = onItem && (currentIndex.data(TypeRole).toString() == "folder"); 
     QString path = onItem ? currentIndex.data(PathRole).toString() : ""; 
  
@@ -1473,8 +1466,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
                 auto indexes = view->selectionModel()->selectedIndexes();
                 for (const auto& idx : indexes) {
                     if (idx.column() == 0) {
-                        if (idx.data(IsGroupHeaderRole).toBool()) continue;
-
                         if (idx.data(IsDiskTrashRole).toBool()) {
                             int id = idx.data(DiskTrashIdRole).toInt();
                             QString trashPath = idx.data(PathRole).toString();
@@ -1497,8 +1488,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
 
                 for (const auto& idx : indexes) {
                     if (idx.column() == 0) {
-                        if (idx.data(IsGroupHeaderRole).toBool()) continue;
-
                         if (idx.data(IsDiskTrashRole).toBool()) {
                             int id = idx.data(DiskTrashIdRole).toInt();
                             QString p = idx.data(PathRole).toString();
@@ -1903,9 +1892,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
             auto indexes = view->selectionModel()->selectedIndexes();
             for (const auto& idx : indexes) {
                 if (idx.column() == 0) {
-                    // 跳过组标题
-                    if (idx.data(IsGroupHeaderRole).toBool()) continue;
-
                     if (idx.data(IsDiskTrashRole).toBool()) {
                         int id = idx.data(DiskTrashIdRole).toInt();
                         QString trashPath = idx.data(PathRole).toString();
@@ -1926,8 +1912,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
 
             for (const auto& idx : indexes) {
                 if (idx.column() == 0) {
-                    if (idx.data(IsGroupHeaderRole).toBool()) continue; // 跳过组标题
-
                     if (idx.data(IsDiskTrashRole).toBool()) {
                         int id = idx.data(DiskTrashIdRole).toInt();
                         QString p = idx.data(PathRole).toString();
@@ -2360,9 +2344,6 @@ void ContentPanel::onSelectionChanged() {
             QModelIndexList indices = selectionModel->selectedIndexes();
             for (const QModelIndex& index : indices) {
                 if (index.column() == 0) {
-                    // 跳过组标题
-                    if (index.data(IsGroupHeaderRole).toBool()) continue;
-
                     QString path = index.data(PathRole).toString();
                     if (!path.isEmpty()) selectedPaths.append(path);
                 }
@@ -2463,9 +2444,6 @@ void ContentPanel::onPathsDropped(const QStringList& paths, const QModelIndex& t
 
 void ContentPanel::onDoubleClicked(const QModelIndex& index) { 
     if (!index.isValid()) return; 
- 
-    // 双轨回收站与分组展示：双击组标题不执行任何操作
-    if (index.data(IsGroupHeaderRole).toBool()) return;
 
     QString path = index.data(PathRole).toString(); 
     if (path.isEmpty()) return; 

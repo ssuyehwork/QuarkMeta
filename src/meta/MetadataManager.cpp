@@ -280,20 +280,19 @@ void MetadataManager::initFromDatabase() {
 
                 rm.width = sqlite3_column_int(stmt, 15);
                 rm.height = sqlite3_column_int(stmt, 16);
-                rm.ingestionStatus = sqlite3_column_int(stmt, 17);
 
-                const wchar_t* autoColor = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 18));
+                const wchar_t* autoColor = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 17));
                 if (autoColor) rm.autoColor = autoColor;
 
-                const wchar_t* wBaseName = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 19));
+                const wchar_t* wBaseName = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 18));
                 if (wBaseName) rm.baseName = wBaseName;
 
-                const wchar_t* wExt = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 20));
+                const wchar_t* wExt = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 19));
                 if (wExt) rm.ext = wExt;
 
-                rm.added_at = sqlite3_column_int64(stmt, 21);
+                rm.added_at = sqlite3_column_int64(stmt, 20);
 
-                const char* hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 22));
+                const char* hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 21));
                 if (hash) rm.sha256 = hash;
 
                 tempCache[path] = rm;
@@ -544,7 +543,6 @@ void MetadataManager::updateExtractedMediaFeaturesBatch(const std::vector<Extrac
             if (item.mtime > 0) meta.mtime = item.mtime;
             if (item.fileSize > 0) meta.fileSize = item.fileSize;
             meta.autoColor = item.autoColor;
-            meta.ingestionStatus = item.ingestionStatus;
             meta.palettes.clear();
             for (const auto& p : item.palettes) {
                 meta.palettes.emplace_back(p.first, p.second);
