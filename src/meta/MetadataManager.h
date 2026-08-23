@@ -37,7 +37,6 @@ struct RuntimeMeta {
     int height;     // 2026-07-xx 物理尺寸：高 (像素)
     int thumbStatus; // 2026-08-xx 0: 正常/未处理, 1: 提取失败/跳过
     std::wstring originalPath; // 2026-06-xx 路径记忆：用于回收站还原
-    std::string folderId; // 2026-06-xx 物理关联：缓存 ID 以供反向查询分类
     std::wstring baseName; // 2026-08-xx 持久化基名，避免重复解析计算
     std::wstring ext;      // 2026-08-xx 持久化后缀名，统一小写
     std::string sha256;    // 新增：储存文件的 SHA256 / FastHash 哈希值
@@ -63,7 +62,6 @@ struct RuntimeMeta {
 
 struct LightMeta {
     std::wstring path;
-    std::string folderId;
     bool isFolder;
     bool isTrash;
     bool tagsEmpty;
@@ -84,14 +82,10 @@ public:
         return m_loaded;
     }
 
-    static std::string generateFallbackFolderId(const std::wstring& vol, const std::wstring& frn);
-    static std::string generateDeterministicFolderId(const std::wstring& path);
-    static std::wstring generateDeterministicFrn(const std::wstring& path);
     static std::wstring normalizePath(const std::wstring& path);
     
     void initFromDatabase();
     RuntimeMeta getMeta(const std::wstring& path);
-    std::wstring getPathByFolderId(const std::string& fid);
 
     /**
      * @brief 在当前引擎下执行多维搜索
@@ -298,12 +292,6 @@ public:
     static void registerQuarkMetaFrn(const std::wstring& parentDir);
 
     /**
-     * @brief 同步获取文件的 128-bit File ID (或 Fallback ID)
-     * 2026-06-15 物理加固：确保在建立分类关联前指纹已就绪
-     */
-    std::string getFolderIdSync(const std::wstring& path);
-
-    /**
      * @brief 获取路径所在磁盘的卷序列号
      */
     static std::wstring getVolumeSerialNumber(const std::wstring& path);
@@ -346,11 +334,6 @@ public:
     void parsePathComponents(const std::wstring& normalizedPath, bool isFolder, std::wstring& outName, std::wstring& outExt);
 
     /**
-     * @brief 从 FID 中提取卷序列号
-     */
-    std::wstring getVolumeFromFolderId(const std::string& fid);
-
-    /**
      * @brief 卸载指定卷的名称/后缀索引映射（驱动器拔出时）
      */
     void unloadVolumeNameCache(const std::wstring& volSerial);
@@ -366,13 +349,6 @@ public:
     void recordAccess(const std::wstring& path);
     void slideRecentWindow();
     double getCachedAtime(const std::wstring& path);
-
-    /**
-     * @brief 隔离查询 API
-     */
-    std::vector<std::string> getFolderIdsByName(const std::wstring& filename);
-    std::vector<std::string> getSubFolderIdsByName(const std::wstring& foldername);
-    std::vector<std::string> getFolderIdsByExtension(const std::wstring& extension);
 
     /**
      * @brief 只读遍历内存缓存，用于统计等场景（无锁 RCU 读取）
@@ -448,8 +424,6 @@ private:
     inline size_t getShardIndex(const std::wstring& path) const {
         return std::hash<std::wstring>{}(normalizePath(path)) % NUM_SHARDS;
     }
-
-    std::unordered_map<std::string, std::wstring> m_folderIdToPath;
 
     // 2026-xx-xx 按照 Plan-124：快速层级倒排索引与进度缓存
     // Key: 标准化父级目录路径 (结尾不含斜杠), Value: 直接子项的完整标准化路径集合

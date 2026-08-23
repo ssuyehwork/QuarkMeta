@@ -30,7 +30,6 @@ void ThumbnailDelegate::setManagedRole(int role) { m_managedRole = role; }
 void ThumbnailDelegate::setTypeRole(int role) { m_typeRole = role; }
 void ThumbnailDelegate::setIsEmptyRole(int role) { m_isEmptyRole = role; }
 void ThumbnailDelegate::setColorRole(int role) { m_colorRole = role; }
-void ThumbnailDelegate::setRegistrationProgressRole(int role) { m_registrationProgressRole = role; }
 
 ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptionViewItem& option) const {
     Metrics m;
@@ -140,7 +139,7 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         bool isPinned = index.data(m_pinnedRole).toBool();
         bool isManaged = index.data(m_managedRole).toBool();
         bool isDir = index.data(m_typeRole).toString() == "folder";
-        double progress = (m_registrationProgressRole != -1) ? index.data(m_registrationProgressRole).toDouble() : -1.0;
+        double progress = -1.0;
 
         CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned, isManaged, isDir, progress);
     }
@@ -149,7 +148,7 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     if (m_pathRole != -1) {
         QString type = (m_typeRole != -1) ? index.data(m_typeRole).toString() : "";
         QString ext;
-        if (type == "category" || type == "folder") {
+        if (type == "folder") {
             ext = "DIR";
         } else {
             QString path = index.data(m_pathRole).toString();
@@ -224,7 +223,7 @@ QWidget* ThumbnailDelegate::createEditor(QWidget* parent, const QStyleOptionView
         "}" 
     ); 
  
-    bool isFolder = (index.data(m_typeRole).toString() == "folder" || index.data(m_typeRole).toString() == "category"); 
+    bool isFolder = (index.data(m_typeRole).toString() == "folder");
     editor->setIsFolder(isFolder); 
     editor->installEventFilter(const_cast<ThumbnailDelegate*>(this)); 
     return editor; 
@@ -304,14 +303,6 @@ bool ThumbnailDelegate::helpEvent(QHelpEvent* event, QAbstractItemView* view,
     Metrics m = calculateMetrics(option);
     QRect statusRect(m.cardRect.right() - 22, m.cardRect.top() + 8, 16, 16);
 
-    if (statusRect.contains(event->pos())) {
-        double p = (m_registrationProgressRole != -1) ? index.data(m_registrationProgressRole).toDouble() : -1.0;
-        if (p >= 0.0) {
-            ToolTipOverlay::instance()->showText(event->globalPos(), 
-                QString("登记进度: %1%").arg(qRound(p * 100)), 0);
-            return true;
-        }
-    }
     return QStyledItemDelegate::helpEvent(event, view, option, index);
 }
 

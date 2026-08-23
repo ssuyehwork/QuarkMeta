@@ -189,8 +189,6 @@ public:
             if (col == 1) { // 🚨 物理修复 ①：状态列图标在单元格内部 100% 水平+垂直绝对居中！
                 bool isPinned = idx0.data(IsLockedRole).toBool();
                 bool isManaged = idx0.data(ManagedRole).toBool();
-                bool isDir = idx0.data(TypeRole).toString() == "folder";
-                double progress = idx0.data(RegistrationProgressRole).toDouble();
 
                 int iconSize = 16;
                 // 计算单元格物理中心坐标
@@ -200,18 +198,7 @@ public:
 
                 if (isPinned) {
                     UiHelper::getIcon("pin_vertical", QColor("#FF551C"), 16).paint(painter, centeredRect, Qt::AlignCenter);
-                } else if (isDir && progress >= 0.0 && progress < 1.0) {
-                    painter->save(); 
-                    painter->setRenderHint(QPainter::Antialiasing); 
-                    painter->setPen(QPen(QColor(60, 60, 60, 180), 2)); 
-                    painter->drawEllipse(centeredRect.adjusted(1, 1, -1, -1)); 
-                    QPen pPen(QColor("#3498db"), 2); 
-                    pPen.setCapStyle(Qt::RoundCap); 
-                    painter->setPen(pPen); 
-                    int spanAngle = -qRound(progress * 360 * 16); 
-                    painter->drawArc(centeredRect.adjusted(1, 1, -1, -1), 90 * 16, spanAngle); 
-                    painter->restore(); 
-                } else if (isManaged || (isDir && progress >= 1.0)) {
+                } else if (isManaged) {
                     UiHelper::getIcon("check_circle", QColor("#2ecc71"), 16).paint(painter, centeredRect, Qt::AlignCenter);
                 }
             } else if (col == 2) { // 星级列
@@ -270,7 +257,7 @@ public:
             "  font-size: 8pt;"
             "}"
         );
-        bool isFolder = (index.data(TypeRole).toString() == "folder" || index.data(TypeRole).toString() == "category");
+        bool isFolder = (index.data(TypeRole).toString() == "folder");
         editor->setIsFolder(isFolder);
         editor->installEventFilter(const_cast<TreeItemDelegate*>(this));
         return editor;

@@ -75,7 +75,6 @@ public:
     bool canPaste() const;
 
     DataSourceType dataSourceType() const;
-    int currentCategoryId() const { return m_currentCategoryId; }
     bool isContextMenuActive() const { return m_isContextMenuActive; }
 
     enum SortType {
@@ -258,7 +257,6 @@ public:
     QString m_currentPath;
     QSet<QString> m_pendingSelectNames;
     bool m_isPendingEdit = false;
-    int m_currentCategoryId = -1;
     QString m_currentCategoryType; // 用于驱动差异化右键菜单
     bool m_isRecursive = false;
     bool m_showFolders = true;
@@ -396,17 +394,6 @@ public slots:
     void setCurrentCategoryType(const QString& type) { m_currentCategoryType = type; }
 
 signals:
-    /**
-     * @brief 请求在指定分类下创建 logical 子分类
-     */
-    void requestCreateSubCategory(int parentCategoryId);
-
-signals:
-    /**
-     * @brief 当在内容区点击子分类时触发，告知 MainWindow 切换侧边栏选中状态
-     */
-    void categoryClicked(int categoryId);
-
     /**
      * @brief 状态栏统计信息信号
      * @param fileCount 文件数量

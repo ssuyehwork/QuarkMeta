@@ -24,7 +24,6 @@ enum CommonRole {
     EncryptHintRole     = Qt::UserRole + 104, // 加密提示
     ManagedRole         = Qt::UserRole + 105, // 是否受控 (已在索引中登记)
     IsEmptyRole         = Qt::UserRole + 106, // 是否为空目录
-    RegistrationProgressRole = Qt::UserRole + 205, // 文件夹入库进度 (double, 0.0 ~ 1.0)
     
     // UI/渲染角色 (UserRole + 201..300)
     AspectRatioRole     = Qt::UserRole + 201, // 图像宽高比

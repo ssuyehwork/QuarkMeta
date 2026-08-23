@@ -2960,37 +2960,18 @@ void ContentPanel::appendPaths(const QStringList& paths, int reqId) {
 }
  
 bool ContentPanel::resolvePasteDestination(int& outCatId) {
-    DataSourceType srcType = dataSourceType();
-
-    if (srcType == DataSourceType::DiskNav) {
-        // 磁盘模式目的地就是 m_currentPath，这里不涉及 catId，直接放行
-        if (m_currentPath.isEmpty() || m_currentPath == "computer://") {
-            ToolTipOverlay::instance()->showText(QCursor::pos(), "粘贴失败：当前未处于任何有效目录中", 2000, QColor("#e81123"));
-            return false;
-        }
-        return true;
-    }
-
-    if (srcType == DataSourceType::UserCategory) {
-        // 用户已经明确导航到了某个具体分类，目的地无歧义
-        if (m_currentCategoryId <= 0) {
-            ToolTipOverlay::instance()->showText(QCursor::pos(), "粘贴失败：未识别到有效的目标分类", 2000, QColor("#e81123"));
-            return false;
-        }
-        outCatId = m_currentCategoryId;
-        return true;
-    }
-
-    // 🚨 回收站：功能定位就是承接"删除"这一个来源，不接受任何形式的新内容粘贴/拖拽
+    Q_UNUSED(outCatId);
     if (m_currentCategoryType == "trash") {
         ToolTipOverlay::instance()->showText(QCursor::pos(), "当前视图为回收站，不支持粘贴或拖拽导入新项目", 2000, QColor("#e81123"));
         return false;
     }
 
+    if (m_currentPath.isEmpty() || m_currentPath == "computer://") {
+        ToolTipOverlay::instance()->showText(QCursor::pos(), "粘贴失败：当前未处于任何有效目录中", 2000, QColor("#e81123"));
+        return false;
+    }
 
-    // 兜底：其余未识别的状态，同样视为无法判断目的地
-    ToolTipOverlay::instance()->showText(QCursor::pos(), "粘贴失败：当前视图不是一个有效的归类目的地", 2000, QColor("#e81123"));
-    return false;
+    return true;
 }
 
 void ContentPanel::recalculateAndEmitStats() {
@@ -3086,40 +3067,34 @@ void ContentPanel::recalculateAndEmitStats() {
 }
 
 void ContentPanel::createNewItem(const QString& type) { 
-    // 2026-11-xx: 选中分类 A 时，在此处新建文件夹作为 A 的逻辑子分类，新建 md/txt 自动绑定到分类 A。
-    // --- 分流 A：物理磁盘导航模式 (DiskNav) ---
-    if (dataSourceType() == DataSourceType::DiskNav) {
-        if (m_currentPath.isEmpty() || m_currentPath == "computer://") return; 
+    if (m_currentPath.isEmpty() || m_currentPath == "computer://") return;
 
-        QString baseName = (type == "folder") ? "新建文件夹" : "未命名"; 
-        QString ext = (type == "md") ? ".md" : ((type == "txt") ? ".txt" : ""); 
-        QString finalName = baseName + ext; 
-        QString fullPath = m_currentPath + "/" + finalName; 
+    QString baseName = (type == "folder") ? "新建文件夹" : "未命名";
+    QString ext = (type == "md") ? ".md" : ((type == "txt") ? ".txt" : "");
+    QString finalName = baseName + ext;
+    QString fullPath = m_currentPath + "/" + finalName;
 
-        int counter = 1; 
-        while (QFileInfo::exists(fullPath)) { 
-            finalName = baseName + QString(" (%1)").arg(counter++) + ext; 
-            fullPath = m_currentPath + "/" + finalName; 
-        } 
-
-        bool success = false; 
-        if (type == "folder") { 
-            success = QDir(m_currentPath).mkdir(finalName); 
-        } else { 
-            QFile file(fullPath); 
-            if (file.open(QIODevice::WriteOnly)) { 
-                file.close(); 
-                success = true; 
-            } 
-        } 
-
-        if (success) { 
-            setPendingSelectName(finalName, true);
-            loadDirectory(m_currentPath, m_isRecursive); 
-        }
-        return;
+    int counter = 1;
+    while (QFileInfo::exists(fullPath)) {
+        finalName = baseName + QString(" (%1)").arg(counter++) + ext;
+        fullPath = m_currentPath + "/" + finalName;
     }
 
+    bool success = false;
+    if (type == "folder") {
+        success = QDir(m_currentPath).mkdir(finalName);
+    } else {
+        QFile file(fullPath);
+        if (file.open(QIODevice::WriteOnly)) {
+            file.close();
+            success = true;
+        } 
+    }
+
+    if (success) {
+        setPendingSelectName(finalName, true);
+        loadDirectory(m_currentPath, m_isRecursive);
+    }
 } 
  
 void ContentPanel::updateLayersButtonState() { 
