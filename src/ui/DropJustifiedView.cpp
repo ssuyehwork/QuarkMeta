@@ -1,4 +1,5 @@
 #include "DropJustifiedView.h"
+#include "../core/ModelContract.h"
 #include <QDrag>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>

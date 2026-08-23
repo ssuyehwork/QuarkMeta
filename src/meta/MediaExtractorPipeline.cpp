@@ -260,7 +260,7 @@ void MediaExtractorPipeline::processItemDirect(const std::wstring& path) {
         return;
     }
 
-    MetadataManager::instance().updateExtractedMediaFeatures(path, w, h, colorStr, palette, 1);
+    MetadataManager::instance().updateExtractedMediaFeatures(path, w, h, colorStr, palette);
 
     int active = m_activeCount.fetch_sub(1) - 1;
     if (active < 0) {
