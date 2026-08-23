@@ -502,6 +502,7 @@ ContentPanel::ContentPanel(QWidget* parent)
  
     m_diskModel = new DiskItemModel(this);
     m_model = m_diskModel; // 默认挂载纯物理磁盘导航模型
+    connect(m_diskModel, &DiskItemModel::thumbnailLoaded, this, &ContentPanel::refreshVisibleThumbnails);
 
     m_proxyModel = new FilterProxyModel(this); 
     m_proxyModel->setSourceModel(m_model); 
@@ -1517,9 +1518,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
         m_isContextMenuActive = true;
         QAction* selectedAction = menu.exec(view->viewport()->mapToGlobal(pos));
         m_isContextMenuActive = false;
-        if (m_model) {
-            m_model->flushPendingUpdates();
-        }
 
         if (!selectedAction || !selectedAction->data().isValid()) return;
 
@@ -1856,9 +1854,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
     m_isContextMenuActive = true;
     QAction* selectedAction = menu.exec(view->viewport()->mapToGlobal(pos)); 
     m_isContextMenuActive = false;
-    if (m_model) {
-        m_model->flushPendingUpdates();
-    }
 
     if (!selectedAction || !selectedAction->data().isValid()) return; 
  
