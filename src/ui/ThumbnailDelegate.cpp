@@ -35,27 +35,34 @@ void ThumbnailDelegate::setRegistrationProgressRole(int role) { m_registrationPr
 ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptionViewItem& option) const {
     Metrics m;
     const int textHeight = 36;
-    const int ratingHeight = 20;
+    const int ratingHeight = 24;
     const int gap = 4;
 
     m.ratingH = ratingHeight;
-    // 底部预留高度，包含星级区域和间隙
+    // 底部预留高度增加，包含星级区域和间隙
     m.cardRect = option.rect.adjusted(3, 3, -3, -(textHeight + m.ratingH + gap + 3));
     
     // 星级坐标脱离卡片范围
     m.ratingY = m.cardRect.bottom() + gap;
 
     m.textRect = QRect(option.rect.left() + 3,
-                       m.ratingY + m.ratingH - 1,
+                       m.ratingY + m.ratingH - 5,
                        option.rect.width() - 6,
                        textHeight);
     
-    Q_UNUSED(option.decorationSize);
+    int zoom = option.decorationSize.width(); // 物理缩放级别
 
-    // 强制色条胶囊上限不超过 20px (starSize = 18px, roundedRect adjusted top -1 / bottom +1 => 20px)
-    m.starSize = 18;
-    m.starSpacing = -4;
-    int banW = 12;
+    m.starSize = 22;
+    m.starSpacing = -4; // 2026-06-08 优化：默认间距调紧
+    int banW = 14;
+
+    // 2026-06-08 按照调试增强版 V2 优化：实现“动态比例星级”
+    // 虽然底限是 96，但在接近极限 (100) 时提前缩小星级，确保视觉紧凑感
+    if (zoom < 100) {
+        m.starSize = 18;
+        m.starSpacing = -4;
+        banW = 12;
+    }
 
     int banGap = 2; // 保持间隙一致性
     int infoTotalW = banW + banGap + (5 * m.starSize) + (4 * m.starSpacing);

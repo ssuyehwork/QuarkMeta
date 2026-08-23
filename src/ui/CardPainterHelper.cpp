@@ -157,7 +157,9 @@ void CardPainterHelper::drawRatingStars(QPainter* painter, const QRect& banRect,
                                ratingY + (ratingH - starSize) / 2, 
                                starSize, starSize);
             QRect totalRect = banRect.united(lastStarRect);
-            painter->drawRoundedRect(totalRect.adjusted(-4, -1, 4, 1), 4, 4);
+            int centerY = totalRect.center().y();
+            QRect colorBarRect(totalRect.left() - 4, centerY - 10, totalRect.width() + 8, 20);
+            painter->drawRoundedRect(colorBarRect, 4, 4);
             painter->restore();
         }
     }
