@@ -4,6 +4,9 @@
 #include <QImage>
 #include <QString>
 #include <QSize>
+#include <QMutex>
+#include <QHash>
+#include <QSet>
 #include <mutex>
 #include <cstdint>
 #include <memory>
@@ -13,8 +16,15 @@
 namespace QuarkMeta {
 
 class DiskMediaExtractor {
+private:
+    static QMutex s_pendingFailureMutex;
+    static QHash<QString, QSet<QString>> s_pendingFailures;
+
 public:
     static std::mutex s_qtGuiMutex;
+
+    static void scheduleFailureMark(const QString& folderPath, const QString& fileName);
+    static void flushPendingFailures();
 
     struct ExtractResult {
         QImage thumbnail512;

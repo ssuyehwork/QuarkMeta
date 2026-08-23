@@ -13,6 +13,45 @@
 namespace QuarkMeta {
 
 std::mutex DiskMediaExtractor::s_qtGuiMutex;
+QMutex DiskMediaExtractor::s_pendingFailureMutex;
+QHash<QString, QSet<QString>> DiskMediaExtractor::s_pendingFailures;
+
+void DiskMediaExtractor::scheduleFailureMark(const QString& folderPath, const QString& fileName) {
+    QMutexLocker locker(&s_pendingFailureMutex);
+    s_pendingFailures[folderPath].insert(fileName);
+}
+
+void DiskMediaExtractor::flushPendingFailures() {
+    QHash<QString, QSet<QString>> toFlush;
+    {
+        QMutexLocker locker(&s_pendingFailureMutex);
+        if (s_pendingFailures.isEmpty()) return;
+        toFlush = s_pendingFailures;
+        s_pendingFailures.clear();
+    }
+
+    for (auto it = toFlush.begin(); it != toFlush.end(); ++it) {
+        QuarkMetaJson jsonCache(it.key().toStdWString());
+        jsonCache.load();
+        auto& items = jsonCache.items();
+        bool changed = false;
+        for (const QString& fileName : it.value()) {
+            std::wstring wName = fileName.toStdWString();
+            if (items.find(wName) == items.end()) {
+                ItemMeta empty;
+                empty.type = L"file";
+                items[wName] = empty;
+            }
+            if (items[wName].thumbStatus != 1) {
+                items[wName].thumbStatus = 1;
+                changed = true;
+            }
+        }
+        if (changed) {
+            jsonCache.save();
+        }
+    }
+}
 
 static bool fetchPhysicalFileId(const QString& filePath, uint32_t& outVol, uint64_t& outFrn) {
 #ifdef Q_OS_WIN
@@ -165,25 +204,9 @@ DiskMediaExtractor::ExtractResult DiskMediaExtractor::getCapsuleExtractResult(co
     } else if (!res.thumbnail512.isNull()) {
         res.isValid = true;
     } else {
-        // 4. 解码与现有缩略图缓存均失败：在非中途取消情况下持久化标记 thumb_status = 1
+        // 4. 解码与现有缩略图缓存均失败：在非中途取消情况下入队定时合并落盘 thumb_status = 1
         if (!token || !token->isCanceled()) {
-            static std::mutex s_jsonSaveMutex;
-            std::lock_guard<std::mutex> lock(s_jsonSaveMutex);
-
-            QuarkMetaJson jsonCache(parentDir.toStdWString());
-            jsonCache.load();
-            auto& cachedItems = jsonCache.items();
-            std::wstring wFileName = fileName.toStdWString();
-            if (cachedItems.find(wFileName) == cachedItems.end()) {
-                ItemMeta emptyMeta;
-                emptyMeta.type = L"file";
-                cachedItems[wFileName] = emptyMeta;
-            }
-            auto& fileMeta = cachedItems[wFileName];
-            if (fileMeta.thumbStatus != 1) {
-                fileMeta.thumbStatus = 1;
-                jsonCache.save();
-            }
+            DiskMediaExtractor::scheduleFailureMark(parentDir, fileName);
         }
     }
     return res;
