@@ -327,9 +327,11 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         }
     } 
  
-    // 10.5 无缩略图 (失败/跳过) 过滤
+    // 10.5 无缩略图过滤（只要是图形格式且无物理缩略图缓存，即判定为无缩略图）
     if (currentFilter.noThumbnailOnly) {
-        if (record.thumbStatus != 1) return false;
+        if (record.isDir || !UiHelper::isGraphicsFile(record.suffix)) return false;
+        QString thumbPath = DiskMediaExtractor::getDiskThumbCachePath(record.path);
+        if (QFile::exists(thumbPath)) return false;
     }
 
     // 11. 重复状态过滤 (O(1) 瞬时判定)
@@ -2992,9 +2994,12 @@ void ContentPanel::recalculateAndEmitStats() {
                     stats.uniqueCount++;
                 }
 
-                // 无缩略图 (失败/跳过) 统计
-                if (record.thumbStatus == 1) {
-                    stats.noThumbnailCount++;
+                // 无缩略图 (提取失败/缺失) 统计
+                if (UiHelper::isGraphicsFile(record.suffix)) {
+                    QString thumbPath = DiskMediaExtractor::getDiskThumbCachePath(record.path);
+                    if (!QFile::exists(thumbPath)) {
+                        stats.noThumbnailCount++;
+                    }
                 }
             }
             
