@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDir>
+#include <mutex>
 
 #ifndef NOMINMAX
 #define NOMINMAX
