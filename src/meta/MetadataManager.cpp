@@ -1405,8 +1405,6 @@ void MetadataManager::syncAfterMove(const std::wstring& oldPath, const std::wstr
 
 void MetadataManager::removeMetadataSync(const std::wstring& path) {
     std::wstring nPath = MetadataManager::normalizePath(path);
-    sqlite3* db = DatabaseManager::instance().getGlobalDb();
-    
     int totalDelta = 0;
     
     {
@@ -1420,7 +1418,6 @@ void MetadataManager::removeMetadataSync(const std::wstring& path) {
             if (children.empty()) m_parentToChildren.erase(rootParent);
         }
 
-        std::vector<std::wstring> pathsToDelete;
         for (size_t i = 0; i < NUM_SHARDS; ++i) {
             std::unique_lock<std::shared_mutex> shardLock(m_shards[i].mutex);
             for (auto it = m_shards[i].items.begin(); it != m_shards[i].items.end(); ) {
@@ -1431,7 +1428,6 @@ void MetadataManager::removeMetadataSync(const std::wstring& path) {
                         totalDelta--;
                         StatisticsService::instance().purgeAsset({}, !it->second.tags.isEmpty(), it->second.isTrash); 
                     }
-                    pathsToDelete.push_back(curPath);
                     m_parentToChildren.erase(curPath);
                     m_folderProgressCache.erase(curPath);
                     it = m_shards[i].items.erase(it);
@@ -1440,21 +1436,6 @@ void MetadataManager::removeMetadataSync(const std::wstring& path) {
                 }
             }
         }
-    }
-
-    if (db && !pathsToDelete.empty()) {
-        const char* sql = "DELETE FROM metadata WHERE path = ?";
-        SqlTransaction trans(db);
-        sqlite3_stmt* memStmt;
-        if (sqlite3_prepare_v2(db, sql, -1, &memStmt, nullptr) == SQLITE_OK) {
-            for (const auto& p : pathsToDelete) {
-                sqlite3_bind_text16(memStmt, 1, p.c_str(), -1, SQLITE_TRANSIENT);
-                sqlite3_step(memStmt);
-                sqlite3_reset(memStmt);
-            }
-            sqlite3_finalize(memStmt);
-        }
-        trans.commit();
     }
 }
 
