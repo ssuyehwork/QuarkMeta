@@ -1405,12 +1405,9 @@ void MetadataManager::syncAfterMove(const std::wstring& oldPath, const std::wstr
 
 void MetadataManager::removeMetadataSync(const std::wstring& path) {
     std::wstring nPath = MetadataManager::normalizePath(path);
-    std::wstring volSerial = getVolumeSerialNumber(nPath);
-    QString letter = (nPath.length() >= 2 && nPath[1] == L':') ? QString::fromWCharArray(&nPath[0], 1) : "";
     sqlite3* db = DatabaseManager::instance().getGlobalDb();
     
     int totalDelta = 0;
-    std::vector<std::string> fids;
     
     {
         std::unique_lock<std::shared_mutex> lock(m_mutex);
@@ -1492,6 +1489,8 @@ void MetadataManager::markAsTrash(const std::wstring& path, bool isTrash, const 
 
 void MetadataManager::setTrash(const std::wstring& path, bool isTrash) {
     std::wstring nPath = normalizePath(path);
+    bool changed = false;
+    bool oldEmpty = false;
     {
         std::unique_lock<std::shared_mutex> lock(m_mutex);
         size_t idx = getShardIndex(nPath);
@@ -1504,11 +1503,17 @@ void MetadataManager::setTrash(const std::wstring& path, bool isTrash) {
                     if (!isTrash) {
                         it->second.originalPath = L""; // Clear on restore
                     }
+                    changed = true;
+                    oldEmpty = it->second.tags.isEmpty();
                 }
             }
         }
     }
-    persistAsync(nPath);
+    if (changed) {
+        StatisticsService::instance().notifyAssetTrashChanged(isTrash, oldEmpty);
+        persistAsync(nPath);
+        notifyUI(RefreshLevel::FullRebuild);
+    }
 }
 
 void MetadataManager::deletePermanently(const std::wstring& path) {
