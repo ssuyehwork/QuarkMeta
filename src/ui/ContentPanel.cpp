@@ -699,8 +699,8 @@ void ContentPanel::initUi() {
     }); 
  
     titleL->addWidget(titleLabel); 
-    titleL->addWidget(m_btnToggleHidden, 0, Qt::AlignVCenter);
     titleL->addStretch(); 
+    titleL->addWidget(m_btnToggleHidden, 0, Qt::AlignVCenter);
     titleL->addWidget(m_btnToggleFolders, 0, Qt::AlignVCenter);
     titleL->addWidget(m_btnToggleFiles, 0, Qt::AlignVCenter);
     titleL->addWidget(m_btnLayersBlue, 0, Qt::AlignVCenter);
