@@ -107,7 +107,6 @@ public:
         ActionNewFolder,
         ActionNewMd,
         ActionNewTxt,
-        ActionCategorize,
         ActionPin,
         ActionUnpin,
         ActionColorTag,
@@ -127,7 +126,6 @@ public:
         ActionEmptyTrash,
         ActionCopyName,
         ActionCopyPath,
-        ActionAddToCategory,
         ActionAddToFavorites,
         ActionRefresh,
         ActionReextractThumbnail,
@@ -230,12 +228,9 @@ private:
     QVBoxLayout* m_mainLayout = nullptr;
     QStackedWidget* m_viewStack = nullptr;
     QPushButton* m_btnLayers = nullptr;
-    QPushButton* m_btnLayersBlue = nullptr;
-    QPushButton* m_btnToggleHidden = nullptr;  // 🚨 左侧：显示/隐藏属性为隐藏的项目
-    QPushButton* m_btnToggleFolders = nullptr; // 2026-07-xx 按照 Plan-73：显示/隐藏文件夹切换
-    QPushButton* m_btnToggleFiles = nullptr;   // 2026-07-xx 按照 Plan-73：显示/隐藏文件切换
-    QTextBrowser* m_textPreview = nullptr;
-    QLabel* m_imagePreview = nullptr;
+    QPushButton* m_btnToggleHidden = nullptr;  // 左侧：显示/隐藏属性为隐藏的项目
+    QPushButton* m_btnToggleFolders = nullptr; // 显示/隐藏文件夹切换
+    QPushButton* m_btnToggleFiles = nullptr;   // 显示/隐藏文件切换
 
     // 视图组件
     QAbstractItemView* m_gridView = nullptr;
@@ -358,11 +353,6 @@ public slots:
      * @brief 创建新条目（文件夹/Markdown/Txt）
      */
     void createNewItem(const QString& type);
-
-    /**
-     * @brief 预览文件内容 (支持文本、Markdown、图片等)
-     */
-    void previewFile(const QString& path);
 
     /**
      * @brief 加载指定路径列表 (分类联动使用)
