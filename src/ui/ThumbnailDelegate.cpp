@@ -134,14 +134,10 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     // ② 绘制卡片边框
     CardPainterHelper::drawCardBorder(painter, m.cardRect, isSelected);
 
-    // ③ 绘制状态互斥标记及进度环
-    if (m_pinnedRole != -1 && m_managedRole != -1) {
+    // ③ 绘制状态互斥标记
+    if (m_pinnedRole != -1) {
         bool isPinned = index.data(m_pinnedRole).toBool();
-        bool isManaged = index.data(m_managedRole).toBool();
-        bool isDir = index.data(m_typeRole).toString() == "folder";
-        double progress = -1.0;
-
-        CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned, isManaged, isDir, progress);
+        CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned);
     }
 
     // ④ 绘制自适应扩展名徽章（直接从内存模型取值，零 QFileInfo 磁盘 I/O）
