@@ -589,19 +589,19 @@ void ContentPanel::initUi() {
     m_btnToggleHidden->setCheckable(true);
     m_btnToggleHidden->setFixedSize(24, 24);
     m_btnToggleHidden->setChecked(m_showHidden);
-    m_btnToggleHidden->setIcon(UiHelper::getIcon(m_showHidden ? "eye" : "eye_closed", m_showHidden ? QColor("#3498db") : QColor("#B0B0B0"), 16));
+    m_btnToggleHidden->setIcon(UiHelper::getIcon("eye", m_showHidden ? QColor("#3498db") : QColor("#888888"), 16));
     m_btnToggleHidden->setProperty("tooltipText", "显示/隐藏属性为隐藏的项目");
     m_btnToggleHidden->installEventFilter(this);
     m_btnToggleHidden->setStyleSheet(
-        "QPushButton { background: transparent; border: none; border-radius: 4px; }"
-        "QPushButton:hover { background: #3E3E42; }"
-        "QPushButton:checked { background: #3E3E42; border: none; }"
+        "QPushButton { background: transparent; border: 1px solid #444; border-radius: 4px; }"
+        "QPushButton:hover { background: #3E3E42; border-color: #666; }"
+        "QPushButton:checked { background: #3E3E42; border-color: #3498db; }"
         "QPushButton:pressed { background: #4E4E52; }"
     );
     connect(m_btnToggleHidden, &QPushButton::clicked, [this]() {
         m_showHidden = m_btnToggleHidden->isChecked();
-        m_btnToggleHidden->setIcon(UiHelper::getIcon(m_showHidden ? "eye" : "eye_closed",
-                                                     m_showHidden ? QColor("#3498db") : QColor("#B0B0B0"), 16));
+        m_btnToggleHidden->setIcon(UiHelper::getIcon("eye",
+                                                     m_showHidden ? QColor("#3498db") : QColor("#888888"), 16));
         AppConfig::instance().setValue("ContentPanel/ShowHidden", m_showHidden);
         m_currentFilter.showHidden = m_showHidden;
         applyFilters();
