@@ -464,7 +464,7 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
                     }
                 }
             }, Qt::QueuedConnection);
-        });
+        }, priority);
     }
 }
 
