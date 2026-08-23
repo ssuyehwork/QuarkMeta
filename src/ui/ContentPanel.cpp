@@ -162,6 +162,11 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
     auto* contentPanel = qobject_cast<ContentPanel*>(parent()); 
     bool isTrashView = contentPanel && (contentPanel->getCurrentCategoryType() == "trash");
 
+    // 0. 隐藏属性过滤拦截（当关闭隐藏项显示时，物理隐藏项一律不展示）
+    if (record.isHidden && !currentFilter.showHidden) {
+        return false;
+    }
+
     // 1. 文件夹与分类卡片控制 (回收站视图下不执行“显示/隐藏文件和文件夹”过滤限制，确保双轨资产百分百正常呈现)
     if (!isTrashView) {
         if (record.isDir) { 
@@ -533,10 +538,12 @@ ContentPanel::ContentPanel(QWidget* parent)
     // 2026-07-xx 按照用户要求：文件夹默认设为隐藏 (false)
     m_showFolders = AppConfig::instance().getValue("ContentPanel/ShowFolders", false).toBool();
     m_showFiles = AppConfig::instance().getValue("ContentPanel/ShowFiles", true).toBool();
+    m_showHidden = AppConfig::instance().getValue("ContentPanel/ShowHidden", false).toBool();
     
     // 同步到当前 FilterState
     m_currentFilter.showFolders = m_showFolders;
     m_currentFilter.showFiles = m_showFiles;
+    m_currentFilter.showHidden = m_showHidden;
  
     // 从配置中恢复排序类型与方向 (对应用户原话："名称、创建日期、修改日期、扩展名、大小、尺寸、评分" 与 "升序、降序")
     m_sortType = static_cast<SortType>(AppConfig::instance().getValue("ContentPanel/RightClickSortType", SortByName).toInt());
@@ -578,6 +585,28 @@ void ContentPanel::initUi() {
     QLabel* titleLabel = new QLabel("内容", titleBar); 
     titleLabel->setStyleSheet("font-size: 13px; font-weight: bold; color: #41F2F2; background: transparent; border: none;"); 
      
+    m_btnToggleHidden = new QPushButton(titleBar);
+    m_btnToggleHidden->setCheckable(true);
+    m_btnToggleHidden->setFixedSize(24, 24);
+    m_btnToggleHidden->setChecked(m_showHidden);
+    m_btnToggleHidden->setIcon(UiHelper::getIcon(m_showHidden ? "eye" : "eye_closed", m_showHidden ? QColor("#3498db") : QColor("#B0B0B0"), 16));
+    m_btnToggleHidden->setProperty("tooltipText", "显示/隐藏属性为隐藏的项目");
+    m_btnToggleHidden->installEventFilter(this);
+    m_btnToggleHidden->setStyleSheet(
+        "QPushButton { background: transparent; border: none; border-radius: 4px; }"
+        "QPushButton:hover { background: #3E3E42; }"
+        "QPushButton:checked { background: #3E3E42; border: none; }"
+        "QPushButton:pressed { background: #4E4E52; }"
+    );
+    connect(m_btnToggleHidden, &QPushButton::clicked, [this]() {
+        m_showHidden = m_btnToggleHidden->isChecked();
+        m_btnToggleHidden->setIcon(UiHelper::getIcon(m_showHidden ? "eye" : "eye_closed",
+                                                     m_showHidden ? QColor("#3498db") : QColor("#B0B0B0"), 16));
+        AppConfig::instance().setValue("ContentPanel/ShowHidden", m_showHidden);
+        m_currentFilter.showHidden = m_showHidden;
+        applyFilters();
+    });
+
     m_btnToggleFolders = new QPushButton(titleBar);
     m_btnToggleFolders->setCheckable(true);
     m_btnToggleFolders->setFixedSize(24, 24);
@@ -670,6 +699,7 @@ void ContentPanel::initUi() {
     }); 
  
     titleL->addWidget(titleLabel); 
+    titleL->addWidget(m_btnToggleHidden, 0, Qt::AlignVCenter);
     titleL->addStretch(); 
     titleL->addWidget(m_btnToggleFolders, 0, Qt::AlignVCenter);
     titleL->addWidget(m_btnToggleFiles, 0, Qt::AlignVCenter);
@@ -2670,9 +2700,11 @@ void ContentPanel::applyFilters(const FilterState& state) {
     // 2026-07-xx 物理防护：保留标题栏按钮独占维护的显隐状态，防止被 FilterPanel 的默认值覆盖
     bool preservedShowFolders = m_currentFilter.showFolders;
     bool preservedShowFiles = m_currentFilter.showFiles;
+    bool preservedShowHidden = m_currentFilter.showHidden;
     m_currentFilter = state; 
     m_currentFilter.showFolders = preservedShowFolders;
     m_currentFilter.showFiles = preservedShowFiles;
+    m_currentFilter.showHidden = preservedShowHidden;
     applyFilters(); 
 } 
  
