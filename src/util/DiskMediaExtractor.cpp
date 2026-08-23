@@ -70,6 +70,26 @@ bool DiskMediaExtractor::saveDiskThumbnail(const QString& filePath, const QImage
     return img512.save(diskCachePath, "PNG");
 }
 
+void DiskMediaExtractor::roamThumbnailCache(const QString& oldFilePath, const QString& newFilePath, bool isMove) {
+    QString oldThumbPath = getDiskThumbCachePath(oldFilePath);
+    QString newThumbPath = getDiskThumbCachePath(newFilePath);
+
+    if (!QFile::exists(oldThumbPath)) return;
+
+    // 确保目标缓存目录存在
+    QDir().mkpath(QFileInfo(newThumbPath).absolutePath());
+
+    if (isMove) {
+        // 移动：原子转移
+        if (QFile::exists(newThumbPath)) QFile::remove(newThumbPath);
+        QFile::rename(oldThumbPath, newThumbPath);
+    } else {
+        // 复制：克隆缓存文件，确保新目录瞬间秒开缩略图
+        if (QFile::exists(newThumbPath)) QFile::remove(newThumbPath);
+        QFile::copy(oldThumbPath, newThumbPath);
+    }
+}
+
 QImage DiskMediaExtractor::getCapsuleThumbnailReadOnly(const QString& filePath) {
     QString diskCachePath = getDiskThumbCachePath(filePath);
     if (QFile::exists(diskCachePath)) {

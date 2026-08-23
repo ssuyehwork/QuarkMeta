@@ -30,6 +30,7 @@ public:
     static QImage getCapsuleThumbnail(const QString& filePath, int size = 512, std::shared_ptr<CancellationToken> token = {});
     static QImage getDiskThumbnail(const QString& path, int size = 512, std::shared_ptr<CancellationToken> token = {});
     static bool saveDiskThumbnail(const QString& filePath, const QImage& img512);
+    static void roamThumbnailCache(const QString& oldFilePath, const QString& newFilePath, bool isMove);
 
     // 强制执行深度长效提取（不走只读缓存，超时放宽至 45 秒）
     static QImage forceExtractDeepThumbnail(const QString& filePath, int size = 512, std::shared_ptr<CancellationToken> token = {});
