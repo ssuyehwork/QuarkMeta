@@ -1779,6 +1779,12 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
         actPaste->setEnabled(canPaste());
  
         menu.addSeparator(); 
+
+        bool isPhysicalPath = !m_currentPath.isEmpty() && !m_currentPath.contains("://") && QDir(m_currentPath).exists();
+        QAction* actShowInExp = menu.addAction("在“资源管理器”中显示");
+        actShowInExp->setData(ActionShowInExplorer);
+        actShowInExp->setEnabled(isPhysicalPath);
+
         menu.addAction("刷新")->setData(ActionRefresh);
     } 
 
@@ -1882,7 +1888,10 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
             break; 
         }
         case ActionShowInExplorer: { 
-            ShellHelper::openInExplorer(onItem ? path : m_currentPath); 
+            QString targetPath = onItem ? path : m_currentPath;
+            if (!targetPath.isEmpty() && !targetPath.contains("://")) {
+                ShellHelper::openInExplorer(targetPath);
+            }
             break; 
         } 
         case ActionNewFolder: createNewItem("folder"); break; 
