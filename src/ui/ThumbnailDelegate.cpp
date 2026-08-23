@@ -26,11 +26,9 @@ void ThumbnailDelegate::setHasThumbnailRole(int role) { m_hasThumbnailRole = rol
 void ThumbnailDelegate::setRatingRole(int role) { m_ratingRole = role; }
 void ThumbnailDelegate::setPathRole(int role) { m_pathRole = role; }
 void ThumbnailDelegate::setPinnedRole(int role) { m_pinnedRole = role; }
-void ThumbnailDelegate::setManagedRole(int role) { m_managedRole = role; }
 void ThumbnailDelegate::setTypeRole(int role) { m_typeRole = role; }
 void ThumbnailDelegate::setIsEmptyRole(int role) { m_isEmptyRole = role; }
 void ThumbnailDelegate::setColorRole(int role) { m_colorRole = role; }
-void ThumbnailDelegate::setRegistrationProgressRole(int role) { m_registrationProgressRole = role; }
 
 ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptionViewItem& option) const {
     Metrics m;
@@ -136,13 +134,11 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     CardPainterHelper::drawCardBorder(painter, m.cardRect, isSelected);
 
     // ③ 绘制状态互斥标记及进度环
-    if (m_pinnedRole != -1 && m_managedRole != -1) {
+    if (m_pinnedRole != -1) {
         bool isPinned = index.data(m_pinnedRole).toBool();
-        bool isManaged = index.data(m_managedRole).toBool();
         bool isDir = index.data(m_typeRole).toString() == "folder";
-        double progress = (m_registrationProgressRole != -1) ? index.data(m_registrationProgressRole).toDouble() : -1.0;
 
-        CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned, isManaged, isDir, progress);
+        CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned, false, isDir, -1.0);
     }
 
     // ④ 绘制自适应扩展名徽章（直接从内存模型取值，零 QFileInfo 磁盘 I/O）
@@ -190,10 +186,6 @@ void ThumbnailDelegate::drawFileNameText(QPainter* painter, const QRect& textRec
     QString name = index.data(Qt::DisplayRole).toString();
     painter->setPen(isSelected ? QColor("#3498db") : QColor("#EEEEEE"));
 
-    // 针对未录入项目应用半透明效果
-    if (m_managedRole != -1 && !isSelected && !index.data(m_managedRole).toBool()) {
-        painter->setPen(QColor(238, 238, 238, 120));
-    }
 
     QFont textFont = painter->font();
     textFont.setPointSize(8);
@@ -301,17 +293,6 @@ bool ThumbnailDelegate::eventFilter(QObject* obj, QEvent* event) {
 
 bool ThumbnailDelegate::helpEvent(QHelpEvent* event, QAbstractItemView* view, 
                                 const QStyleOptionViewItem& option, const QModelIndex& index) {
-    Metrics m = calculateMetrics(option);
-    QRect statusRect(m.cardRect.right() - 22, m.cardRect.top() + 8, 16, 16);
-
-    if (statusRect.contains(event->pos())) {
-        double p = (m_registrationProgressRole != -1) ? index.data(m_registrationProgressRole).toDouble() : -1.0;
-        if (p >= 0.0) {
-            ToolTipOverlay::instance()->showText(event->globalPos(), 
-                QString("登记进度: %1%").arg(qRound(p * 100)), 0);
-            return true;
-        }
-    }
     return QStyledItemDelegate::helpEvent(event, view, option, index);
 }
 

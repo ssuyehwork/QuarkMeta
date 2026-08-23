@@ -88,13 +88,6 @@ public:
         
         if (selected) {
             opt.palette.setColor(QPalette::Text, Qt::white);
-        } else if (m_showStatus) {
-            // 2026-06-xx 按照视觉要求：未录入项文字半透明暗淡处理
-            // 物理修复：校准作用域
-            bool isManaged = index.data(ManagedRole).toBool();
-            if (!isManaged) {
-                opt.palette.setColor(QPalette::Text, QColor(238, 238, 238, 120));
-            }
         }
 
         // 2026-06-16 按照 8 列架构重构：第 1, 2, 3 列由代理独立绘制；第 0 列作为名称列，具有微型圆角卡片预览（最左侧看片）
@@ -188,9 +181,6 @@ public:
 
             if (col == 1) { // 🚨 物理修复 ①：状态列图标在单元格内部 100% 水平+垂直绝对居中！
                 bool isPinned = idx0.data(IsLockedRole).toBool();
-                bool isManaged = idx0.data(ManagedRole).toBool();
-                bool isDir = idx0.data(TypeRole).toString() == "folder";
-                double progress = idx0.data(RegistrationProgressRole).toDouble();
 
                 int iconSize = 16;
                 // 计算单元格物理中心坐标
