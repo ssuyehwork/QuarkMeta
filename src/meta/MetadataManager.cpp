@@ -317,30 +317,10 @@ void MetadataManager::initFromDatabase() {
         std::unique_lock<std::shared_mutex> lock(m_mutex);
         m_folderIdToPath = tempFidToPath;
         m_parentToChildren = tempParentToChildren;
-        m_folderProgressCache = tempFolderProgressCache;
 
         for (auto& entry : m_parentToChildren) {
             std::sort(entry.second.begin(), entry.second.end());
             entry.second.erase(std::unique(entry.second.begin(), entry.second.end()), entry.second.end());
-        }
-
-        std::vector<std::wstring> dirtySvgPaths;
-        for (const auto& pair : tempCache) {
-            const RuntimeMeta& meta = pair.second;
-            if (!meta.baseName.empty()) {
-                if (meta.isFolder) {
-                    auto& v = m_subFolderNameToFolderIds[meta.baseName];
-                    if (std::find(v.begin(), v.end(), meta.folderId) == v.end()) v.push_back(meta.folderId);
-                } else {
-                    auto& v = m_assetNameToFolderIds[meta.baseName];
-                    if (std::find(v.begin(), v.end(), meta.folderId) == v.end()) v.push_back(meta.folderId);
-                    if (!meta.ext.empty()) {
-                        auto& ve = m_extensionToFolderIds[meta.ext];
-                        if (std::find(ve.begin(), ve.end(), meta.folderId) == ve.end()) ve.push_back(meta.folderId);
-                    }
-                }
-            }
-
         }
 
         m_loaded = true;
