@@ -203,6 +203,39 @@ QImage DiskMediaExtractor::forceExtractDeepThumbnail(const QString& filePath, in
     DecodedMediaResult dec = ImageDecoderFacade::decodeSinglePass(filePath, size, 45000, token);
     if (dec.isValid && !dec.thumbnail512.isNull()) {
         saveDiskThumbnail(filePath, dec.thumbnail512);
+
+        // 重置此前的失败标记 thumb_status，并同步分辨率尺寸到 .QuarkMeta.json
+        QFileInfo fi(filePath);
+        QString parentDir = QDir::toNativeSeparators(fi.absolutePath());
+        std::wstring wFileName = fi.fileName().toStdWString();
+
+        static std::mutex s_jsonSaveMutex;
+        std::lock_guard<std::mutex> lock(s_jsonSaveMutex);
+        QuarkMetaJson jsonCache(parentDir.toStdWString());
+        jsonCache.load();
+        auto& cachedItems = jsonCache.items();
+        if (cachedItems.find(wFileName) == cachedItems.end()) {
+            ItemMeta emptyMeta;
+            emptyMeta.type = L"file";
+            cachedItems[wFileName] = emptyMeta;
+        }
+        auto& fileMeta = cachedItems[wFileName];
+        bool changed = false;
+        if (fileMeta.thumbStatus != 0) {
+            fileMeta.thumbStatus = 0;
+            changed = true;
+        }
+        if (dec.originalSize.isValid() && dec.originalSize.width() > 0) {
+            if (fileMeta.width != dec.originalSize.width() || fileMeta.height != dec.originalSize.height()) {
+                fileMeta.width = dec.originalSize.width();
+                fileMeta.height = dec.originalSize.height();
+                changed = true;
+            }
+        }
+        if (changed) {
+            jsonCache.save();
+        }
+
         return dec.thumbnail512;
     }
     return QImage();
