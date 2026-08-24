@@ -263,12 +263,6 @@ public:
     bool m_isContextMenuActive = false;
     std::atomic<int> m_loadRequestId{0}; // 2026-07-xx 物理请求 ID：防止异步回调导致的视图内容乱跳
 
-    // --- 2026-06-xx 性能优化：递归扫描指纹缓存 ---
-    struct ScanCacheEntry {
-        qint64 lastModified; // 根目录的时间戳
-        std::vector<ItemRecord> records;
-    };
-    QMap<QString, ScanCacheEntry> m_recursiveCache; 
     QTimer* m_selectionTimer = nullptr; // 选中防抖定时器
     void updateGridSize();
     void updateStatusBarStats();
@@ -280,15 +274,6 @@ public:
      * @return true 表示可以继续执行导入；false 表示应终止（已在内部完成提示或已被用户取消）
      */
     bool resolvePasteDestination(int& outCatId);
-
-    void addItemsFromDirectory(const QString& path, bool recursive,
-                               QMap<int, int>& ratingCounts,
-                               QMap<QString, int>& colorCounts,
-                               QMap<QString, int>& tagCounts,
-                               QMap<QString, int>& typeCounts,
-                               QMap<QString, int>& createDateCounts,
-                               QMap<QString, int>& modifyDateCounts,
-                               int& noTagCount);
 
 public slots:
     /**

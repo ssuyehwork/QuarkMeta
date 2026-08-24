@@ -370,23 +370,6 @@ bool FilterProxyModel::lessThan(const QModelIndex& source_left, const QModelInde
     const auto& leftRec = records[leftRow];
     const auto& rightRec = records[rightRow];
 
-    // 2. 双轨隔离与分组展示：在任何排序逻辑下，优先保持 Library 在前，DiskNav 在后；组标题绝对在最前面。
-    // 强制无状态（不掺杂 sortOrder），交给代理模型本身反转
-    if (!leftRec.groupName.isEmpty() || !rightRec.groupName.isEmpty()) {
-        if (leftRec.groupName != rightRec.groupName) {
-            auto getGroupPriority = [](const QString& g) {
-                if (g == "Library") return 1;
-                if (g == "DiskNav") return 2;
-                return 0; // 非垃圾箱普通项或空分组排最前
-            };
-            return getGroupPriority(leftRec.groupName) < getGroupPriority(rightRec.groupName);
-        }
-        // 在同一分组内，组标题置顶
-        if (leftRec.isGroupHeader != rightRec.isGroupHeader) {
-            return leftRec.isGroupHeader;
-        }
-    }
-
     // 🚀 【绝对结构权重 1】：文件夹/分类 永远排在 文件 前面（物理隔绝，不受用户升降序取反下沉影响，实现无缝上下两区！） 
     bool leftIsDir  = leftRec.isDir; 
     bool rightIsDir = rightRec.isDir; 
