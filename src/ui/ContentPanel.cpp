@@ -1704,13 +1704,6 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
                 cryptoMenu->addAction("解除加密")->setData(ActionDecrypt);
                 cryptoMenu->addAction("修改加密密码")->setData(ActionChangePwd);
             }
-
-            // 常规项目的安全删除子菜单
-            menu.addSeparator();
-            QMenu* delMenu = menu.addMenu("删除");
-            UiHelper::applyMenuStyle(delMenu);
-            delMenu->addAction("移入回收站")->setData(ActionDelete);
-            delMenu->addAction("永久删除")->setData(ActionSecureDelete);
         }
     }
     // =========================================================================
@@ -1805,17 +1798,15 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
     addOrderAct("升序", Qt::AscendingOrder);
     addOrderAct("降序", Qt::DescendingOrder);
 
-    // 🚨 按照用户要求：确保“删除”选项严格位于右键菜单的最下方（仅在选中项目时显示）
-    if (currentIndex.isValid()) {
+    // =========================================================================
+    // 🚨 全局唯一位置：“删除”子菜单（严格位于排序之后，且仅在选中常规文件/目录时呈现）
+    // =========================================================================
+    if (onItem && !isDriveRoot) {
         menu.addSeparator();
-        if (m_currentCategoryType != "trash") {
-            QMenu* delMenu = menu.addMenu("删除");
-            UiHelper::applyMenuStyle(delMenu);
-            delMenu->addAction("移入回收站")->setData(ActionDelete);
-            delMenu->addAction("永久删除")->setData(ActionSecureDelete);
-        } else {
-            menu.addAction(UiHelper::getIcon("trash", QColor("#e81123"), 18), "永久删除")->setData(ActionSecureDelete);
-        }
+        QMenu* delMenu = menu.addMenu("删除");
+        UiHelper::applyMenuStyle(delMenu);
+        delMenu->addAction("移入回收站")->setData(ActionDelete);
+        delMenu->addAction("永久删除")->setData(ActionSecureDelete);
     }
 
     // 🚀 【补丁彻底根除】：废除硬锁信号与物理禁用绘制！
