@@ -449,22 +449,7 @@ void JustifiedView::doLayout() {
             int rowStart = i;
             
 
-            // 1. 获取本行第一个元素的类型 (是否是文件夹)
-            QString firstType = model()->data(firstIdx, TypeRole).toString();
-            bool isFirstDir = (firstType == "folder");
-
-            // 2. 循环塞入元素，一旦遇到类型变动 (例如从文件夹突变为普通文件)，立即在这里截断退出当前行，强制折行
-            int numInRow = 0;
-            while (numInRow < maxNumInRow && (rowStart + numInRow) < count) {
-                int nextIdx = rowStart + numInRow;
-                QModelIndex idx = model()->index(nextIdx, 0);
-                QString nextType = model()->data(idx, TypeRole).toString();
-                bool isNextDir = (nextType == "folder");
-                if (isNextDir != isFirstDir) {
-                    break; // 类型改变，立即断开，不允许继续混排同行
-                }
-                numInRow++;
-            }
+            int numInRow = std::min(maxNumInRow, count - rowStart);
 
             int currentX = margin;
             for (int j = 0; j < numInRow; ++j) {
