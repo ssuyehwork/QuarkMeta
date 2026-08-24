@@ -777,54 +777,77 @@ void ContentPanel::updateGridSize() {
     AppConfig::instance().setValue("UI/GridZoomLevel", m_zoomLevel);
 } 
  
-bool ContentPanel::canPaste() const {
-    // 1. 目标目录必须是真实物理目录，且不是“此电脑”、“回收站”或“搜索结果”
-    if (m_currentPath.isEmpty() || m_currentPath == "computer://" || m_currentPath == "trash://" ||
-        m_currentCategoryType == "trash" || m_currentCategoryType == "path_list") {
+bool ContentPanel::canPaste(const QString& targetOverride) const {
+    // 1. 动态决议本次粘贴的实际物理落脚点（右键点击文件夹时以该文件夹为目标，否则以当前路径为目标）
+    QString destDir = targetOverride.isEmpty() ? m_currentPath : targetOverride;
+
+    // 2. 回收站与虚拟路径全局拦截
+    if (m_currentCategoryType == "trash" || destDir.isEmpty() ||
+        destDir == "computer://" || destDir == "trash://" || destDir.contains("://")) {
         return false;
     }
 
-    // 2. 目标目录必须在物理磁盘上存在且具备写入权限
-    QFileInfo destInfo(m_currentPath);
+    // 3. 目标必须是物理磁盘上真实存在且具备写入权限的文件夹
+    QFileInfo destInfo(destDir);
     if (!destInfo.exists() || !destInfo.isDir() || !destInfo.isWritable()) {
         return false;
     }
 
-    // 3. 检查系统剪贴板是否有有效的文件 URL
+    // 4. 提取系统剪贴板
     const QMimeData* mime = QApplication::clipboard()->mimeData();
-    if (!mime || !mime->hasUrls() || mime->urls().isEmpty()) {
+    if (!mime) return false;
+
+    // 5. 支持图片截图直粘：如果剪贴板中存在系统截图/图像数据，只要目标可写立即启用
+    if (mime->hasImage()) {
+        return true;
+    }
+
+    // 6. 若非图像且不包含文件链接，直接置灰
+    if (!mime->hasUrls() || mime->urls().isEmpty()) {
         return false;
     }
 
-    // 4. 提取剪贴板来源路径，确保至少有 1 个真实物理文件存在
+    // 7. 检测剪贴板操作模式（复制 vs 剪切）
     bool isCut = false;
     if (mime->hasFormat("Preferred DropEffect")) {
         QByteArray effect = mime->data("Preferred DropEffect");
-        if (!effect.isEmpty() && (effect.at(0) & 0x02)) isCut = true;
-    }
-
-    QString nativeDest = QDir::toNativeSeparators(m_currentPath);
-    bool hasValidSource = false;
-    bool isSameDirCut = true;
-
-    for (const QUrl& url : mime->urls()) {
-        QString localPath = QDir::toNativeSeparators(url.toLocalFile());
-        if (localPath.isEmpty()) continue;
-
-        QFileInfo srcInfo(localPath);
-        if (srcInfo.exists()) {
-            hasValidSource = true;
-            // 如果存在剪切且来源父目录与当前目录不同，则不是原地剪切
-            if (QDir::toNativeSeparators(srcInfo.absolutePath()) != nativeDest) {
-                isSameDirCut = false;
-            }
+        if (!effect.isEmpty() && (effect.at(0) & 0x02)) {
+            isCut = true;
         }
     }
 
-    if (!hasValidSource) return false;
+    QString cleanDest = QDir::toNativeSeparators(QDir::cleanPath(destDir)).toLower();
+    bool hasValidPhysicalSource = false;
+    bool isSameDirForCut = true;
 
-    // 5. 如果是剪切操作，且所有文件都在当前目录内（原地剪切），则禁用粘贴
-    if (isCut && isSameDirCut) {
+    for (const QUrl& url : mime->urls()) {
+        QString localPath = url.toLocalFile();
+        if (localPath.isEmpty()) continue;
+
+        QFileInfo srcInfo(localPath);
+        if (!srcInfo.exists()) continue;
+
+        hasValidPhysicalSource = true;
+        QString cleanSrc = QDir::toNativeSeparators(QDir::cleanPath(localPath)).toLower();
+
+        // 🚨 循环嵌套防爆：绝对禁止将父文件夹粘贴到其自身或其子文件夹内部
+        if (srcInfo.isDir()) {
+            if (cleanDest == cleanSrc || cleanDest.startsWith(cleanSrc + "\\") || cleanDest.startsWith(cleanSrc + "/")) {
+                return false;
+            }
+        }
+
+        // 检查来源父目录是否与目标一致
+        QString srcParent = QDir::toNativeSeparators(QDir::cleanPath(srcInfo.absolutePath())).toLower();
+        if (srcParent != cleanDest) {
+            isSameDirForCut = false;
+        }
+    }
+
+    if (!hasValidPhysicalSource) return false;
+
+    // 🚨 原地剪切拦截：只有在【剪切模式】且【所有文件均处于目标目录下】时才置灰；普通复制即使同目录也允许（生成副本）
+    if (isCut && isSameDirForCut) {
         return false;
     }
 
@@ -1633,7 +1656,8 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
         menu.addAction("剪切")->setData(ActionCut); 
         QAction* actItemPaste = menu.addAction("粘贴"); 
         actItemPaste->setData(ActionPaste); 
-        actItemPaste->setEnabled(canPaste()); 
+        QString pasteTarget = isFolder ? path : m_currentPath;
+        actItemPaste->setEnabled(canPaste(pasteTarget));
         menu.addAction("复制名称")->setData(ActionCopyName); 
         menu.addAction("复制路径")->setData(ActionCopyPath); 
 
@@ -1690,7 +1714,7 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
         menu.addSeparator(); 
         QAction* actPaste = menu.addAction("粘贴"); 
         actPaste->setData(ActionPaste); 
-        actPaste->setEnabled(canPaste()); 
+        actPaste->setEnabled(canPaste(m_currentPath));
  
         menu.addSeparator(); 
 
@@ -2194,8 +2218,33 @@ void ContentPanel::performCopy(bool cutMode) {
  
 void ContentPanel::performPaste() { 
     const QMimeData* mime = QApplication::clipboard()->mimeData(); 
-    if (!mime || !mime->hasUrls()) return; 
- 
+    if (!mime) return;
+
+    // 1. 如果剪贴板是截图/图片：直接保存为新 PNG 文件
+    if (mime->hasImage() && (!mime->hasUrls() || mime->urls().isEmpty())) {
+        QImage img = qvariant_cast<QImage>(mime->imageData());
+        if (!img.isNull() && !m_currentPath.isEmpty() && QDir(m_currentPath).exists()) {
+            QString timeStr = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+            QString baseName = QString("贴图_%1").arg(timeStr);
+            QString fileName = baseName + ".png";
+            QString fullPath = QDir(m_currentPath).filePath(fileName);
+
+            int counter = 1;
+            while (QFile::exists(fullPath)) {
+                fileName = QString("%1_(%2).png").arg(baseName).arg(counter++);
+                fullPath = QDir(m_currentPath).filePath(fileName);
+            }
+
+            if (img.save(fullPath, "PNG")) {
+                loadDirectory(m_currentPath, m_isRecursive);
+                setPendingSelectName(fileName, false);
+                ToolTipOverlay::instance()->showText(QCursor::pos(), "已将剪贴板图片粘贴为新文件", 1500, QColor("#2ecc71"));
+            }
+            return;
+        }
+    }
+
+    // 2. 常规文件与目录的粘贴（原有流程）
     QList<QUrl> urls = mime->urls(); 
     QStringList fromPaths;
     for (const QUrl& url : urls) {
