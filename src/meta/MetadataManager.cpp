@@ -56,50 +56,6 @@
 
 namespace QuarkMeta {
 
-static const char* kSqlSelectAllMeta = 
-    "SELECT path, is_folder, rating, color, tags, note, url, "
-    "ctime, mtime, atime, file_size, palettes, is_trash, original_path, "
-    "width, height, auto_color, base_name, ext, added_at, sha256 "
-    "FROM metadata";
-
-static const char* kSqlInsertMeta = 
-    "INSERT OR REPLACE INTO metadata (path, is_folder, rating, color, tags, note, url, "
-    "ctime, mtime, atime, file_size, palettes, is_trash, original_path, "
-    "width, height, auto_color, base_name, ext, added_at, sha256) "
-    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-static void bindMetaHelper(sqlite3_stmt* stmt, const std::wstring& path, const RuntimeMeta& meta) {
-    sqlite3_bind_text16(stmt, 1, path.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 2, meta.isFolder ? 1 : 0);
-    sqlite3_bind_int(stmt, 3, meta.rating);
-    sqlite3_bind_text16(stmt, 4, meta.manualColor.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text16(stmt, 5, meta.tags.join(",").toStdWString().c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text16(stmt, 6, meta.note.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text16(stmt, 7, meta.url.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, 8, meta.ctime);
-    sqlite3_bind_int64(stmt, 9, meta.mtime);
-    sqlite3_bind_int64(stmt, 10, meta.atime);
-    sqlite3_bind_int64(stmt, 11, meta.fileSize);
-
-    QJsonArray arr;
-    for (const auto& pe : meta.palettes) {
-        QJsonObject obj;
-        obj["color"] = pe.color.name();
-        obj["ratio"] = (double)pe.ratio;
-        arr.append(obj);
-    }
-    QByteArray ba = QJsonDocument(arr).toJson(QJsonDocument::Compact);
-    sqlite3_bind_blob(stmt, 12, ba.constData(), ba.size(), SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 13, meta.isTrash ? 1 : 0);
-    sqlite3_bind_text16(stmt, 14, meta.originalPath.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 15, meta.width);
-    sqlite3_bind_int(stmt, 16, meta.height);
-    sqlite3_bind_text16(stmt, 17, meta.autoColor.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text16(stmt, 18, meta.baseName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text16(stmt, 19, meta.ext.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, 20, meta.added_at);
-    sqlite3_bind_text(stmt, 21, meta.sha256.c_str(), -1, SQLITE_TRANSIENT);
-}
 
 // --- Helper Functions ---
 
@@ -162,129 +118,16 @@ MetadataManager::MetadataManager(QObject* parent) : QObject(parent) {
 
 
 void MetadataManager::initFromDatabase() {
-    // 2026-06-xx 物理加固：防止重复初始化
     {
         std::shared_lock<std::shared_mutex> lock(m_mutex);
         if (m_loaded) return;
     }
 
     DatabaseManager::instance().init();
-    
-    std::unordered_map<std::wstring, RuntimeMeta> tempCache;
-    std::unordered_map<std::wstring, std::vector<std::wstring>> tempParentToChildren;
-
-    auto loadFromDb = [&](sqlite3* db) {
-        if (!db) return;
-        sqlite3_stmt* stmt = nullptr;
-
-        // 1. 读取主元数据表
-        if (sqlite3_prepare_v2(db, kSqlSelectAllMeta, -1, &stmt, nullptr) == SQLITE_OK) {
-            while (sqlite3_step(stmt) == SQLITE_ROW) {
-                RuntimeMeta rm;
-                const wchar_t* wpath = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 0));
-                std::wstring path = normalizePath(wpath ? wpath : L"");
-
-                rm.isFolder = sqlite3_column_int(stmt, 1) != 0;
-                rm.rating = sqlite3_column_int(stmt, 2);
-                
-                const wchar_t* color = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 3));
-                if (color) rm.manualColor = color;
-
-                const wchar_t* wtags = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 4));
-                QString tagsStr = wtags ? QString::fromWCharArray(wtags) : "";
-                QStringList rawTags = tagsStr.split(",", Qt::SkipEmptyParts);
-                QStringList cleanTags;
-
-                for (const QString& t : rawTags) {
-                    QString trimmed = t.trimmed();
-                    if (trimmed.contains(":\\") || trimmed.contains(":/")) {
-                        continue;
-                    }
-                    cleanTags.append(trimmed);
-                }
-                rm.tags = cleanTags;
-
-                // Column 5 ~ 21 严格按 kSqlSelectAllMeta 顺序列提取
-                const wchar_t* note = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 5));
-                if (note) rm.note = note;
-                
-                const wchar_t* url = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 6));
-                if (url) rm.url = url;
-
-                rm.ctime = sqlite3_column_int64(stmt, 7);
-                rm.mtime = sqlite3_column_int64(stmt, 8);
-                rm.atime = sqlite3_column_int64(stmt, 9);
-                rm.fileSize = sqlite3_column_int64(stmt, 10);
-
-                const void* paletteBlob = sqlite3_column_blob(stmt, 11);
-                int paletteSize = sqlite3_column_bytes(stmt, 11);
-                if (paletteBlob && paletteSize > 0) {
-                    QByteArray ba(reinterpret_cast<const char*>(paletteBlob), paletteSize);
-                    QJsonDocument doc = QJsonDocument::fromJson(ba);
-                    QJsonArray arr = doc.array();
-                    for (const auto& v : arr) {
-                        QJsonObject obj = v.toObject();
-                        PaletteEntry pe;
-                        pe.color = QColor(obj["color"].toString());
-                        pe.ratio = (float)obj["ratio"].toDouble();
-                        rm.palettes.push_back(pe);
-                    }
-                }
-
-                rm.isTrash = sqlite3_column_int(stmt, 12) != 0;
-                const wchar_t* wOrigPath = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 13));
-                if (wOrigPath) rm.originalPath = wOrigPath;
-
-                rm.width = sqlite3_column_int(stmt, 14);
-                rm.height = sqlite3_column_int(stmt, 15);
-
-                const wchar_t* autoColor = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 16));
-                if (autoColor) rm.autoColor = autoColor;
-
-                const wchar_t* wBaseName = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 17));
-                if (wBaseName) rm.baseName = wBaseName;
-
-                const wchar_t* wExt = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 18));
-                if (wExt) rm.ext = wExt;
-
-                rm.added_at = sqlite3_column_int64(stmt, 19);
-
-                const char* hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 20));
-                if (hash) rm.sha256 = hash;
-
-                tempCache[path] = rm;
-
-                // 维护树级索引...
-                std::wstring parentPath = QDir::toNativeSeparators(QFileInfo(QString::fromStdWString(path)).absolutePath()).toStdWString();
-                parentPath = normalizePath(parentPath);
-                if (parentPath != path) {
-                    tempParentToChildren[parentPath].push_back(path);
-                }
-            }
-            sqlite3_finalize(stmt);
-        }
-
-    };
-
-    // 加载全局库
-    loadFromDb(DatabaseManager::instance().getGlobalDb());
 
     {
         std::unique_lock<std::shared_mutex> lock(m_mutex);
-        m_parentToChildren = tempParentToChildren;
-
-        for (auto& entry : m_parentToChildren) {
-            std::sort(entry.second.begin(), entry.second.end());
-            entry.second.erase(std::unique(entry.second.begin(), entry.second.end()), entry.second.end());
-        }
-
-
         m_loaded = true;
-        for (const auto& pair : tempCache) {
-            size_t idx = getShardIndex(pair.first);
-            std::unique_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
-            m_shards[idx].items[pair.first] = pair.second;
-        }
     }
 
     notifyUI(RefreshLevel::FullRebuild);
@@ -562,33 +405,6 @@ void MetadataManager::updateExtractedMediaFeatures(
         metaCopy = meta; 
     } 
 
-    // 仅发起 1 次数据库事务 
-    DatabaseManager::instance().enqueueSyncTask([this, nPath, metaCopy]() { 
-        sqlite3* db = DatabaseManager::instance().getGlobalDb(); 
-        if (!db) return; 
-
-        SqlTransaction trans(db); 
-        const char* sql = "UPDATE metadata SET width = ?, height = ?, auto_color = ?, palettes = ? WHERE path = ?";
-        sqlite3_stmt* stmt = nullptr; 
-        if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) { 
-            sqlite3_bind_int(stmt, 1, metaCopy.width); 
-            sqlite3_bind_int(stmt, 2, metaCopy.height); 
-            sqlite3_bind_text16(stmt, 3, metaCopy.autoColor.c_str(), -1, SQLITE_TRANSIENT); 
-             
-            // 序列化调色盘 JSON 
-            QJsonArray arr; 
-            for (const auto& pe : metaCopy.palettes) { 
-                QJsonObject obj; obj["color"] = pe.color.name(); obj["ratio"] = (double)pe.ratio; arr.append(obj); 
-            } 
-            QByteArray ba = QJsonDocument(arr).toJson(QJsonDocument::Compact); 
-            sqlite3_bind_blob(stmt, 4, ba.constData(), ba.size(), SQLITE_TRANSIENT); 
-            sqlite3_bind_text16(stmt, 5, nPath.c_str(), -1, SQLITE_TRANSIENT);
-
-            sqlite3_step(stmt); 
-            sqlite3_finalize(stmt); 
-        } 
-        trans.commit(); 
-    }); 
 
     notifyUI(RefreshLevel::PathUpdate, QString::fromStdWString(nPath)); 
 }
@@ -946,54 +762,6 @@ void MetadataManager::renameBatchAsync(
             }
         }
 
-        // C. SQLite 数据库分库批量提交大事务
-        struct DbBatchRenameTask {
-            std::wstring oldPath;
-            std::wstring newPath;
-            std::wstring newName;
-            std::wstring newExt;
-        };
-        std::map<sqlite3*, std::vector<DbBatchRenameTask>> groupedTasks;
-        for (const auto& pair : normalizedPairs) {
-            const std::wstring& curOld = pair.first;
-            const std::wstring& curNew = pair.second;
-            std::wstring newName, newExt;
-            {
-                size_t idx = getShardIndex(curNew);
-                std::shared_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
-                auto it = m_shards[idx].items.find(curNew);
-                if (it != m_shards[idx].items.end()) {
-                    newName = it->second.baseName;
-                    newExt = it->second.ext;
-                }
-            }
-
-            sqlite3* db = DatabaseManager::instance().getGlobalDb();
-            if (db) {
-                groupedTasks[db].push_back({curOld, curNew, newName, newExt});
-            }
-        }
-
-        const char* updSql = "UPDATE metadata SET path = ?, base_name = ?, ext = ? WHERE path = ?";
-        for (auto& entry : groupedTasks) {
-            sqlite3* targetDb = entry.first;
-            const auto& tasks = entry.second;
-
-            SqlTransaction trans(targetDb); // 【仅开启 1 次事务】
-            sqlite3_stmt* stmt = nullptr;
-            if (sqlite3_prepare_v2(targetDb, updSql, -1, &stmt, nullptr) == SQLITE_OK) {
-                for (const auto& task : tasks) {
-                    sqlite3_bind_text16(stmt, 1, task.newPath.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text16(stmt, 2, task.newName.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text16(stmt, 3, task.newExt.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text16(stmt, 4, task.oldPath.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_step(stmt);
-                    sqlite3_reset(stmt);
-                }
-                sqlite3_finalize(stmt);
-            }
-            trans.commit(); // 【仅提交 1 次事务】
-        }
 
 
         // E. 清理操作标志位，安全回到 UI 主线程通知
@@ -1101,58 +869,6 @@ void MetadataManager::renameItem(const std::wstring& oldPath, const std::wstring
             }
         }
 
-        // 4. 物理数据库批量同步 (引入事务保护)
-        // 极致优化：预取根路径的卷信息，避免在循环中重复执行耗时的 Win32 磁盘查询
-        std::wstring volSerial = getVolumeSerialNumber(nNew);
-        QString letter = (nNew.length() >= 2 && nNew[1] == L':') ? QString::fromWCharArray(&nNew[0], 1) : "";
-        sqlite3* memDb = DatabaseManager::instance().getGlobalDb();
-        
-        struct DbItemRenameTask {
-            std::wstring oldPath;
-            std::wstring newPath;
-            std::wstring newName;
-            std::wstring newExt;
-        };
-        std::map<sqlite3*, std::vector<DbItemRenameTask>> groupedSyncTasks;
-        for (const auto& pair : itemsToRename) {
-            const std::wstring& curOld = pair.first;
-            const std::wstring& curNew = pair.second;
-            std::wstring newName, newExt;
-            {
-                size_t idx = getShardIndex(curNew);
-                std::shared_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
-                auto it = m_shards[idx].items.find(curNew);
-                if (it != m_shards[idx].items.end()) {
-                    newName = it->second.baseName;
-                    newExt = it->second.ext;
-                }
-            }
-
-            if (memDb) {
-                groupedSyncTasks[memDb].push_back({curOld, curNew, newName, newExt});
-            }
-        }
-
-        const char* updSql = "UPDATE metadata SET path = ?, base_name = ?, ext = ? WHERE path = ?";
-        for (auto& entry : groupedSyncTasks) {
-            sqlite3* targetDb = entry.first;
-            auto& tasks = entry.second;
-
-            SqlTransaction trans(targetDb);
-            sqlite3_stmt* memStmt;
-            if (sqlite3_prepare_v2(targetDb, updSql, -1, &memStmt, nullptr) == SQLITE_OK) {
-                for (const auto& task : tasks) {
-                    sqlite3_bind_text16(memStmt, 1, task.newPath.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text16(memStmt, 2, task.newName.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text16(memStmt, 3, task.newExt.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_bind_text16(memStmt, 4, task.oldPath.c_str(), -1, SQLITE_TRANSIENT);
-                    sqlite3_step(memStmt);
-                    sqlite3_reset(memStmt);
-                }
-                sqlite3_finalize(memStmt);
-            }
-            trans.commit();
-        }
 
         notifyFullUIRebuild();
     });
@@ -1261,7 +977,7 @@ void MetadataManager::setTrash(const std::wstring& path, bool isTrash) {
 void MetadataManager::deletePermanently(const std::wstring& path) {
     std::wstring nPath = MetadataManager::normalizePath(path);
 
-    // 执行彻底根除 (removeMetadataSync 会级联擦除 SQLite metadata 与 category_items)
+    // 执行彻底根除
     removeMetadataSync(nPath);
 
     // 广播 UI 全量刷新信号
@@ -1313,40 +1029,14 @@ void MetadataManager::persistBatchAsync(const std::vector<std::wstring>& paths) 
     WriteGuard guard;
     if (paths.empty()) return;
 
-    struct BatchTask {
-        sqlite3* memDb;
-        std::vector<std::wstring> groupPaths;
-    };
-    std::map<sqlite3*, std::vector<std::wstring>> groups;
+    for (const auto& p : paths) {
+        RuntimeMeta rMeta = getMeta(p);
+        parsePathComponents(p, rMeta.isFolder, rMeta.baseName, rMeta.ext);
 
-    sqlite3* db = DatabaseManager::instance().getGlobalDb();
-    if (db) groups[db] = paths;
-
-    for (auto& entry : groups) {
-        sqlite3* memDb = entry.first;
-        const auto& groupPaths = entry.second;
-
-        SqlTransaction trans(memDb);
-        std::vector<std::pair<std::wstring, RuntimeMeta>> recordsToSync;
-
-        for (const auto& p : groupPaths) {
-            RuntimeMeta rMeta = getMeta(p);
-
-            parsePathComponents(p, rMeta.isFolder, rMeta.baseName, rMeta.ext);
-
-            {
-                size_t idx = getShardIndex(p);
-                std::unique_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
-                m_shards[idx].items[p] = rMeta;
-            }
-            recordsToSync.push_back({p, rMeta});
-        }
-        trans.commit();
+        size_t idx = getShardIndex(p);
+        std::unique_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
+        m_shards[idx].items[p] = rMeta;
     }
-
-    DatabaseManager::instance().enqueueSyncTask([]() {
-        DatabaseManager::instance().flushAll();
-    });
 }
 
 void MetadataManager::persistAsync(const std::wstring& path, bool notify) {
@@ -1356,22 +1046,10 @@ void MetadataManager::persistAsync(const std::wstring& path, bool notify) {
     RuntimeMeta rMeta = getMeta(nPath);
     parsePathComponents(nPath, rMeta.isFolder, rMeta.baseName, rMeta.ext);
     
-    sqlite3* memDb = DatabaseManager::instance().getGlobalDb();
-    if (!memDb) {
-        return;
-    }
-
-    sqlite3_stmt* memStmt;
-    if (sqlite3_prepare_v2(memDb, kSqlInsertMeta, -1, &memStmt, nullptr) == SQLITE_OK) {
-        bindMetaHelper(memStmt, nPath, rMeta);
-        if (sqlite3_step(memStmt) == SQLITE_DONE) {
-            {
-                size_t idx = getShardIndex(nPath);
-                std::unique_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
-                m_shards[idx].items[nPath] = rMeta;
-            }
-        }
-        sqlite3_finalize(memStmt);
+    {
+        size_t idx = getShardIndex(nPath);
+        std::unique_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
+        m_shards[idx].items[nPath] = rMeta;
     }
         
     if (notify) notifyUI(RefreshLevel::PathUpdate, QString::fromStdWString(nPath));
@@ -1398,7 +1076,6 @@ void MetadataManager::parsePathComponents(const std::wstring& normalizedPath, bo
 
 QStringList MetadataManager::searchInCache(const QString& keyword, const QString& scopeSource, int categoryId, const QString& parentPath) {
     Q_UNUSED(categoryId);
-    // FTS5 trigram 模糊检索引擎 + 内存 O(1) 快速反查
     QStringList results; if (keyword.isEmpty()) return results;
     
     std::wstring wParentPath = (scopeSource == "nav" && !parentPath.isEmpty()) ? normalizePath(parentPath.toStdWString()) : L"";
@@ -1410,71 +1087,18 @@ QStringList MetadataManager::searchInCache(const QString& keyword, const QString
         }
     }
 
-    // 2. 区分检索词长度获取匹配路径，避开 O(N) 扫描
-    std::vector<std::wstring> matchedPaths;
-    std::vector<sqlite3*> dbs = { DatabaseManager::instance().getGlobalDb() };
+    forEachCachedItem([&](const std::wstring& path, const RuntimeMeta& meta) {
+        if (!wParentPath.empty() && path.find(wParentPath) != 0) return;
 
-    if (keyword.length() >= 3) {
-        // FTS5 trigram 快速 Match 路径：通过倒排索引实现 O(log N) 模糊检索分流，彻底释解读写锁
-        QString cleanKeyword = keyword;
-        cleanKeyword.replace("\"", "");
-        QString ftsQuery = "\"" + cleanKeyword + "\"";
-        std::string utf8Query = ftsQuery.toUtf8().toStdString();
+        QString qPath = QString::fromStdWString(path);
+        QString filename = QFileInfo(qPath).fileName();
 
-        const char* sql = "SELECT path FROM metadata WHERE rowid IN (SELECT rowid FROM metadata_fts WHERE metadata_fts MATCH ?)";
-        for (sqlite3* db : dbs) {
-            sqlite3_stmt* stmt = nullptr;
-            if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
-                sqlite3_bind_text(stmt, 1, utf8Query.c_str(), -1, SQLITE_TRANSIENT);
-                while (sqlite3_step(stmt) == SQLITE_ROW) {
-                    const wchar_t* wpath = reinterpret_cast<const wchar_t*>(sqlite3_column_text16(stmt, 0));
-                    if (wpath) {
-                        matchedPaths.push_back(normalizePath(wpath));
-                    }
-                }
-                sqlite3_finalize(stmt);
-            }
+        if (filename.contains(keyword, Qt::CaseInsensitive) ||
+            meta.tags.contains(keyword, Qt::CaseInsensitive) ||
+            QString::fromStdWString(meta.note).contains(keyword, Qt::CaseInsensitive)) {
+            results << qPath;
         }
-    } else {
-        // LIKE 模糊匹配降级路径 (使用高性能 UTF-8 绑定以避免 SQLite 内部编码转换开销)
-        QString likeQueryStr = "%" + keyword + "%";
-        std::string utf8LikeQuery = likeQueryStr.toUtf8().toStdString();
-
-        const char* sql = "SELECT path FROM metadata WHERE path LIKE ? OR note LIKE ? OR tags LIKE ?";
-        for (sqlite3* db : dbs) {
-            sqlite3_stmt* stmt = nullptr;
-            if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
-                sqlite3_bind_text(stmt, 1, utf8LikeQuery.c_str(), -1, SQLITE_TRANSIENT);
-                sqlite3_bind_text(stmt, 2, utf8LikeQuery.c_str(), -1, SQLITE_TRANSIENT);
-                sqlite3_bind_text(stmt, 3, utf8LikeQuery.c_str(), -1, SQLITE_TRANSIENT);
-                while (sqlite3_step(stmt) == SQLITE_ROW) {
-                    const char* utf8Path = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-                    if (utf8Path) {
-                        matchedPaths.push_back(normalizePath(QString::fromUtf8(utf8Path).toStdWString()));
-                    }
-                }
-                sqlite3_finalize(stmt);
-            }
-        }
-    }
-
-    // 去重
-    std::sort(matchedPaths.begin(), matchedPaths.end());
-    matchedPaths.erase(std::unique(matchedPaths.begin(), matchedPaths.end()), matchedPaths.end());
-
-    // 3. 关联内存缓存并执行 Scope 过滤
-    for (const auto& path : matchedPaths) {
-        size_t idx = getShardIndex(path);
-        std::shared_lock<std::shared_mutex> shardLock(m_shards[idx].mutex);
-        auto it = m_shards[idx].items.find(path);
-        if (it != m_shards[idx].items.end()) {
-            if (!wParentPath.empty()) {
-                if (path.find(wParentPath) != 0) continue;
-            }
-
-            results << QString::fromStdWString(path);
-        }
-    }
+    });
 
     return results;
 }
