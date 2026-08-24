@@ -119,19 +119,25 @@ QString DatabaseManager::getAppDir() {
 }
 
 bool DatabaseManager::loadDb(const std::wstring& diskPath, DbConnection& conn) {
-    std::string utf8Path = QString::fromStdWString(diskPath).toUtf8().toStdString();
+    QString qDiskPath = QString::fromStdWString(diskPath);
+    QFileInfo fileInfo(qDiskPath);
     
-    // 直接打开物理磁盘上的 global.db 数据库文件
-    if (sqlite3_open_v2(utf8Path.c_str(), &conn.db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK) {
+    // 1. 确保物理目录存在，防止打开失败
+    QDir().mkpath(fileInfo.absolutePath());
+
+    std::string utf8Path = qDiskPath.toUtf8().toStdString();
+
+    // 2. 直接打开硬盘物理数据库文件 global.db
+    if (sqlite3_open_v2(utf8Path.c_str(), &conn.diskDb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK) {
         return false;
     }
-    sqlite3_busy_timeout(conn.db, 25000);
+    sqlite3_busy_timeout(conn.diskDb, 25000);
 
-    // 配置工业级高性能 WAL 模式（支持高并发读写，毫秒级直接落盘）
-    sqlite3_exec(conn.db, "PRAGMA journal_mode = WAL;", nullptr, nullptr, nullptr);
-    sqlite3_exec(conn.db, "PRAGMA synchronous = NORMAL;", nullptr, nullptr, nullptr);
+    // 3. 配置高性能 WAL 模式（直接写盘，零数据丢失）
+    sqlite3_exec(conn.diskDb, "PRAGMA journal_mode = WAL;", nullptr, nullptr, nullptr);
+    sqlite3_exec(conn.diskDb, "PRAGMA synchronous = NORMAL;", nullptr, nullptr, nullptr);
 
-    // 直接在物理磁盘数据库中初始化表结构
+    // 4. 【核心修复】：直接在硬盘物理数据库 conn.diskDb 上创建 3 张物理表！
     const char* schema = R"(
         CREATE TABLE IF NOT EXISTS tag_groups (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -161,7 +167,7 @@ bool DatabaseManager::loadDb(const std::wstring& diskPath, DbConnection& conn) {
         CREATE INDEX IF NOT EXISTS idx_disk_trash_drive_letter ON disk_trash(drive_letter);
     )";
     char* errMsg = nullptr;
-    sqlite3_exec(conn.db, schema, nullptr, nullptr, &errMsg);
+    sqlite3_exec(conn.diskDb, schema, nullptr, nullptr, &errMsg);
     if (errMsg) {
         sqlite3_free(errMsg);
     }
@@ -175,9 +181,9 @@ bool DatabaseManager::saveDb(DbConnection&, bool) {
 }
 
 void DatabaseManager::closeDb(DbConnection& conn) {
-    if (conn.db) {
-        sqlite3_close_v2(conn.db);
-        conn.db = nullptr;
+    if (conn.diskDb) {
+        sqlite3_close_v2(conn.diskDb);
+        conn.diskDb = nullptr;
     }
 }
 
@@ -219,7 +225,7 @@ void DatabaseManager::shutdown() {
 }
 
 sqlite3* DatabaseManager::getGlobalDb() {
-    return m_globalDb.db;
+    return m_globalDb.diskDb;
 }
 
 void DatabaseManager::incrementWriteSources() {
