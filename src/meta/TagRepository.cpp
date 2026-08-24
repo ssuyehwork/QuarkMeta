@@ -11,10 +11,6 @@
 namespace QuarkMeta {
 
 QList<TagRepository::TagGroup> TagRepository::getAllGroups() {
-    // 确保数据已自动检查与迁移
-    static std::once_flag s_migrateOnce;
-    std::call_once(s_migrateOnce, []() { checkAndMigrate(); });
-
     QList<TagGroup> results;
     sqlite3* db = DatabaseManager::instance().getGlobalDb();
     if (!db) return results;
@@ -159,47 +155,5 @@ bool TagRepository::removeTagFromGroup(const QString& tagName, int groupId) {
     return success;
 }
 
-void TagRepository::checkAndMigrate() {
-    sqlite3* globalDb = DatabaseManager::instance().getGlobalDb();
-    if (!globalDb) return;
-
-    // 1. 优先强标记检查
-    bool migrationCompleted = false;
-    sqlite3_stmt* checkStmt = nullptr;
-    const char* checkSql = "SELECT value FROM system_stats WHERE key = 'tag_migration_completed'";
-    if (sqlite3_prepare_v2(globalDb, checkSql, -1, &checkStmt, nullptr) == SQLITE_OK) {
-        if (sqlite3_step(checkStmt) == SQLITE_ROW) {
-            migrationCompleted = (sqlite3_column_int(checkStmt, 0) == 1);
-        }
-        sqlite3_finalize(checkStmt);
-    }
-
-    if (migrationCompleted) {
-        return; // 已完成迁移，直接跳过
-    }
-
-    // 2. 检查全局库中是否已有数据，以防止覆盖
-    bool globalHasGroups = false;
-    sqlite3_stmt* gGroupStmt = nullptr;
-    if (sqlite3_prepare_v2(globalDb, "SELECT 1 FROM tag_groups LIMIT 1", -1, &gGroupStmt, nullptr) == SQLITE_OK) {
-        if (sqlite3_step(gGroupStmt) == SQLITE_ROW) {
-            globalHasGroups = true;
-        }
-        sqlite3_finalize(gGroupStmt);
-    }
-
-    (void)globalHasGroups;
-
-    // 4. 写入强标记，即使没有历史数据
-    sqlite3_stmt* markerStmt = nullptr;
-    const char* markerSql = "INSERT OR REPLACE INTO system_stats (key, value) VALUES ('tag_migration_completed', 1)";
-    if (sqlite3_prepare_v2(globalDb, markerSql, -1, &markerStmt, nullptr) == SQLITE_OK) {
-        sqlite3_step(markerStmt);
-        sqlite3_finalize(markerStmt);
-    }
-    // 并写入脏标记确保落盘
-    DatabaseManager::instance().setDirty(true);
-    DatabaseManager::instance().flushAll();
-}
 
 } // namespace QuarkMeta
