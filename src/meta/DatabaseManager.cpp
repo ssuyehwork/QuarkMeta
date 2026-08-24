@@ -121,38 +121,18 @@ QString DatabaseManager::getAppDir() {
 bool DatabaseManager::loadDb(const std::wstring& diskPath, DbConnection& conn) {
     std::string utf8Path = QString::fromStdWString(diskPath).toUtf8().toStdString();
     
-    // 打开独立的磁盘数据库连接
-    if (sqlite3_open_v2(utf8Path.c_str(), &conn.diskDb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK) {
+    // 直接打开物理磁盘上的 global.db 数据库文件
+    if (sqlite3_open_v2(utf8Path.c_str(), &conn.db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK) {
         return false;
     }
-    sqlite3_busy_timeout(conn.diskDb, 25000);
+    sqlite3_busy_timeout(conn.db, 25000);
 
-    // 打开独立的内存数据库连接
-    if (sqlite3_open_v2(":memory:", &conn.memDb, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) != SQLITE_OK) {
-        sqlite3_close_v2(conn.diskDb);
-        conn.diskDb = nullptr;
-        return false;
-    }
-    sqlite3_busy_timeout(conn.memDb, 25000);
-    // 🚀【修改方案一】：彻底删去对 ShellHelper::ensureHidden 的直接耦合，保持 DAL 纯粹性
+    // 配置工业级高性能 WAL 模式（支持高并发读写，毫秒级直接落盘）
+    sqlite3_exec(conn.db, "PRAGMA journal_mode = WAL;", nullptr, nullptr, nullptr);
+    sqlite3_exec(conn.db, "PRAGMA synchronous = NORMAL;", nullptr, nullptr, nullptr);
 
-    // 使用 SQLite Backup API 将 conn.diskDb 的数据一次性导入内存 conn.memDb
-    sqlite3_backup* backup = sqlite3_backup_init(conn.memDb, "main", conn.diskDb, "main");
-    if (backup) {
-        sqlite3_backup_step(backup, -1);
-        sqlite3_backup_finish(backup);
-    } else {
-    }
-
-    // 配置高性能 WAL 模式
-    sqlite3_exec(conn.diskDb, "PRAGMA journal_mode = WAL;", nullptr, nullptr, nullptr);
-    sqlite3_exec(conn.diskDb, "PRAGMA synchronous = NORMAL;", nullptr, nullptr, nullptr);
-    sqlite3_exec(conn.memDb, "PRAGMA journal_mode = WAL;", nullptr, nullptr, nullptr);
-    sqlite3_exec(conn.memDb, "PRAGMA synchronous = NORMAL;", nullptr, nullptr, nullptr);
-
-    // 初始化表结构 (Schema)
+    // 直接在物理磁盘数据库中初始化表结构
     const char* schema = R"(
-        -- 标签组表
         CREATE TABLE IF NOT EXISTS tag_groups (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -160,14 +140,12 @@ bool DatabaseManager::loadDb(const std::wstring& diskPath, DbConnection& conn) {
             sort_order INTEGER DEFAULT 0
         );
 
-        -- 标签与标签组关联表
         CREATE TABLE IF NOT EXISTS tag_group_items (
             group_id INTEGER,
             tag_name TEXT,
             PRIMARY KEY (group_id, tag_name)
         );
 
-        -- 物理磁盘回收站独立表
         CREATE TABLE IF NOT EXISTS disk_trash (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_id TEXT NOT NULL,
@@ -183,7 +161,7 @@ bool DatabaseManager::loadDb(const std::wstring& diskPath, DbConnection& conn) {
         CREATE INDEX IF NOT EXISTS idx_disk_trash_drive_letter ON disk_trash(drive_letter);
     )";
     char* errMsg = nullptr;
-    sqlite3_exec(conn.memDb, schema, nullptr, nullptr, &errMsg);
+    sqlite3_exec(conn.db, schema, nullptr, nullptr, &errMsg);
     if (errMsg) {
         sqlite3_free(errMsg);
     }
@@ -192,43 +170,15 @@ bool DatabaseManager::loadDb(const std::wstring& diskPath, DbConnection& conn) {
     return true;
 }
 
-bool DatabaseManager::saveDb(DbConnection& conn, bool forceFull) {
-    if (!conn.diskDb || !conn.memDb) {
-        return false;
-    }
-
-    (void)forceFull;
-    sqlite3_backup* backup = sqlite3_backup_init(conn.diskDb, "main", conn.memDb, "main");
-    if (backup) {
-        int rc = SQLITE_OK;
-        // 每次只备份 64 个 Pager 页，分片让路，避免长时间锁死 SQLite 数据库
-        do {
-            rc = sqlite3_backup_step(backup, 64);
-            if (rc == SQLITE_OK) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(2)); // 主动让出数据库锁
-            }
-        } while (rc == SQLITE_OK);
-
-        sqlite3_backup_finish(backup);
-        if (rc == SQLITE_DONE) {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return false;
-    }
+bool DatabaseManager::saveDb(DbConnection&, bool) {
+    return true;
 }
 
 void DatabaseManager::closeDb(DbConnection& conn) {
-    if (conn.memDb) {
-        sqlite3_close_v2(conn.memDb);
+    if (conn.db) {
+        sqlite3_close_v2(conn.db);
+        conn.db = nullptr;
     }
-    if (conn.diskDb) {
-        sqlite3_close_v2(conn.diskDb);
-    }
-    conn.memDb = nullptr;
-    conn.diskDb = nullptr;
 }
 
 bool DatabaseManager::init() {
@@ -247,30 +197,8 @@ bool DatabaseManager::init() {
     return true;
 }
 
-void DatabaseManager::flushAll(bool forceFull) {
-    if (!m_isDirty.load()) {
-        return;
-    }
-
-    DbConnection globalConn;
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        globalConn = m_globalDb;
-    }
-
-    bool allSucceeded = true;
-    
-    // 全局库独立加锁落盘
-    {
-        std::lock_guard<std::mutex> lockGlobal(m_globalDbMutex);
-        if (!saveDb(globalConn, forceFull)) {
-            allSucceeded = false;
-        }
-    }
-    
-    if (allSucceeded) {
-        m_isDirty.store(false);
-    }
+void DatabaseManager::flushAll(bool) {
+    // 直连 WAL 模式下数据即时落盘，无需内存中转备份
 }
 
 bool DatabaseManager::flushStep() {
@@ -291,7 +219,7 @@ void DatabaseManager::shutdown() {
 }
 
 sqlite3* DatabaseManager::getGlobalDb() {
-    return m_globalDb.memDb;
+    return m_globalDb.db;
 }
 
 void DatabaseManager::incrementWriteSources() {

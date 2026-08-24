@@ -112,9 +112,7 @@ private:
     ~DatabaseManager();
 
     struct DbConnection {
-        sqlite3* diskDb = nullptr;
-        sqlite3* memDb = nullptr;
-        sqlite3_backup* activeBackup = nullptr;
+        sqlite3* db = nullptr;
         std::wstring diskPath;
     };
 
