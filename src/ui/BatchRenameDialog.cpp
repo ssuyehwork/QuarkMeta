@@ -264,15 +264,17 @@ void BatchRenameDialog::initTableItems() {
         QString oldPath = QString::fromStdWString(m_originalPaths[static_cast<size_t>(i)]);
         QFileInfo info(oldPath);
 
+        // 恢复老版本高速机制：直接加载现成的缩略图缓存小图（微秒级），没有才退避为文件图标
         QIcon fileIcon;
-        if (UiHelper::isGraphicsFile(info.suffix().toLower())) {
-            QImage thumbImg = DiskMediaExtractor::getCapsuleThumbnail(oldPath, 64);
-            if (!thumbImg.isNull()) {
-                fileIcon = QIcon(QPixmap::fromImage(thumbImg));
+        QString thumbPath = DiskMediaExtractor::getDiskThumbCachePath(oldPath);
+        if (QFile::exists(thumbPath)) {
+            QPixmap pix(thumbPath);
+            if (!pix.isNull()) {
+                fileIcon = QIcon(pix);
             }
         }
         if (fileIcon.isNull()) {
-            fileIcon = ShellIconManager::getFileIcon(oldPath, 20);
+            fileIcon = ShellIconManager::getFileIconFast(oldPath, info.isDir(), info.suffix().toLower());
         }
 
         auto* itemOld = new QTableWidgetItem(fileIcon, info.fileName());
