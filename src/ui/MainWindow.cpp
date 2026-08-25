@@ -310,6 +310,7 @@ void MainWindow::initUi() {
     connect(m_contentPanel, &ContentPanel::selectionChanged, this, [this](const QStringList& paths) {
         m_metaPanel->setSelectedPaths(paths);
         if (paths.isEmpty()) {
+            m_metaPanel->setImagePreview(QPixmap());
             m_metaPanel->updateInfo("-", "-", "-", "-", "-", "-", "-", false, 0, 0);
             m_metaPanel->setRating(0);
             m_metaPanel->setColor(L"");
@@ -419,11 +420,24 @@ void MainWindow::initUi() {
             m_metaPanel->setColor(idx.data(ColorRole).toString().toStdWString());
             m_metaPanel->setPinned(idx.data(IsLockedRole).toBool());
             
-            // 5. 标签、备注、链接与色板展示
+            // 5. 标签、备注、链接、图片预览与色板展示
             m_metaPanel->setTags(cleanTags); 
             m_metaPanel->setNote(noteStr);
             m_metaPanel->setURL(urlStr);
             m_metaPanel->setPalettes(palettes);
+
+            QVariant decoData = idx.data(Qt::DecorationRole);
+            bool hasThumb = idx.data(HasThumbnailRole).toBool();
+            if (hasThumb && decoData.canConvert<QIcon>()) {
+                QIcon icon = decoData.value<QIcon>();
+                if (!icon.isNull()) {
+                    m_metaPanel->setImagePreview(icon.pixmap(256, 256));
+                } else {
+                    m_metaPanel->setImagePreview(QPixmap());
+                }
+            } else {
+                m_metaPanel->setImagePreview(QPixmap());
+            }
         }
         
         int totalCount = m_contentPanel->getProxyModel()->rowCount();

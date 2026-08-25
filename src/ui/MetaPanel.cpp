@@ -467,6 +467,21 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     });
 }
 
+void MetaPanel::setImagePreview(const QPixmap& pixmap) {
+    if (!m_lblImagePreview) return;
+    if (pixmap.isNull()) {
+        m_lblImagePreview->clear();
+        m_lblImagePreview->hide();
+    } else {
+        int maxW = m_topPreviewBox ? qMax(180, m_topPreviewBox->width() - 16) : 200;
+        QPixmap scaled = pixmap.scaled(maxW, 160, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        m_lblImagePreview->setPixmap(scaled);
+        m_lblImagePreview->show();
+    }
+    adjustFlowHeights();
+    if (m_container) m_container->adjustSize();
+}
+
 void MetaPanel::setSelectedPaths(const QStringList& paths) {
     m_selectedPaths = paths;
     bool hasSelection = !m_selectedPaths.isEmpty();
@@ -474,6 +489,7 @@ void MetaPanel::setSelectedPaths(const QStringList& paths) {
 
     if (!hasSelection) {
         m_isInternalUpdating = true;
+        setImagePreview(QPixmap());
         if (m_nameEdit) m_nameEdit->clear();
         if (m_noteEdit) m_noteEdit->clear();
         if (m_linkEdit) m_linkEdit->clear();
@@ -637,11 +653,12 @@ void MetaPanel::resizeEvent(QResizeEvent* event) {
 void MetaPanel::adjustFlowHeights() {
     if (m_topPreviewBox && m_paletteFlowLayout) {
         int contentH = m_paletteFlowLayout->heightForWidth(m_topPreviewBox->width());
-        bool hasPreview = (m_lblImagePreview && m_lblImagePreview->isVisible());
+        bool hasPreview = (m_lblImagePreview && m_lblImagePreview->isVisible() && m_lblImagePreview->pixmap() && !m_lblImagePreview->pixmap()->isNull());
         bool hasPalette = (m_paletteFlowLayout->count() > 0);
         if (hasPreview || hasPalette) {
             m_topPreviewBox->show();
-            m_topPreviewBox->setFixedHeight(qMax(32, contentH + (hasPreview ? 70 : 0)));
+            int previewH = hasPreview ? m_lblImagePreview->pixmap()->height() : 0;
+            m_topPreviewBox->setFixedHeight(qMax(32, contentH + previewH + 16));
         } else {
             m_topPreviewBox->hide();
             m_topPreviewBox->setFixedHeight(0);
