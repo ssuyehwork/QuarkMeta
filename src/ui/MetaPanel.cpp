@@ -180,8 +180,8 @@ void MetaPanel::initUi() {
     colorLayout->addWidget(btnNoColor);
 
     static const QVector<QPair<QString, QString>> s_colorMap = {
-        {"红色", "#E24B4A"}, {"橙色", "#F2994A"}, {"黄色", "#F2C94C"}, {"绿色", "#27AE60"},
-        {"青色", "#2D9CDB"}, {"蓝色", "#2F80ED"}, {"紫色", "#9B51E0"}, {"灰色", "#828282"}
+        {"红色", "#E24B4A"}, {"橙色", "#EF9F27"}, {"黄色", "#FECF0E"}, {"绿色", "#639922"},
+        {"青色", "#1D9E75"}, {"蓝色", "#378ADD"}, {"紫色", "#7F77DD"}, {"灰色", "#5F5E5A"}
     };
 
     for (const auto& pair : s_colorMap) {
@@ -757,14 +757,18 @@ void MetaPanel::setColor(const std::wstring& color) {
     m_currentColor = color;
     QString colorStr = QString::fromStdWString(color);
     static const QMap<QString, QString> s_colorHexMap = {
-        {"红色", "#E24B4A"}, {"橙色", "#F2994A"}, {"黄色", "#F2C94C"}, {"绿色", "#27AE60"},
-        {"青色", "#2D9CDB"}, {"蓝色", "#2F80ED"}, {"紫色", "#9B51E0"}, {"灰色", "#828282"}
+        {"红色", "#E24B4A"}, {"橙色", "#EF9F27"}, {"黄色", "#FECF0E"}, {"绿色", "#639922"},
+        {"青色", "#1D9E75"}, {"蓝色", "#378ADD"}, {"紫色", "#7F77DD"}, {"灰色", "#5F5E5A"}
     };
+
+    QString normInputHex = UiHelper::normalizeColorHex(colorStr);
 
     for (QPushButton* btn : m_colorBtns) {
         QString btnToolTip = btn->property("tooltipText").toString();
-        bool active = (btnToolTip == colorStr);
-        QString hexColor = s_colorHexMap.value(btnToolTip, "#828282");
+        QString hexColor = s_colorHexMap.value(btnToolTip, "#5F5E5A");
+        QString normBtnHex = UiHelper::normalizeColorHex(hexColor);
+
+        bool active = (!normInputHex.isEmpty() && normInputHex == normBtnHex) || (btnToolTip == colorStr);
         btn->setStyleSheet(QString(
             "QPushButton { background-color: %1; border: %2; border-radius: 8px; }"
             "QPushButton:hover { border-color: #FFFFFF; }"
