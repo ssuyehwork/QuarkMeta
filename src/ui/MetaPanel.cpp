@@ -7,6 +7,7 @@
 #include "../util/ShellHelper.h"
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QToolButton>
 #include <QHBoxLayout>
 #include <QFileInfo>
 #include <QLabel>
@@ -180,6 +181,12 @@ void MetaPanel::initUi() {
 
     m_actOpenLink = m_linkEdit->addAction(UiHelper::getIcon("link", QColor("#378ADD"), 14), QLineEdit::TrailingPosition);
     m_actOpenLink->setVisible(false);
+
+    for (QToolButton* btn : m_linkEdit->findChildren<QToolButton*>()) {
+        if (btn->defaultAction() == m_actOpenLink) {
+            btn->setCursor(Qt::PointingHandCursor);
+        }
+    }
 
     connect(m_actOpenLink, &QAction::triggered, this, [this]() {
         QString urlStr = m_linkEdit->text().trimmed();
