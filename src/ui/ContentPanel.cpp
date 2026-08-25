@@ -282,6 +282,13 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         if (currentFilter.notePresence == FilterState::No && hasNote) return false;
     }
 
+    // 8.5. 标签过滤
+    if (currentFilter.tagPresence != FilterState::All) {
+        bool hasTags = !record.tags.isEmpty();
+        if (currentFilter.tagPresence == FilterState::Yes && !hasTags) return false;
+        if (currentFilter.tagPresence == FilterState::No && hasTags) return false;
+    }
+
     // 9. 文件大小过滤 (Plan-30)
     if (currentFilter.minSize != -1 && record.size < currentFilter.minSize) return false;
     if (currentFilter.maxSize != -1 && record.size > currentFilter.maxSize) return false;
@@ -2867,6 +2874,10 @@ void ContentPanel::recalculateAndEmitStats() {
                 // 备注统计
                 if (!record.note.isEmpty()) stats.hasNoteCount++;
                 else stats.noNoteCount++;
+
+                // 标签存在性统计
+                if (!record.tags.isEmpty()) stats.hasTagCount++;
+                else stats.noTagCount++;
 
                 // 图像比例统计
                 if (record.width > 0 && record.height > 0) {

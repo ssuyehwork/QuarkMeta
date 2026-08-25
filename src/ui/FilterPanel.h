@@ -52,6 +52,7 @@ struct FilterState {
     enum Presence { All, Yes, No };
     Presence linkPresence = All;
     Presence notePresence = All;
+    Presence tagPresence = All;
 
     enum AspectRatio { AspectAny, Horizontal, Vertical, Square, Ratio169 };
     AspectRatio ratio = AspectAny;
@@ -75,7 +76,7 @@ struct FilterState {
     bool isEmpty() const {
         return ratings.isEmpty() && colors.isEmpty() && keyword.isEmpty() && types.isEmpty() &&
                createDates.isEmpty() && modifyDates.isEmpty() &&
-               linkPresence == All && notePresence == All && ratio == AspectAny &&
+               linkPresence == All && notePresence == All && tagPresence == All && ratio == AspectAny &&
                minSize == -1 && maxSize == -1 &&
                typeFilterText.trimmed().isEmpty() && createDateFilterText.trimmed().isEmpty() &&
                modifyDateFilterText.trimmed().isEmpty() && duplicatePresence == DupAll &&
@@ -180,6 +181,7 @@ private:
     QWidget* m_groupColor = nullptr;
     QWidget* m_groupLink = nullptr;
     QWidget* m_groupNote = nullptr;
+    QWidget* m_groupTag = nullptr;
     QWidget* m_groupRatio = nullptr;
     QWidget* m_groupDuplicate = nullptr;
 

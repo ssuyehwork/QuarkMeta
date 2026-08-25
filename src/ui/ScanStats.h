@@ -20,6 +20,8 @@ struct ScanStats {
     int noLinkCount = 0;
     int hasNoteCount = 0;
     int noNoteCount = 0;
+    int hasTagCount = 0;
+    int noTagCount = 0;
     int ratioHorizontalCount = 0;
     int ratioVerticalCount = 0;
     int ratioSquareCount = 0;

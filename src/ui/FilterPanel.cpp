@@ -132,6 +132,8 @@ void FilterPanel::syncUIFromFilterState() {
         else if (text == "有链接") shouldCheck = (m_filter.linkPresence == FilterState::Yes);
         else if (text == "无链接") shouldCheck = (m_filter.linkPresence == FilterState::No);
         else if (text == "有备注") shouldCheck = (m_filter.notePresence == FilterState::Yes);
+        else if (text == "已标签") shouldCheck = (m_filter.tagPresence == FilterState::Yes);
+        else if (text == "未标签") shouldCheck = (m_filter.tagPresence == FilterState::No);
         else if (text == "重复项") shouldCheck = (m_filter.duplicatePresence == FilterState::DuplicateOnly);
         else if (text == "未重复") shouldCheck = (m_filter.duplicatePresence == FilterState::UniqueOnly);
         else if (text == "无备注") shouldCheck = (m_filter.notePresence == FilterState::No);
@@ -405,6 +407,8 @@ void FilterPanel::populate(
                  else if (name == "无链接") count = m_currentStats.noLinkCount;
                  else if (name == "有备注") count = m_currentStats.hasNoteCount;
                  else if (name == "无备注") count = m_currentStats.noNoteCount;
+                 else if (name == "已标签") count = m_currentStats.hasTagCount;
+                 else if (name == "未标签") count = m_currentStats.noTagCount;
                  else if (name == "无缩略图 (提取失败)" || name == "无缩略图 (失败/跳过)") count = m_currentStats.noThumbnailCount;
 
                  cntLabel->setText(QString::number(count));
@@ -487,6 +491,40 @@ void FilterPanel::rebuildGroups() {
                 emit filterChanged(m_filter);
             });
         }
+
+        m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
+    }
+
+    // ── 8.5. 标签 (独立主选项) ──────────────────────────────────────────
+    {
+        QVBoxLayout* gl = nullptr;
+        QWidget* g = buildGroup("标签", gl);
+        m_groupTag = g;
+
+        QButtonGroup* tagGroup = new QButtonGroup(g);
+        tagGroup->setExclusive(false);
+
+        QCheckBox* cbYes = addFilterRow(gl, "已标签", m_currentStats.hasTagCount);
+        if (m_filter.tagPresence == FilterState::Yes) cbYes->setChecked(true);
+        connect(cbYes, &QCheckBox::toggled, this, [this, tagGroup, cbYes](bool on) {
+            if (on) {
+                for (QAbstractButton* b : tagGroup->buttons()) if (b != cbYes && b->isChecked()) b->setChecked(false);
+                m_filter.tagPresence = FilterState::Yes;
+            } else m_filter.tagPresence = FilterState::All;
+            emit filterChanged(m_filter);
+        });
+        tagGroup->addButton(cbYes);
+
+        QCheckBox* cbNo = addFilterRow(gl, "未标签", m_currentStats.noTagCount);
+        if (m_filter.tagPresence == FilterState::No) cbNo->setChecked(true);
+        connect(cbNo, &QCheckBox::toggled, this, [this, tagGroup, cbNo](bool on) {
+            if (on) {
+                for (QAbstractButton* b : tagGroup->buttons()) if (b != cbNo && b->isChecked()) b->setChecked(false);
+                m_filter.tagPresence = FilterState::No;
+            } else m_filter.tagPresence = FilterState::All;
+            emit filterChanged(m_filter);
+        });
+        tagGroup->addButton(cbNo);
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
