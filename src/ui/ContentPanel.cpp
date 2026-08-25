@@ -2619,8 +2619,8 @@ void ContentPanel::loadDirectory(const QString& path, bool recursive) {
         } 
         MetaCacheDecorator::decorate(driveRecords);
         m_model->setRecords(driveRecords);
-        // 2026-05-29 物理对齐：在加载“此电脑”后显式触发一次排序，确保置顶硬盘排在首位
-        m_proxyModel->sort(0, Qt::AscendingOrder);
+        // 2026-05-29 物理对齐：在加载“此电脑”后显式触发一次排序，使用持久化的 m_sortOrder
+        m_proxyModel->sort(0, m_sortOrder);
         m_isLoading = false;
         recalculateAndEmitStats();
         return; 
@@ -2648,7 +2648,7 @@ void ContentPanel::loadDirectory(const QString& path, bool recursive) {
         QMetaObject::invokeMethod(QCoreApplication::instance(), [panelPtr, path, allItems, reqId]() { 
             if (panelPtr && panelPtr->m_loadRequestId == reqId) { 
                 panelPtr->m_model->setRecords(allItems);
-                panelPtr->m_proxyModel->sort(0, Qt::AscendingOrder);
+                panelPtr->m_proxyModel->sort(0, panelPtr->m_sortOrder);
                 panelPtr->m_isLoading = false;
                 panelPtr->recalculateAndEmitStats();
                 // 2026-06-xx 物理同步：数据加载完成后强制重新应用筛选，防止显示已过滤掉的占位符记录
@@ -2792,7 +2792,7 @@ void ContentPanel::loadPaths(const QStringList& paths, int reqId) {
         QMetaObject::invokeMethod(QCoreApplication::instance(), [weakThis, records, reqId]() {
             if (weakThis && weakThis->m_loadRequestId == reqId) {
                 weakThis->m_model->setRecords(records);
-                weakThis->m_proxyModel->sort(0, Qt::AscendingOrder);
+                weakThis->m_proxyModel->sort(0, weakThis->m_sortOrder);
                 weakThis->m_isLoading = false;
                 weakThis->recalculateAndEmitStats();
                 weakThis->applyFilters(); 
