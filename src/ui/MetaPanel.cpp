@@ -232,14 +232,16 @@ void MetaPanel::initUi() {
     m_tagFlowLayout = new FlowLayout(m_tagContainer, 0, 4, 4);
     tagL->addWidget(m_tagContainer);
 
-    m_btnAddTagSmall = new QPushButton("+", m_tagContainer);
+    m_btnAddTagSmall = new QPushButton(m_tagContainer);
     m_btnAddTagSmall->setFixedSize(22, 22);
     m_btnAddTagSmall->setCursor(Qt::PointingHandCursor);
+    m_btnAddTagSmall->setIcon(UiHelper::getIcon("add", QColor("#CCCCCC"), 12));
+    m_btnAddTagSmall->setIconSize(QSize(12, 12));
     m_btnAddTagSmall->setProperty("tooltipText", "添加标签");
     m_btnAddTagSmall->installEventFilter(this);
     m_btnAddTagSmall->setStyleSheet(
-        "QPushButton { background-color: #2D2D30; border: 1px dashed #555555; border-radius: 4px; color: #CCCCCC; font-size: 13px; font-weight: bold; padding: 0; }"
-        "QPushButton:hover { background-color: #378ADD; border-color: #378ADD; color: #FFFFFF; }"
+        "QPushButton { background-color: #2D2D30; border: 1px dashed #555555; border-radius: 4px; padding: 0; }"
+        "QPushButton:hover { background-color: #378ADD; border-color: #378ADD; }"
     );
     connect(m_btnAddTagSmall, &QPushButton::clicked, this, [this]() {
         openTagSelectorOverlay(m_btnAddTagSmall);
