@@ -110,21 +110,22 @@ void MetaPanel::initUi() {
     m_containerLayout->addWidget(m_nameEdit);
 
     // ==========================================
-    // 模块 3: 星级评级 + 颜色色标条 (`m_ratingColorBox`)
+    // 模块 3: 星级评级 + 颜色色标条 (独立整洁容器)
     // ==========================================
     m_ratingColorBox = new QWidget(m_container);
-    m_ratingColorBox->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
     QVBoxLayout* ratingColorLayout = new QVBoxLayout(m_ratingColorBox);
-    ratingColorLayout->setContentsMargins(8, 6, 8, 6);
+    ratingColorLayout->setContentsMargins(0, 2, 0, 2);
     ratingColorLayout->setSpacing(8);
 
-    // 评级栏（⊘ + 5 星）
-    QHBoxLayout* starLayout = new QHBoxLayout();
-    starLayout->setContentsMargins(0, 0, 0, 0);
+    // 评级行（⊘ + 5 星）
+    QWidget* ratingRow = new QWidget(m_ratingColorBox);
+    ratingRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
+    QHBoxLayout* starLayout = new QHBoxLayout(ratingRow);
+    starLayout->setContentsMargins(8, 4, 8, 4);
     starLayout->setSpacing(4);
 
-    QPushButton* btnClearStar = new QPushButton("⊘", m_ratingColorBox);
-    btnClearStar->setFixedSize(22, 22);
+    QPushButton* btnClearStar = new QPushButton("⊘", ratingRow);
+    btnClearStar->setFixedSize(20, 20);
     btnClearStar->setCursor(Qt::PointingHandCursor);
     btnClearStar->setToolTip("清除评级");
     btnClearStar->setStyleSheet("QPushButton { border: none; color: #888; font-size: 13px; background: transparent; } QPushButton:hover { color: #FF551C; }");
@@ -135,8 +136,8 @@ void MetaPanel::initUi() {
     starLayout->addWidget(btnClearStar);
 
     for (int i = 1; i <= 5; ++i) {
-        QPushButton* btnStar = new QPushButton(m_ratingColorBox);
-        btnStar->setFixedSize(22, 22);
+        QPushButton* btnStar = new QPushButton(ratingRow);
+        btnStar->setFixedSize(20, 20);
         btnStar->setCursor(Qt::PointingHandCursor);
         btnStar->setIcon(UiHelper::getIcon("star", QColor("#555555"), 16));
         btnStar->setIconSize(QSize(16, 16));
@@ -151,18 +152,20 @@ void MetaPanel::initUi() {
         starLayout->addWidget(btnStar);
     }
     starLayout->addStretch();
-    ratingColorLayout->addLayout(starLayout);
+    ratingColorLayout->addWidget(ratingRow);
 
-    // 颜色标记栏（无色标 + 8 基础色）
-    QHBoxLayout* colorLayout = new QHBoxLayout();
-    colorLayout->setContentsMargins(0, 0, 0, 0);
+    // 颜色标记行（无色标 + 8 基础色）
+    QWidget* colorRow = new QWidget(m_ratingColorBox);
+    colorRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
+    QHBoxLayout* colorLayout = new QHBoxLayout(colorRow);
+    colorLayout->setContentsMargins(8, 4, 8, 4);
     colorLayout->setSpacing(4);
 
-    QPushButton* btnNoColor = new QPushButton("⊘", m_ratingColorBox);
-    btnNoColor->setFixedSize(18, 18);
+    QPushButton* btnNoColor = new QPushButton("⊘", colorRow);
+    btnNoColor->setFixedSize(16, 16);
     btnNoColor->setCursor(Qt::PointingHandCursor);
     btnNoColor->setToolTip("无色标");
-    btnNoColor->setStyleSheet("QPushButton { border: 1px solid #555; border-radius: 9px; color: #888; font-size: 11px; background: transparent; } QPushButton:hover { border-color: #FFF; color: #FFF; }");
+    btnNoColor->setStyleSheet("QPushButton { border: 1px solid #555; border-radius: 8px; color: #888; font-size: 10px; background: transparent; } QPushButton:hover { border-color: #FFF; color: #FFF; }");
     connect(btnNoColor, &QPushButton::clicked, this, [this]() {
         setColor(L"");
         emit metadataChanged(m_currentRating, m_currentColor);
@@ -175,7 +178,7 @@ void MetaPanel::initUi() {
     };
 
     for (const auto& pair : s_colorMap) {
-        QPushButton* btnColor = new QPushButton(m_ratingColorBox);
+        QPushButton* btnColor = new QPushButton(colorRow);
         btnColor->setFixedSize(16, 16);
         btnColor->setCursor(Qt::PointingHandCursor);
         btnColor->setToolTip(pair.first);
@@ -193,7 +196,7 @@ void MetaPanel::initUi() {
         colorLayout->addWidget(btnColor);
     }
     colorLayout->addStretch();
-    ratingColorLayout->addLayout(colorLayout);
+    ratingColorLayout->addWidget(colorRow);
     m_containerLayout->addWidget(m_ratingColorBox);
 
     // ==========================================
@@ -204,7 +207,7 @@ void MetaPanel::initUi() {
     tagL->setContentsMargins(0, 0, 0, 0);
     tagL->setSpacing(6);
 
-    m_btnAddTagBig = new QPushButton(UiHelper::getIcon("add", QColor("#AAAAAA"), 14), " + 添加标签", m_tagBox);
+    m_btnAddTagBig = new QPushButton(UiHelper::getIcon("add", QColor("#AAAAAA"), 14), "添加标签", m_tagBox);
     m_btnAddTagBig->setFixedHeight(28);
     m_btnAddTagBig->setCursor(Qt::PointingHandCursor);
     m_btnAddTagBig->setStyleSheet(
