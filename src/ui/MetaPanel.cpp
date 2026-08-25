@@ -219,7 +219,7 @@ void MetaPanel::initUi() {
     m_btnAddTagBig->setFixedHeight(28);
     m_btnAddTagBig->setCursor(Qt::PointingHandCursor);
     m_btnAddTagBig->setStyleSheet(
-        "QPushButton { background-color: #252526; border: 1px dashed #3c3c3c; border-radius: 4px; padding: 0 10px; color: #AAAAAA; font-size: 12px; text-align: center; }"
+        "QPushButton { background-color: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding: 0 10px; color: #AAAAAA; font-size: 12px; text-align: center; }"
         "QPushButton:hover { background-color: #2a2d2e; border-color: #378ADD; color: #FFFFFF; }"
         "QPushButton:pressed { background-color: #333333; }"
     );
@@ -240,7 +240,7 @@ void MetaPanel::initUi() {
     m_btnAddTagSmall->setProperty("tooltipText", "添加标签");
     m_btnAddTagSmall->installEventFilter(this);
     m_btnAddTagSmall->setStyleSheet(
-        "QPushButton { background-color: #2D2D30; border: 1px dashed #555555; border-radius: 4px; padding: 0; }"
+        "QPushButton { background-color: #2D2D30; border: 1px solid #555555; border-radius: 4px; padding: 0; }"
         "QPushButton:hover { background-color: #378ADD; border-color: #378ADD; }"
     );
     connect(m_btnAddTagSmall, &QPushButton::clicked, this, [this]() {
