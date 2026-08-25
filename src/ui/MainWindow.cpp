@@ -107,9 +107,8 @@ MainWindow::MainWindow(QWidget* parent)
     // 配合 ToolTipOverlay 内部的 winId() 强行预热，消除初次显示延迟
     ToolTipOverlay::instance();
 
-    // 彻底废除硬编码的 1200x800 与 1180x653！
-    // 设置基础单栏极小保底（内容区 230px + 边距），高度保底 400px
-    setMinimumSize(240, 400);
+    // 锁定物理保底：最小宽度 465px（防止顶栏控件重叠），最小高度 400px
+    setMinimumSize(465, 400);
     setWindowTitle("QuarkMeta");
 
     // ============================================================
@@ -1745,11 +1744,13 @@ void MainWindow::updateDynamicMinimumSize() {
 
     if (visibleCount <= 0) visibleCount = 1;
 
-    // 单个面板 230px + 分割手柄 (5px * (N - 1)) + 全局呼吸边距 (10px)
-    int minW = (visibleCount * 230) + ((visibleCount - 1) * 5) + 10;
+    // 单面板计算值：(面板数 * 230) + (分割条 * 5) + (外边距 10)
+    int calculatedMinW = (visibleCount * 230) + ((visibleCount - 1) * 5) + 10;
 
-    // 动态应用给主窗口
-    setMinimumWidth(minW);
+    // 🚨 核心约束：无论隐藏了多少栏，窗口宽度绝对不低于 465px，彻底杜绝顶栏重叠
+    int finalMinW = qMax(465, calculatedMinW);
+
+    setMinimumWidth(finalMinW);
 }
 
 void MainWindow::savePanelVisibility() {
