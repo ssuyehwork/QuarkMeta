@@ -350,12 +350,31 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         }
     }
 
-    // 2026-07-xx Plan-92: 统一使用 FilterState 中的 keyword 进行文件名过滤
+    // 统一支持：文件名/文件夹名、已绑定标签、备注说明 多维度命中搜索
     if (!currentFilter.keyword.isEmpty()) {
-        QString fileName = idx.data(Qt::DisplayRole).toString(); 
-        if (!fileName.contains(currentFilter.keyword, Qt::CaseInsensitive)) {
-            return false;
+        const QString& kw = currentFilter.keyword;
+
+        // 1. 匹配文件名/文件夹名
+        bool match = record.filename.contains(kw, Qt::CaseInsensitive);
+
+        // 2. 匹配绑定的标签 (Tags)
+        if (!match) {
+            for (const QString& tag : record.tags) {
+                if (tag.contains(kw, Qt::CaseInsensitive)) {
+                    match = true;
+                    break;
+                }
+            }
         }
+
+        // 3. 匹配备注说明 (Note)
+        if (!match && !record.note.isEmpty()) {
+            if (record.note.contains(kw, Qt::CaseInsensitive)) {
+                match = true;
+            }
+        }
+
+        if (!match) return false;
     }
 
     return true;
