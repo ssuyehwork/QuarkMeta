@@ -474,28 +474,7 @@ void FilterPanel::rebuildGroups() {
         delete item;
     }
 
-    // ── 1. 评级 ──────────────────────────────────────────────
-    if (!m_ratingCounts.isEmpty()) {
-        QVBoxLayout* gl = nullptr;
-        QWidget* g = buildGroup("评级", gl);
-        m_groupRating = g;
-        for (int r : {0, 1, 2, 3, 4, 5}) {
-            if (!m_ratingCounts.contains(r) || m_ratingCounts[r] <= 0) continue;
-            QCheckBox* cb = addFilterRow(gl, ratingDisplayName(r), m_ratingCounts[r]);
-            cb->blockSignals(true);
-            cb->setChecked(m_filter.ratings.contains(r));
-            cb->blockSignals(false);
-            connect(cb, &QCheckBox::toggled, this, [this, r](bool on) {
-                if (on) { if (!m_filter.ratings.contains(r)) m_filter.ratings.append(r); }
-                else m_filter.ratings.removeAll(r);
-                emit filterChanged(m_filter);
-            });
-        }
-
-        m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
-    }
-
-    // ── 8.5. 标签 (独立主选项) ──────────────────────────────────────────
+    // ── 1. 标签 (独立主选项，位于最顶部) ──────────────────────────────
     {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("标签", gl);
@@ -528,6 +507,28 @@ void FilterPanel::rebuildGroups() {
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
+
+    // ── 2. 评级 ──────────────────────────────────────────────
+    if (!m_ratingCounts.isEmpty()) {
+        QVBoxLayout* gl = nullptr;
+        QWidget* g = buildGroup("评级", gl);
+        m_groupRating = g;
+        for (int r : {0, 1, 2, 3, 4, 5}) {
+            if (!m_ratingCounts.contains(r) || m_ratingCounts[r] <= 0) continue;
+            QCheckBox* cb = addFilterRow(gl, ratingDisplayName(r), m_ratingCounts[r]);
+            cb->blockSignals(true);
+            cb->setChecked(m_filter.ratings.contains(r));
+            cb->blockSignals(false);
+            connect(cb, &QCheckBox::toggled, this, [this, r](bool on) {
+                if (on) { if (!m_filter.ratings.contains(r)) m_filter.ratings.append(r); }
+                else m_filter.ratings.removeAll(r);
+                emit filterChanged(m_filter);
+            });
+        }
+
+        m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
+    }
+
 
     // ── 2. 颜色标记 (动态呈现：有对应文件时才显示) ────────────
     {
