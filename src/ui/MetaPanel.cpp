@@ -200,7 +200,7 @@ void MetaPanel::initUi() {
     m_containerLayout->addWidget(createCollapsibleSection("关联网址", m_linkBox, true));
 
     // =========================================================================
-    // 顺序 5: 星级评级 + 颜色色标条 (星级 + 8 纯色圆点，彻底移除无色标按钮)
+    // 顺序 5: 星级评级 + 颜色色标条 (星级行 + 颜色行，均包含清除 ⊘ 按钮)
     // =========================================================================
     m_ratingColorBox = new QWidget(m_container);
     QVBoxLayout* ratingColorLayout = new QVBoxLayout(m_ratingColorBox);
@@ -245,12 +245,25 @@ void MetaPanel::initUi() {
     starLayout->addStretch();
     ratingColorLayout->addWidget(ratingRow);
 
-    // 颜色标记行 (仅 8 基础纯色圆点)
+    // 颜色标记行 (无色标 ⊘ + 8 基础纯色圆点)
     QWidget* colorRow = new QWidget(m_ratingColorBox);
     colorRow->setStyleSheet("QWidget { background: transparent; border: none; }");
     QHBoxLayout* colorLayout = new QHBoxLayout(colorRow);
     colorLayout->setContentsMargins(0, 2, 0, 2);
     colorLayout->setSpacing(6);
+
+    QPushButton* btnNoColor = new QPushButton(colorRow);
+    btnNoColor->setFixedSize(22, 22);
+    btnNoColor->setCursor(Qt::PointingHandCursor);
+    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 16));
+    btnNoColor->setIconSize(QSize(16, 16));
+    btnNoColor->setProperty("tooltipText", "无色标");
+    btnNoColor->installEventFilter(this);
+    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333333; border-radius: 4px; }");
+    connect(btnNoColor, &QPushButton::clicked, this, [this]() {
+        setColor(L"");
+    });
+    colorLayout->addWidget(btnNoColor);
 
     static const QVector<QPair<QString, QString>> s_colorMap = {
         {"红色", "#E24B4A"}, {"橙色", "#EF9F27"}, {"黄色", "#FECF0E"}, {"绿色", "#639922"},
