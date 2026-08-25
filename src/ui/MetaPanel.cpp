@@ -328,7 +328,7 @@ void MetaPanel::initUi() {
         QString p = m_pathEdit->toPlainText().trimmed();
         if (!p.isEmpty()) {
             QApplication::clipboard()->setText(QDir::toNativeSeparators(p));
-            ToolTipOverlay::showText(m_btnCopyPath->mapToGlobal(QPoint(0, -28)), "已复制路径");
+            ToolTipOverlay::instance()->showText(m_btnCopyPath->mapToGlobal(QPoint(0, -28)), "已复制路径");
         }
     });
     pathBtnL->addWidget(m_btnCopyPath);
@@ -564,7 +564,7 @@ void MetaPanel::onTagDeleted(const QString& text) {
     QStringList remainingTags;
     for (int i = 0; i < m_tagFlowLayout->count(); ++i) {
         TagPill* pill = qobject_cast<TagPill*>(m_tagFlowLayout->itemAt(i)->widget());
-        if (pill && pill != m_btnAddTagSmall) {
+        if (pill) {
             remainingTags.append(pill->property("tagText").toString());
         }
     }
