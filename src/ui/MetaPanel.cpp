@@ -473,8 +473,7 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
         m_lblImagePreview->clear();
         m_lblImagePreview->hide();
     } else {
-        int maxW = m_topPreviewBox ? qMax(180, m_topPreviewBox->width() - 16) : 200;
-        QPixmap scaled = pixmap.scaled(maxW, 160, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        QPixmap scaled = pixmap.scaled(QSize(240, 160), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         m_lblImagePreview->setPixmap(scaled);
         m_lblImagePreview->show();
     }
@@ -653,11 +652,11 @@ void MetaPanel::resizeEvent(QResizeEvent* event) {
 void MetaPanel::adjustFlowHeights() {
     if (m_topPreviewBox && m_paletteFlowLayout) {
         int contentH = m_paletteFlowLayout->heightForWidth(m_topPreviewBox->width());
-        bool hasPreview = (m_lblImagePreview && m_lblImagePreview->isVisible() && !m_lblImagePreview->pixmap().isNull());
+        bool hasPreview = (m_lblImagePreview && m_lblImagePreview->isVisible() && m_lblImagePreview->pixmap() && !m_lblImagePreview->pixmap()->isNull());
         bool hasPalette = (m_paletteFlowLayout->count() > 0);
         if (hasPreview || hasPalette) {
             m_topPreviewBox->show();
-            int previewH = hasPreview ? m_lblImagePreview->pixmap().height() : 0;
+            int previewH = (hasPreview && m_lblImagePreview->pixmap()) ? m_lblImagePreview->pixmap()->height() : 0;
             m_topPreviewBox->setFixedHeight(qMax(32, contentH + previewH + 16));
         } else {
             m_topPreviewBox->hide();

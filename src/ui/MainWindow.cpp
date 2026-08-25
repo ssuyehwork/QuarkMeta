@@ -26,7 +26,7 @@
 #include "ToolTipOverlay.h"
 #include "../meta/DuplicateDetectorService.h"
 #include "../util/DiskMediaExtractor.h"
-#include "../util/DiskMediaExtractor.h"
+#include "ShellIconManager.h"
 #include "DuplicateConflictDialog.h"
 #include "TaskProgressToolBar.h"
 #include "../core/VolumeOnlineManager.h"
@@ -426,18 +426,27 @@ void MainWindow::initUi() {
             m_metaPanel->setURL(urlStr);
             m_metaPanel->setPalettes(palettes);
 
-            QVariant decoData = idx.data(Qt::DecorationRole);
-            bool hasThumb = idx.data(HasThumbnailRole).toBool();
-            if (hasThumb && decoData.canConvert<QIcon>()) {
-                QIcon icon = decoData.value<QIcon>();
+            QModelIndex idxPreview = indexes.first();
+            QPixmap previewPixmap;
+            QVariant decData = idxPreview.data(Qt::DecorationRole);
+            if (decData.canConvert<QIcon>()) {
+                QIcon icon = decData.value<QIcon>();
                 if (!icon.isNull()) {
-                    m_metaPanel->setImagePreview(icon.pixmap(256, 256));
-                } else {
-                    m_metaPanel->setImagePreview(QPixmap());
+                    previewPixmap = icon.pixmap(128, 128);
                 }
-            } else {
-                m_metaPanel->setImagePreview(QPixmap());
+            } else if (decData.canConvert<QPixmap>()) {
+                previewPixmap = decData.value<QPixmap>();
             }
+
+            if (previewPixmap.isNull()) {
+                QImage img = DiskMediaExtractor::getCapsuleThumbnailReadOnly(paths.first());
+                if (!img.isNull()) {
+                    previewPixmap = QPixmap::fromImage(img);
+                } else {
+                    previewPixmap = ShellIconManager::getFileIcon(paths.first(), 128).pixmap(128, 128);
+                }
+            }
+            m_metaPanel->setImagePreview(previewPixmap);
         }
         
         int totalCount = m_contentPanel->getProxyModel()->rowCount();
