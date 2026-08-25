@@ -211,6 +211,7 @@ public slots:
 private:
     void loadPanelVisibility();
     void savePanelVisibility();
+    void updateDynamicMinimumSize();
 };
 
 } // namespace QuarkMeta

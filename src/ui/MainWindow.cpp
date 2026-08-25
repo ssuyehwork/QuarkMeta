@@ -107,8 +107,9 @@ MainWindow::MainWindow(QWidget* parent)
     // 配合 ToolTipOverlay 内部的 winId() 强行预热，消除初次显示延迟
     ToolTipOverlay::instance();
 
-    resize(1200, 800);
-    setMinimumSize(1180, 653); // 物理对齐：5x230px面板 + 20px分割手柄 + 10px全局边距
+    // 彻底废除硬编码的 1200x800 与 1180x653！
+    // 设置基础单栏极小保底（内容区 230px + 边距），高度保底 400px
+    setMinimumSize(240, 400);
     setWindowTitle("QuarkMeta");
 
     // ============================================================
@@ -229,6 +230,15 @@ void MainWindow::initUi() {
 
     // 1. 先应用面板显隐状态
     loadPanelVisibility();
+
+    // 恢复用户上一次的窗口几何位置、大小与最大化状态
+    QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
+    if (!savedGeom.isEmpty()) {
+        restoreGeometry(savedGeom);
+    } else {
+        // 首次打开默认尺寸（大屏推荐 1400x850）
+        resize(1400, 850);
+    }
 
     // 2. 延迟至下一个事件循环（等窗口 geometry 稳定后）再恢复 SplitterState
     QByteArray state = AppConfig::instance().getValue("MainWindow/SplitterState").toByteArray();
@@ -1633,6 +1643,10 @@ void MainWindow::changeEvent(QEvent* event) {
 
 void MainWindow::closeEvent(QCloseEvent* event) {
     AppConfig::instance().setValue("MainWindow/LastPath", m_currentPath);
+
+    // 🚨 物理持久化当前窗口大小、屏幕位置与最大化/正常状态
+    AppConfig::instance().setValue("MainWindow/Geometry", saveGeometry());
+
     // 2026-04-11 按照用户要求：物理保存各容器宽度状态
     if (m_mainSplitter) {
         AppConfig::instance().setValue("MainWindow/SplitterState", m_mainSplitter->saveState());
@@ -1659,8 +1673,9 @@ void MainWindow::populatePanelMenu(QMenu* menu) {
         action->setChecked(panel->isVisible());
         action->setEnabled(canHide);
         // 使用 Lambda 捕获成员变量，确保连接有效
-        connect(action, &QAction::toggled, panel, [panel](bool visible) {
+        connect(action, &QAction::toggled, panel, [this, panel](bool visible) {
             panel->setVisible(visible);
+            updateDynamicMinimumSize(); // 🚨 用户右键切换面板显隐时实时刷新最小宽度
         });
     };
 
@@ -1705,17 +1720,36 @@ void MainWindow::resetSplitterLayout() {
     AppConfig::instance().sync();
 
     ToolTipOverlay::instance()->showText(QCursor::pos(), "布局已重置为默认值", 1500);
+    updateDynamicMinimumSize();
 }
 
 void MainWindow::loadPanelVisibility() {
     QVariant val = AppConfig::instance().getValue("MainWindow/PanelVisibility");
-    if (!val.isValid()) return;
+    if (val.isValid()) {
+        QStringList hiddenPanels = val.toStringList();
+        if (hiddenPanels.contains("nav"))      m_navPanel->hide();
+        if (hiddenPanels.contains("favorite")) m_favoritePanel->hide();
+        if (hiddenPanels.contains("meta"))     m_metaPanel->hide();
+        if (hiddenPanels.contains("filter"))   m_filterPanel->hide();
+    }
+    updateDynamicMinimumSize(); // 🚨 每次加载面板显隐后，立即刷新最小宽度约束
+}
 
-    QStringList hiddenPanels = val.toStringList();
-    if (hiddenPanels.contains("nav"))      m_navPanel->hide();
-    if (hiddenPanels.contains("favorite")) m_favoritePanel->hide();
-    if (hiddenPanels.contains("meta"))     m_metaPanel->hide();
-    if (hiddenPanels.contains("filter"))   m_filterPanel->hide();
+void MainWindow::updateDynamicMinimumSize() {
+    int visibleCount = 0;
+    if (m_navPanel && m_navPanel->isVisible()) visibleCount++;
+    if (m_favoritePanel && m_favoritePanel->isVisible()) visibleCount++;
+    if (m_contentPanel && m_contentPanel->isVisible()) visibleCount++;
+    if (m_metaPanel && m_metaPanel->isVisible()) visibleCount++;
+    if (m_filterPanel && m_filterPanel->isVisible()) visibleCount++;
+
+    if (visibleCount <= 0) visibleCount = 1;
+
+    // 单个面板 230px + 分割手柄 (5px * (N - 1)) + 全局呼吸边距 (10px)
+    int minW = (visibleCount * 230) + ((visibleCount - 1) * 5) + 10;
+
+    // 动态应用给主窗口
+    setMinimumWidth(minW);
 }
 
 void MainWindow::savePanelVisibility() {
