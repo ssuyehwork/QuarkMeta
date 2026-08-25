@@ -128,11 +128,11 @@ void MetaPanel::initUi() {
     QPushButton* btnClearStar = new QPushButton(ratingRow);
     btnClearStar->setFixedSize(22, 22);
     btnClearStar->setCursor(Qt::PointingHandCursor);
-    btnClearStar->setIcon(UiHelper::getIcon("prohibit", QColor("#888888"), 14));
-    btnClearStar->setIconSize(QSize(14, 14));
+    btnClearStar->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 16));
+    btnClearStar->setIconSize(QSize(16, 16));
     btnClearStar->setProperty("tooltipText", "清除评级");
     btnClearStar->installEventFilter(this);
-    btnClearStar->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 3px; }");
+    btnClearStar->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 4px; }");
     connect(btnClearStar, &QPushButton::clicked, this, [this]() {
         setRating(0);
         emit metadataChanged(m_currentRating, m_currentColor);
@@ -166,13 +166,13 @@ void MetaPanel::initUi() {
     colorLayout->setSpacing(4);
 
     QPushButton* btnNoColor = new QPushButton(colorRow);
-    btnNoColor->setFixedSize(20, 20);
+    btnNoColor->setFixedSize(22, 22);
     btnNoColor->setCursor(Qt::PointingHandCursor);
-    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 14));
-    btnNoColor->setIconSize(QSize(14, 14));
+    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 16));
+    btnNoColor->setIconSize(QSize(16, 16));
     btnNoColor->setProperty("tooltipText", "无色标");
     btnNoColor->installEventFilter(this);
-    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 10px; }");
+    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 4px; }");
     connect(btnNoColor, &QPushButton::clicked, this, [this]() {
         setColor(L"");
         emit metadataChanged(m_currentRating, m_currentColor);
