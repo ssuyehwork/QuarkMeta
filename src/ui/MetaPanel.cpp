@@ -123,10 +123,10 @@ void MetaPanel::initUi() {
     ratingRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
     QHBoxLayout* starLayout = new QHBoxLayout(ratingRow);
     starLayout->setContentsMargins(8, 4, 8, 4);
-    starLayout->setSpacing(4);
+    starLayout->setSpacing(6);
 
     QPushButton* btnClearStar = new QPushButton(ratingRow);
-    btnClearStar->setFixedSize(20, 20);
+    btnClearStar->setFixedSize(22, 22);
     btnClearStar->setCursor(Qt::PointingHandCursor);
     btnClearStar->setIcon(UiHelper::getIcon("prohibit", QColor("#888888"), 14));
     btnClearStar->setIconSize(QSize(14, 14));
@@ -141,10 +141,10 @@ void MetaPanel::initUi() {
 
     for (int i = 1; i <= 5; ++i) {
         QPushButton* btnStar = new QPushButton(ratingRow);
-        btnStar->setFixedSize(20, 20);
+        btnStar->setFixedSize(22, 22);
         btnStar->setCursor(Qt::PointingHandCursor);
-        btnStar->setIcon(UiHelper::getIcon("star", QColor("#555555"), 16));
-        btnStar->setIconSize(QSize(16, 16));
+        btnStar->setIcon(UiHelper::getIcon("star", QColor("#555555"), 18));
+        btnStar->setIconSize(QSize(18, 18));
         btnStar->setStyleSheet("QPushButton { border: none; background: transparent; }");
         
         connect(btnStar, &QPushButton::clicked, this, [this, i]() {
@@ -166,13 +166,13 @@ void MetaPanel::initUi() {
     colorLayout->setSpacing(4);
 
     QPushButton* btnNoColor = new QPushButton(colorRow);
-    btnNoColor->setFixedSize(18, 18);
+    btnNoColor->setFixedSize(20, 20);
     btnNoColor->setCursor(Qt::PointingHandCursor);
     btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 14));
     btnNoColor->setIconSize(QSize(14, 14));
     btnNoColor->setProperty("tooltipText", "无色标");
     btnNoColor->installEventFilter(this);
-    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 9px; }");
+    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 10px; }");
     connect(btnNoColor, &QPushButton::clicked, this, [this]() {
         setColor(L"");
         emit metadataChanged(m_currentRating, m_currentColor);
@@ -750,8 +750,9 @@ void MetaPanel::setRating(int rating) {
         m_starBtns[i]->setIcon(UiHelper::getIcon(
             active ? "star_filled" : "star",
             active ? QColor("#FF551C") : QColor("#555555"),
-            16
+            18
         ));
+        m_starBtns[i]->setIconSize(QSize(18, 18));
     }
 }
 
