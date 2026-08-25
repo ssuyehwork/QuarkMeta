@@ -115,7 +115,7 @@ void MetaPanel::initUi() {
     // =========================================================================
     m_topPreviewBox = new QWidget(m_container);
     m_topPreviewBox->setObjectName("TopPreviewBox");
-    m_topPreviewBox->setStyleSheet("QWidget#TopPreviewBox { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
+    m_topPreviewBox->setStyleSheet("QWidget#TopPreviewBox { background: #252526; border: none; border-radius: 4px; }");
     QVBoxLayout* previewLayout = new QVBoxLayout(m_topPreviewBox);
     previewLayout->setContentsMargins(6, 6, 6, 6);
     previewLayout->setSpacing(6);
@@ -209,7 +209,7 @@ void MetaPanel::initUi() {
 
     // 星级行 (清除 ⊘ + 5 星)
     QWidget* ratingRow = new QWidget(m_ratingColorBox);
-    ratingRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
+    ratingRow->setStyleSheet("QWidget { background: #252526; border: none; border-radius: 4px; }");
     QHBoxLayout* starLayout = new QHBoxLayout(ratingRow);
     starLayout->setContentsMargins(8, 4, 8, 4);
     starLayout->setSpacing(6);
@@ -247,7 +247,7 @@ void MetaPanel::initUi() {
 
     // 颜色标记行 (仅 8 基础纯色圆点)
     QWidget* colorRow = new QWidget(m_ratingColorBox);
-    colorRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
+    colorRow->setStyleSheet("QWidget { background: #252526; border: none; border-radius: 4px; }");
     QHBoxLayout* colorLayout = new QHBoxLayout(colorRow);
     colorLayout->setContentsMargins(8, 4, 8, 4);
     colorLayout->setSpacing(6);
