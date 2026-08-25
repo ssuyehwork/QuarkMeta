@@ -2875,6 +2875,11 @@ void ContentPanel::recalculateAndEmitStats() {
         for (const auto& record : records) {
             if (!weakThis) return;
 
+            // 0. 隐藏属性过滤（关闭隐藏项显示时，隐藏属性文件不参与筛选面板统计）
+            if (record.isHidden && !weakThis->m_currentFilter.showHidden) {
+                continue;
+            }
+
             stats.ratingCounts[record.rating]++;
             QString normHex = UiHelper::normalizeColorHex(record.manualColor);
             stats.colorCounts[normHex]++;
