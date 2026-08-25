@@ -174,7 +174,7 @@ void MetaPanel::initUi() {
     m_linkEdit->setPlaceholderText("添加关联网址...");
     m_linkEdit->setFixedHeight(28);
     m_linkEdit->setStyleSheet(
-        "QLineEdit { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding-left: 8px; padding-right: 4px; font-size: 12px; color: #378ADD; }"
+        "QLineEdit { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding-left: 8px; padding-right: 28px; font-size: 12px; color: #378ADD; }"
         "QLineEdit:focus { border-color: #378ADD; }"
     );
     m_linkEdit->installEventFilter(this);
@@ -185,6 +185,10 @@ void MetaPanel::initUi() {
     for (QToolButton* btn : m_linkEdit->findChildren<QToolButton*>()) {
         if (btn->defaultAction() == m_actOpenLink) {
             btn->setCursor(Qt::PointingHandCursor);
+            btn->setStyleSheet(
+                "QToolButton { border: none; border-left: 1px solid #3c3c3c; background: transparent; padding: 0 4px; }"
+                "QToolButton:hover { background: #333333; }"
+            );
         }
     }
 
