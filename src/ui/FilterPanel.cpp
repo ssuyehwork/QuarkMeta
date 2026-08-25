@@ -141,7 +141,8 @@ void FilterPanel::syncUIFromFilterState() {
         else if (text == "竖图") shouldCheck = (m_filter.ratio == FilterState::Vertical);
         else if (text == "方形") shouldCheck = (m_filter.ratio == FilterState::Square);
         else if (text == "16:9") shouldCheck = (m_filter.ratio == FilterState::Ratio169);
-        else if (text == "无缩略图 (失败/跳过)") shouldCheck = m_filter.noThumbnailOnly;
+        else if (text == "有缩略图") shouldCheck = (m_filter.thumbnailPresence == FilterState::HasThumbnail);
+        else if (text == "无缩略图 (提取失败)" || text == "无缩略图 (失败/跳过)") shouldCheck = (m_filter.thumbnailPresence == FilterState::NoThumbnail);
 
         cb->blockSignals(true);
         cb->setChecked(shouldCheck);
@@ -409,6 +410,7 @@ void FilterPanel::populate(
                  else if (name == "无备注") count = m_currentStats.noNoteCount;
                  else if (name == "已标签") count = m_currentStats.hasTagCount;
                  else if (name == "未标签") count = m_currentStats.noTagCount;
+                 else if (name == "有缩略图") count = m_currentStats.hasThumbnailCount;
                  else if (name == "无缩略图 (提取失败)" || name == "无缩略图 (失败/跳过)") count = m_currentStats.noThumbnailCount;
 
                  cntLabel->setText(QString::number(count));
@@ -1002,14 +1004,30 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("缩略图状态", gl);
 
-        QCheckBox* cb = addFilterRow(gl, "无缩略图 (提取失败)", m_currentStats.noThumbnailCount);
-        cb->blockSignals(true);
-        cb->setChecked(m_filter.noThumbnailOnly);
-        cb->blockSignals(false);
-        connect(cb, &QCheckBox::toggled, this, [this](bool on) {
-            m_filter.noThumbnailOnly = on;
+        QButtonGroup* thumbGroup = new QButtonGroup(g);
+        thumbGroup->setExclusive(false);
+
+        QCheckBox* cbYes = addFilterRow(gl, "有缩略图", m_currentStats.hasThumbnailCount);
+        if (m_filter.thumbnailPresence == FilterState::HasThumbnail) cbYes->setChecked(true);
+        connect(cbYes, &QCheckBox::toggled, this, [this, thumbGroup, cbYes](bool on) {
+            if (on) {
+                for (QAbstractButton* b : thumbGroup->buttons()) if (b != cbYes && b->isChecked()) b->setChecked(false);
+                m_filter.thumbnailPresence = FilterState::HasThumbnail;
+            } else m_filter.thumbnailPresence = FilterState::ThumbAll;
             emit filterChanged(m_filter);
         });
+        thumbGroup->addButton(cbYes);
+
+        QCheckBox* cbNo = addFilterRow(gl, "无缩略图 (提取失败)", m_currentStats.noThumbnailCount);
+        if (m_filter.thumbnailPresence == FilterState::NoThumbnail) cbNo->setChecked(true);
+        connect(cbNo, &QCheckBox::toggled, this, [this, thumbGroup, cbNo](bool on) {
+            if (on) {
+                for (QAbstractButton* b : thumbGroup->buttons()) if (b != cbNo && b->isChecked()) b->setChecked(false);
+                m_filter.thumbnailPresence = FilterState::NoThumbnail;
+            } else m_filter.thumbnailPresence = FilterState::ThumbAll;
+            emit filterChanged(m_filter);
+        });
+        thumbGroup->addButton(cbNo);
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }

@@ -29,6 +29,7 @@ struct ScanStats {
     int duplicateCount = 0;
     int uniqueCount = 0;
     int noThumbnailCount = 0;
+    int hasThumbnailCount = 0;
 };
 
 } // namespace QuarkMeta

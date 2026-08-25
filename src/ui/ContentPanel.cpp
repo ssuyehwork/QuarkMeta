@@ -327,11 +327,13 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         }
     } 
  
-    // 10.5 无缩略图过滤（只要是图形格式且无物理缩略图缓存，即判定为无缩略图）
-    if (currentFilter.noThumbnailOnly) {
+    // 10.5 缩略图状态过滤
+    if (currentFilter.thumbnailPresence != FilterState::ThumbAll) {
         if (record.isDir || !UiHelper::isGraphicsFile(record.suffix)) return false;
         QString thumbPath = DiskMediaExtractor::getDiskThumbCachePath(record.path);
-        if (QFile::exists(thumbPath)) return false;
+        bool hasThumb = QFile::exists(thumbPath);
+        if (currentFilter.thumbnailPresence == FilterState::HasThumbnail && !hasThumb) return false;
+        if (currentFilter.thumbnailPresence == FilterState::NoThumbnail && hasThumb) return false;
     }
 
     // 11. 重复状态过滤 (O(1) 瞬时判定)
@@ -2895,10 +2897,12 @@ void ContentPanel::recalculateAndEmitStats() {
                     stats.uniqueCount++;
                 }
 
-                // 无缩略图 (提取失败/缺失) 统计
+                // 缩略图状态 (提取成功/缺失) 统计
                 if (UiHelper::isGraphicsFile(record.suffix)) {
                     QString thumbPath = DiskMediaExtractor::getDiskThumbCachePath(record.path);
-                    if (!QFile::exists(thumbPath)) {
+                    if (QFile::exists(thumbPath)) {
+                        stats.hasThumbnailCount++;
+                    } else {
                         stats.noThumbnailCount++;
                     }
                 }
