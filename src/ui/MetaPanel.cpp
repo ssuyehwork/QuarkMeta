@@ -18,6 +18,7 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QCursor>
 
 namespace QuarkMeta {
 
@@ -127,7 +128,8 @@ void MetaPanel::initUi() {
     QPushButton* btnClearStar = new QPushButton("⊘", ratingRow);
     btnClearStar->setFixedSize(20, 20);
     btnClearStar->setCursor(Qt::PointingHandCursor);
-    btnClearStar->setToolTip("清除评级");
+    btnClearStar->setProperty("tooltipText", "清除评级");
+    btnClearStar->installEventFilter(this);
     btnClearStar->setStyleSheet("QPushButton { border: none; color: #888; font-size: 13px; background: transparent; } QPushButton:hover { color: #FF551C; }");
     connect(btnClearStar, &QPushButton::clicked, this, [this]() {
         setRating(0);
@@ -164,7 +166,8 @@ void MetaPanel::initUi() {
     QPushButton* btnNoColor = new QPushButton("⊘", colorRow);
     btnNoColor->setFixedSize(16, 16);
     btnNoColor->setCursor(Qt::PointingHandCursor);
-    btnNoColor->setToolTip("无色标");
+    btnNoColor->setProperty("tooltipText", "无色标");
+    btnNoColor->installEventFilter(this);
     btnNoColor->setStyleSheet("QPushButton { border: 1px solid #555; border-radius: 8px; color: #888; font-size: 10px; background: transparent; } QPushButton:hover { border-color: #FFF; color: #FFF; }");
     connect(btnNoColor, &QPushButton::clicked, this, [this]() {
         setColor(L"");
@@ -181,7 +184,8 @@ void MetaPanel::initUi() {
         QPushButton* btnColor = new QPushButton(colorRow);
         btnColor->setFixedSize(16, 16);
         btnColor->setCursor(Qt::PointingHandCursor);
-        btnColor->setToolTip(pair.first);
+        btnColor->setProperty("tooltipText", pair.first);
+        btnColor->installEventFilter(this);
         btnColor->setStyleSheet(QString(
             "QPushButton { background-color: %1; border: 1px solid transparent; border-radius: 8px; }"
             "QPushButton:hover { border-color: #FFFFFF; }"
@@ -227,7 +231,8 @@ void MetaPanel::initUi() {
     m_btnAddTagSmall = new QPushButton("+", m_tagContainer);
     m_btnAddTagSmall->setFixedSize(22, 22);
     m_btnAddTagSmall->setCursor(Qt::PointingHandCursor);
-    m_btnAddTagSmall->setToolTip("添加标签");
+    m_btnAddTagSmall->setProperty("tooltipText", "添加标签");
+    m_btnAddTagSmall->installEventFilter(this);
     m_btnAddTagSmall->setStyleSheet(
         "QPushButton { background-color: #2D2D30; border: 1px dashed #555555; border-radius: 4px; color: #CCCCCC; font-size: 13px; font-weight: bold; padding: 0; }"
         "QPushButton:hover { background-color: #378ADD; border-color: #378ADD; color: #FFFFFF; }"
@@ -268,7 +273,8 @@ void MetaPanel::initUi() {
     m_btnOpenLink = new QPushButton(m_linkBox);
     m_btnOpenLink->setFixedSize(24, 24);
     m_btnOpenLink->setCursor(Qt::PointingHandCursor);
-    m_btnOpenLink->setToolTip("在默认浏览器中打开");
+    m_btnOpenLink->setProperty("tooltipText", "在默认浏览器中打开");
+    m_btnOpenLink->installEventFilter(this);
     m_btnOpenLink->setIcon(UiHelper::getIcon("link", QColor("#378ADD"), 16));
     m_btnOpenLink->setIconSize(QSize(16, 16));
     m_btnOpenLink->setStyleSheet("QPushButton { border: 1px solid #3c3c3c; background: #252526; border-radius: 4px; } QPushButton:hover { background: #333; border-color: #378ADD; }");
@@ -750,7 +756,7 @@ void MetaPanel::setColor(const std::wstring& color) {
     };
 
     for (QPushButton* btn : m_colorBtns) {
-        QString btnToolTip = btn->toolTip();
+        QString btnToolTip = btn->property("tooltipText").toString();
         bool active = (btnToolTip == colorStr);
         QString hexColor = s_colorHexMap.value(btnToolTip, "#828282");
         btn->setStyleSheet(QString(
@@ -819,6 +825,17 @@ void MetaPanel::setPalettes(const QVector<QPair<QColor, float>>& palette) {
 }
 
 bool MetaPanel::eventFilter(QObject* watched, QEvent* event) {
+    // 拦截与接管自定义 ToolTipOverlay 显示，禁止使用 Windows/Qt 系统默认样式
+    if (event->type() == QEvent::ToolTip) {
+        QString text = watched->property("tooltipText").toString();
+        if (!text.isEmpty()) {
+            ToolTipOverlay::instance()->showText(QCursor::pos(), text, 0);
+            return true; // 拦截系统默认 ToolTip
+        }
+    } else if (event->type() == QEvent::Leave || event->type() == QEvent::MouseButtonPress) {
+        ToolTipOverlay::hideTip();
+    }
+
     if (m_isInternalUpdating) return QFrame::eventFilter(watched, event);
 
     if (event->type() == QEvent::FocusIn) {
