@@ -111,26 +111,28 @@ void MetaPanel::initUi() {
     m_containerLayout->addWidget(m_nameEdit);
 
     // ==========================================
-    // 模块 3: 星级评级 + 颜色色标条 (独立整洁容器)
+    // 模块 3: 星级评级 + 颜色色标条 (独立整洁容器 + 100% SVG 图标)
     // ==========================================
     m_ratingColorBox = new QWidget(m_container);
     QVBoxLayout* ratingColorLayout = new QVBoxLayout(m_ratingColorBox);
     ratingColorLayout->setContentsMargins(0, 2, 0, 2);
     ratingColorLayout->setSpacing(8);
 
-    // 评级行（⊘ + 5 星）
+    // 评级行（无评级 SVG + 5 星 SVG）
     QWidget* ratingRow = new QWidget(m_ratingColorBox);
     ratingRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
     QHBoxLayout* starLayout = new QHBoxLayout(ratingRow);
     starLayout->setContentsMargins(8, 4, 8, 4);
     starLayout->setSpacing(4);
 
-    QPushButton* btnClearStar = new QPushButton("⊘", ratingRow);
+    QPushButton* btnClearStar = new QPushButton(ratingRow);
     btnClearStar->setFixedSize(20, 20);
     btnClearStar->setCursor(Qt::PointingHandCursor);
+    btnClearStar->setIcon(UiHelper::getIcon("prohibit", QColor("#888888"), 14));
+    btnClearStar->setIconSize(QSize(14, 14));
     btnClearStar->setProperty("tooltipText", "清除评级");
     btnClearStar->installEventFilter(this);
-    btnClearStar->setStyleSheet("QPushButton { border: none; color: #888; font-size: 13px; background: transparent; } QPushButton:hover { color: #FF551C; }");
+    btnClearStar->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 3px; }");
     connect(btnClearStar, &QPushButton::clicked, this, [this]() {
         setRating(0);
         emit metadataChanged(m_currentRating, m_currentColor);
@@ -156,19 +158,21 @@ void MetaPanel::initUi() {
     starLayout->addStretch();
     ratingColorLayout->addWidget(ratingRow);
 
-    // 颜色标记行（无色标 + 8 基础色）
+    // 颜色标记行（无色标 SVG + 8 基础色）
     QWidget* colorRow = new QWidget(m_ratingColorBox);
     colorRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
     QHBoxLayout* colorLayout = new QHBoxLayout(colorRow);
     colorLayout->setContentsMargins(8, 4, 8, 4);
     colorLayout->setSpacing(4);
 
-    QPushButton* btnNoColor = new QPushButton("⊘", colorRow);
-    btnNoColor->setFixedSize(16, 16);
+    QPushButton* btnNoColor = new QPushButton(colorRow);
+    btnNoColor->setFixedSize(18, 18);
     btnNoColor->setCursor(Qt::PointingHandCursor);
+    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 14));
+    btnNoColor->setIconSize(QSize(14, 14));
     btnNoColor->setProperty("tooltipText", "无色标");
     btnNoColor->installEventFilter(this);
-    btnNoColor->setStyleSheet("QPushButton { border: 1px solid #555; border-radius: 8px; color: #888; font-size: 10px; background: transparent; } QPushButton:hover { border-color: #FFF; color: #FFF; }");
+    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 9px; }");
     connect(btnNoColor, &QPushButton::clicked, this, [this]() {
         setColor(L"");
         emit metadataChanged(m_currentRating, m_currentColor);
@@ -381,7 +385,9 @@ QWidget* MetaPanel::createCollapsibleSection(const QString& title, QWidget* cont
     );
 
     auto updateHeaderText = [btnHeader, title](bool expanded) {
-        btnHeader->setText(QString("%1  %2").arg(expanded ? "▼" : "▶").arg(title));
+        btnHeader->setIcon(UiHelper::getIcon(expanded ? "chevron_down" : "chevron_right", QColor("#888888"), 12));
+        btnHeader->setIconSize(QSize(12, 12));
+        btnHeader->setText(" " + title);
     };
 
     updateHeaderText(defaultExpanded);
