@@ -123,16 +123,16 @@ void MetaPanel::initUi() {
     ratingRow->setStyleSheet("QWidget { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; }");
     QHBoxLayout* starLayout = new QHBoxLayout(ratingRow);
     starLayout->setContentsMargins(8, 4, 8, 4);
-    starLayout->setSpacing(4);
+    starLayout->setSpacing(6);
 
     QPushButton* btnClearStar = new QPushButton(ratingRow);
-    btnClearStar->setFixedSize(20, 20);
+    btnClearStar->setFixedSize(22, 22);
     btnClearStar->setCursor(Qt::PointingHandCursor);
-    btnClearStar->setIcon(UiHelper::getIcon("prohibit", QColor("#888888"), 14));
-    btnClearStar->setIconSize(QSize(14, 14));
+    btnClearStar->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 16));
+    btnClearStar->setIconSize(QSize(16, 16));
     btnClearStar->setProperty("tooltipText", "清除评级");
     btnClearStar->installEventFilter(this);
-    btnClearStar->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 3px; }");
+    btnClearStar->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 4px; }");
     connect(btnClearStar, &QPushButton::clicked, this, [this]() {
         setRating(0);
         emit metadataChanged(m_currentRating, m_currentColor);
@@ -141,10 +141,10 @@ void MetaPanel::initUi() {
 
     for (int i = 1; i <= 5; ++i) {
         QPushButton* btnStar = new QPushButton(ratingRow);
-        btnStar->setFixedSize(20, 20);
+        btnStar->setFixedSize(22, 22);
         btnStar->setCursor(Qt::PointingHandCursor);
-        btnStar->setIcon(UiHelper::getIcon("star", QColor("#555555"), 16));
-        btnStar->setIconSize(QSize(16, 16));
+        btnStar->setIcon(UiHelper::getIcon("star", QColor("#555555"), 18));
+        btnStar->setIconSize(QSize(18, 18));
         btnStar->setStyleSheet("QPushButton { border: none; background: transparent; }");
         
         connect(btnStar, &QPushButton::clicked, this, [this, i]() {
@@ -166,13 +166,13 @@ void MetaPanel::initUi() {
     colorLayout->setSpacing(4);
 
     QPushButton* btnNoColor = new QPushButton(colorRow);
-    btnNoColor->setFixedSize(18, 18);
+    btnNoColor->setFixedSize(22, 22);
     btnNoColor->setCursor(Qt::PointingHandCursor);
-    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 14));
-    btnNoColor->setIconSize(QSize(14, 14));
+    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 16));
+    btnNoColor->setIconSize(QSize(16, 16));
     btnNoColor->setProperty("tooltipText", "无色标");
     btnNoColor->installEventFilter(this);
-    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 9px; }");
+    btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333; border-radius: 4px; }");
     connect(btnNoColor, &QPushButton::clicked, this, [this]() {
         setColor(L"");
         emit metadataChanged(m_currentRating, m_currentColor);
@@ -219,7 +219,7 @@ void MetaPanel::initUi() {
     m_btnAddTagBig->setFixedHeight(28);
     m_btnAddTagBig->setCursor(Qt::PointingHandCursor);
     m_btnAddTagBig->setStyleSheet(
-        "QPushButton { background-color: #252526; border: 1px dashed #3c3c3c; border-radius: 4px; padding: 0 10px; color: #AAAAAA; font-size: 12px; text-align: center; }"
+        "QPushButton { background-color: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding: 0 10px; color: #AAAAAA; font-size: 12px; text-align: center; }"
         "QPushButton:hover { background-color: #2a2d2e; border-color: #378ADD; color: #FFFFFF; }"
         "QPushButton:pressed { background-color: #333333; }"
     );
@@ -240,7 +240,7 @@ void MetaPanel::initUi() {
     m_btnAddTagSmall->setProperty("tooltipText", "添加标签");
     m_btnAddTagSmall->installEventFilter(this);
     m_btnAddTagSmall->setStyleSheet(
-        "QPushButton { background-color: #2D2D30; border: 1px dashed #555555; border-radius: 4px; padding: 0; }"
+        "QPushButton { background-color: #2D2D30; border: 1px solid #555555; border-radius: 4px; padding: 0; }"
         "QPushButton:hover { background-color: #378ADD; border-color: #378ADD; }"
     );
     connect(m_btnAddTagSmall, &QPushButton::clicked, this, [this]() {
@@ -467,6 +467,20 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     });
 }
 
+void MetaPanel::setImagePreview(const QPixmap& pixmap) {
+    if (!m_lblImagePreview) return;
+    if (pixmap.isNull()) {
+        m_lblImagePreview->clear();
+        m_lblImagePreview->hide();
+    } else {
+        QPixmap scaled = pixmap.scaled(QSize(240, 160), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        m_lblImagePreview->setPixmap(scaled);
+        m_lblImagePreview->show();
+    }
+    adjustFlowHeights();
+    if (m_container) m_container->adjustSize();
+}
+
 void MetaPanel::setSelectedPaths(const QStringList& paths) {
     m_selectedPaths = paths;
     bool hasSelection = !m_selectedPaths.isEmpty();
@@ -474,6 +488,7 @@ void MetaPanel::setSelectedPaths(const QStringList& paths) {
 
     if (!hasSelection) {
         m_isInternalUpdating = true;
+        setImagePreview(QPixmap());
         if (m_nameEdit) m_nameEdit->clear();
         if (m_noteEdit) m_noteEdit->clear();
         if (m_linkEdit) m_linkEdit->clear();
@@ -637,11 +652,12 @@ void MetaPanel::resizeEvent(QResizeEvent* event) {
 void MetaPanel::adjustFlowHeights() {
     if (m_topPreviewBox && m_paletteFlowLayout) {
         int contentH = m_paletteFlowLayout->heightForWidth(m_topPreviewBox->width());
-        bool hasPreview = (m_lblImagePreview && m_lblImagePreview->isVisible());
+        bool hasPreview = (m_lblImagePreview && m_lblImagePreview->isVisible() && !m_lblImagePreview->pixmap().isNull());
         bool hasPalette = (m_paletteFlowLayout->count() > 0);
         if (hasPreview || hasPalette) {
             m_topPreviewBox->show();
-            m_topPreviewBox->setFixedHeight(qMax(32, contentH + (hasPreview ? 70 : 0)));
+            int previewH = hasPreview ? m_lblImagePreview->pixmap().height() : 0;
+            m_topPreviewBox->setFixedHeight(qMax(32, contentH + previewH + 16));
         } else {
             m_topPreviewBox->hide();
             m_topPreviewBox->setFixedHeight(0);
@@ -750,8 +766,9 @@ void MetaPanel::setRating(int rating) {
         m_starBtns[i]->setIcon(UiHelper::getIcon(
             active ? "star_filled" : "star",
             active ? QColor("#FF551C") : QColor("#555555"),
-            16
+            18
         ));
+        m_starBtns[i]->setIconSize(QSize(18, 18));
     }
 }
 
