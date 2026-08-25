@@ -115,15 +115,15 @@ void MetaPanel::initUi() {
     // =========================================================================
     m_topPreviewBox = new QWidget(m_container);
     m_topPreviewBox->setObjectName("TopPreviewBox");
-    m_topPreviewBox->setStyleSheet("QWidget#TopPreviewBox { background: #252526; border: none; border-radius: 4px; }");
+    m_topPreviewBox->setStyleSheet("QWidget#TopPreviewBox { background: transparent; border: none; }");
     QVBoxLayout* previewLayout = new QVBoxLayout(m_topPreviewBox);
-    previewLayout->setContentsMargins(6, 6, 6, 6);
+    previewLayout->setContentsMargins(0, 0, 0, 0);
     previewLayout->setSpacing(6);
 
     m_lblImagePreview = new QLabel(m_topPreviewBox);
     m_lblImagePreview->setAlignment(Qt::AlignCenter);
     m_lblImagePreview->setMinimumHeight(60);
-    m_lblImagePreview->setStyleSheet("background: #1E1E1E; border-radius: 2px;");
+    m_lblImagePreview->setStyleSheet("background: transparent;");
     m_lblImagePreview->hide();
     previewLayout->addWidget(m_lblImagePreview);
 
@@ -209,9 +209,9 @@ void MetaPanel::initUi() {
 
     // 星级行 (清除 ⊘ + 5 星)
     QWidget* ratingRow = new QWidget(m_ratingColorBox);
-    ratingRow->setStyleSheet("QWidget { background: #252526; border: none; border-radius: 4px; }");
+    ratingRow->setStyleSheet("QWidget { background: transparent; border: none; }");
     QHBoxLayout* starLayout = new QHBoxLayout(ratingRow);
-    starLayout->setContentsMargins(8, 4, 8, 4);
+    starLayout->setContentsMargins(0, 2, 0, 2);
     starLayout->setSpacing(6);
 
     QPushButton* btnClearStar = new QPushButton(ratingRow);
@@ -247,9 +247,9 @@ void MetaPanel::initUi() {
 
     // 颜色标记行 (仅 8 基础纯色圆点)
     QWidget* colorRow = new QWidget(m_ratingColorBox);
-    colorRow->setStyleSheet("QWidget { background: #252526; border: none; border-radius: 4px; }");
+    colorRow->setStyleSheet("QWidget { background: transparent; border: none; }");
     QHBoxLayout* colorLayout = new QHBoxLayout(colorRow);
-    colorLayout->setContentsMargins(8, 4, 8, 4);
+    colorLayout->setContentsMargins(0, 2, 0, 2);
     colorLayout->setSpacing(6);
 
     static const QVector<QPair<QString, QString>> s_colorMap = {
@@ -636,7 +636,8 @@ void MetaPanel::adjustFlowHeights() {
         if (hasPreview || hasPalette) {
             m_topPreviewBox->show();
             int previewH = hasPreview ? m_lblImagePreview->pixmap().height() : 0;
-            m_topPreviewBox->setFixedHeight(contentH + previewH + 16);
+            int totalSpacing = (hasPreview && hasPalette) ? 6 : 0;
+            m_topPreviewBox->setFixedHeight(contentH + previewH + totalSpacing);
         } else {
             m_topPreviewBox->hide();
             m_topPreviewBox->setFixedHeight(0);
