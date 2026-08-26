@@ -2435,11 +2435,11 @@ ContentPanel::DataSourceType ContentPanel::dataSourceType() const {
 
 
 void ContentPanel::onSelectionChanged() { 
-    // 1. 初始化 30ms 防抖定时器
+    // 1. 初始化 100ms 防抖定时器，防止高速拖选与全选操作触发频繁全量遍历
     if (!m_selectionTimer) {
         m_selectionTimer = new QTimer(this);
         m_selectionTimer->setSingleShot(true);
-        m_selectionTimer->setInterval(30); // 30 毫秒黄金防抖窗口
+        m_selectionTimer->setInterval(100);
 
         connect(m_selectionTimer, &QTimer::timeout, this, [this]() {
             QItemSelectionModel* selectionModel = (m_viewStack->currentWidget() == m_gridView) ? 
