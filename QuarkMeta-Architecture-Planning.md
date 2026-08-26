@@ -28,6 +28,12 @@
 1. **上帝类拆分解耦红线**：内容面板（ContentPanel）必须遵循单一职责原则，严禁过度堆砌跨领域业务。主面板仅保留视图栈管理与子控制器调度职责，右键上下文菜单构建、物理文件系统操作（复制/剪切/粘贴/删除/重命名）以及选择状态与统计运算必须物理解耦拆分为独立控制器模块。
 2. **高并发选中索引计算防卡死规范**：在处理大目录全选与批量取消选中操作时，必须严格禁止调用获取全列单元格索引的高开销 API（如 `getSelectedIndexes()`）；统一约束仅获取首列行索引（`selectedRows(0)`），杜绝在成千上万条记录场景下因遍历多列生成巨量 QModelIndex 导致主 UI 线程假死卡顿。
 
+### 核心解耦与单一职责架构顶层规范 (MainWindow, FilterPanel, MetaPanel, MetadataManager)
+1. **主窗口 (MainWindow) 拆分规范**：主窗口仅允许承载顶层 UI 布局构建与 QSS 样式加载。全局快捷键捕获与事件分发必须解耦至 `GlobalShortcutController`；多面板（ContentPanel、MetaPanel、FavoritePanel）之间的联动逻辑必须解耦至中介者 `PanelMediator`。
+2. **筛选面板 (FilterPanel) 拆分规范**：筛选面板仅保留纯 UI 控件渲染职责。筛选状态管理（`FilterState`）解耦至 `FilterStateModel`；后台文件数量聚合与分类统计解耦至 `ScanStatsEngine`。
+3. **属性面板 (MetaPanel) 拆分规范**：属性面板作为宿主容器仅负责纵向 Layout 布局与子 Section 的显示控制。缩略图预览解耦为 `MetaPreviewWidget`；打星与颜色标记解耦为 `MetaRatingColorWidget`；标签与 Overlay 解耦为 `MetaTagSection`；文件属性与 Explorer 跳转解耦为 `MetaInfoSection`。
+4. **元数据中心 (MetadataManager) 门面模式规范**：元数据中心作为对外统一门面（Facade），不再直接混合磁盘 IO 与数据库存取。`.QuarkMeta.json` 序列化由 `QuarkMetaJsonStore` 承载；SQLite `global.db` 持久化由 `MetaDbRepository` 承载；内存 LRU 缓存由 `MetaMemoryCache` 承载。
+
 ---
 
 ## 2. 自研代码文件职责与功能深度剖析 (Self-Developed Source File Responsibilities)
