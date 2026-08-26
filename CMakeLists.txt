@@ -100,6 +100,12 @@ set(SOURCES
     src/meta/DuplicateDetectorService.h
     src/meta/DuplicateDetectorService.cpp
     src/meta/MetadataDefs.h
+    src/meta/QuarkMetaJsonStore.h
+    src/meta/QuarkMetaJsonStore.cpp
+    src/meta/MetaDbRepository.h
+    src/meta/MetaDbRepository.cpp
+    src/meta/MetaMemoryCache.h
+    src/meta/MetaMemoryCache.cpp
     src/meta/MetadataManager.cpp
     src/meta/MetadataManager.h
     src/meta/MediaExtractorPipeline.cpp
