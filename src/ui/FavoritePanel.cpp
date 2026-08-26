@@ -220,6 +220,31 @@ void FavoritePanel::saveFavorites() {
     AppConfig::instance().setValue("FavoritePanel/Favorites", doc.toJson(QJsonDocument::Compact));
 }
 
+bool FavoritePanel::containsPath(const QString& path) const {
+    if (!m_favoriteModel || path.isEmpty()) return false;
+    QString cleanPath = QDir::toNativeSeparators(QDir::cleanPath(path));
+    for (int i = 0; i < m_favoriteModel->rowCount(); ++i) {
+        QString existingPath = QDir::toNativeSeparators(QDir::cleanPath(m_favoriteModel->item(i)->data(Qt::UserRole + 1).toString()));
+        if (QString::compare(existingPath, cleanPath, Qt::CaseInsensitive) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void FavoritePanel::removeFavoriteItem(const QString& path) {
+    if (!m_favoriteModel || path.isEmpty()) return;
+    QString cleanPath = QDir::toNativeSeparators(QDir::cleanPath(path));
+    for (int i = 0; i < m_favoriteModel->rowCount(); ++i) {
+        QString existingPath = QDir::toNativeSeparators(QDir::cleanPath(m_favoriteModel->item(i)->data(Qt::UserRole + 1).toString()));
+        if (QString::compare(existingPath, cleanPath, Qt::CaseInsensitive) == 0) {
+            m_favoriteModel->removeRow(i);
+            saveFavorites();
+            return;
+        }
+    }
+}
+
 void FavoritePanel::addFavoriteItem(const QString& path) {
     QString cleanPath = QDir::toNativeSeparators(QDir::cleanPath(path));
     if (cleanPath.isEmpty()) return;

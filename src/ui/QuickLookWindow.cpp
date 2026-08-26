@@ -16,6 +16,7 @@
 #include <QDesktopServices>
 #include <QContextMenuEvent>
 #include "../util/ShellHelper.h"
+#include "FavoritePanel.h"
 #include <QFileInfo>
 #include <QScreen>
 #include <QApplication>
@@ -476,7 +477,15 @@ void QuickLookWindow::showContextMenu(const QPoint& globalPos) {
 
     QAction* actCopyName = menu.addAction("复制文件名");
     QAction* actCopyPath = menu.addAction("复制路径");
-    QAction* actFavorite = menu.addAction("添加至收藏夹");
+    FavoritePanel* favoritePanel = nullptr;
+    for (QWidget* topWidget : QApplication::topLevelWidgets()) {
+        if (topWidget) {
+            favoritePanel = topWidget->findChild<FavoritePanel*>();
+            if (favoritePanel) break;
+        }
+    }
+    bool isFav = favoritePanel ? favoritePanel->containsPath(m_currentPath) : false;
+    QAction* actFavorite = menu.addAction(isFav ? "取消收藏" : "添加至收藏夹");
 
     // 根据是否显示图片启用/禁用 旋转、水平翻转、原始、自适应
     bool isImage = m_graphicsView->isVisible();
@@ -526,7 +535,12 @@ void QuickLookWindow::showContextMenu(const QPoint& globalPos) {
     } else if (selected == actCopyPath) {
         QApplication::clipboard()->setText(QDir::toNativeSeparators(m_currentPath));
     } else if (selected == actFavorite) {
-        emit favoriteRequested(m_currentPath);
+        if (favoritePanel && isFav) {
+            favoritePanel->removeFavoriteItem(m_currentPath);
+            ToolTipOverlay::instance()->showText(QCursor::pos(), "已从收藏夹移除", 1500, QColor("#e81123"));
+        } else {
+            emit favoriteRequested(m_currentPath);
+        }
     }
 }
 
