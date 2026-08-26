@@ -136,6 +136,10 @@ set(SOURCES
     src/ui/DropTreeView.cpp
     src/ui/DropTreeView.h
     src/ui/IScanResultView.h
+    src/ui/FilterStateModel.h
+    src/ui/FilterStateModel.cpp
+    src/ui/ScanStatsEngine.h
+    src/ui/ScanStatsEngine.cpp
     src/ui/FilterPanel.cpp
     src/ui/FilterPanel.h
     src/ui/FramelessDialogBase.h
