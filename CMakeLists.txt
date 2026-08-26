@@ -145,6 +145,10 @@ set(SOURCES
     src/ui/ThumbnailDelegate.cpp
     src/ui/ThumbnailDelegate.h
     src/ui/Logger.h
+    src/ui/GlobalShortcutController.h
+    src/ui/GlobalShortcutController.cpp
+    src/ui/PanelMediator.h
+    src/ui/PanelMediator.cpp
     src/ui/MainWindow.cpp
     src/ui/MainWindow.h
     src/ui/TrayController.cpp
