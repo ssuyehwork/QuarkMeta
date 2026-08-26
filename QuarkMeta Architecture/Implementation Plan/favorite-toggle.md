@@ -4,10 +4,10 @@
 This implementation plan addresses the context menu flaw where items already bookmarked still display "添加至收藏夹" (Add to Favorites). It introduces a dynamic check against the `FavoritePanel` model state so that context menus (in both `ContentPanel` and `QuickLookWindow`) toggle dynamically between "添加至收藏夹" and "取消收藏" (Remove from Favorites).
 
 ## 2. Modified Files List
-- `src/ui/ContentPanel.cpp`
-- `src/ui/QuickLookWindow.cpp`
 - `src/ui/FavoritePanel.h`
 - `src/ui/FavoritePanel.cpp`
+- `src/ui/ContentPanel.cpp`
+- `src/ui/QuickLookWindow.cpp`
 
 ## 3. Detailed Line-by-Line Changes
 
@@ -65,6 +65,28 @@ void FavoritePanel::removeFavoriteItem(const QString& path) {
 }
 
 void FavoritePanel::addFavoriteItem(const QString& path) {
+>>>>>>> REPLACE
+```
+
+```diff
+<<<<<<< SEARCH
+            bool isPinned = currentIndex.data(IsLockedRole).toBool();
+            menu.addAction(isPinned ? "取消置顶" : "置顶")->setData(isPinned ? ActionUnpin : ActionPin);
+            menu.addAction("添加至收藏夹")->setData(ActionAddToFavorites);
+=======
+            bool isPinned = currentIndex.data(IsLockedRole).toBool();
+            menu.addAction(isPinned ? "取消置顶" : "置顶")->setData(isPinned ? ActionUnpin : ActionPin);
+            bool fav = isItemFavorite(currentIndex.data(PathRole).toString());
+            menu.addAction(fav ? "取消收藏" : "添加至收藏夹")->setData(ActionAddToFavorites);
+>>>>>>> REPLACE
+```
+
+```diff
+<<<<<<< SEARCH
+    QAction* actFavorite = menu.addAction("添加至收藏夹");
+=======
+    bool fav = isCurrentFileFavorite();
+    QAction* actFavorite = menu.addAction(fav ? "取消收藏" : "添加至收藏夹");
 >>>>>>> REPLACE
 ```
 
