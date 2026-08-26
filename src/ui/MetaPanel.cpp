@@ -64,7 +64,7 @@ void MetaPanel::initUi() {
         if (m_selectedPaths.size() == 1) {
             QString oldPath = m_selectedPaths.first();
             QFileInfo fi(oldPath);
-            QString newName = m_nameEdit->text().trimmed();
+            QString newName = m_nameEdit->toPlainText().trimmed();
             if (!newName.isEmpty() && newName != fi.fileName()) {
                 QString newPath = fi.dir().filePath(newName);
                 emit renameRequested(oldPath, newPath);
@@ -98,7 +98,7 @@ void MetaPanel::initUi() {
 
     connect(m_noteEdit, &ElasticEdit::editingFinished, this, [this]() {
         if (!m_isInternalUpdating) {
-            emit noteEdited(m_selectedPaths, m_noteEdit->text().trimmed());
+            emit noteEdited(m_selectedPaths, m_noteEdit->toPlainText().trimmed());
         }
     });
 

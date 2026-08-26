@@ -84,8 +84,12 @@ void BreadcrumbBar::addLevel(const QString& name, const QString& fullPath) {
         "QPushButton:pressed { background: #4E4E52; }"
     );
 
+    btn->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(btn, &QPushButton::clicked, [this, fullPath]() {
         emit pathClicked(fullPath);
+    });
+    connect(btn, &QPushButton::customContextMenuRequested, [this, btn, fullPath](const QPoint& pos) {
+        emit favoriteToggleRequested(fullPath, btn->mapToGlobal(pos));
     });
 
     m_layout->addWidget(btn);

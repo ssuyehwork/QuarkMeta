@@ -31,6 +31,13 @@ void MetaTagSection::setSelectedPaths(const QStringList& paths) {
 
 void MetaTagSection::setTags(const QStringList& tags, const QStringList& paths) {
     m_selectedPaths = paths;
+    while (QLayoutItem* item = m_tagFlowLayout->takeAt(0)) {
+        if (QWidget* w = item->widget()) {
+            w->hide();
+        }
+        delete item;
+    }
+
     for (auto* pill : m_tagPool) {
         pill->hide();
     }
