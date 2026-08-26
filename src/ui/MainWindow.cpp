@@ -1100,24 +1100,15 @@ void MainWindow::loadPanelVisibility() {
 
 void MainWindow::updateDynamicMinimumSize() {
     int visibleCount = 0;
-    int calculatedMinW = 0;
-
-    auto addPanelWidth = [&](QWidget* panel) {
-        if (panel && panel->isVisible()) {
-            visibleCount++;
-            calculatedMinW += panel->minimumWidth();
-        }
-    };
-
-    addPanelWidth(m_navPanel);
-    addPanelWidth(m_favoritePanel);
-    addPanelWidth(m_contentPanel);
-    addPanelWidth(m_metaPanel);
-    addPanelWidth(m_filterPanel);
+    if (m_navPanel && m_navPanel->isVisible()) visibleCount++;
+    if (m_favoritePanel && m_favoritePanel->isVisible()) visibleCount++;
+    if (m_contentPanel && m_contentPanel->isVisible()) visibleCount++;
+    if (m_metaPanel && m_metaPanel->isVisible()) visibleCount++;
+    if (m_filterPanel && m_filterPanel->isVisible()) visibleCount++;
 
     if (visibleCount <= 0) visibleCount = 1;
 
-    calculatedMinW += ((visibleCount - 1) * 5) + 10;
+    int calculatedMinW = (visibleCount * 230) + ((visibleCount - 1) * 5) + 10;
     int finalMinW = qMax(465, calculatedMinW);
     
     setMinimumWidth(finalMinW);
