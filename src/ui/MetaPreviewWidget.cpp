@@ -39,15 +39,15 @@ void MetaPreviewWidget::setPalettes(const QVector<QPair<QColor, float>>& palette
         ColorPill* pill = nullptr;
         if (idx < m_colorPool.size()) {
             pill = m_colorPool[idx];
+            pill->setData(pair.first, pair.second);
         } else {
-            pill = new ColorPill(this);
+            pill = new ColorPill(pair.first, pair.second, this);
             m_paletteFlowLayout->addWidget(pill);
             m_colorPool.append(pill);
-            connect(pill, &ColorPill::clicked, this, [this, pill]() {
-                emit searchByColor(pill->color());
+            connect(pill, &ColorPill::colorSelected, this, [this](const QColor& col) {
+                emit searchByColor(col);
             });
         }
-        pill->setColor(pair.first, pair.second);
         pill->show();
         idx++;
     }

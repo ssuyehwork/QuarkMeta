@@ -2,6 +2,7 @@
 #include "UiHelper.h"
 #include "ToolTipOverlay.h"
 #include "FavoritePanel.h"
+#include "StyleLibrary.h"
 #include "../core/NavigationHistoryService.h"
 #include <QHBoxLayout>
 #include <QDir>
