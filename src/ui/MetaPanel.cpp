@@ -6,6 +6,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QFileInfo>
+#include <QDir>
 #include <QApplication>
 
 namespace QuarkMeta {
@@ -60,7 +61,7 @@ void MetaPanel::initUi() {
     m_nameEdit->setStyleSheet("QTextEdit { background: #252526; border: 1px solid #3C3C3C; border-radius: 4px; color: #FFFFFF; font-size: 14px; font-weight: bold; padding: 4px 6px; }");
     m_containerLayout->addWidget(m_nameEdit);
 
-    connect(m_nameEdit, &ElasticEdit::editingFinished, this, [this]() {
+    connect(m_nameEdit, &ElasticEdit::returnPressed, this, [this]() {
         if (m_selectedPaths.size() == 1) {
             QString oldPath = m_selectedPaths.first();
             QFileInfo fi(oldPath);
@@ -96,7 +97,7 @@ void MetaPanel::initUi() {
     m_noteEdit->setStyleSheet("QTextEdit { background: #252526; border: 1px solid #3C3C3C; border-radius: 4px; color: #CCCCCC; font-size: 12px; padding: 4px 6px; }");
     m_containerLayout->addWidget(createCollapsibleSection("备注", m_noteEdit));
 
-    connect(m_noteEdit, &ElasticEdit::editingFinished, this, [this]() {
+    connect(m_noteEdit, &ElasticEdit::returnPressed, this, [this]() {
         if (!m_isInternalUpdating) {
             emit noteEdited(m_selectedPaths, m_noteEdit->toPlainText().trimmed());
         }

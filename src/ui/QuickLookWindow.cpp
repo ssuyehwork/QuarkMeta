@@ -1,5 +1,6 @@
 #include "QuickLookWindow.h"
 #include "UiHelper.h"
+#include "ToolTipOverlay.h"
 #include "ShellIconManager.h"
 #include "MediaColorExtractor.h"
 #include "QuickLookMinimap.h"

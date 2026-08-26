@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QMenu>
 #include <QFileInfo>
+#include <QDir>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonDocument>
