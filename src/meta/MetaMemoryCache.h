@@ -71,6 +71,16 @@ public:
         }
     }
 
+    template<typename Func>
+    void forEachItemMut(Func&& fn) {
+        for (size_t i = 0; i < NUM_SHARDS; ++i) {
+            std::unique_lock<std::shared_mutex> lock(m_shards[i].mutex);
+            for (auto& pair : m_shards[i].items) {
+                fn(pair.first, pair.second);
+            }
+        }
+    }
+
     std::array<MetaShard, NUM_SHARDS>& shards() { return m_shards; }
 
 private:

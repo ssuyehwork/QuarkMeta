@@ -307,7 +307,7 @@ void MetadataManager::setAddedAt(const std::wstring& path, long long addedAt, bo
 void MetadataManager::renameTag(const QString& oldName, const QString& newName) {
     if (oldName == newName) return;
     
-    MetaMemoryCache::instance().forEachItem([&oldName, &newName](const std::wstring&, RuntimeMeta& meta) {
+    MetaMemoryCache::instance().forEachItemMut([&oldName, &newName](const std::wstring&, RuntimeMeta& meta) {
         if (meta.tags.contains(oldName)) {
             meta.tags.removeAll(oldName);
             if (!newName.isEmpty() && !meta.tags.contains(newName)) {
@@ -320,7 +320,7 @@ void MetadataManager::renameTag(const QString& oldName, const QString& newName) 
 }
 
 void MetadataManager::removeTag(const QString& tagName) {
-    MetaMemoryCache::instance().forEachItem([&tagName](const std::wstring&, RuntimeMeta& meta) {
+    MetaMemoryCache::instance().forEachItemMut([&tagName](const std::wstring&, RuntimeMeta& meta) {
         if (meta.tags.contains(tagName)) {
             meta.tags.removeAll(tagName);
         }
