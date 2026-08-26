@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "ContentPanel.h"
+#include "FavoritePanel.h"
 #include "../meta/TrashRepository.h" 
 #include "../meta/DiskTrashRepo.h"
 #include "ColorPicker.h"

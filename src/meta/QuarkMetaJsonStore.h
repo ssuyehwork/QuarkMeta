@@ -10,7 +10,7 @@ class QuarkMetaJsonStore {
 public:
     static QuarkMetaJsonStore& instance();
 
-    bool updateItemMeta(const std::wstring& path, std::function<void(ItemMeta&)> modifier);
+    void updateItemMeta(const std::wstring& path, std::function<void(ItemMeta&)> modifier);
     bool renameItem(const QString& folderPath, const QString& oldName, const QString& newName);
     bool migrateFolderCache(const QString& oldFolderPath, const QString& newFolderPath);
 

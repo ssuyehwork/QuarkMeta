@@ -7,8 +7,8 @@ QuarkMetaJsonStore& QuarkMetaJsonStore::instance() {
     return inst;
 }
 
-bool QuarkMetaJsonStore::updateItemMeta(const std::wstring& path, std::function<void(ItemMeta&)> modifier) {
-    return QuarkMetaJson::updateItemMeta(path, modifier);
+void QuarkMetaJsonStore::updateItemMeta(const std::wstring& path, std::function<void(ItemMeta&)> modifier) {
+    QuarkMetaJson::updateItemMeta(path, modifier);
 }
 
 bool QuarkMetaJsonStore::renameItem(const QString& folderPath, const QString& oldName, const QString& newName) {

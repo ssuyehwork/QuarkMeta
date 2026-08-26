@@ -18,6 +18,7 @@
 #endif
 #include "MetadataManager.h"
 #include "MetadataDefs.h"
+#include "DatabaseManager.h"
 #include "QuarkMetaJsonStore.h"
 #include "MetaDbRepository.h"
 #include "MetaMemoryCache.h"
