@@ -55,6 +55,11 @@
 3. **属性面板 (MetaPanel) 拆分规范**：属性面板解耦为独立的组件小模块（预览、评分颜色、标签节、基础信息节），结构清晰，职责单一。
 4. **元数据中心 (MetadataManager) 门面模式规范**：元数据中心作为对外统一门面（Facade），不再直接混合磁盘 I/O 与数据库存取。序列化由 `QuarkMetaJsonStore` 承载；SQLite 持久化由 `MetaDbRepository` 承载；内存缓存由 `MetaMemoryCache` 承载。
 
+### 多媒体色彩提取与调色板引擎归一化顶层规范 (ColorPaletteEngine)
+1. **底层工具层绝对归一收敛红线**：多媒体图像格式权威判定（标准图/矢量图/RAW 等）、主导色彩提取、5 色调色板桶量化算法、标准色标（红/橙/黄/绿/青/蓝/紫/灰等）量化映射以及 CIEDE2000 国际标准色差算法（$\Delta E$）必须 100% 物理归一化收敛至底层 `ColorPaletteEngine`（位于 `src/util/`），绝对禁止在 UI 视图层、中介者或控制器内编写手写 RGB 差值算法或色彩比对逻辑。
+2. **纯计算与 0 UI 依赖隔离红线**：`ColorPaletteEngine` 归属于底层 Utility 计算层，严禁包含任何 `src/ui/` 目录头文件或持有 QWidget/QPainter 等 UI 绘图组件。同时支持基于文件路径（`extractPalette`）与内存 `QImage` 句柄（`extractPaletteFromImage`）的双重提取重载，保障后台多媒体提取管道（`MediaExtractorPipeline`）的高性能零卡顿处理。
+3. **架构分层倒挂物理彻底清除红线**：物理废除并彻底删除原 UI 层中分层倒挂的 `MediaColorExtractor` 与 `ColorAlgorithmEngine` 旧类；`UiHelper` 仅保留平滑转发内联接口，确保既有调用的 100% 向后兼容性。
+
 ### 全局任务进度中枢与观察者视图顶层解耦规范 (TaskProgressService & TaskProgressToolBar)
 1. **全局进度中枢线程安全与单例调度红线**：全系统所有后台耗时任务（如扫描、判重、提取缩略图等）的进度管理统一由领域服务 `TaskProgressService` 单例承载。内部状态操作与任务字典管理必须通过锁（`QMutex`）保护，跨线程进度变动与完成信号通知强制采用 `QMetaObject::invokeMethod(..., Qt::QueuedConnection)` 切回主 UI 线程，彻底消除跨线程访问 UI 崩溃漏洞。
 2. **进度工具栏 UI 纯粹观察者模式红线**：底部进度工具栏 (`TaskProgressToolBar`) 仅作为纯粹的观察者（Observer），直接订阅 `TaskProgressService` 信号，根据活动任务状态实现自动显隐与进度条更新。工具栏内部禁止包含任何任务调度、倒计时逻辑或重型计算。
