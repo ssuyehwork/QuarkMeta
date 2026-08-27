@@ -107,7 +107,6 @@ MainWindow::MainWindow(QWidget* parent)
     m_hoverFilter = new HoverEventFilter(this);
 
     m_shortcutController = new GlobalShortcutController(this, this);
-    m_panelMediator = new PanelMediator(this, this);
 
     m_isPinned = AppConfig::instance().getValue("MainWindow/AlwaysOnTop", false).toBool();
 
@@ -199,9 +198,16 @@ void MainWindow::initUi() {
     }
 
     // 由 PanelMediator 接管各面板间的信号联动 setup
-    if (m_panelMediator) {
-        m_panelMediator->setupConnections();
-    }
+    m_panelMediator = new PanelMediator(
+        m_navPanel,
+        m_favoritePanel,
+        m_contentPanel,
+        m_metaPanel,
+        m_filterPanel,
+        m_addressBar,
+        this
+    );
+    m_panelMediator->setupConnections();
 
     if (m_searchController) {
         m_searchController->bindContentPanel(m_contentPanel);

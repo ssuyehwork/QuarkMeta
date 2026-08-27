@@ -43,9 +43,6 @@ class PanelLayoutManager;
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
-    friend class GlobalShortcutController;
-    friend class PanelMediator;
-
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;

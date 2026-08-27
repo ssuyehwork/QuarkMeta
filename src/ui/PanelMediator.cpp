@@ -1,7 +1,5 @@
 #include "PanelMediator.h"
-#include "MainWindow.h"
 #include "NavPanel.h"
-#include "SearchController.h"
 #include "FavoritePanel.h"
 #include "ContentPanel.h"
 #include "MetaPanel.h"
@@ -9,54 +7,45 @@
 #include "AddressBar.h"
 #include "QuickLookWindow.h"
 #include "ToolTipOverlay.h"
+#include "../core/NavigationService.h"
+#include "../core/TrashService.h"
 #include "../core/CoreEngine.h"
 #include "../core/CentralEventHub.h"
-#include "../core/NavigationService.h"
 #include "../core/VolumeOnlineManager.h"
 #include "../core/ModelContract.h"
 #include "../util/ShellHelper.h"
-#include "models/DiskItemModel.h"
-#include "StyleLibrary.h"
-
 #include <QFileInfo>
-#include <QDateTime>
-#include <QTextDocument>
-#include <QGuiApplication>
-#include <QScreen>
 #include <QCursor>
 
 namespace QuarkMeta {
 
-PanelMediator::PanelMediator(MainWindow* mainWindow, QObject* parent)
-    : QObject(parent), m_mainWindow(mainWindow) {
+PanelMediator::PanelMediator(NavPanel* navPanel,
+                             FavoritePanel* favoritePanel,
+                             ContentPanel* contentPanel,
+                             MetaPanel* metaPanel,
+                             FilterPanel* filterPanel,
+                             AddressBar* addressBar,
+                             QObject* parent)
+    : QObject(parent),
+      m_navPanel(navPanel),
+      m_favoritePanel(favoritePanel),
+      m_contentPanel(contentPanel),
+      m_metaPanel(metaPanel),
+      m_filterPanel(filterPanel),
+      m_addressBar(addressBar) {
 }
 
 void PanelMediator::setupConnections() {
-    if (!m_mainWindow) return;
-
-    NavPanel* navPanel = m_mainWindow->m_navPanel;
-    FavoritePanel* favoritePanel = m_mainWindow->m_favoritePanel;
-    ContentPanel* contentPanel = m_mainWindow->m_contentPanel;
-    MetaPanel* metaPanel = m_mainWindow->m_metaPanel;
-    FilterPanel* filterPanel = m_mainWindow->m_filterPanel;
-    AddressBar* addressBar = m_mainWindow->m_addressBar;
+    NavPanel* navPanel = m_navPanel;
+    FavoritePanel* favoritePanel = m_favoritePanel;
+    ContentPanel* contentPanel = m_contentPanel;
+    MetaPanel* metaPanel = m_metaPanel;
+    FilterPanel* filterPanel = m_filterPanel;
+    AddressBar* addressBar = m_addressBar;
 
     // 1. 路径变更与导航驱动
-    connect(&NavigationService::instance(), &NavigationService::currentUrlChanged, m_mainWindow,
-            [this, contentPanel, addressBar, navPanel, filterPanel](const QString& url, const QString& displayPath) {
-        if (m_mainWindow->m_searchController && m_mainWindow->m_searchController->searchEdit()) {
-            m_mainWindow->m_searchController->searchEdit()->blockSignals(true);
-            m_mainWindow->m_searchController->searchEdit()->clear();
-            m_mainWindow->m_searchController->searchEdit()->blockSignals(false);
-        }
-        if (contentPanel) {
-            contentPanel->search("");
-        }
-        if (filterPanel) {
-            filterPanel->clearAllFilters();
-            filterPanel->setMirrorSource(false);
-        }
-
+    connect(&NavigationService::instance(), &NavigationService::currentUrlChanged, this,
+            [contentPanel, addressBar, navPanel](const QString& url, const QString& displayPath) {
         if (addressBar) addressBar->setPath(displayPath);
         if (navPanel) navPanel->selectPath(url == "computer://" ? "" : url);
 
@@ -69,8 +58,6 @@ void PanelMediator::setupConnections() {
                 contentPanel->loadDirectory(url);
             }
         }
-
-        m_mainWindow->updateStatusBar();
     });
 
     if (navPanel) {
@@ -88,7 +75,7 @@ void PanelMediator::setupConnections() {
             NavigationService::instance().navigateTo(path);
         });
 
-        connect(favoritePanel, &FavoritePanel::requestLocateFile, m_mainWindow, [contentPanel](const QString& path) {
+        connect(favoritePanel, &FavoritePanel::requestLocateFile, this, [contentPanel](const QString& path) {
             QFileInfo fi(path);
             if (contentPanel) {
                 contentPanel->setPendingSelectName(fi.fileName(), false);
@@ -102,26 +89,29 @@ void PanelMediator::setupConnections() {
             NavigationService::instance().navigateTo(path);
         });
 
-        connect(contentPanel, &ContentPanel::requestAddFavorite, m_mainWindow, [favoritePanel](const QStringList& paths) {
-            if (favoritePanel) {
+        if (favoritePanel) {
+            connect(contentPanel, &ContentPanel::requestAddFavorite, favoritePanel, [favoritePanel](const QStringList& paths) {
                 for (const QString& p : paths) {
                     favoritePanel->addFavoriteItem(p);
                 }
                 favoritePanel->saveFavorites();
-            }
-        });
+            });
+        }
     }
 
-    connect(&VolumeOnlineManager::instance(), &VolumeOnlineManager::volumeStateChanged,
-            m_mainWindow, [this](const QString& driveLetter, bool isOnline) {
+    connect(&VolumeOnlineManager::instance(), &VolumeOnlineManager::volumeStateChanged, this,
+            [](const QString& driveLetter, bool isOnline) {
         if (!isOnline) {
-            m_mainWindow->onVolumeUnplugged(driveLetter);
+            QString current = NavigationService::instance().currentUrl();
+            if (current.contains(driveLetter + ":", Qt::CaseInsensitive)) {
+                NavigationService::instance().navigateTo("computer://");
+            }
         }
     });
 
-    // 2. 内容面板选中项改变 -> 元数据面板 0 毫秒极速同步
+    // 2. 内容面板选中项改变 -> 元数据面板 0 毫秒极速同步 (使用标准 ModelRole 数据契约)
     if (contentPanel && metaPanel) {
-        connect(contentPanel, &ContentPanel::selectionChanged, m_mainWindow, [this, contentPanel, metaPanel](const QStringList& paths) {
+        connect(contentPanel, &ContentPanel::selectionChanged, metaPanel, [contentPanel, metaPanel](const QStringList& paths) {
             metaPanel->setSelectedPaths(paths);
             if (paths.isEmpty()) {
                 metaPanel->setImagePreview(QPixmap());
@@ -139,69 +129,21 @@ void PanelMediator::setupConnections() {
                 QString path = paths.first();
                 QFileInfo fi(path);
 
-                QString name;
-                QString type;
-                QString sizeStr;
-                QString mtimeStr;
-
-                if (idx.isValid()) {
-                    name = idx.sibling(idx.row(), 0).data(Qt::DisplayRole).toString();
-                    type = (idx.data(TypeRole).toString() == "folder") ? "文件夹" : idx.sibling(idx.row(), 4).data(Qt::DisplayRole).toString() + " 文件";
-                    sizeStr = idx.sibling(idx.row(), 5).data(Qt::DisplayRole).toString();
-                    mtimeStr = idx.sibling(idx.row(), 6).data(Qt::DisplayRole).toString();
-                }
-
-                if (name.isEmpty()) name = fi.fileName();
-                if (type.isEmpty()) type = fi.isDir() ? "文件夹" : fi.suffix().toUpper() + " 文件";
-
-                int width = 0;
-                int height = 0;
-                QString ctimeStr = "-";
-                QString atimeStr = "-";
-                QString noteStr;
-                QString urlStr;
-                QStringList cleanTags;
-                QVector<QPair<QColor, float>> palettes;
-
-                if (contentPanel->model()) {
-                    const auto* diskModel = qobject_cast<const DiskItemModel*>(contentPanel->model());
-                    if (diskModel) {
-                        const auto& allRecs = diskModel->allRecords();
-                        int srcRow = contentPanel->getProxyModel()->mapToSource(idx).row();
-                        if (srcRow >= 0 && srcRow < static_cast<int>(allRecs.size())) {
-                            const auto& rec = allRecs[srcRow];
-                            width = rec.width;
-                            height = rec.height;
-                            if (rec.ctime > 0) ctimeStr = QDateTime::fromMSecsSinceEpoch(rec.ctime).toString("dd-MM-yyyy HH:mm");
-                            if (rec.atime > 0) atimeStr = QDateTime::fromMSecsSinceEpoch(rec.atime).toString("dd-MM-yyyy HH:mm");
-                            noteStr = rec.note;
-                            urlStr = rec.url;
-                            for (const QString& t : rec.tags) {
-                                QString cleanT = t.trimmed();
-                                if (!cleanT.isEmpty() && !cleanT.contains(":\\") && !cleanT.contains(":/") && cleanT != path) {
-                                    cleanTags.append(cleanT);
-                                }
-                            }
-                            for (const auto& p : rec.palettes) {
-                                palettes.append({p.first, p.second});
-                            }
-                        }
-                    }
-                }
+                QString name = idx.isValid() ? idx.sibling(idx.row(), 0).data(Qt::DisplayRole).toString() : fi.fileName();
+                QString type = idx.isValid() ? ((idx.data(TypeRole).toString() == "folder") ? "文件夹" : idx.sibling(idx.row(), 4).data(Qt::DisplayRole).toString() + " 文件") : (fi.isDir() ? "文件夹" : fi.suffix().toUpper() + " 文件");
+                QString sizeStr = idx.isValid() ? idx.sibling(idx.row(), 5).data(Qt::DisplayRole).toString() : "-";
+                QString mtimeStr = idx.isValid() ? idx.sibling(idx.row(), 6).data(Qt::DisplayRole).toString() : "-";
 
                 metaPanel->updateInfo(
-                    name, type, sizeStr, ctimeStr, mtimeStr, atimeStr,
-                    path, idx.data(EncryptedRole).toBool(), width, height
+                    name, type, sizeStr, "-", mtimeStr, "-",
+                    path, idx.data(EncryptedRole).toBool(), 0, 0
                 );
                 metaPanel->setRating(idx.data(RatingRole).toInt(), false);
                 metaPanel->setColor(idx.data(ColorRole).toString().toStdWString(), false);
-                metaPanel->setTags(cleanTags); 
-                metaPanel->setNote(noteStr);
-                metaPanel->setURL(urlStr);
-                metaPanel->setPalettes(palettes);
+                metaPanel->setTags(idx.data(TagsRole).toStringList());
 
-                QPixmap previewPixmap;
                 QVariant decData = idx.data(Qt::DecorationRole);
+                QPixmap previewPixmap;
                 if (decData.canConvert<QIcon>()) {
                     previewPixmap = decData.value<QIcon>().pixmap(128, 128);
                 } else if (decData.canConvert<QPixmap>()) {
@@ -209,133 +151,74 @@ void PanelMediator::setupConnections() {
                 }
                 metaPanel->setImagePreview(previewPixmap);
             }
-
-            m_mainWindow->onStatusBarStatsUpdated(0, 0, 0);
         });
     }
 
-    // 3. 内容面板请求预览 -> QuickLook
+    // 3. 内容面板与 QuickLook 预览窗口联动
     if (contentPanel) {
-        connect(contentPanel, &ContentPanel::requestQuickLook, m_mainWindow, [this](const QString& path) {
-            m_mainWindow->m_currentQuickLookPath = path;
+        connect(contentPanel, &ContentPanel::requestQuickLook, this, [this](const QString& path) {
+            m_currentQuickLookPath = path;
             QuickLookWindow::instance().previewFile(path);
         });
-
-        // 4. 内容面板统计信息更新 -> 状态栏
-        connect(contentPanel, &ContentPanel::statusBarStatsUpdated, m_mainWindow, &MainWindow::onStatusBarStatsUpdated);
     }
 
-    connect(&QuickLookWindow::instance(), &QuickLookWindow::prevRequested, m_mainWindow, [this, contentPanel]() {
+    connect(&QuickLookWindow::instance(), &QuickLookWindow::prevRequested, this, [this, contentPanel]() {
         if (!contentPanel) return;
-        QString prev = contentPanel->getAdjacentFilePath(m_mainWindow->m_currentQuickLookPath, -1);
+        QString prev = contentPanel->getAdjacentFilePath(m_currentQuickLookPath, -1);
         if (!prev.isEmpty()) {
-            m_mainWindow->m_currentQuickLookPath = prev;
+            m_currentQuickLookPath = prev;
             QuickLookWindow::instance().previewFile(prev);
             contentPanel->selectAndScrollToPath(prev);
         }
     });
 
-    connect(&QuickLookWindow::instance(), &QuickLookWindow::nextRequested, m_mainWindow, [this, contentPanel]() {
+    connect(&QuickLookWindow::instance(), &QuickLookWindow::nextRequested, this, [this, contentPanel]() {
         if (!contentPanel) return;
-        QString next = contentPanel->getAdjacentFilePath(m_mainWindow->m_currentQuickLookPath, 1);
+        QString next = contentPanel->getAdjacentFilePath(m_currentQuickLookPath, 1);
         if (!next.isEmpty()) {
-            m_mainWindow->m_currentQuickLookPath = next;
+            m_currentQuickLookPath = next;
             QuickLookWindow::instance().previewFile(next);
             contentPanel->selectAndScrollToPath(next);
         }
     });
 
-    // 4. 元数据变化 -> 通过 CoreEngine 指令中心提交持久化
-    connect(&QuickLookWindow::instance(), &QuickLookWindow::ratingRequested, m_mainWindow, [this, metaPanel](int rating) {
-        if (m_mainWindow->m_currentQuickLookPath.isEmpty()) return;
+    connect(&QuickLookWindow::instance(), &QuickLookWindow::ratingRequested, this, [this, metaPanel](int rating) {
+        if (m_currentQuickLookPath.isEmpty()) return;
 
         AppCommand cmd;
         cmd.type = AppCommandType::SetRating;
-        cmd.targetPaths << m_mainWindow->m_currentQuickLookPath;
+        cmd.targetPaths << m_currentQuickLookPath;
         cmd.params["rating"] = rating;
         CoreEngine::instance().executeCommand(cmd);
 
         if (metaPanel) metaPanel->setRating(rating);
-        
-        QString starsStr;
-        int activeStars = qBound(0, rating, 5);
-        for (int i = 1; i <= 5; ++i) {
-            if (i <= activeStars) {
-                starsStr += "<span style='color: #FF551C; font-size: 14pt; margin-right: 2px;'>★</span>";
-            } else {
-                starsStr += "<span style='color: #444444; font-size: 14pt; margin-right: 2px;'>★</span>";
-            }
-        }
-        QString msg = QString("<div style='text-align: center; padding: 4px 10px;'>%1</div>").arg(starsStr);
-        
-        QScreen* screen = QGuiApplication::screenAt(QCursor::pos());
-        if (!screen) screen = QGuiApplication::primaryScreen();
-        QRect screenGeom = screen ? screen->geometry() : QRect(0, 0, 1920, 1080);
-
-        QTextDocument doc;
-        doc.setHtml(msg);
-        doc.setDefaultStyleSheet("body, div, p, span, b, i { color: #EEEEEE !important; font-family: 'Microsoft YaHei', 'Segoe UI'; font-size: 9pt; }");
-        doc.setDocumentMargin(0);
-        qreal idealW = doc.idealWidth();
-        if (idealW > 450) idealW = 450;
-        int w = static_cast<int>(idealW) + 24;
-        
-        int centerX = screenGeom.x() + screenGeom.width() / 2;
-        int targetX = centerX - w / 2;
-        int targetY = screenGeom.y() + 50;
-
-        ToolTipOverlay::instance()->showText(QPoint(targetX, targetY), msg, 1500, QColor("#FF551C"), true);
     });
 
-    connect(&QuickLookWindow::instance(), &QuickLookWindow::colorRequested, m_mainWindow, [this, metaPanel](const QString& color) {
-        if (m_mainWindow->m_currentQuickLookPath.isEmpty()) return;
+    connect(&QuickLookWindow::instance(), &QuickLookWindow::colorRequested, this, [this, metaPanel](const QString& color) {
+        if (m_currentQuickLookPath.isEmpty()) return;
 
         AppCommand cmd;
         cmd.type = AppCommandType::SetColor;
-        cmd.targetPaths << m_mainWindow->m_currentQuickLookPath;
+        cmd.targetPaths << m_currentQuickLookPath;
         cmd.params["color"] = color;
         CoreEngine::instance().executeCommand(cmd);
 
         if (metaPanel) metaPanel->setColor(color.toStdWString());
-        
-        QColor colorHex = QColor("#2B2B2B");
-        QColor borderCol = QColor("#888888");
-        
-        if (color == "red") { colorHex = QColor("#E81123"); borderCol = QColor("#FF6B6B"); }
-        else if (color == "orange") { colorHex = QColor("#FF551C"); borderCol = QColor("#FF8C00"); }
-        else if (color == "yellow") { colorHex = QColor("#FECF0E"); borderCol = QColor("#FFF200"); }
-        else if (color == "green") { colorHex = QColor("#2ECC71"); borderCol = QColor("#2ECC71"); }
-        else if (color == "cyan") { colorHex = QColor("#41F2F2"); borderCol = QColor("#E0FFFF"); }
-        else if (color == "blue") { colorHex = QColor("#3498DB"); borderCol = QColor("#00BFFF"); }
-        else if (color == "purple") { colorHex = QColor("#9B59B6"); borderCol = QColor("#EE82EE"); }
-        else if (color == "gray") { colorHex = QColor("#95A5A6"); borderCol = QColor("#BDC3C7"); }
-
-        QString msg = "";
-        
-        QScreen* screen = QGuiApplication::screenAt(QCursor::pos());
-        if (!screen) screen = QGuiApplication::primaryScreen();
-        QRect screenGeom = screen ? screen->geometry() : QRect(0, 0, 1920, 1080);
-
-        int w = 60;
-        int centerX = screenGeom.x() + screenGeom.width() / 2;
-        int targetX = centerX - w / 2;
-        int targetY = screenGeom.y() + 50;
-
-        ToolTipOverlay::instance()->showText(QPoint(targetX, targetY), msg, 1500, borderCol, true, colorHex);
     });
 
-    connect(&QuickLookWindow::instance(), &QuickLookWindow::deleteRequested, m_mainWindow, [this, contentPanel](const QString& path) {
+    connect(&QuickLookWindow::instance(), &QuickLookWindow::deleteRequested, this, [this, contentPanel](const QString& path) {
         if (path.isEmpty()) return;
-        if (ShellHelper::moveToTrash({path})) {
+
+        if (TrashService::instance().moveToTrash({path})) {
             if (contentPanel) {
                 QString next = contentPanel->getAdjacentFilePath(path, 1);
                 if (!next.isEmpty()) {
-                    m_mainWindow->m_currentQuickLookPath = next;
+                    m_currentQuickLookPath = next;
                     QuickLookWindow::instance().previewFile(next);
                 } else {
                     QString prev = contentPanel->getAdjacentFilePath(path, -1);
                     if (!prev.isEmpty()) {
-                        m_mainWindow->m_currentQuickLookPath = prev;
+                        m_currentQuickLookPath = prev;
                         QuickLookWindow::instance().previewFile(prev);
                     } else {
                         QuickLookWindow::instance().closePreview();
@@ -346,39 +229,29 @@ void PanelMediator::setupConnections() {
         }
     });
 
-    connect(&QuickLookWindow::instance(), &QuickLookWindow::favoriteRequested, m_mainWindow, [favoritePanel](const QString& path) {
+    connect(&QuickLookWindow::instance(), &QuickLookWindow::favoriteRequested, this, [favoritePanel](const QString& path) {
         if (!path.isEmpty() && favoritePanel) {
             favoritePanel->addFavoriteItem(path);
             favoritePanel->saveFavorites();
-            ToolTipOverlay::instance()->showText(QCursor::pos(), "已成功添加至收藏夹", 1500, Style::SuccessGreen);
+            ToolTipOverlay::instance()->showText(QCursor::pos(), "已成功添加至收藏夹", 1500, QColor("#2ecc71"));
         }
     });
 
-    // 5a. 目录装载完成 -> 通过事件中枢触发 FilterPanel 动态填充
-    if (contentPanel) {
-        connect(contentPanel, &ContentPanel::directoryStatsReady, m_mainWindow, [filterPanel](const ScanStats& stats) {
-            if (filterPanel) {
-                filterPanel->populateStats(stats);
-            }
+    // 4. 统计与过滤联动
+    if (contentPanel && filterPanel) {
+        connect(contentPanel, &ContentPanel::directoryStatsReady, filterPanel, [filterPanel](const ScanStats& stats) {
+            filterPanel->populateStats(stats);
             AppEvent ev;
             ev.type = AppEventType::FilterStateChanged;
             CentralEventHub::instance().publishEvent(ev);
         });
-    }
 
-    // 5b. FilterPanel 状态变化 -> 内容面板过滤
-    if (filterPanel && contentPanel) {
-        connect(filterPanel, &FilterPanel::filterChanged, m_mainWindow, [this, contentPanel](const FilterState& state) {
-            FilterState mergedState = state;
-            if (m_mainWindow->m_searchController && m_mainWindow->m_searchController->searchEdit()) {
-                mergedState.keyword = m_mainWindow->m_searchController->searchEdit()->text().trimmed();
-            }
-            contentPanel->applyFilters(mergedState);
-            m_mainWindow->updateStatusBar();
+        connect(filterPanel, &FilterPanel::filterChanged, contentPanel, [contentPanel](const FilterState& state) {
+            contentPanel->applyFilters(state);
         });
     }
 
-    // 6. 地址栏路径跳转与刷新
+    // 5. 地址栏路径跳转与刷新
     if (addressBar) {
         connect(addressBar, &AddressBar::pathChanged, &NavigationService::instance(), [](const QString& path) {
             NavigationService::instance().navigateTo(path);
@@ -387,14 +260,14 @@ void PanelMediator::setupConnections() {
         connect(addressBar, &AddressBar::refreshRequested, &NavigationService::instance(), &NavigationService::refresh);
     }
 
-    // 8. 响应元数据面板自己的星级/颜色变更
+    // 6. 响应元数据面板属性修改 -> 驱动 CoreEngine 与 ContentPanel 同步
     if (metaPanel && contentPanel) {
-        connect(metaPanel, &MetaPanel::metadataChanged, m_mainWindow, [contentPanel](int rating, const std::wstring& color) {
+        connect(metaPanel, &MetaPanel::metadataChanged, contentPanel, [contentPanel](int rating, const std::wstring& color) {
             auto indexes = contentPanel->getSelectedIndexes();
             QStringList paths;
             for (const auto& idx : indexes) {
-                QString path = idx.data(PathRole).toString(); 
-                if(!path.isEmpty()) paths << path;
+                QString path = idx.data(PathRole).toString();
+                if (!path.isEmpty()) paths << path;
             }
             if (paths.isEmpty()) return;
 
@@ -414,8 +287,7 @@ void PanelMediator::setupConnections() {
             }
         });
 
-        // 添加标签管网 
-        connect(metaPanel, &MetaPanel::tagAddRequested, m_mainWindow, [contentPanel](const QStringList& paths, const QString& newTag) { 
+        connect(metaPanel, &MetaPanel::tagAddRequested, contentPanel, [contentPanel](const QStringList& paths, const QString& newTag) {
             if (!paths.isEmpty() && !newTag.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::AddTag;
@@ -426,10 +298,9 @@ void PanelMediator::setupConnections() {
                     contentPanel->updateItemMetadata(p);
                 }
             }
-        }); 
- 
-        // 删除标签管网 
-        connect(metaPanel, &MetaPanel::tagRemoveRequested, m_mainWindow, [contentPanel](const QStringList& paths, const QString& removeTag) { 
+        });
+
+        connect(metaPanel, &MetaPanel::tagRemoveRequested, contentPanel, [contentPanel](const QStringList& paths, const QString& removeTag) {
             if (!paths.isEmpty() && !removeTag.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::RemoveTag;
@@ -440,24 +311,21 @@ void PanelMediator::setupConnections() {
                     contentPanel->updateItemMetadata(p);
                 }
             }
-        }); 
+        });
 
-        // 标签批量更新
-        connect(metaPanel, &MetaPanel::tagsChanged, m_mainWindow, [contentPanel](const QStringList& paths, const QStringList&) {
+        connect(metaPanel, &MetaPanel::tagsChanged, contentPanel, [contentPanel](const QStringList& paths, const QStringList&) {
             for (const QString& p : paths) {
                 contentPanel->updateItemMetadata(p);
             }
         });
 
-        // 调色盘搜索联动
-        connect(metaPanel, &MetaPanel::searchByColor, m_mainWindow, [filterPanel](const QColor& color) {
-            if (filterPanel) {
+        if (filterPanel) {
+            connect(metaPanel, &MetaPanel::searchByColor, filterPanel, [filterPanel](const QColor& color) {
                 filterPanel->selectColor(color);
-            }
-        });
+            });
+        }
 
-        // 重命名信号
-        connect(metaPanel, &MetaPanel::renameRequested, m_mainWindow, [contentPanel](const QString& oldPath, const QString& newPath) {
+        connect(metaPanel, &MetaPanel::renameRequested, contentPanel, [contentPanel](const QString& oldPath, const QString& newPath) {
             if (ShellHelper::renameItem(oldPath, newPath)) {
                 contentPanel->migrateModelCache(oldPath, newPath);
                 contentPanel->refreshAll();
@@ -466,7 +334,7 @@ void PanelMediator::setupConnections() {
             }
         });
 
-        connect(metaPanel, &MetaPanel::noteEdited, m_mainWindow, [](const QStringList& paths, const QString& newNote) {
+        connect(metaPanel, &MetaPanel::noteEdited, this, [](const QStringList& paths, const QString& newNote) {
             if (!paths.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::SetNote;
@@ -476,7 +344,7 @@ void PanelMediator::setupConnections() {
             }
         });
 
-        connect(metaPanel, &MetaPanel::linkEdited, m_mainWindow, [](const QStringList& paths, const QString& newLink) {
+        connect(metaPanel, &MetaPanel::linkEdited, this, [](const QStringList& paths, const QString& newLink) {
             if (!paths.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::SetURL;
@@ -487,9 +355,10 @@ void PanelMediator::setupConnections() {
         });
     }
 
-    // 9. 响应中央中枢事件
-    connect(&CentralEventHub::instance(), &CentralEventHub::eventOccurred, m_mainWindow, [contentPanel](const QuarkMeta::AppEvent& event) {
+    // 7. 全局事件总线 CentralEventHub 增量通知响应
+    connect(&CentralEventHub::instance(), &CentralEventHub::eventOccurred, this, [contentPanel](const QuarkMeta::AppEvent& event) {
         if (!contentPanel) return;
+
         if (event.type == QuarkMeta::AppEventType::MetadataUpdated) {
             if (!event.targetPath.isEmpty()) {
                 contentPanel->updateItemMetadata(event.targetPath);
@@ -500,7 +369,8 @@ void PanelMediator::setupConnections() {
             } else {
                 contentPanel->refreshAll();
             }
-        } else if (event.type == QuarkMeta::AppEventType::ItemsDeleted || event.type == QuarkMeta::AppEventType::ItemsRenamed) {
+        } else if (event.type == QuarkMeta::AppEventType::ItemsDeleted ||
+                   event.type == QuarkMeta::AppEventType::ItemsRenamed) {
             contentPanel->refreshAll();
         }
     });
