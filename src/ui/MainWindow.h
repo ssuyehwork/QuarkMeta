@@ -32,7 +32,7 @@ class ContentPanel;
 class MetaPanel;
 class FilterPanel;
 class SearchHistoryPanel;
-class GlobalShortcutController;
+class AppShortcutController;
 class PanelMediator;
 class PanelLayoutManager;
 
@@ -160,7 +160,7 @@ private:
     QTimer* m_sidebarRefreshTimer = nullptr;
 
     // 模块化控制器与中介者
-    GlobalShortcutController* m_shortcutController = nullptr;
+    AppShortcutController* m_shortcutController = nullptr;
     PanelMediator* m_panelMediator = nullptr;
     PanelLayoutManager*       m_panelLayoutManager = nullptr;
     TaskProgressController* m_taskProgressController = nullptr;

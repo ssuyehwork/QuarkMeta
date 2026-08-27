@@ -163,8 +163,8 @@ set(SOURCES
     src/ui/ThumbnailDelegate.cpp
     src/ui/ThumbnailDelegate.h
     src/ui/Logger.h
-    src/ui/GlobalShortcutController.h
-    src/ui/GlobalShortcutController.cpp
+    src/ui/AppShortcutController.h
+    src/ui/AppShortcutController.cpp
     src/ui/PanelMediator.h
     src/ui/PanelMediator.cpp
     src/ui/MainWindow.cpp

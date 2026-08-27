@@ -2,7 +2,7 @@
 #define NOMINMAX
 #endif
 #include "MainWindow.h"
-#include "GlobalShortcutController.h"
+#include "AppShortcutController.h"
 #include "PanelMediator.h"
 #include "TaskProgressController.h" 
 #include "SearchController.h" 
@@ -213,6 +213,13 @@ void MainWindow::initUi() {
         m_searchController->bindContentPanel(m_contentPanel);
         connect(m_searchController, &SearchController::searchExecuted, this, &MainWindow::updateStatusBar);
     }
+
+    m_shortcutController = new AppShortcutController(this, m_searchController, this);
+    connect(m_shortcutController, &AppShortcutController::togglePinRequested, this, [this]() {
+        if (m_btnPinTop) {
+            m_btnPinTop->setChecked(!m_btnPinTop->isChecked());
+        }
+    });
 
 }
 
