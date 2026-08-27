@@ -74,6 +74,7 @@ using namespace QuarkMeta::Style;
 #include "../meta/MetadataManager.h"
 #include "FramelessDialog.h"
 #include "FramelessFileDialog.h"
+#include "../core/NavigationService.h"
 #include <QSlider>
 #include <QSignalBlocker>
 
@@ -158,14 +159,10 @@ MainWindow::MainWindow(QWidget* parent)
 
     this->installEventFilter(this);
 
-    QTimer::singleShot(200, [this]() {
+    QTimer::singleShot(200, []() {
         QString lastPath = AppConfig::instance().getValue("MainWindow/LastPath", "computer://").toString();
         bool isValid = lastPath.contains("://") || QDir(lastPath).exists();
-        if (isValid) {
-            unifiedNavigateTo(lastPath);
-        } else {
-            unifiedNavigateTo("computer://");
-        }
+        NavigationService::instance().navigateTo(isValid ? lastPath : "computer://");
     });
 }
 
@@ -299,9 +296,16 @@ void MainWindow::initToolbar() {
     m_btnUp->setProperty("tooltipText", "上级");
     m_btnUp->installEventFilter(m_hoverFilter);
 
-    connect(m_btnBack, &QPushButton::clicked, this, &MainWindow::onBackClicked);
-    connect(m_btnForward, &QPushButton::clicked, this, &MainWindow::onForwardClicked);
-    connect(m_btnUp, &QPushButton::clicked, this, &MainWindow::onUpClicked);
+    connect(m_btnBack, &QPushButton::clicked, &NavigationService::instance(), &NavigationService::goBack);
+    connect(m_btnForward, &QPushButton::clicked, &NavigationService::instance(), &NavigationService::goForward);
+    connect(m_btnUp, &QPushButton::clicked, &NavigationService::instance(), &NavigationService::goUp);
+
+    connect(&NavigationService::instance(), &NavigationService::navStateChanged, this,
+            [this](bool canBack, bool canForward, bool canUp) {
+        m_btnBack->setEnabled(canBack);
+        m_btnForward->setEnabled(canForward);
+        m_btnUp->setEnabled(canUp);
+    });
 
     m_addressBar = new AddressBar(this);
     m_addressBar->setMinimumWidth(300);
@@ -631,100 +635,13 @@ void MainWindow::setupCustomTitleBarButtons() {
 }
 
 void MainWindow::unifiedNavigateTo(const QString& url, bool record) {
-    if (url.isEmpty()) return;
-
-    if (m_searchController && m_searchController->searchEdit()) {
-        m_searchController->searchEdit()->blockSignals(true);
-        m_searchController->searchEdit()->clear();
-        m_searchController->searchEdit()->blockSignals(false);
-    }
-    
-    if (m_contentPanel) {
-        m_contentPanel->search("");
-    }
-
-    if (m_filterPanel) m_filterPanel->clearAllFilters();
-
-    if (record) {
-        if (m_historyIndex < static_cast<int>(m_history.size()) - 1) {
-            m_history = m_history.mid(0, m_historyIndex + 1);
-        }
-        if (m_history.isEmpty() || m_history.last() != url) {
-            m_history.append(url);
-            m_historyIndex = static_cast<int>(m_history.size()) - 1;
-        }
-    }
-
-    m_contentPanel->show();
-
-    QString path = url;
-    if (path.startsWith(kProtocolFile)) path = path.mid(kProtocolFile.length());
-    
-    if (path == "computer://") {
-        if (m_addressBar) m_addressBar->setPath("computer://");
-        if (m_contentPanel) m_contentPanel->loadDirectory("");
-        if (m_navPanel) m_navPanel->selectPath("computer://");
-        m_currentPath = "computer://";
-    } else {
-        QString normPath = QDir::toNativeSeparators(path);
-        if (m_addressBar) m_addressBar->setPath(normPath);
-        if (m_contentPanel) m_contentPanel->loadDirectory(normPath);
-        if (m_navPanel) m_navPanel->selectPath(normPath);
-        m_currentPath = normPath;
-        NavigationHistoryService::recordRecentVisitedFolder(normPath.toStdWString());
-    }
-
-    if (m_filterPanel && m_contentPanel) {
-        m_filterPanel->setMirrorSource(false);
-    }
-
-    updateNavButtons();
-    updateStatusBar();
-}
-
-void MainWindow::onBackClicked() {
-    if (m_historyIndex > 0) {
-        m_historyIndex--;
-        unifiedNavigateTo(m_history[m_historyIndex], false);
-    }
-}
-
-void MainWindow::onForwardClicked() {
-    if (m_historyIndex < m_history.size() - 1) {
-        m_historyIndex++;
-        unifiedNavigateTo(m_history[m_historyIndex], false);
-    }
-}
-
-void MainWindow::onUpClicked() {
-    if (m_currentPath.contains("://") && m_currentPath != "computer://") {
-        unifiedNavigateTo("computer://");
-        return;
-    }
-
-    QDir dir(m_currentPath);
-    if (dir.cdUp()) {
-        unifiedNavigateTo(dir.absolutePath());
-    }
-}
-
-void MainWindow::updateNavButtons() {
-    m_btnBack->setEnabled(m_historyIndex > 0);
-    m_btnForward->setEnabled(m_historyIndex < m_history.size() - 1);
-    
-    bool isLogic = m_currentPath.contains("://");
-    bool atRoot = (m_currentPath == "computer://" || (!isLogic && QDir(m_currentPath).isRoot()));
-    m_btnUp->setEnabled(!atRoot && !m_currentPath.isEmpty());
+    NavigationService::instance().navigateTo(url, record);
 }
 
 void MainWindow::onVolumeUnplugged(const QString& driveLetter) {
-    bool isCurrentOnUnpluggedDrive = false;
-    if (m_currentPath.contains(driveLetter + ":", Qt::CaseInsensitive)) {
-        isCurrentOnUnpluggedDrive = true;
-    }
-
-    if (isCurrentOnUnpluggedDrive) {
-        unifiedNavigateTo("computer://");
+    QString current = NavigationService::instance().currentUrl();
+    if (current.contains(driveLetter + ":", Qt::CaseInsensitive)) {
+        NavigationService::instance().navigateTo("computer://");
     }
 }
 
@@ -790,7 +707,7 @@ void MainWindow::changeEvent(QEvent* event) {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
-    AppConfig::instance().setValue("MainWindow/LastPath", m_currentPath);
+    AppConfig::instance().setValue("MainWindow/LastPath", NavigationService::instance().currentUrl());
     AppConfig::instance().setValue("MainWindow/Geometry", saveGeometry());
 
     if (m_panelLayoutManager) {
@@ -829,7 +746,7 @@ void MainWindow::initDriveBar() {
      .arg(qssColor(PressedBackground)));
 
     connect(m_btnTagManager, &QPushButton::clicked, this, [this]() {
-        TagManagerDialog::showDialog(this, m_currentPath, false);
+        TagManagerDialog::showDialog(this, NavigationService::instance().currentUrl(), false);
     });
 
     m_driveBarLayout->addWidget(m_btnTagManager);

@@ -84,6 +84,8 @@ set(SOURCES
     src/core/ClipboardService.h
     src/core/ClipboardService.cpp
     src/core/AppConfig.h
+    src/core/NavigationService.cpp
+    src/core/NavigationService.h
     src/core/NavigationHistoryService.cpp
     src/core/NavigationHistoryService.h
     src/core/SearchHistoryService.cpp

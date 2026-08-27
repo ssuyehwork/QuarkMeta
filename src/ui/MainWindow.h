@@ -69,9 +69,6 @@ protected:
 
 private slots:
     void onPinToggled(bool checked);
-    void onBackClicked();
-    void onForwardClicked();
-    void onUpClicked();
     void onStatusBarStatsUpdated(int fileCount, int folderCount, int totalCount);
     void onVolumeUnplugged(const QString& driveLetter);
 
@@ -89,17 +86,11 @@ private:
     QVBoxLayout* m_bodyLayout = nullptr; // 2026-05-08 按照用户要求：提升为成员变量以支持动态边距切换
 
     void initUi();
-    void updateNavButtons();
     void updateStatusBar();
     void initDriveBar();
 
-    // 2026-07-xx 导航协议常量
-    static inline const QString kProtocolFile     = "file://";
-    static inline const QString kProtocolSystem   = "system://";
-
     /**
-     * @brief 2026-07-xx 按照 Plan-56：统一导航调度中心
-     * 支持 file://, category://, system:// 等协议
+     * @brief 统一导航调度向前兼容转调接口
      */
     void unifiedNavigateTo(const QString& url, bool record = true);
 
@@ -156,9 +147,6 @@ private:
     bool m_isTagManagerMode = false;
     QString m_currentDataSource; // "category" or "nav"
     bool m_panelsInitialized = false; // 2026-04-12 状态锁：确保面板仅初始化一次
-    QString m_currentPath;
-    QStringList m_history;
-    int m_historyIndex = -1;
 
     // 底部状态栏
     QLabel* m_statusLeft = nullptr;

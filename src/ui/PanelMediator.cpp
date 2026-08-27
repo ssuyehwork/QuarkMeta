@@ -11,6 +11,7 @@
 #include "ToolTipOverlay.h"
 #include "../core/CoreEngine.h"
 #include "../core/CentralEventHub.h"
+#include "../core/NavigationService.h"
 #include "../core/VolumeOnlineManager.h"
 #include "../core/ModelContract.h"
 #include "../util/ShellHelper.h"
@@ -40,45 +41,67 @@ void PanelMediator::setupConnections() {
     FilterPanel* filterPanel = m_mainWindow->m_filterPanel;
     AddressBar* addressBar = m_mainWindow->m_addressBar;
 
-    // 1. 导航/收藏/内容面板 双击跳转 -> 统一导航中枢
+    // 1. 路径变更与导航驱动
+    connect(&NavigationService::instance(), &NavigationService::currentUrlChanged, m_mainWindow,
+            [this, contentPanel, addressBar, navPanel, filterPanel](const QString& url, const QString& displayPath) {
+        if (m_mainWindow->m_searchController && m_mainWindow->m_searchController->searchEdit()) {
+            m_mainWindow->m_searchController->searchEdit()->blockSignals(true);
+            m_mainWindow->m_searchController->searchEdit()->clear();
+            m_mainWindow->m_searchController->searchEdit()->blockSignals(false);
+        }
+        if (contentPanel) {
+            contentPanel->search("");
+        }
+        if (filterPanel) {
+            filterPanel->clearAllFilters();
+            filterPanel->setMirrorSource(false);
+        }
+
+        if (addressBar) addressBar->setPath(displayPath);
+        if (navPanel) navPanel->selectPath(url == "computer://" ? "" : url);
+
+        if (contentPanel) {
+            if (url == "computer://") {
+                contentPanel->loadDirectory("");
+            } else if (url == "trash://") {
+                contentPanel->loadCategory("trash");
+            } else {
+                contentPanel->loadDirectory(url);
+            }
+        }
+
+        m_mainWindow->updateStatusBar();
+    });
+
     if (navPanel) {
-        connect(navPanel, &NavPanel::directorySelected, m_mainWindow, [this](const QString& path) {
-            m_mainWindow->unifiedNavigateTo(path);
+        connect(navPanel, &NavPanel::directorySelected, &NavigationService::instance(), [](const QString& path) {
+            NavigationService::instance().navigateTo(path);
         });
 
-        connect(navPanel, &NavPanel::requestOpenTrash, m_mainWindow, [this, contentPanel, addressBar]() {
-            if (contentPanel) {
-                contentPanel->loadCategory("trash");
-            }
-            if (addressBar) {
-                addressBar->setPath("trash://");
-            }
-            m_mainWindow->m_currentPath = "trash://";
-            m_mainWindow->updateNavButtons();
-            m_mainWindow->updateStatusBar();
+        connect(navPanel, &NavPanel::requestOpenTrash, &NavigationService::instance(), []() {
+            NavigationService::instance().navigateTo("trash://");
         });
     }
 
     if (favoritePanel) {
-        connect(favoritePanel, &FavoritePanel::directorySelected, m_mainWindow, [this](const QString& path) {
-            m_mainWindow->unifiedNavigateTo(path);
+        connect(favoritePanel, &FavoritePanel::directorySelected, &NavigationService::instance(), [](const QString& path) {
+            NavigationService::instance().navigateTo(path);
         });
 
-        connect(favoritePanel, &FavoritePanel::requestLocateFile, m_mainWindow, [this, contentPanel](const QString& path) {
+        connect(favoritePanel, &FavoritePanel::requestLocateFile, m_mainWindow, [contentPanel](const QString& path) {
             QFileInfo fi(path);
             if (contentPanel) {
                 contentPanel->setPendingSelectName(fi.fileName(), false);
             }
-            m_mainWindow->unifiedNavigateTo(fi.absolutePath());
+            NavigationService::instance().navigateTo(fi.absolutePath());
         });
     }
 
     if (contentPanel) {
-        connect(contentPanel, &ContentPanel::directorySelected, m_mainWindow, [this](const QString& path) {
-            m_mainWindow->unifiedNavigateTo(path);
+        connect(contentPanel, &ContentPanel::directorySelected, &NavigationService::instance(), [](const QString& path) {
+            NavigationService::instance().navigateTo(path);
         });
 
-        // 监听内容容器的右键添加至收藏夹信号
         connect(contentPanel, &ContentPanel::requestAddFavorite, m_mainWindow, [favoritePanel](const QStringList& paths) {
             if (favoritePanel) {
                 for (const QString& p : paths) {
@@ -357,13 +380,11 @@ void PanelMediator::setupConnections() {
 
     // 6. 地址栏路径跳转与刷新
     if (addressBar) {
-        connect(addressBar, &AddressBar::pathChanged, m_mainWindow, [this](const QString& path) {
-            m_mainWindow->unifiedNavigateTo(path);
+        connect(addressBar, &AddressBar::pathChanged, &NavigationService::instance(), [](const QString& path) {
+            NavigationService::instance().navigateTo(path);
         });
 
-        connect(addressBar, &AddressBar::refreshRequested, m_mainWindow, [contentPanel]() {
-            if (contentPanel) contentPanel->refreshAll();
-        });
+        connect(addressBar, &AddressBar::refreshRequested, &NavigationService::instance(), &NavigationService::refresh);
     }
 
     // 8. 响应元数据面板自己的星级/颜色变更
