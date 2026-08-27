@@ -2,10 +2,15 @@
 #include <QApplication>
 #include <QIcon>
 #include <QDebug>
+#include <QCursor>
 #include <QProgressDialog>
 #include "../meta/DatabaseManager.h"
 #include "BatchProgressDialog.h"
 #include "UiHelper.h"
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 namespace QuarkMeta {
 
@@ -26,8 +31,6 @@ TrayController::TrayController(QMainWindow* mainWindow)
 
     connect(showAction, &QAction::triggered, this, &TrayController::onShowMainWindow);
     connect(quitAction, &QAction::triggered, this, &TrayController::onQuitApp);
-
-    m_trayIcon->setContextMenu(m_trayMenu);
 
     connect(m_trayIcon, &QSystemTrayIcon::activated, this, &TrayController::onTrayActivated);
 }
@@ -52,10 +55,17 @@ void TrayController::hide() {
 
 void TrayController::onTrayActivated(QSystemTrayIcon::ActivationReason reason) {
     if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick) {
-        if (m_mainWindow->isVisible()) {
+        if (m_mainWindow && m_mainWindow->isVisible() && !m_mainWindow->isMinimized()) {
             m_mainWindow->hide();
         } else {
             onShowMainWindow();
+        }
+    } else if (reason == QSystemTrayIcon::Context) {
+        if (m_trayMenu && m_mainWindow) {
+#ifdef Q_OS_WIN
+            SetForegroundWindow(reinterpret_cast<HWND>(m_mainWindow->winId()));
+#endif
+            m_trayMenu->exec(QCursor::pos());
         }
     }
 }
@@ -66,7 +76,6 @@ void TrayController::onShowMainWindow() {
         m_mainWindow->showNormal();
     }
     m_mainWindow->show();
-    m_mainWindow->setWindowState((m_mainWindow->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
     m_mainWindow->raise();
     m_mainWindow->activateWindow();
 }
