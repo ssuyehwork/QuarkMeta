@@ -2,13 +2,13 @@
 
 语言：始终中文  
 
-## 0. 工业级 C++/Qt 架构绝对红线与准则（SYSTEM_PROMPT.md）
-任何代码修改、功能新增、重构或 Bug 修复任务，**必须无条件遵守根目录下 `SYSTEM_PROMPT.md` 约定的架构铁律与重构纪律**：
-1. **严禁盲改对外签名（Public API Freezing）**：绝对不允许破坏既有调用方的编译契约。
-2. **严禁伪解耦与友元侵入（No Friend Classes）**：严禁为了访问私有成员声明 `friend class`，模块间通信必须通过标准接口/信号槽。
-3. **严禁平台 Hack 级补丁（Zero Patch Tolerance）**：严禁引入 OS 底层 API（如 Win32 `SetForegroundWindow`）暴力掩盖焦点问题；严禁篡改控件顶层窗口标志（如破坏 `Qt::Popup`）导致事件链断裂。
-4. **严禁 Model-View 抽象穿透**：数据获取必须通过标准 `model->data(index, role)` 协议。
-5. **严禁批量循环发射事件**：批量数据操作完成后只发射 1 次聚合批量事件。
+## 0. 工业级 C++/Qt 架构绝对红线与五道工程硬锁（SYSTEM_PROMPT.md）
+任何代码修改、功能新增、重构或 Bug 修复任务，**必须无条件遵守根目录下 `SYSTEM_PROMPT.md` 约定的架构铁律与【五道工程硬锁】**：
+1. **【契约锁】严禁盲改对外签名（Public API Freezing）**：修 Bug 时既有 `.h` 处于只读/冻结状态，绝对不允许破坏既有调用方的编译契约。
+2. **【依赖锁】严格单向依赖流动**：$\text{Shell} \to \text{View} \to \text{Controller} \to \text{Domain} \to \text{Data}$，禁止逆向包含头文件与跨层下钻。
+3. **【门禁锁】架构三问先答后写**：提供方案前必须先回答真理源溯源 (SSOT)、黑盒完整性与根因溯源。
+4. **【静态红线扫描】严禁平台 Hack 级补丁**：严禁 Win32 `SetForegroundWindow` 强抢焦点、工具类篡改 `Qt::Popup`、`friend class` 伪解耦及 `installEventFilter` 无校验全局挂载。
+5. **【黑盒隔离锁】黑盒信息隐藏**：仅对接口 (API/DTO) 负责，禁止跨模块窥探或依赖私有实现。
 
 ---
 
