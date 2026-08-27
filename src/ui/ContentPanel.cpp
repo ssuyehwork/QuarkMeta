@@ -1430,34 +1430,33 @@ void ContentPanel::initListView() {
         "QTreeView QLineEdit { background-color: #2D2D2D; color: #FFFFFF; border: 1px solid #378ADD; border-radius: 6px; padding: 2px; selection-background-color: #378ADD; selection-color: #FFFFFF; }" 
     ); 
  
-    m_treeView->header()->setDefaultAlignment(Qt::AlignCenter);
+    // 统一表头样式：干净、左对齐、无任何破坏性 padding
     m_treeView->header()->setStyleSheet( 
-        "QHeaderView::section { background-color: #252525; color: #B0B0B0; border: none; border-right: 1px solid #333333; height: 32px; font-size: 11px; }" 
+        "QHeaderView::section { background-color: #252525; color: #B0B0B0; border: none; border-right: 1px solid #333333; height: 32px; font-size: 11px; padding: 0 4px; }"
     ); 
     
-    // --- 列表表头（Header）列宽固定化重构 ---
     auto* header = m_treeView->header();
-    header->setStretchLastSection(false); // 禁止末端强行拉伸
-    header->setCascadingSectionResizes(false);
+    header->setStretchLastSection(false);
+    header->setCascadingSectionResizes(true);
+    header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
-    // 1. 确保所有 7 列均可见，并且彻底隐藏或移除多余的第 7 列（原本的第 7 列已被前移）
     for (int i = 0; i <= 6; ++i) {
         header->setSectionHidden(i, false);
     }
     header->setSectionHidden(7, true);
 
-    // 2. 精确设置各列固定像素宽度（彻底移除“颜色”列，平移后续所有列宽度）
-    header->resizeSection(1, 50);   // 状态 (固定 50px 图标区)
-    header->resizeSection(2, 120);  // 星级 (固定 120px 图标区)
-    header->resizeSection(3, 120);  // 尺寸 (固定 120px)
-    header->resizeSection(4, 80);   // 类型 (固定 80px)
-    header->resizeSection(5, 100);  // 大小 (固定 100px)
-    header->resizeSection(6, 120);  // 修改日期 (固定 120px)
+    header->setMinimumSectionSize(35);
 
-    // 3. 锁定调整模式：第 0 列（名称）弹性自适应拉伸，第 1~6 列物理固定禁止拖拽
-    header->setSectionResizeMode(0, QHeaderView::Stretch);
-    for (int i = 1; i <= 6; ++i) {
-        header->setSectionResizeMode(i, QHeaderView::Fixed);
+    header->resizeSection(0, 260);  // 【第 0 列名称】：保底 260px，确保缩略图和文件名完美并存！
+    header->resizeSection(1, 40);   // 【第 1 列状态】：40px
+    header->resizeSection(2, 90);   // 【第 2 列星级】：90px
+    header->resizeSection(3, 90);   // 【第 3 列尺寸】：90px
+    header->resizeSection(4, 70);   // 【第 4 列类型】：70px
+    header->resizeSection(5, 75);   // 【第 5 列大小】：75px
+    header->resizeSection(6, 110);  // 【第 6 列修改日期】：110px
+
+    for (int i = 0; i <= 6; ++i) {
+        header->setSectionResizeMode(i, QHeaderView::Interactive);
     }
  
     connect(m_treeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &ContentPanel::onSelectionChanged); 
