@@ -263,7 +263,9 @@ void PanelMediator::setupConnections() {
             CentralEventHub::instance().publishEvent(ev);
         });
 
-        connect(filterPanel, &FilterPanel::filterChanged, contentPanel, &ContentPanel::applyFilters);
+        connect(filterPanel, &FilterPanel::filterChanged, contentPanel, [contentPanel](const FilterState& state) {
+            contentPanel->applyFilters(state);
+        });
     }
 
     // 5. 地址栏路径跳转与刷新
