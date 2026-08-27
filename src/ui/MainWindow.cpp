@@ -92,9 +92,6 @@ constexpr int kEdgeMargin = 5;
 constexpr int kStatusBarMargin = 12;
 
 MainWindow::~MainWindow() {
-    if (m_resizeFilter) {
-        QCoreApplication::instance()->removeEventFilter(m_resizeFilter);
-    }
 }
 
 MainWindow::MainWindow(QWidget* parent)

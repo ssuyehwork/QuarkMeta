@@ -1,3 +1,6 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include "PermanentDeleteService.h"
 #include "../ui/dialogs/FramelessMessageBox.h"
 #include "../ui/BatchProgressDialog.h"

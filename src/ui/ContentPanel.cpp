@@ -7,6 +7,7 @@
 #include "../meta/TrashRepository.h" 
 #include "../meta/DiskTrashRepo.h"
 #include "ColorPicker.h"
+#include "../core/DiskTrashService.h"
 #include "../core/TrashService.h"
 #include "../core/PermanentDeleteService.h"
 #include "../core/ClipboardService.h"
