@@ -45,6 +45,12 @@
 ### 系统托盘退出生命周期与主进程优雅终结顶层规范 (TrayController)
 1. **标准关闭序列与配置落盘红线**：系统托盘（TrayController）在响应右键“退出”指令时，必须发射退出信号或调用 `qApp->closeAllWindows()` 发起标准的窗口关闭流程，由主窗口 `closeEvent` 统一调度后台工作线程熔断与数据库安全落盘，严禁强杀主事件循环。
 
+### 核心文件生命周期与剪贴板服务模块化拆分规范 (TrashService, PermanentDeleteService, ClipboardService)
+1. **视图层物理 I/O 完全剥离红线**：视图层（如 `ContentPanel`）仅负责 UI 交互、控件呈现与视图刷新，严禁就地书写物理文件擦除、剪贴板 MIME 数据解析、多线程物理传输或底层回收站数据库存取逻辑。
+2. **回收站服务 (TrashService) 撤销闭环规范**：回收站生命周期统一由 `TrashService` 承载，封装移入回收站、选定还原、全量还原与定向恢复，并强绑定快照撤销引擎 (`OperationSnapshotEngine`) 与轻量级反馈 (`UndoToastOverlay`) 构成原子闭环。
+3. **永久删除服务 (PermanentDeleteService) 异步擦除规范**：物理粉碎与永久删除统一由 `PermanentDeleteService` 承载，涉及磁盘重度 I/O 擦除的操作必须隔离在 `QtConcurrent` 后台工作线程，并通过进度回调主线程刷新 UI，禁止阻塞主事件循环。
+4. **剪贴板服务 (ClipboardService) 多态传输与智能防死循环规范**：剪贴板操作统一由 `ClipboardService` 承载，收拢复制、剪切、粘贴判定与物理传输；智能识别剪贴板图片并直接保存为本地图像文件；严格校验层级包含关系，杜绝将父目录复制/剪切入子目录引发的死循环。
+
 ### 工业级 Clean Architecture 重构路线图与命名治理顶层规范
 1. **重构演进路线图（从根底重构与五层架构对齐）**：
    - **第一阶段：窗口壳体层收拢与全局事件降权**：收拢无边框拖拽、拉伸及标题栏交互（`FramelessWindowHelper`），事件过滤器严禁无校验全局挂载。
