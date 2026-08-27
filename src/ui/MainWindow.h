@@ -195,21 +195,6 @@ private:
     PanelLayoutManager*       m_panelLayoutManager = nullptr;
     TaskProgressController* m_taskProgressController = nullptr;
 
-public slots:
-    /**
-     * @brief 2026-07-xx 按照 Plan-63：显示统一的面板显隐控制菜单
-     */
-    void showPanelContextMenu(const QPoint& globalPos);
-
-    /**
-     * @brief 2026-07-xx 按照 Plan-63：为已有菜单填充面板显隐 Action
-     */
-    void populatePanelMenu(QMenu* menu);
-
-private:
-    void loadPanelVisibility();
-    void savePanelVisibility();
-    void updateDynamicMinimumSize();
 };
 
 } // namespace QuarkMeta

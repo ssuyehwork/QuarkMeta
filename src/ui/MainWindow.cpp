@@ -183,8 +183,6 @@ void MainWindow::initUi() {
     m_mainSplitter->setStretchFactor(3, 0);
     m_mainSplitter->setStretchFactor(4, 0);
 
-    loadPanelVisibility();
-
     QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
     if (!savedGeom.isEmpty()) {
         restoreGeometry(savedGeom);
@@ -658,7 +656,6 @@ void MainWindow::unifiedNavigateTo(const QString& url, bool record) {
     }
 
     m_contentPanel->show();
-    loadPanelVisibility();
 
     QString path = url;
     if (path.startsWith(kProtocolFile)) path = path.mid(kProtocolFile.length());
