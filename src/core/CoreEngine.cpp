@@ -1,6 +1,7 @@
 #include "CoreEngine.h"
 #include "../meta/MetadataManager.h"
 #include "../meta/TagRepository.h"
+#include "TagLexiconService.h"
 
 namespace QuarkMeta {
 
@@ -83,12 +84,8 @@ bool CoreEngine::executeCommand(const AppCommand& cmd) {
         QString newTag = cmd.params.value("newTag").toString().trimmed();
         if (oldTag.isEmpty() || newTag.isEmpty() || oldTag == newTag) break;
 
-        // 1. global.db 主词典重命名
-        TagRepository::removeTagFromGroup(oldTag, -1);
-        TagRepository::addTagToGroup(newTag, -1);
-
-        // 2. 内存与磁盘 .QuarkMeta.json 级联更新
-        MetadataManager::instance().renameTag(oldTag, newTag);
+        // 🚀 仅作用于 global.db 标签词库，解耦全盘扫描
+        TagLexiconService::instance().renameTag(oldTag, newTag);
 
         AppEvent ev;
         ev.type = AppEventType::MetadataUpdated;
@@ -99,11 +96,8 @@ bool CoreEngine::executeCommand(const AppCommand& cmd) {
         QString tag = cmd.params.value("tag").toString().trimmed();
         if (tag.isEmpty()) break;
 
-        // 1. global.db 主词典彻底擦除
-        TagRepository::removeTagFromGroup(tag, -1);
-
-        // 2. 内存与磁盘 .QuarkMeta.json 级联擦除
-        MetadataManager::instance().removeTag(tag);
+        // 🚀 仅作用于 global.db 标签词库，解耦全盘扫描
+        TagLexiconService::instance().deleteTag(tag);
 
         AppEvent ev;
         ev.type = AppEventType::MetadataUpdated;

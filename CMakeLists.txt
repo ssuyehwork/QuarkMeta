@@ -90,6 +90,8 @@ set(SOURCES
     src/core/NavigationHistoryService.h
     src/core/SearchHistoryService.cpp
     src/core/SearchHistoryService.h
+    src/core/TagLexiconService.h
+    src/core/TagLexiconService.cpp
     src/crypto/EncryptionManager.cpp
     src/crypto/EncryptionManager.h
     src/meta/DiskTrashRepo.cpp
