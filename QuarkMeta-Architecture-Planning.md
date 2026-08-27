@@ -51,6 +51,19 @@
 2. **托盘句柄与资源显式注销红线**：在退出序列发起时，托盘控制器必须显式隐藏托盘图标（`hide()`）并断开相关信号与上下文菜单绑定，防止 Windows 系统托盘句柄残留。
 3. **主事件循环强行终结红线**：由于系统禁用了“最后一个窗口关闭时自动退出”（`setQuitOnLastWindowClosed(false)`），托盘退出指令在关闭主窗口后，必须显式调用 `QCoreApplication::exit(0)` 或 `QApplication::exit(0)`，强制通知 Qt 主事件循环以状态码 0 退出，确保 `a.exec()` 立即结束并顺序执行 `aboutToQuit` 安全清场序列（包括后台流水线熔断与数据库安全落盘）。
 
+### 工业级 Clean Architecture 重构路线图与命名治理顶层规范
+1. **重构演进路线图（从根底重构与五层架构对齐）**：
+   - **第一阶段：窗口壳体层收拢与全局事件降权**：收拢无边框拖拽、拉伸及标题栏交互（`FramelessWindowHelper`），事件过滤器严禁无校验全局挂载。
+   - **第二阶段：主窗口（上帝类）拆分与控制协调层重构**：将 `MainWindow` 瘦身为纯装配壳体，彻底剥离导航控制器 (`NavigationController`)、右键上下文菜单控制器 (`ContextMenuController`) 和盘符控制器 (`DriveBarController`)。
+   - **第三阶段：Model-View 协议规范与伪解耦清理**：彻底清理 `friend class` 侵入；强约束 `model->data(index, role)` 规范；批量操作严禁循环发射事件。
+   - **第四阶段：数据基础设施落盘与异步线程隔离**：确保重型磁盘 I/O 与媒体解析完全隔离在后台工作线程，UI 主线程零阻塞。
+   - **第五阶段：全局接口契约冻结与历史 Legacy 清场**：彻底清理废弃代码与僵尸文件，完成最终静态规范审计。
+
+2. **重构命名治理红线**：
+   - **类名与文件名（PascalCase 1:1 映射）**：类名统一采用 PascalCase 大驼峰；文件名必须与类名 1:1 严格对应（例如 `TaskProgressController.h/cpp`），严禁临时无意义名称。
+   - **函数名与变量名（camelCase 表达力约束）**：函数名与变量名统一小驼峰；私有成员强约束 `m_` 前缀；严禁动词模糊的无脑命名（如 `doIt()`、`process1()`）。
+   - **接口重命名平滑过渡**：重命名不规范的 Public 接口时，必须保留或提供 inline 转发函数，绝对保证既有调用方的编译契约不受破坏。
+
 ---
 
 ## 2. 自研代码文件职责与功能深度剖析 (Self-Developed Source File Responsibilities)
