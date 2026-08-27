@@ -106,8 +106,6 @@ MainWindow::MainWindow(QWidget* parent)
 
     m_hoverFilter = new HoverEventFilter(this);
 
-    m_shortcutController = new GlobalShortcutController(this, this);
-
     m_isPinned = AppConfig::instance().getValue("MainWindow/AlwaysOnTop", false).toBool();
 
     QFile file(":/style.qss");
@@ -205,6 +203,7 @@ void MainWindow::initUi() {
         m_metaPanel,
         m_filterPanel,
         m_addressBar,
+        m_searchController,
         this
     );
     m_panelMediator->setupConnections();
@@ -263,10 +262,6 @@ void MainWindow::showEvent(QShowEvent* event) {
 
 
 void MainWindow::keyPressEvent(QKeyEvent* event) {
-    if (m_shortcutController && m_shortcutController->handleKeyPress(event)) {
-        return;
-    }
-
     setAttribute(Qt::WA_Hover);
     QMainWindow::keyPressEvent(event);
 }

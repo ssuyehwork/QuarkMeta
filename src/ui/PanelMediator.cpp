@@ -25,6 +25,7 @@ PanelMediator::PanelMediator(NavPanel* navPanel,
                              MetaPanel* metaPanel,
                              FilterPanel* filterPanel,
                              AddressBar* addressBar,
+                             SearchController* searchController,
                              QObject* parent)
     : QObject(parent),
       m_navPanel(navPanel),
@@ -32,7 +33,8 @@ PanelMediator::PanelMediator(NavPanel* navPanel,
       m_contentPanel(contentPanel),
       m_metaPanel(metaPanel),
       m_filterPanel(filterPanel),
-      m_addressBar(addressBar) {
+      m_addressBar(addressBar),
+      m_searchController(searchController) {
 }
 
 void PanelMediator::setupConnections() {

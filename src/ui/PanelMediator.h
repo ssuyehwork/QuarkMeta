@@ -11,6 +11,7 @@ class ContentPanel;
 class MetaPanel;
 class FilterPanel;
 class AddressBar;
+class SearchController;
 
 /**
  * @brief 面板中介者
@@ -26,6 +27,7 @@ public:
                            MetaPanel* metaPanel,
                            FilterPanel* filterPanel,
                            AddressBar* addressBar,
+                           SearchController* searchController = nullptr,
                            QObject* parent = nullptr);
     ~PanelMediator() override = default;
 
@@ -41,6 +43,7 @@ private:
     QPointer<MetaPanel> m_metaPanel;
     QPointer<FilterPanel> m_filterPanel;
     QPointer<AddressBar> m_addressBar;
+    QPointer<SearchController> m_searchController;
 
     QString m_currentQuickLookPath;
 };
