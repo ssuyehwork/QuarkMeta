@@ -16,7 +16,7 @@ TrayController::TrayController(QMainWindow* mainWindow)
     m_trayIcon->setIcon(QIcon(":/app_icon.ico"));
     m_trayIcon->setToolTip("QuarkMeta");
 
-    m_trayMenu = new QMenu(mainWindow);
+    m_trayMenu = new QMenu();
     m_trayMenu->setStyleSheet(
         "QMenu { background-color: #2D2D2D; color: #EEE; border: 1px solid #444; padding: 4px; border-radius: 8px; }"
         "QMenu::item { padding: 6px 25px 6px 10px; border-radius: 4px; font-size: 12px; color: #EEE; }"
@@ -40,6 +40,10 @@ TrayController::~TrayController() {
     if (m_trayIcon) {
         m_trayIcon->hide();
     }
+    if (m_trayMenu) {
+        delete m_trayMenu;
+        m_trayMenu = nullptr;
+    }
 }
 
 void TrayController::show() {
@@ -61,7 +65,13 @@ void TrayController::onTrayActivated(QSystemTrayIcon::ActivationReason reason) {
 }
 
 void TrayController::onShowMainWindow() {
-    m_mainWindow->showNormal();
+    if (!m_mainWindow) return;
+    if (m_mainWindow->isMinimized()) {
+        m_mainWindow->showNormal();
+    }
+    m_mainWindow->show();
+    m_mainWindow->setWindowState((m_mainWindow->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+    m_mainWindow->raise();
     m_mainWindow->activateWindow();
 }
 
