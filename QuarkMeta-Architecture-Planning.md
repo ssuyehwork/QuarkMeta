@@ -36,6 +36,10 @@
 1. **三阶哈希判重红线**：文件判重严格采用三阶流水线算法：一阶依物理尺寸粗滤 -> 二阶做 FastHash（首尾分块哈希） -> 三阶做全量 SHA-256 校验。彻底杜绝误判。
 2. **UI 主线程零 I/O 判重保护红线**：哈希计算与全量判重集合生成全权移交至 `QtConcurrent` 后台工作线程处理。
 
+### 批量重命名服务归一化与两阶段安全重命名顶层规范 (BatchRenameService)
+1. **重命名管道与物理 I/O 归一收敛红线**：全系统批量重命名、移动与复制规则计算（固定文本、序列、日期、原文件名、元数据变量）、同名冲突校验、Windows NTFS 大小写不敏感两阶段 UUID 中转安全重命名、缩略图与元数据 (.QuarkMeta.json) 全量同步漫游统一由 `BatchRenameService` 承载，视图层（`BatchRenameDialog`）与计算引擎（`BatchRenameEngine`）严禁就地执行同步 `std::filesystem::rename` 物理写盘。
+2. **原子撤销与双重撤销消除红线**：批量重命名操作必须生成单一次原子的 `BatchRenameCommand` 并推入全局 `UndoManager`，彻底消除视图层手动二次推入撤销快照引起的双重撤销冲突，撤销完成反馈 Toast 统一固定为 7 秒 (7000ms) 停留机制。
+
 ### 全局标签词库服务与磁盘 I/O 完全解耦顶层规范 (TagLexiconService)
 1. **词库维护与文件标注解耦红线**：全局标签词库（词条 CRUD、分组管理、颜色与拼音/前缀联想补全）统一由 `TagLexiconService` 承载，仅对 SQLite `global.db` 数据库（`tags` 与 `tag_groups` 表）进行持久化更新，严禁在重命名或删除全局词条时执行全盘 `.QuarkMeta.json` 磁盘扫描遍历。
 2. **底层并发访问与事务安全红线**：`TagLexiconService` 底层必须严格对接 `DatabaseManager` 的原生 `sqlite3*` 句柄与全局并发锁，统一采用 `SqlTransaction` RAII 事务和 `sqlite3_wal_checkpoint_v2` WAL 检查点，杜绝混合使用 Qt `QSqlDatabase` 引起的数据库锁冲突（`SQLITE_BUSY`）。
