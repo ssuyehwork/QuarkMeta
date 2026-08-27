@@ -163,6 +163,8 @@ set(SOURCES
     src/ui/MainWindow.h
     src/ui/TaskProgressController.h
     src/ui/TaskProgressController.cpp
+    src/ui/SearchController.h
+    src/ui/SearchController.cpp
     src/ui/TrayController.cpp
     src/ui/TrayController.h
     src/ui/HoverEventFilter.cpp

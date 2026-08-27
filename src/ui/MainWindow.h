@@ -27,6 +27,7 @@ class TitleBarEventFilter;
 class AddressBar;
 class TaskProgressToolBar;
 class TaskProgressController;
+class SearchController;
 class NavPanel;
 class FavoritePanel;
 class ContentPanel;
@@ -142,14 +143,11 @@ private:
 
     // 工具栏组件
     QToolBar* m_toolbar    = nullptr;
-    QLineEdit* m_searchEdit = nullptr;
     QPushButton* m_btnBack    = nullptr;
     QPushButton* m_btnForward = nullptr;
     QPushButton* m_btnUp      = nullptr;
 
-    // 2026-04-12 按照用户要求：搜索历史悬浮面板及历史记录
-    QWidget* m_searchContainer = nullptr; // 搜索框容器
-    SearchHistoryPanel* m_searchHistoryPanel = nullptr;
+    SearchController* m_searchController = nullptr;
     
     // 排列方式视图按钮及中性缩放滑杆 (Modification_Plan-47)
     QPushButton* m_btnViewMenu = nullptr;
@@ -175,7 +173,6 @@ private:
     bool m_isTagManagerMode = false;
     QString m_currentDataSource; // "category" or "nav"
     bool m_panelsInitialized = false; // 2026-04-12 状态锁：确保面板仅初始化一次
-    QTimer* m_searchTimer = nullptr; // 2026-xx-xx 按照 Plan-106：搜索防抖计时器
     QString m_currentPath;
     QStringList m_history;
     int m_historyIndex = -1;

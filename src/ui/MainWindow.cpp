@@ -5,6 +5,8 @@
 #include "GlobalShortcutController.h"
 #include "PanelMediator.h"
 #include "TaskProgressController.h"
+#include "SearchController.h"
+#include "SearchHistoryPanel.h"
 #include <QDateTime>
 #include <algorithm>
 #include "../meta/DiskNavigatorService.h"
@@ -222,48 +224,10 @@ void MainWindow::initUi() {
         m_panelMediator->setupConnections();
     }
 
-    // 搜索框与历史记录
-    m_searchHistoryPanel = new SearchHistoryPanel(this);
-    m_searchHistoryPanel->setCategory("global");
-    m_searchHistoryPanel->setHistory(SearchHistoryService::instance().getHistory("global"));
-
-    m_searchTimer = new QTimer(this);
-    m_searchTimer->setSingleShot(true);
-    m_searchTimer->setInterval(300);
-
-    auto doSearch = [this](const QString& keyword) {
-        m_contentPanel->search(keyword);
-        updateStatusBar();
-
-        if (!keyword.isEmpty()) {
-            SearchHistoryService::instance().appendSearch("global", keyword);
-        }
-        m_searchHistoryPanel->hide();
-    };
-
-    connect(m_searchEdit, &QLineEdit::returnPressed, this, [this, doSearch]() {
-        doSearch(m_searchEdit->text().trimmed());
-    });
-
-    connect(m_searchEdit, &QLineEdit::textChanged, this, [this, doSearch](const QString& text) {
-        if (text.isEmpty()) {
-            m_searchTimer->stop();
-            doSearch("");
-            return;
-        }
-        m_searchTimer->start();
-    });
-
-    connect(m_searchTimer, &QTimer::timeout, this, [this, doSearch]() {
-        doSearch(m_searchEdit->text().trimmed());
-    });
-    
-    m_searchEdit->installEventFilter(this);
-
-    connect(m_searchHistoryPanel, &SearchHistoryPanel::historyItemClicked, this, [this, doSearch](const QString& keyword) {
-        m_searchEdit->setText(keyword);
-        doSearch(keyword);
-    });
+    if (m_searchController) {
+        m_searchController->bindContentPanel(m_contentPanel);
+        connect(m_searchController, &SearchController::searchExecuted, this, &MainWindow::updateStatusBar);
+    }
 
 }
 
@@ -407,14 +371,6 @@ void MainWindow::keyPressEvent(QKeyEvent* event) {
 }
 
 bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
-    if (event->type() == QEvent::MouseButtonDblClick && watched == m_searchEdit) {
-        QStringList history = SearchHistoryService::instance().getHistory("global");
-        if (!history.isEmpty()) {
-            m_searchHistoryPanel->setHistory(history);
-            m_searchHistoryPanel->showBelow(m_searchEdit);
-        }
-    }
-
     return QMainWindow::eventFilter(watched, event);
 }
 
@@ -459,27 +415,7 @@ void MainWindow::initToolbar() {
     m_addressBar = new AddressBar(this);
     m_addressBar->setMinimumWidth(300);
 
-    m_searchContainer = new QWidget(this);
-    m_searchContainer->setStyleSheet("background: transparent;");
-    QHBoxLayout* searchLayout = new QHBoxLayout(m_searchContainer);
-    searchLayout->setContentsMargins(0, 0, 0, 0);
-    searchLayout->setSpacing(0);
-
-    m_searchEdit = new QLineEdit(m_searchContainer);
-    m_searchEdit->setPlaceholderText("搜索...");
-    m_searchEdit->setFixedSize(230, 32);
-    m_searchEdit->addAction(UiHelper::getIcon("search", TextMuted), QLineEdit::LeadingPosition);
-    
-    m_searchEdit->setClearButtonEnabled(true);
-
-    m_searchEdit->setStyleSheet(QString(
-        "QLineEdit { background: %1; border: 1px solid %2;"
-        "  border-radius: 6px;"
-        "  color: %3; padding-left: 5px; padding-right: 5px; }"
-        "QLineEdit:focus { border: 1px solid %4; }"
-    ).arg(qssColor(BackgroundDeep)).arg(qssColor(BorderColor)).arg(qssColor(TextMain)).arg(qssColor(PrimaryBlue)));
-
-    searchLayout->addWidget(m_searchEdit);
+    m_searchController = new SearchController(this);
 }
 
 void MainWindow::setupSplitters() {
@@ -527,7 +463,9 @@ void MainWindow::setupSplitters() {
     m_navBarLayout->addWidget(m_btnForward);
     m_navBarLayout->addWidget(m_btnUp);
     m_navBarLayout->addWidget(m_addressBar, 1);
-    m_navBarLayout->addWidget(m_searchContainer);
+    if (m_searchController && m_searchController->toolbarWidget()) {
+        m_navBarLayout->addWidget(m_searchController->toolbarWidget());
+    }
 
     QWidget* bodyWrapper = new QWidget(centralC);
     bodyWrapper->setStyleSheet("background: transparent;");
@@ -801,10 +739,10 @@ void MainWindow::setupCustomTitleBarButtons() {
 void MainWindow::unifiedNavigateTo(const QString& url, bool record) {
     if (url.isEmpty()) return;
 
-    if (m_searchEdit) {
-        m_searchEdit->blockSignals(true);
-        m_searchEdit->clear();
-        m_searchEdit->blockSignals(false);
+    if (m_searchController && m_searchController->searchEdit()) {
+        m_searchController->searchEdit()->blockSignals(true);
+        m_searchController->searchEdit()->clear();
+        m_searchController->searchEdit()->blockSignals(false);
     }
     
     if (m_contentPanel) {
@@ -949,8 +887,8 @@ void MainWindow::onPinToggled(bool checked) {
 
 void MainWindow::changeEvent(QEvent* event) {
     if (event->type() == QEvent::WindowStateChange) {
-        if (isMinimized() && m_searchHistoryPanel) {
-            m_searchHistoryPanel->hide();
+        if (isMinimized() && m_searchController && m_searchController->historyPanel()) {
+            m_searchController->historyPanel()->hide();
         }
 
         if (m_btnMax) {
