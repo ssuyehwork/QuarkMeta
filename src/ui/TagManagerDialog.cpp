@@ -204,7 +204,7 @@ void TagManagerDialog::refreshSidebar() {
     createSideBtn(-2, "star_filled", "常用标签");
 
     // 动态加载自定义分组
-    m_allGroups = TagRepository::getAllGroups();
+    m_allGroups = TagLexiconService::instance().getAllTagGroups();
     for (const auto& grp : m_allGroups) {
         QPushButton* btn = createSideBtn(grp.id, "folder_filled", grp.name);
         btn->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -350,7 +350,7 @@ void TagManagerDialog::refreshTags() {
 
     if (m_activeGroupId == -2) {
         // 常用 / 最近使用
-        filteredTags = TagRepository::getRecentTags(30);
+        filteredTags = TagLexiconService::instance().querySuggestions("", 30);
     } else if (m_activeGroupId == -1) {
         // 未分类
         QSet<QString> groupedTags;

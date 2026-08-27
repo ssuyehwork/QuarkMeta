@@ -1,6 +1,5 @@
 #include "CoreEngine.h"
 #include "../meta/MetadataManager.h"
-#include "../meta/TagRepository.h"
 #include "TagLexiconService.h"
 
 namespace QuarkMeta {
@@ -48,7 +47,7 @@ bool CoreEngine::executeCommand(const AppCommand& cmd) {
         if (tag.isEmpty()) break;
 
         // 🚨 铁律第一步：先将新标签登记到 global.db 主词典（默认归入未分类/全局）
-        TagRepository::addTagToGroup(tag, -1);
+        TagLexiconService::instance().addTag(tag);
 
         // 🚨 铁律第二步：再绑定到各个选中项目的 .QuarkMeta.json 与内存
         for (const QString& path : cmd.targetPaths) {
@@ -178,7 +177,7 @@ void CoreEngine::handleSetTags(const QStringList& paths, const QStringList& tags
     for (const QString& t : tags) {
         QString cleanTag = t.trimmed();
         if (!cleanTag.isEmpty()) {
-            TagRepository::addTagToGroup(cleanTag, -1);
+            TagLexiconService::instance().addTag(cleanTag);
         }
     }
 
