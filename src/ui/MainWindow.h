@@ -22,8 +22,6 @@ namespace QuarkMeta {
 
 class TrayController;
 class HoverEventFilter;
-class ResizeEventFilter;
-class TitleBarEventFilter;
 class AddressBar;
 class TaskProgressToolBar;
 class TaskProgressController;
@@ -36,6 +34,7 @@ class FilterPanel;
 class SearchHistoryPanel;
 class GlobalShortcutController;
 class PanelMediator;
+class PanelLayoutManager;
 
 /**
  * @brief 主窗口类
@@ -51,10 +50,9 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
+    PanelLayoutManager* layoutManager() const { return m_panelLayoutManager; }
+
 protected:
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseMoveEvent(QMouseEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void changeEvent(QEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -189,13 +187,12 @@ private:
     // 系统托盘控制器
     TrayController* m_trayController = nullptr;
     HoverEventFilter*     m_hoverFilter     = nullptr;
-    ResizeEventFilter*    m_resizeFilter    = nullptr;
-    TitleBarEventFilter* m_titleBarFilter  = nullptr;
     QTimer* m_sidebarRefreshTimer = nullptr;
 
     // 模块化控制器与中介者
     GlobalShortcutController* m_shortcutController = nullptr;
     PanelMediator* m_panelMediator = nullptr;
+    PanelLayoutManager*       m_panelLayoutManager = nullptr;
     TaskProgressController* m_taskProgressController = nullptr;
 
 public slots:
