@@ -4,6 +4,7 @@
 #include "MainWindow.h"
 #include "GlobalShortcutController.h"
 #include "PanelMediator.h"
+#include "TaskProgressController.h"
 #include <QDateTime>
 #include <algorithm>
 #include "../meta/DiskNavigatorService.h"
@@ -264,50 +265,6 @@ void MainWindow::initUi() {
         doSearch(keyword);
     });
 
-    m_elapsedTimer = new QTimer(this);
-    m_elapsedTimer->setInterval(100);
-
-    auto formatTime = [](qint64 totalSeconds) -> QString {
-        if (totalSeconds < 0) totalSeconds = 0;
-        qint64 hours = totalSeconds / 3600;
-        qint64 mins = (totalSeconds % 3600) / 60;
-        qint64 secs = totalSeconds % 60;
-        if (hours > 0) {
-            return QString("%1:%2:%3")
-                .arg(hours, 2, 10, QChar('0'))
-                .arg(mins, 2, 10, QChar('0'))
-                .arg(secs, 2, 10, QChar('0'));
-        }
-        return QString("%1:%2")
-            .arg(mins, 2, 10, QChar('0'))
-            .arg(secs, 2, 10, QChar('0'));
-    };
-
-    connect(m_elapsedTimer, &QTimer::timeout, this, [this, formatTime]() {
-        if (m_syncStartTime > 0 && m_totalBatchCount > 0) {
-            double elapsedSec = (QDateTime::currentMSecsSinceEpoch() - m_syncStartTime) / 1000.0;
-            int currentPct = m_topProgressBar->value();
-            
-            int completedCount = qBound(0, (int)((double)currentPct / 100.0 * m_totalBatchCount), m_totalBatchCount);
-
-            QString countdownStr = "00:00";
-            QString totalEstStr = "00:00";
-
-            if (currentPct >= 5) {
-                qint64 remainingSec = static_cast<qint64>(elapsedSec * (100.0 - currentPct) / (double)currentPct);
-                qint64 totalEstSec = static_cast<qint64>(elapsedSec) + remainingSec;
-                countdownStr = formatTime(remainingSec);
-                totalEstStr = formatTime(totalEstSec);
-            }
-
-            m_statusLeft->setText(QString("扫描数据中... %1%  数量：%2/%3  |  倒计时分 %4 / 预计时分: %5")
-                                  .arg(currentPct)
-                                  .arg(completedCount)
-                                  .arg(m_totalBatchCount)
-                                  .arg(countdownStr)
-                                  .arg(totalEstStr));
-        }
-    });
 }
 
 #ifdef Q_OS_WIN
@@ -654,16 +611,7 @@ void MainWindow::setupSplitters() {
     mainL->addWidget(m_statusBarWidget);
     mainL->addWidget(m_taskProgressToolBar);
 
-    m_topProgressBar = new QProgressBar(centralC);
-    m_topProgressBar->setFixedHeight(5);
-    m_topProgressBar->setTextVisible(false);
-    m_topProgressBar->setRange(0, 100);
-    m_topProgressBar->setInvertedAppearance(false);
-    m_topProgressBar->setStyleSheet(QString(
-        "QProgressBar { background: transparent; border: none; max-height: 5px; }"
-        "QProgressBar::chunk { background-color: %1; border-radius: 1px; }"
-    ).arg(qssColor(PrimaryBlue)));
-    m_topProgressBar->hide();
+    m_taskProgressController = new TaskProgressController(bodyWrapper, m_statusBarWidget, m_statusLeft, this);
 
     setCentralWidget(centralC);
 }
@@ -1172,23 +1120,6 @@ void MainWindow::onDriveBarContextMenu(const QPoint& pos) {
 
 void MainWindow::resizeEvent(QResizeEvent* event) {
     QMainWindow::resizeEvent(event);
-    updateProgressBarGeometry();
-}
-
-void MainWindow::updateProgressBarGeometry() {
-    if (!m_topProgressBar || !m_mainSplitter || !m_statusLeft) return;
-
-    QWidget* bodyWrapper = m_mainSplitter->parentWidget();
-    QWidget* statusBar = m_statusLeft->parentWidget();
-
-    if (bodyWrapper && statusBar) {
-        int x = bodyWrapper->geometry().left();
-        int y = statusBar->geometry().top() - 5;
-        int width = bodyWrapper->geometry().width();
-
-        m_topProgressBar->setGeometry(x, y, width, 5);
-        m_topProgressBar->raise();
-    }
 }
 
 } // namespace QuarkMeta

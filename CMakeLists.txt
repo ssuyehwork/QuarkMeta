@@ -161,6 +161,8 @@ set(SOURCES
     src/ui/PanelMediator.cpp
     src/ui/MainWindow.cpp
     src/ui/MainWindow.h
+    src/ui/TaskProgressController.h
+    src/ui/TaskProgressController.cpp
     src/ui/TrayController.cpp
     src/ui/TrayController.h
     src/ui/HoverEventFilter.cpp

@@ -26,6 +26,7 @@ class ResizeEventFilter;
 class TitleBarEventFilter;
 class AddressBar;
 class TaskProgressToolBar;
+class TaskProgressController;
 class NavPanel;
 class FavoritePanel;
 class ContentPanel;
@@ -198,13 +199,7 @@ private:
     // 模块化控制器与中介者
     GlobalShortcutController* m_shortcutController = nullptr;
     PanelMediator* m_panelMediator = nullptr;
-
-    void updateProgressBarGeometry(); // 实时计算 5px 悬浮位置函数
-
-    QProgressBar* m_topProgressBar = nullptr; // 悬浮覆盖层进度条
-    QTimer* m_elapsedTimer = nullptr;         // 耗时刷新定时器
-    qint64 m_syncStartTime = 0;               // 任务开始毫秒时间戳
-    int m_totalBatchCount = 0;                // 当前批次扫描的任务总项数
+    TaskProgressController* m_taskProgressController = nullptr;
 
 public slots:
     /**
