@@ -263,13 +263,7 @@ void PanelMediator::setupConnections() {
             CentralEventHub::instance().publishEvent(ev);
         });
 
-        connect(filterPanel, &FilterPanel::filterChanged, contentPanel, [contentPanel, searchController](const FilterState& state) {
-            FilterState mergedState = state;
-            if (searchController && searchController->searchEdit()) {
-                mergedState.keyword = searchController->searchEdit()->text().trimmed();
-            }
-            contentPanel->applyFilters(mergedState);
-        });
+        connect(filterPanel, &FilterPanel::filterChanged, contentPanel, &ContentPanel::applyFilters);
     }
 
     // 5. 地址栏路径跳转与刷新
