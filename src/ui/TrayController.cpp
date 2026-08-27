@@ -5,6 +5,7 @@
 #include <QProgressDialog>
 #include "../meta/DatabaseManager.h"
 #include "BatchProgressDialog.h"
+#include "UiHelper.h"
 
 namespace QuarkMeta {
 
@@ -17,12 +18,7 @@ TrayController::TrayController(QMainWindow* mainWindow)
     m_trayIcon->setToolTip("QuarkMeta");
 
     m_trayMenu = new QMenu();
-    m_trayMenu->setStyleSheet(
-        "QMenu { background-color: #2D2D2D; color: #EEE; border: 1px solid #444; padding: 4px; border-radius: 8px; }"
-        "QMenu::item { padding: 6px 25px 6px 10px; border-radius: 4px; font-size: 12px; color: #EEE; }"
-        "QMenu::item:selected { background-color: #3E3E42; color: white; }"
-        "QMenu::item:disabled { color: #666666; background-color: transparent; }"
-    );
+    UiHelper::applyMenuStyle(m_trayMenu);
 
     QAction* showAction = m_trayMenu->addAction("显示主界面");
     m_trayMenu->addSeparator();
