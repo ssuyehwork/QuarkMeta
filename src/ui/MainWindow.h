@@ -48,6 +48,9 @@ public:
     ~MainWindow() override;
 
     PanelLayoutManager* layoutManager() const { return m_panelLayoutManager; }
+    ContentPanel* contentPanel() const { return m_contentPanel; }
+    SearchController* searchController() const { return m_searchController; }
+    QPushButton* btnPinTop() const { return m_btnPinTop; }
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;
