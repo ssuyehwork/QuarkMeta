@@ -5,7 +5,7 @@
 
 ## 🏛️ 第一章：顶层架构哲学与五层分层规范 (Clean Architecture)
 
-`QuarkMeta` 定位于工业级、高性能、纯磁盘架构的桌面文件管理与元数据处理系统。为彻底根治“上帝类膨胀”、“隐式跨层耦合”、“平台级 Hack 补丁”及“事件风暴”等架构顽疾，全工程强制划分为严格单向依赖的**标准五层逻辑架构**：
+`QuarkMeta` 定位于工业级、高性能、纯磁盘架构的桌面文件管理与元数据处理系统。本文档作为全工程架构规划与模块拆分的最高指导蓝图。为彻底根治“上帝类膨胀”、“隐式跨层耦合”、“平台级 Hack 补丁”及“事件风暴”等架构顽疾，全工程强制划分为严格单向依赖的**标准五层逻辑架构**：
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -18,7 +18,7 @@
 ├────────────────────────────────────────────────────────────┤
 │ 3. 控制协调层 (Controller / Mediator / Handlers Layer)       │
 │    - 仅负责事件路由、动作分发、跨面板状态中介与上下文菜单构建   │
-│    - 严禁包含 HTML 字符串渲染、屏幕坐标几何计算与物理文件 I/O    │
+│    - 严禁包含渲染格式化、屏幕坐标几何计算与物理文件 I/O         │
 ├────────────────────────────────────────────────────────────┤
 │ 4. 业务领域层 (Domain Service / Core Engine Layer)           │
 │    - 状态单一持有者 (如 NavigationService 持有历史栈与当前 URL)│
@@ -29,6 +29,10 @@
 │    - 重型物理 I/O、扫描与媒体提取必须异步隔离，UI 主线程零阻塞  │
 └────────────────────────────────────────────────────────────┘
 ```
+
+### 架构大纲纯洁性隔离红线
+1. **纯洁性隔离红线**：本大纲仅记录**五层架构分层原则、状态持有者唯一性（SSOT）、Model-View 数据获取契约、并发与线程隔离策略**等核心架构骨架。
+2. **度量参数剥离说明**：所有像素级控件尺寸、颜色 Hex 色值及交互停留时间（如 Toast 7秒）等纯视觉参数，**全权剥离并托管于独立的 `UI_DESIGN_SPEC.md` 文档**，严禁污染系统顶层架构蓝图。
 
 ---
 
@@ -45,7 +49,7 @@
 
 ---
 
-## 命名治理与代码规范 (Name Governance)
+## 命名治理规范 (Name Governance)
 
 全工程所有新设及重构的文件、类、函数与变量必须严格对齐以下命名规范：
 
@@ -61,7 +65,7 @@
 
 ## 🗺️ 第三章：五阶段演进重构路线图 (Refactoring Roadmap)
 
-为防止重构断层与节奏混乱，全工程重构划分为 **5 个循序渐进的演进阶段**：
+全工程重构划分为 **5 个循序渐进的演进阶段**：
 
 ### 📍 阶段 1：窗口壳体层收拢与全局事件降权 (Native Shell & Event Isolation)
 - **目标**：收拢无边框拉伸、拖拽及标题栏交互，清除“全局事件侵入”。
@@ -74,7 +78,7 @@
 - **关键任务**：
   1. **进度与搜索控制** (已完成)：`TaskProgressController` (进度条与倒计时)、`SearchController` (搜索框与防抖)。
   2. **导航控制器** (`NavigationController`)：接管 `file://`、`computer://`、`trash://` 统一协议路由与历史栈管理。
-  3. **右键上下文菜单控制器** (`ContextMenuController`)：接管 4 种物理场景的右键 Action 构建与响应分发。
+  3. **上下文菜单控制器** (`ContextMenuController`)：接管 4 种物理场景的右键 Action 构建与响应分发。
   4. **盘符栏控制器** (`DriveBarController`)：接管热插拔感应、卷标加载与标签管理入口。
 
 ### 📍 阶段 3：Model-View 协议规范与伪解耦清理 (Model-View & Interface Standardization)
@@ -88,25 +92,34 @@
 - **目标**：规范【5. 数据与基础设施层】，确保 UI 主线程零阻塞。
 - **关键任务**：
   1. 梳理 SQLite (`global.db`)、`.QuarkMeta.json` 与 `MetaMemoryCache` 三级数据流。
-  2. 将磁盘物理扫描、深层缩略图解码、色彩提取彻底隔离在后台工作线程链中（如 `MediaExtractorPipeline`）。
+  2. 将磁盘物理扫描、深层缩略图解码、色彩提取彻底隔离在后台线程池中（如 `MediaExtractorPipeline`）。
 
 ### 📍 阶段 5：全局接口契约冻结与历史 Legacy 清场 (Dead Code Purge & Final Audit)
 - **目标**：确保代码库纯洁性与向后兼容性。
 - **关键任务**：
-  1. 清理所有废弃的无用函数、冗余头文件及历史残留字段（如旧版分类逻辑）。
+  1. 清理所有废弃的无用函数、冗余头文件及历史残留字段。
   2. 按照 `SYSTEM_PROMPT.md` 标准，对全工程进行最终静态规范审计与编译契约校验。
 
 ---
 
-## ⚡ 第四章：数据流、并发线程与事件总线规范
+## 🔗 第四章：子系统（Subsystems）数据流向与契约约束
 
-1. **命令-事件单向数据流 (Command-Event Pattern)**：
-   - UI 面板产生用户意图 -> 构建 `AppCommand` 提交给 `CoreEngine` -> `CoreEngine` 处理完毕后通过 `CentralEventHub` 广播 `AppEvent` -> 各面板监听 `AppEvent` 进行增量 UI 刷盘。
-2. **并发与线程安全模型**：
-   - UI 线程仅负责 QWidget 的轻量渲染与事件捕获。
-   - 所有数据库事务 (`DatabaseManager`) 与文件 IO/解码统一运行在后台线程池；跨线程数据传递必须使用 Qt 强类型值拷贝或标准 Smart Pointer。
-3. **选区响应熔断保护机制**：
-   - 当用户选中项目数量突破阈值（如 50 项）时，选区广播自动触发熔断保护，禁止打包深拷贝数千个路径字符串，降级为仅传输首项索引进行元数据预览，防止全选操作引发卡死。
+为杜绝二次上帝类与职责虚化，按子系统划分明确的数据流向与组件职责：
+
+### 1. 预览子系统 (QuickLook Subsystem)
+- **组件构成**：`QuickLookWindow`, `QuickLookGraphicsView`, `QuickLookMinimap`
+- **契约约束**：`QuickLookWindow` 为受控展示组件，严禁在预览窗口中直接操作物理文件系统或存取数据库。文件属性与像素数据统一由 `ContentPanel` / `DiskItemModel` 准备完毕后通过 DTO（`ItemRecord`）注入展示。
+
+### 2. 对话框子系统 (FramelessDialog Subsystem)
+- **组件构成**：`FramelessDialog`, `FramelessInputDialog`, `BatchRenameDialog`, `TagManagerDialog`
+- **契约约束**：对话框统一下沉为标准模态组件，仅通过 `QDialog::exec()` 的返回值（`Accepted` / `Rejected`）和受控 Getter 导出输入参数，严禁在 Dialog 内部直接持有或修改全局单例（如 `CoreEngine` / `MainWindow`）的内部私有状态。
+
+### 3. 内容与网格子系统 (Content & Grid Subsystem)
+- **组件构成**：`ContentPanel`, `DropTreeView`, `DropListView`, `DropJustifiedView`
+- **契约约束**：`ContentPanel` 作为页面级容器，仅调度 `DiskItemModel` 与代理模型 `FilterProxyModel`。视图绘制与 Drop 拖放行为全权交由 View / Delegate 承载，操作请求统一封装为 `AppCommand` 交付 `CoreEngine` 执行。
+
+### 4. 托盘退出协议规范 (Tray Lifecycle Subsystem)
+- **契约约束**：`TrayController` 响应“退出”指令时，**严禁使用 `QCoreApplication::exit(0)` 进行物理截断**。必须发射 `quitRequested` 信号或调用 `qApp->closeAllWindows()` 发起标准的关闭序列；由 `MainWindow::closeEvent` 统一调度后台异步工作线程（如哈希计算、媒体解析链）熔断与数据库落盘，确保清理完毕后由 Qt 主流程优雅退出。
 
 ---
 
@@ -114,7 +127,7 @@
 
 为了保证后续任何助手与开发者接手时均能无缝衔接、不发生断层：
 
-1. **唯一顶层规划指导**：本大纲文档 (`QuarkMeta Architecture Outline & Refactoring Plan.md`) 与 `QuarkMeta-Architecture-Planning.md` 为顶层架构规划的唯一权威依据。
+1. **唯一顶层规划指导**：本大纲文档与 `QuarkMeta-Architecture-Planning.md` 为顶层架构规划的唯一权威依据。
 2. **无脑实施方案制作**：每一个具体重构任务在实施前，**必须且只能**在 `QuarkMeta Architecture/Implementation Plan/` 目录下创建只读的实施方案文档（英文小写命名，如 `navigation.md`）。
 3. **四章节严格格式**：每个实施方案文档必须包含：
    - `1. Overview` (概述)
