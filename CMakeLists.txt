@@ -90,6 +90,8 @@ set(SOURCES
     src/core/NavigationHistoryService.h
     src/core/SearchHistoryService.cpp
     src/core/SearchHistoryService.h
+    src/core/BatchRenameService.h
+    src/core/BatchRenameService.cpp
     src/core/TagLexiconService.h
     src/core/TagLexiconService.cpp
     src/crypto/EncryptionManager.cpp
@@ -125,8 +127,6 @@ set(SOURCES
     src/ui/DuplicateConflictDialog.cpp
     src/ui/PresetManager.cpp
     src/ui/PresetManager.h
-    src/ui/DiskBatchRenameService.cpp
-    src/ui/DiskBatchRenameService.h
     src/ui/UndoToastOverlay.cpp
     src/ui/UndoToastOverlay.h
     src/ui/BreadcrumbBar.cpp
