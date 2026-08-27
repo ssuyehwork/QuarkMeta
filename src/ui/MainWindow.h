@@ -34,6 +34,7 @@ class FilterPanel;
 class SearchHistoryPanel;
 class GlobalShortcutController;
 class PanelMediator;
+class PanelLayoutManager;
 
 /**
  * @brief 主窗口类
@@ -48,6 +49,8 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
+
+    PanelLayoutManager* layoutManager() const { return m_panelLayoutManager; }
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;
@@ -189,6 +192,7 @@ private:
     // 模块化控制器与中介者
     GlobalShortcutController* m_shortcutController = nullptr;
     PanelMediator* m_panelMediator = nullptr;
+    PanelLayoutManager*       m_panelLayoutManager = nullptr;
     TaskProgressController* m_taskProgressController = nullptr;
 
 public slots:

@@ -16,6 +16,7 @@
 #include "TrayController.h"
 #include "HoverEventFilter.h"
 #include "FramelessWindowHelper.h"
+#include "PanelLayoutManager.h"
 #include "AddressBar.h"
 #include "../core/CoreController.h"
 #include "ColorPicker.h"
@@ -400,6 +401,13 @@ void MainWindow::setupSplitters() {
     m_mainSplitter->addWidget(m_metaPanel);
     m_mainSplitter->addWidget(m_filterPanel);
 
+    m_panelLayoutManager = new PanelLayoutManager(
+        this, m_mainSplitter,
+        m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel,
+        this
+    );
+    m_panelLayoutManager->initLayout();
+
     m_bodyLayout->addWidget(m_mainSplitter);
 
     m_statusBarWidget = new QWidget(centralC);
@@ -550,10 +558,9 @@ void MainWindow::setupCustomTitleBarButtons() {
     m_btnLayout->setProperty("tooltipText", "布局管理与重置");
     m_btnLayout->installEventFilter(m_hoverFilter);
     connect(m_btnLayout, &QPushButton::clicked, this, [this]() {
-        QMenu menu(this);
-        UiHelper::applyMenuStyle(&menu);
-        populatePanelMenu(&menu);
-        menu.exec(m_btnLayout->mapToGlobal(QPoint(0, m_btnLayout->height())));
+        if (m_panelLayoutManager) {
+            m_panelLayoutManager->showPanelContextMenu(m_btnLayout->mapToGlobal(QPoint(0, m_btnLayout->height())));
+        }
     });
 
     m_btnCreate = createTitleBtn("add");
@@ -792,113 +799,12 @@ void MainWindow::closeEvent(QCloseEvent* event) {
     AppConfig::instance().setValue("MainWindow/LastPath", m_currentPath);
     AppConfig::instance().setValue("MainWindow/Geometry", saveGeometry());
 
-    if (m_mainSplitter) {
-        AppConfig::instance().setValue("MainWindow/SplitterState", m_mainSplitter->saveState());
-        savePanelVisibility();
+    if (m_panelLayoutManager) {
+        m_panelLayoutManager->saveLayoutState();
     }
     AppConfig::instance().sync();
 
     QMainWindow::closeEvent(event);
-}
-
-void MainWindow::showPanelContextMenu(const QPoint& globalPos) {
-    QMenu menu(this);
-    UiHelper::applyMenuStyle(&menu);
-    populatePanelMenu(&menu);
-    menu.exec(globalPos);
-}
-
-void MainWindow::populatePanelMenu(QMenu* menu) {
-    auto addToggleAction = [&](const QString& text, QWidget* panel, bool canHide = true) {
-        QAction* action = menu->addAction(text);
-        action->setCheckable(true);
-        action->setChecked(panel->isVisible());
-        action->setEnabled(canHide);
-        connect(action, &QAction::toggled, panel, [this, panel](bool visible) {
-            panel->setVisible(visible);
-            updateDynamicMinimumSize();
-        });
-    };
-
-    addToggleAction("显示目录导航", m_navPanel);
-    addToggleAction("显示收藏夹", m_favoritePanel);
-    addToggleAction("显示内容区", m_contentPanel, false);
-    addToggleAction("显示元数据栏", m_metaPanel);
-    addToggleAction("显示筛选栏", m_filterPanel);
-
-    menu->addSeparator();
-    QAction* resetAct = menu->addAction("重置分栏");
-    connect(resetAct, &QAction::triggered, this, &MainWindow::resetSplitterLayout);
-}
-
-void MainWindow::resetSplitterLayout() {
-    m_isTagManagerMode = false;
-
-    m_navPanel->show();
-    m_favoritePanel->show();
-    m_contentPanel->show();
-    m_metaPanel->show();
-    m_filterPanel->show();
-
-    QList<int> sizes;
-    sizes << 230 << 230 << 550 << 230 << 230;
-
-    m_mainSplitter->setSizes(sizes);
-    
-    m_mainSplitter->setStretchFactor(0, 0);
-    m_mainSplitter->setStretchFactor(1, 0);
-    m_mainSplitter->setStretchFactor(2, 1);
-    m_mainSplitter->setStretchFactor(3, 0);
-    m_mainSplitter->setStretchFactor(4, 0);
-
-    AppConfig::instance().remove("MainWindow/SplitterState");
-    AppConfig::instance().remove("MainWindow/PanelVisibility");
-    AppConfig::instance().sync();
-
-    ToolTipOverlay::instance()->showText(QCursor::pos(), "布局已重置为默认值", 1500);
-    updateDynamicMinimumSize();
-}
-
-void MainWindow::loadPanelVisibility() {
-    QVariant val = AppConfig::instance().getValue("MainWindow/PanelVisibility");
-    if (val.isValid()) {
-        QStringList hiddenPanels = val.toStringList();
-        if (hiddenPanels.contains("nav"))      m_navPanel->hide();
-        if (hiddenPanels.contains("favorite")) m_favoritePanel->hide();
-        if (hiddenPanels.contains("meta"))     m_metaPanel->hide();
-        if (hiddenPanels.contains("filter"))   m_filterPanel->hide();
-    }
-    updateDynamicMinimumSize();
-}
-
-void MainWindow::updateDynamicMinimumSize() {
-    int visibleCount = 0;
-    if (m_navPanel && m_navPanel->isVisible()) visibleCount++;
-    if (m_favoritePanel && m_favoritePanel->isVisible()) visibleCount++;
-    if (m_contentPanel && m_contentPanel->isVisible()) visibleCount++;
-    if (m_metaPanel && m_metaPanel->isVisible()) visibleCount++;
-    if (m_filterPanel && m_filterPanel->isVisible()) visibleCount++;
-
-    if (visibleCount <= 0) visibleCount = 1;
-
-    int calculatedMinW = (visibleCount * 230) + ((visibleCount - 1) * 5) + 10;
-    int finalMinW = qMax(465, calculatedMinW);
-    
-    setMinimumWidth(finalMinW);
-}
-
-void MainWindow::savePanelVisibility() {
-    if (m_isTagManagerMode) {
-        return;
-    }
-
-    QStringList hiddenPanels;
-    if (!m_navPanel->isVisible())      hiddenPanels << "nav";
-    if (!m_favoritePanel->isVisible()) hiddenPanels << "favorite";
-    if (!m_metaPanel->isVisible())     hiddenPanels << "meta";
-    if (!m_filterPanel->isVisible())   hiddenPanels << "filter";
-    
-    AppConfig::instance().setValue("MainWindow/PanelVisibility", hiddenPanels);
 }
 
 void MainWindow::initDriveBar() {

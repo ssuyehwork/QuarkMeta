@@ -177,6 +177,8 @@ set(SOURCES
     src/ui/HoverEventFilter.h
     src/ui/FramelessWindowHelper.cpp
     src/ui/FramelessWindowHelper.h
+    src/ui/PanelLayoutManager.cpp
+    src/ui/PanelLayoutManager.h
     src/ui/AddressBar.cpp
     src/ui/AddressBar.h
     src/ui/MetaPreviewWidget.h
