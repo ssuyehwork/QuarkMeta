@@ -37,7 +37,7 @@
 2. **UI 主线程零 I/O 判重保护红线**：哈希计算与全量判重集合生成全权移交至 `QtConcurrent` 后台工作线程处理。
 
 ### 核心解耦与单一职责架构顶层规范 (MainWindow, FilterPanel, MetaPanel, MetadataManager)
-1. **主窗口 (MainWindow) 拆分与事件过滤器降权**：主窗口仅允许承载顶层 UI 布局构建与 QSS 样式加载。无边框窗口边缘 Hover 光标感应与拖拽拉伸全权由 `ResizeEventFilter` 独立承载并限定仅作用于主窗口本身，彻底防止干扰弹出菜单；顶层标题栏拖拽与最大化交由 `TitleBarEventFilter` 承载；全局快捷键解耦至 `GlobalShortcutController`；多面板联动解耦至 `PanelMediator`。
+1. **主窗口 (MainWindow) 拆分与壳体归一化**：主窗口仅允许承载顶层 UI 布局构建与 QSS 样式加载。无边框窗口 8 方向边缘感应、DPI 动态热区、光标切换、边缘拉伸、标题栏拖拽移动、双击最大化/还原及跨平台安全置顶全权交由 `FramelessWindowHelper` 统一收敛承载；彻底清除主窗口中的底层几何算式与裸 Win32 API 杂质；全局快捷键解耦至 `GlobalShortcutController`；多面板联动解耦至 `PanelMediator`。
 2. **筛选面板 (FilterPanel) 拆分规范**：筛选面板仅保留 UI 控件渲染职责。筛选状态管理解耦至 `FilterStateModel`；后台文件数量聚合解耦至 `ScanStatsEngine`。
 3. **属性面板 (MetaPanel) 拆分规范**：属性面板解耦为独立的组件小模块（预览、评分颜色、标签节、基础信息节），结构清晰，职责单一。
 4. **元数据中心 (MetadataManager) 门面模式规范**：元数据中心作为对外统一门面（Facade），不再直接混合磁盘 I/O 与数据库存取。序列化由 `QuarkMetaJsonStore` 承载；SQLite 持久化由 `MetaDbRepository` 承载；内存缓存由 `MetaMemoryCache` 承载。
@@ -50,6 +50,11 @@
 2. **回收站服务 (TrashService) 撤销闭环规范**：回收站生命周期统一由 `TrashService` 承载，封装移入回收站、选定还原、全量还原与定向恢复，并强绑定快照撤销引擎 (`OperationSnapshotEngine`) 与轻量级反馈 (`UndoToastOverlay`) 构成原子闭环。
 3. **永久删除服务 (PermanentDeleteService) 异步擦除规范**：物理粉碎与永久删除统一由 `PermanentDeleteService` 承载，涉及磁盘重度 I/O 擦除的操作必须隔离在 `QtConcurrent` 后台工作线程，并通过进度回调主线程刷新 UI，禁止阻塞主事件循环。
 4. **剪贴板服务 (ClipboardService) 多态传输与智能防死循环规范**：剪贴板操作统一由 `ClipboardService` 承载，收拢复制、剪切、粘贴判定与物理传输；智能识别剪贴板图片并直接保存为本地图像文件；严格校验层级包含关系，杜绝将父目录复制/剪切入子目录引发的死循环。
+
+### 无边框窗口壳体归一化顶层规范 (FramelessWindowHelper)
+1. **窗口壳体交互归一收敛红线**：顶级窗口（主窗口、对话框等）的无边框交互（包含 8 方向边缘感应、DPI 动态热区计算、光标图形切换、边缘拉伸、标题栏拖拽移动、双击最大化/还原及最大化拖拽还原吸附）必须统一由 `FramelessWindowHelper` 收敛控制，严禁散落在各类主窗口或多个事件过滤器中。
+2. **底层几何数学算式物理清除红线**：顶级窗口类必须保持绝对纯洁，严禁重写底层鼠标事件虚函数或内嵌复杂的边缘坐标差值算式，窗口构造函数仅保留标准装配接口（如 `FramelessWindowHelper::apply(this, titleBar)`）。
+3. **平台级置顶抽象隔离红线**：跨平台置顶/取消置顶抽象统一收拢于 `FramelessWindowHelper::setAlwaysOnTop`，严禁在 UI 业务代码中直接包含或调用 Win32 原生 `SetWindowPos` API。
 
 ### 工业级 Clean Architecture 重构路线图与命名治理顶层规范
 1. **重构演进路线图（从根底重构与五层架构对齐）**：
