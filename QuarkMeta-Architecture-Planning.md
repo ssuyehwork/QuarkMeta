@@ -45,6 +45,11 @@
 ### 系统托盘退出生命周期与主进程优雅终结顶层规范 (TrayController)
 1. **标准关闭序列与配置落盘红线**：系统托盘（TrayController）在响应右键“退出”指令时，必须发射退出信号或调用 `qApp->closeAllWindows()` 发起标准的窗口关闭流程，由主窗口 `closeEvent` 统一调度后台工作线程熔断与数据库安全落盘，严禁强杀主事件循环。
 
+### 路径导航与历史栈服务顶层解耦规范 (NavigationService)
+1. **全局路径状态与历史栈统一收敛红线**：全系统路径状态（`m_currentUrl`）、协议归一化解析（`file://`、`computer://`、`trash://`）、前进/后退双向历史栈状态机、上级路径解析以及最近访问记录持久化必须 100% 独立于 `NavigationService` 领域服务，主窗口（MainWindow）与视图层严禁持有路径历史栈变量或自行计算层级关系。
+2. **UI 零感知与单向事件流广播规范**：`NavigationService` 归属于 Domain 领域层，绝对禁止包含任何 UI 视图或控制器头文件。路径变更（`currentUrlChanged`）与导航按钮可用性（`navStateChanged`）统一通过单向信号广播，由 Controller 层（如 `PanelMediator`）订阅并联动更新 UI 状态与清空临时搜索/筛选视图。
+3. **虚拟协议与物理路径分级审计红线**：对于 `computer://`（此电脑）及 `trash://`（回收站）等虚拟协议，导航服务必须准确识别并拦截上级跳转逻辑，且禁止将虚拟协议注入操作系统或 SQLite 数据库的本地文件访问历史记录。
+
 ### 核心文件生命周期与剪贴板服务模块化拆分规范 (TrashService, PermanentDeleteService, ClipboardService)
 1. **视图层物理 I/O 完全剥离红线**：视图层（如 `ContentPanel`）仅负责 UI 交互、控件呈现与视图刷新，严禁就地书写物理文件擦除、剪贴板 MIME 数据解析、多线程物理传输或底层回收站数据库存取逻辑。
 2. **回收站服务 (TrashService) 撤销闭环规范**：回收站生命周期统一由 `TrashService` 承载，封装移入回收站、选定还原、全量还原与定向恢复，并强绑定快照撤销引擎 (`OperationSnapshotEngine`) 与轻量级反馈 (`UndoToastOverlay`) 构成原子闭环。
