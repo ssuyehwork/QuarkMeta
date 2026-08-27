@@ -1,7 +1,10 @@
 #include "TaskProgressController.h"
 #include "UiHelper.h"
+#include "StyleLibrary.h"
 #include <QVBoxLayout>
 #include <algorithm>
+
+using namespace QuarkMeta::Style;
 
 namespace QuarkMeta {
 

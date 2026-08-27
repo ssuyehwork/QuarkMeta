@@ -3,7 +3,10 @@
 #include "ContentPanel.h"
 #include "../core/SearchHistoryService.h"
 #include "UiHelper.h"
+#include "StyleLibrary.h"
 #include <QHBoxLayout>
+
+using namespace QuarkMeta::Style;
 
 namespace QuarkMeta {
 

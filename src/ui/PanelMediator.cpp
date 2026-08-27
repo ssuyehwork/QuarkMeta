@@ -1,6 +1,7 @@
 #include "PanelMediator.h"
 #include "MainWindow.h"
 #include "NavPanel.h"
+#include "SearchController.h"
 #include "FavoritePanel.h"
 #include "ContentPanel.h"
 #include "MetaPanel.h"

@@ -1,6 +1,7 @@
 #include "GlobalShortcutController.h"
 #include "MainWindow.h"
 #include "ContentPanel.h"
+#include "SearchController.h"
 #include "../core/UndoManager.h"
 #include <QKeyEvent>
 
