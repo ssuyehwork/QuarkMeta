@@ -77,6 +77,12 @@ set(SOURCES
     src/core/DiskTrashService.h
     src/core/OperationSnapshotEngine.h
     src/core/OperationSnapshotEngine.cpp
+    src/core/TrashService.h
+    src/core/TrashService.cpp
+    src/core/PermanentDeleteService.h
+    src/core/PermanentDeleteService.cpp
+    src/core/ClipboardService.h
+    src/core/ClipboardService.cpp
     src/core/AppConfig.h
     src/core/NavigationHistoryService.cpp
     src/core/NavigationHistoryService.h
