@@ -7,6 +7,7 @@
 #include "UiHelper.h"
 #include "BatchRenameDialog.h"
 #include "../util/ThumbnailPipelineService.h"
+#include "../util/DiskMediaExtractor.h"
 #include "../meta/DuplicateDetectorService.h"
 #include "../meta/MetaCacheDecorator.h"
 #include "../core/DiskScanService.h"
@@ -41,12 +42,19 @@ ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
 
     m_fileProxyModel = new FileProxyModel(this);
     m_fileProxyModel->setSourceModel(m_model);
- 
+
     m_visibleTimer = new QTimer(this);
     m_visibleTimer->setSingleShot(true);
     m_visibleTimer->setInterval(60); 
- 
-    m_zoomLevel = AppConfig::instance().getValue("UI/GridZoomLevel", 96).toInt(); 
+    connect(m_visibleTimer, &QTimer::timeout, this, &ContentPanel::refreshVisibleThumbnails);
+
+    connect(m_diskModel, &DiskItemModel::thumbnailLoaded, this, [this]() {
+        if (m_visibleTimer && !m_visibleTimer->isActive()) {
+            m_visibleTimer->start();
+        }
+    });
+
+    m_zoomLevel = AppConfig::instance().getValue("UI/GridZoomLevel", 96).toInt();
     m_showFolders = AppConfig::instance().getValue("ContentPanel/ShowFolders", true).toBool();
     m_showFiles = AppConfig::instance().getValue("ContentPanel/ShowFiles", true).toBool();
     m_showHidden = AppConfig::instance().getValue("ContentPanel/ShowHidden", false).toBool();
@@ -57,7 +65,7 @@ ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
 
     m_sortType = static_cast<SortType>(AppConfig::instance().getValue("ContentPanel/RightClickSortType", SortByName).toInt());
     m_sortOrder = static_cast<Qt::SortOrder>(AppConfig::instance().getValue("ContentPanel/RightClickSortOrder", Qt::AscendingOrder).toInt());
- 
+
     initUi(); 
     initDualContainers();
  
@@ -144,7 +152,7 @@ void ContentPanel::initUi() {
     m_centerLayout->setSpacing(8);
 
     m_mainLayout->addWidget(bodyWidget, 1);
-} 
+}
  
 void ContentPanel::initDualContainers() {
     // 1. 上方文件夹容器
@@ -192,13 +200,21 @@ void ContentPanel::initDualContainers() {
     m_centerLayout->addWidget(m_folderContainer, 0);
     m_centerLayout->addWidget(m_fileContainer, 1);
  
-    // 绑定右键菜单与双击
+    // 绑定右键菜单与双击与视口滚动触发
     auto bindEvents = [this](QAbstractItemView* view) {
         view->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(view, &QWidget::customContextMenuRequested, this, [this, view](const QPoint& pos) {
             m_contextMenuController->showContextMenu(view, pos, m_currentPath, m_currentCategoryType);
         });
         connect(view, &QAbstractItemView::doubleClicked, this, &ContentPanel::onDoubleClicked);
+
+        if (view->verticalScrollBar()) {
+            connect(view->verticalScrollBar(), &QScrollBar::valueChanged, this, [this]() {
+                if (m_visibleTimer && !m_visibleTimer->isActive()) {
+                    m_visibleTimer->start();
+                }
+            });
+        }
     };
  
     bindEvents(m_folderGridView);
@@ -231,7 +247,7 @@ QModelIndexList ContentPanel::getSelectedIndexes() const {
     if (m_fileContainer && m_fileContainer->isVisible()) {
         auto* sel = (m_currentViewMode == ListView) ? m_fileListView->selectionModel() : m_fileGridView->selectionModel();
         if (sel) result.append(sel->selectedIndexes());
-    } 
+    }
     return result;
 }
  
@@ -251,7 +267,7 @@ QList<int> ContentPanel::getSelectedTrashIds() const {
     for (const auto& idx : getSelectedIndexes()) {
         if (idx.column() == 0 && idx.data(IsDiskTrashRole).toBool()) {
             ids << idx.data(DiskTrashIdRole).toInt();
-        } 
+        }
     } 
     return ids;
 }
@@ -273,14 +289,14 @@ void ContentPanel::setSortType(SortType type) {
     m_folderProxyModel->sort(0, m_sortOrder);
     m_fileProxyModel->invalidate();
     m_fileProxyModel->sort(0, m_sortOrder);
-} 
+}
  
 void ContentPanel::setSortOrder(Qt::SortOrder order) {
     m_sortOrder = order;
     AppConfig::instance().setValue("ContentPanel/RightClickSortOrder", static_cast<int>(order));
     m_folderProxyModel->sort(0, order);
     m_fileProxyModel->sort(0, order);
-} 
+}
  
 void ContentPanel::applyFilters(const FilterState& state) {
     m_currentFilter = state;
@@ -300,7 +316,7 @@ void ContentPanel::applyFilters(const FilterState& state) {
  
 void ContentPanel::applyFilters() {
     applyFilters(m_currentFilter);
-} 
+}
  
 void ContentPanel::loadDirectory(const QString& path, bool recursive) {
     m_currentPath = path;
@@ -327,6 +343,9 @@ void ContentPanel::loadDirectory(const QString& path, bool recursive) {
                     } 
                     weakThis->updateDualContainersVisibility();
                     weakThis->recalculateAndEmitStats();
+                    if (weakThis->m_visibleTimer && !weakThis->m_visibleTimer->isActive()) {
+                        weakThis->m_visibleTimer->start();
+                    }
                 }, Qt::QueuedConnection);
             },
             [weakThis, reqId]() { return weakThis && (weakThis->m_loadRequestId == reqId); }
@@ -370,7 +389,7 @@ void ContentPanel::onDoubleClicked(const QModelIndex& index) {
 void ContentPanel::emitSelectionChangedSignal() {
     emit selectionChanged(getSelectedPaths());
     updateStatusBarStats();
-} 
+}
  
 void ContentPanel::refreshAll() {
     loadDirectory(m_currentPath, m_isRecursive);
@@ -386,29 +405,147 @@ void ContentPanel::migrateModelCache(const QString& oldPath, const QString& newP
  
 void ContentPanel::clearFolderCache(const QString& folderPath) {
     if (m_model) m_model->clearCacheForFolder(folderPath);
-} 
+}
  
 void ContentPanel::search(const QString& query) {
     m_currentFilter.keyword = query;
-    applyFilters(); 
+    applyFilters();
 } 
  
 void ContentPanel::loadCategory(const QString& categoryType) {
     m_currentCategoryType = categoryType;
     if (categoryType == "trash") m_currentPath = "trash://";
-} 
+}
  
 void ContentPanel::recalculateAndEmitStats() {
-    // 委托后台统计
+    if (!m_model) return;
+    const std::vector<ItemRecord>& records = m_model->allRecords();
+    if (records.empty()) return;
+
+    QPointer<ContentPanel> weakThis(this);
+    (void)QtConcurrent::run([weakThis, records]() {
+        ScanStats stats;
+
+        stats.duplicatePaths = DuplicateDetectorService::findDuplicatePaths(records);
+        stats.duplicateCount = static_cast<int>(stats.duplicatePaths.size());
+
+        for (const auto& record : records) {
+            if (!weakThis) return;
+
+            if (record.isHidden && !weakThis->m_currentFilter.showHidden) {
+                continue;
+            }
+
+            stats.ratingCounts[record.rating]++;
+            QString normHex = UiHelper::normalizeColorHex(record.manualColor);
+            stats.colorCounts[normHex]++;
+
+            if (record.isDir) {
+                stats.typeCounts["folder"]++;
+                if (record.isEmpty) {
+                    stats.emptyFolderCount++;
+                }
+            } else {
+                stats.typeCounts["file"]++;
+                stats.typeCounts[record.suffix.toUpper()]++;
+
+                if (!record.url.isEmpty()) stats.hasLinkCount++;
+                else stats.noLinkCount++;
+
+                if (!record.note.isEmpty()) stats.hasNoteCount++;
+                else stats.noNoteCount++;
+
+                if (!record.tags.isEmpty()) stats.hasTagCount++;
+                else stats.noTagCount++;
+
+                if (record.width > 0 && record.height > 0) {
+                    double r = (double)record.width / record.height;
+                    if (record.width > record.height) stats.ratioHorizontalCount++;
+                    if (record.height > record.width) stats.ratioVerticalCount++;
+                    if (std::abs(r - 1.0) <= 0.05) stats.ratioSquareCount++;
+                    if (std::abs(r - 1.77) <= 0.05) stats.ratio169Count++;
+                }
+
+                if (!stats.duplicatePaths.contains(record.path)) {
+                    stats.uniqueCount++;
+                }
+
+                if (UiHelper::isGraphicsFile(record.suffix)) {
+                    QString thumbPath = DiskMediaExtractor::getDiskThumbCachePath(record.path);
+                    if (QFile::exists(thumbPath)) {
+                        stats.hasThumbnailCount++;
+                    } else {
+                        stats.noThumbnailCount++;
+                    }
+                }
+            }
+
+            auto dateKey = [&](long long ts) {
+                return QDateTime::fromMSecsSinceEpoch(ts).date().toString("dd-MM-yyyy");
+            };
+            stats.createDateCounts[dateKey(record.ctime)]++;
+            stats.modifyDateCounts[dateKey(record.mtime)]++;
+        }
+
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakThis, stats]() {
+            if (weakThis) {
+                auto* proxy = qobject_cast<FilterProxyModel*>(weakThis->m_fileProxyModel);
+                if (proxy) {
+                    proxy->setCachedDuplicatePaths(stats.duplicatePaths);
+                }
+                emit weakThis->directoryStatsReady(stats);
+            }
+        });
+    });
 } 
  
 void ContentPanel::updateStatusBarStats() {
     int total = (m_folderProxyModel ? m_folderProxyModel->rowCount() : 0) + (m_fileProxyModel ? m_fileProxyModel->rowCount() : 0);
     emit statusBarStatsUpdated(0, 0, total);
-} 
+}
  
 void ContentPanel::refreshVisibleThumbnails() {
-    // 委托 ThumbnailPipelineService
+    if (!m_model || CoreController::isShuttingDown()) return;
+
+    auto processView = [this](QAbstractItemView* view, QSortFilterProxyModel* proxyModel) {
+        if (!view || !view->isVisible() || !proxyModel) return;
+
+        int top = 0;
+        int bottom = proxyModel->rowCount() - 1;
+        if (bottom < 0) return;
+
+        QModelIndex topIdx = view->indexAt(QPoint(10, 10));
+        QModelIndex bottomIdx = view->indexAt(QPoint(view->viewport()->width() - 10, view->viewport()->height() - 10));
+
+        if (topIdx.isValid()) top = topIdx.row();
+        if (bottomIdx.isValid()) bottom = bottomIdx.row();
+
+        top = std::max(0, top - 4);
+        bottom = std::min(proxyModel->rowCount() - 1, bottom + 4);
+
+        QList<int> visibleRows;
+        for (int r = top; r <= bottom; ++r) {
+            QModelIndex proxyIdx = proxyModel->index(r, 0);
+            QModelIndex srcIdx = proxyModel->mapToSource(proxyIdx);
+            if (srcIdx.isValid()) {
+                visibleRows.append(srcIdx.row());
+            }
+        }
+
+        if (!visibleRows.isEmpty()) {
+            m_model->loadThumbnailsForRows(visibleRows);
+        }
+    };
+
+    if (m_folderContainer && m_folderContainer->isVisible()) {
+        QAbstractItemView* folderView = (m_currentViewMode == ListView) ? m_folderListView : m_folderGridView;
+        processView(folderView, m_folderProxyModel);
+    }
+
+    if (m_fileContainer && m_fileContainer->isVisible()) {
+        QAbstractItemView* fileView = (m_currentViewMode == ListView) ? m_fileListView : m_fileGridView;
+        processView(fileView, m_fileProxyModel);
+    }
 } 
  
 void ContentPanel::updateGridSize() {}
