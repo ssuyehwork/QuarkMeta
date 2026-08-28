@@ -19,6 +19,8 @@
 #include <QCursor>
 #include <QKeyEvent>
 #include <QRegularExpression>
+#include <QPainter>
+#include <QPainterPath>
 
 namespace QuarkMeta {
 
@@ -118,14 +120,8 @@ void MetaPanel::initUi() {
 
     m_lblImagePreview = new QLabel(m_topPreviewBox);
     m_lblImagePreview->setAlignment(Qt::AlignCenter);
-    m_lblImagePreview->setObjectName("MetaImagePreviewCard");
-    m_lblImagePreview->setStyleSheet(
-        "QLabel#MetaImagePreviewCard {"
-        "  background-color: #232325;"
-        "  border: 1px solid #333333;"
-        "  border-radius: 4px;"
-        "}"
-    );
+    m_lblImagePreview->setObjectName("MetaImagePreview");
+    m_lblImagePreview->setStyleSheet("background: transparent; border: none;");
     m_lblImagePreview->hide();
     previewLayout->addWidget(m_lblImagePreview, 0, Qt::AlignHCenter);
 
@@ -443,13 +439,27 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
         m_lblImagePreview->hide();
         if (m_topPreviewBox) m_topPreviewBox->hide();
     } else {
-        int cardWidth = m_container ? (m_container->width() - 16) : 214;
-        cardWidth = qBound(120, cardWidth, 230);
-        m_lblImagePreview->setFixedSize(cardWidth, cardWidth);
+        int maxW = m_container ? (m_container->width() - 16) : 214;
+        maxW = qBound(120, maxW, 230);
+        int maxH = 220;
 
-        int innerSize = cardWidth - 16;
-        QPixmap scaled = pixmap.scaled(QSize(innerSize, innerSize), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        m_lblImagePreview->setPixmap(scaled);
+        QPixmap scaled = pixmap.scaled(QSize(maxW, maxH), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+        QImage roundedImg(scaled.size(), QImage::Format_ARGB32_Premultiplied);
+        roundedImg.fill(Qt::transparent);
+        {
+            QPainter painter(&roundedImg);
+            painter.setRenderHint(QPainter::Antialiasing);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+            QPainterPath path;
+            path.addRoundedRect(QRectF(0, 0, scaled.width(), scaled.height()), 4.0, 4.0);
+            painter.setClipPath(path);
+            painter.drawPixmap(0, 0, scaled);
+        }
+
+        m_lblImagePreview->setPixmap(QPixmap::fromImage(roundedImg));
+        m_lblImagePreview->setFixedSize(scaled.size());
 
         m_lblImagePreview->show();
         if (m_topPreviewBox) m_topPreviewBox->show();
@@ -606,9 +616,6 @@ void MetaPanel::resizeEvent(QResizeEvent* event) {
             if (m_btnAddTagBig) m_btnAddTagBig->setFixedWidth(maxW);
             
             if (m_topPreviewBox) m_topPreviewBox->setFixedWidth(maxW);
-            if (m_lblImagePreview && m_lblImagePreview->isVisible()) {
-                m_lblImagePreview->setFixedSize(maxW, maxW);
-            }
             if (m_ratingColorBox) m_ratingColorBox->setFixedWidth(maxW);
             if (m_tagBox) m_tagBox->setFixedWidth(maxW);
             if (m_tagContainer) m_tagContainer->setFixedWidth(maxW);
