@@ -7,12 +7,14 @@
 #include <QScrollArea>
 #include <QTimer>
 #include <QEvent>
+#include <QKeyEvent>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QPointer>
 #include <QAction>
+#include <QSet>
 #include "components/ElasticEdit.h"
 #include "TagSelectorOverlay.h"
 #include "components/TagPill.h"
@@ -40,19 +42,21 @@ public:
     void setURL(const QString& url);
     void setURL(const std::wstring& url);
     void setRating(int rating, bool fromUser = false);
+    void setColor(const QString& hexColor, bool fromUser = false);
     void setColor(const std::wstring& color, bool fromUser = false);
     void setPinned(bool pinned) { Q_UNUSED(pinned); }
 
 signals:
+    // 解耦且携带路径的纯净领域信号
+    void ratingChanged(const QStringList& paths, int rating);
+    void colorChanged(const QStringList& paths, const QString& hexColor);
     void tagAddRequested(const QStringList& paths, const QString& tag);
     void tagRemoveRequested(const QStringList& paths, const QString& tag);
-    void metadataChanged(int rating, const std::wstring& color);
     void noteEdited(const QStringList& paths, const QString& newNote);
     void linkEdited(const QStringList& paths, const QString& newLink);
     void primaryColorChanged(const QString& path, const QColor& color);
-    void tagsChanged(const QStringList& paths, const QStringList& tags);
-    void searchByColor(const QColor& color);
     void renameRequested(const QString& oldPath, const QString& newPath);
+    void searchByColor(const QColor& color);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -93,7 +97,7 @@ private:
     QList<QPushButton*> m_starBtns;
     QList<QPushButton*> m_colorBtns;
     int m_currentRating = 0;
-    std::wstring m_currentColor;
+    QString m_currentColorHex;
 
     // 6. 标签管理区
     QWidget* m_tagBox = nullptr;
@@ -119,6 +123,7 @@ private:
     QPushButton* m_btnOpenLocation = nullptr;
 
     QStringList m_selectedPaths;
+    QStringList m_editingPathsSnapshot; // 防失焦时序竞态的路径快照
     QSet<QString> m_currentTagsSet;
     QTimer* m_adjustTimer = nullptr;
     bool m_isInternalUpdating = false;
@@ -128,6 +133,7 @@ private:
 private slots:
     void onTagDeleted(const QString& text);
     void openTagSelectorOverlay(QWidget* targetAnchor);
+    void setAsPrimaryColor(const QColor& color);
 };
 
 } // namespace QuarkMeta

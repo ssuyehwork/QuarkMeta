@@ -17,6 +17,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QCursor>
+#include <QKeyEvent>
 #include <QRegularExpression>
 
 namespace QuarkMeta {
@@ -117,10 +118,10 @@ void MetaPanel::initUi() {
 
     m_lblImagePreview = new QLabel(m_topPreviewBox);
     m_lblImagePreview->setAlignment(Qt::AlignCenter);
-    m_lblImagePreview->setMinimumHeight(60);
-    m_lblImagePreview->setStyleSheet("background: transparent;");
+    m_lblImagePreview->setObjectName("MetaImagePreview");
+    m_lblImagePreview->setStyleSheet("background: transparent; border: none;");
     m_lblImagePreview->hide();
-    previewLayout->addWidget(m_lblImagePreview);
+    previewLayout->addWidget(m_lblImagePreview, 0, Qt::AlignHCenter);
 
     m_paletteContainer = new QWidget(m_topPreviewBox);
     m_paletteFlowLayout = new FlowLayout(m_paletteContainer, 0, 4, 4);
@@ -193,7 +194,7 @@ void MetaPanel::initUi() {
 
     m_containerLayout->addWidget(createCollapsibleSection("关联网址", m_linkEdit, true));
 
-    // 5. 星级评级 + 颜色色标条
+    // 5. 星级评级 + 颜色色标条 (严格采用 Hex 物理色值)
     m_ratingColorBox = new QWidget(m_container);
     QVBoxLayout* ratingColorLayout = new QVBoxLayout(m_ratingColorBox);
     ratingColorLayout->setContentsMargins(0, 2, 0, 2);
@@ -247,7 +248,7 @@ void MetaPanel::initUi() {
     btnNoColor->setProperty("tooltipText", "无色标");
     btnNoColor->installEventFilter(this);
     btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333333; border-radius: 4px; }");
-    connect(btnNoColor, &QPushButton::clicked, this, [this]() { setColor(L"", true); });
+    connect(btnNoColor, &QPushButton::clicked, this, [this]() { setColor(QString(""), true); });
     colorLayout->addWidget(btnNoColor);
 
     static const QVector<QPair<QString, QString>> s_colorMap = {
@@ -267,12 +268,13 @@ void MetaPanel::initUi() {
             "QPushButton:hover { border-color: #FFFFFF; }"
         ).arg(pair.second));
 
-        std::wstring colorName = pair.first.toStdWString();
-        connect(btnColor, &QPushButton::clicked, this, [this, colorName]() {
-            if (m_currentColor == colorName) {
-                setColor(L"", true);
+        QString hex = pair.second;
+        // 核心修复：点击时传递精确的十六进制色值 hex，确保缩略图能够识别并直接绘制
+        connect(btnColor, &QPushButton::clicked, this, [this, hex]() {
+            if (m_currentColorHex.compare(hex, Qt::CaseInsensitive) == 0) {
+                setColor(QString(""), true);
             } else {
-                setColor(colorName, true);
+                setColor(hex, true);
             }
         });
         m_colorBtns.append(btnColor);
@@ -433,10 +435,16 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
     if (pixmap.isNull()) {
         m_lblImagePreview->clear();
         m_lblImagePreview->hide();
+        if (m_topPreviewBox) m_topPreviewBox->hide();
     } else {
-        QPixmap scaled = pixmap.scaled(QSize(220, 140), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        int side = m_container ? qBound(140, m_container->width() - 16, 210) : 200;
+        m_lblImagePreview->setFixedSize(side, side);
+
+        QPixmap scaled = pixmap.scaled(QSize(side, side), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         m_lblImagePreview->setPixmap(scaled);
+
         m_lblImagePreview->show();
+        if (m_topPreviewBox) m_topPreviewBox->show();
     }
     adjustFlowHeights();
     if (m_container) m_container->adjustSize();
@@ -444,6 +452,7 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
 
 void MetaPanel::setSelectedPaths(const QStringList& paths) {
     m_selectedPaths = paths;
+    m_editingPathsSnapshot = paths;
     bool hasSelection = !m_selectedPaths.isEmpty();
     bool isMulti = m_selectedPaths.size() > 1;
 
@@ -457,9 +466,9 @@ void MetaPanel::setSelectedPaths(const QStringList& paths) {
     if (!hasSelection) {
         m_isInternalUpdating = true;
         setImagePreview(QPixmap());
-        if (m_nameEdit) m_nameEdit->clear();
-        if (m_noteEdit) m_noteEdit->clear();
-        if (m_linkEdit) m_linkEdit->clear();
+        if (m_nameEdit) { m_nameEdit->clear(); m_nameEdit->setPlaceholderText("文件名..."); }
+        if (m_noteEdit) { m_noteEdit->clear(); m_noteEdit->setPlaceholderText("添加备注说明..."); }
+        if (m_linkEdit) { m_linkEdit->clear(); m_linkEdit->setPlaceholderText("添加关联网址..."); }
         if (m_pathEdit) m_pathEdit->clear();
         if (lblType) lblType->setText("-");
         if (lblSize) lblSize->setText("-");
@@ -468,8 +477,8 @@ void MetaPanel::setSelectedPaths(const QStringList& paths) {
         if (lblMtime) lblMtime->setText("-");
         if (lblAtime) lblAtime->setText("-");
         if (lblEncrypted) lblEncrypted->setText("-");
-        setRating(0);
-        setColor(L"");
+        setRating(0, false);
+        setColor(QString(""), false);
         setTags({});
         setPalettes({});
         m_isInternalUpdating = false;
@@ -478,6 +487,15 @@ void MetaPanel::setSelectedPaths(const QStringList& paths) {
         setImagePreview(QPixmap());
         if (m_nameEdit) {
             m_nameEdit->setPlainText(QString("已选中 %1 个项目").arg(m_selectedPaths.size()));
+        }
+        if (m_noteEdit) {
+            m_noteEdit->clear();
+            m_noteEdit->setPlaceholderText("添加批量备注...");
+            m_noteEdit->adjustHeight();
+        }
+        if (m_linkEdit) {
+            m_linkEdit->clear();
+            m_linkEdit->setPlaceholderText("添加批量关联网址...");
         }
         if (m_pathEdit) {
             m_pathEdit->setText(QString("已选中 %1 个项目").arg(m_selectedPaths.size()));
@@ -489,6 +507,9 @@ void MetaPanel::setSelectedPaths(const QStringList& paths) {
         if (lblMtime) lblMtime->setText("-");
         if (lblAtime) lblAtime->setText("-");
         if (lblEncrypted) lblEncrypted->setText("-");
+
+        setRating(0, false);
+        setColor(QString(""), false);
         setPalettes({});
         m_isInternalUpdating = false;
     }
@@ -712,18 +733,16 @@ void MetaPanel::setRating(int rating, bool fromUser) {
     }
 
     if (fromUser && !m_selectedPaths.isEmpty() && !m_isReadOnlyMode) {
-        emit metadataChanged(rating, m_currentColor);
+        emit ratingChanged(m_selectedPaths, rating);
     }
 }
 
-void MetaPanel::setColor(const std::wstring& color, bool fromUser) {
-    m_currentColor = color;
-    QString colorStr = QString::fromStdWString(color);
+void MetaPanel::setColor(const QString& hexColor, bool fromUser) {
+    m_currentColorHex = hexColor;
 
     for (QPushButton* btn : m_colorBtns) {
         QString hex = btn->property("hexColor").toString();
-        QString tip = btn->property("tooltipText").toString();
-        bool active = (!colorStr.isEmpty() && (colorStr == hex || colorStr == tip));
+        bool active = (!hexColor.isEmpty() && hex.compare(hexColor, Qt::CaseInsensitive) == 0);
 
         btn->setStyleSheet(QString(
             "QPushButton { background-color: %1; border: %2; border-radius: 8px; }"
@@ -732,8 +751,12 @@ void MetaPanel::setColor(const std::wstring& color, bool fromUser) {
     }
 
     if (fromUser && !m_selectedPaths.isEmpty() && !m_isReadOnlyMode) {
-        emit metadataChanged(m_currentRating, color);
+        emit colorChanged(m_selectedPaths, hexColor);
     }
+}
+
+void MetaPanel::setColor(const std::wstring& color, bool fromUser) {
+    setColor(QString::fromStdWString(color), fromUser);
 }
 
 void MetaPanel::setNote(const QString& note) {
@@ -777,6 +800,7 @@ void MetaPanel::setPalettes(const QVector<QPair<QColor, float>>& palette) {
         ColorPill* pill = new ColorPill(entry.first, entry.second, m_paletteContainer);
         pill->setStyleSheet("background: transparent; border: none;");
         connect(pill, &ColorPill::colorSelected, this, [this](const QColor& c){ emit searchByColor(c); });
+        connect(pill, &ColorPill::requestSetAsPrimary, this, &MetaPanel::setAsPrimaryColor);
         pill->show();
         m_paletteFlowLayout->addWidget(pill);
     }
@@ -785,6 +809,13 @@ void MetaPanel::setPalettes(const QVector<QPair<QColor, float>>& palette) {
     if (m_topPreviewBox) m_topPreviewBox->update();
     adjustFlowHeights();
     m_adjustTimer->start();
+}
+
+void MetaPanel::setAsPrimaryColor(const QColor& color) {
+    QString currentPath = m_pathEdit->text().trimmed();
+    if (!currentPath.isEmpty() && !currentPath.startsWith("已选中")) {
+        emit primaryColorChanged(currentPath, color);
+    }
 }
 
 bool MetaPanel::eventFilter(QObject* watched, QEvent* event) {
@@ -800,30 +831,48 @@ bool MetaPanel::eventFilter(QObject* watched, QEvent* event) {
 
     if (m_isInternalUpdating || m_isReadOnlyMode) return QFrame::eventFilter(watched, event);
 
+    // 拦截文件名编辑的回车键，防止插入换行符并触发提交
+    if (watched == m_nameEdit && event->type() == QEvent::KeyPress) {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
+            m_nameEdit->clearFocus();
+            return true;
+        }
+    }
+
     if (watched == m_linkEdit) {
-        if (event->type() == QEvent::FocusIn) m_isUserEditing = true;
-        else if (event->type() == QEvent::FocusOut) m_isUserEditing = false;
+        if (event->type() == QEvent::FocusIn) {
+            m_isUserEditing = true;
+            m_editingPathsSnapshot = m_selectedPaths;
+        } else if (event->type() == QEvent::FocusOut) {
+            m_isUserEditing = false;
+        }
     } else if (event->type() == QEvent::FocusIn) {
-        if (watched == m_noteEdit || watched == m_nameEdit) m_isUserEditing = true;
+        if (watched == m_noteEdit || watched == m_nameEdit) {
+            m_isUserEditing = true;
+            m_editingPathsSnapshot = m_selectedPaths;
+        }
     } else if (event->type() == QEvent::FocusOut) {
-        if (watched == m_noteEdit || watched == m_nameEdit) m_isUserEditing = false;
+        if (watched == m_noteEdit || watched == m_nameEdit) {
+            m_isUserEditing = false;
+        }
     }
 
     if (watched == m_noteEdit && event->type() == QEvent::FocusOut) {
-        if (!m_selectedPaths.isEmpty()) {
-            emit noteEdited(m_selectedPaths, m_noteEdit->toPlainText());
+        if (!m_editingPathsSnapshot.isEmpty()) {
+            emit noteEdited(m_editingPathsSnapshot, m_noteEdit->toPlainText());
         }
     } else if (watched == m_linkEdit && event->type() == QEvent::FocusOut) {
-        if (!m_selectedPaths.isEmpty()) {
-            emit linkEdited(m_selectedPaths, m_linkEdit->text().trimmed());
+        if (!m_editingPathsSnapshot.isEmpty()) {
+            emit linkEdited(m_editingPathsSnapshot, m_linkEdit->text().trimmed());
         }
     } else if (watched == m_nameEdit && event->type() == QEvent::FocusOut) {
-        if (m_selectedPaths.size() > 1) return true;
+        if (m_editingPathsSnapshot.size() > 1) return true;
 
         QString oldPath = m_nameEdit->property("oldPath").toString();
         QString newName = m_nameEdit->toPlainText().trimmed();
         
-        static const QRegularExpression illegalRegex("[\\\\/:*?\"<>|]");
+        static const QRegularExpression illegalRegex("[\\\\/:*?\"<>|\r\n]");
         newName.remove(illegalRegex);
         m_nameEdit->setPlainText(newName);
 
