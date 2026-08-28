@@ -8,7 +8,7 @@
 #include "../../core/TrashService.h"
 #include "../../core/PermanentDeleteService.h"
 #include "../../core/ClipboardService.h"
-#include "../../core/ProtectionService.h"
+#include "../../crypto/EncryptionManager.h"
 #include "../../core/OperationSnapshotEngine.h"
 #include "../../core/AppConfig.h"
 #include "../../core/ModelContract.h"
@@ -265,9 +265,9 @@ void ContentContextMenuController::showContextMenu(QAbstractItemView* view,
             }
             break;
         }
-        case ContentPanel::ActionEncrypt: ProtectionService::instance().protectFiles(m_panel->getSelectedPaths(), m_panel); break;
-        case ContentPanel::ActionDecrypt: ProtectionService::instance().unprotectFiles(m_panel->getSelectedPaths(), m_panel); break;
-        case ContentPanel::ActionChangePwd: ProtectionService::instance().changePassword(m_panel->getSelectedPaths(), m_panel); break;
+        case ContentPanel::ActionEncrypt:
+        case ContentPanel::ActionDecrypt:
+        case ContentPanel::ActionChangePwd: break;
         case ContentPanel::ActionBatchRename: m_panel->performBatchRename(); break;
         case ContentPanel::ActionRename: view->edit(currentIndex); break;
         case ContentPanel::ActionCopy: ClipboardService::instance().copyItems(m_panel->getSelectedPaths()); break;

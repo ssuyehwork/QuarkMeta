@@ -23,6 +23,11 @@ public:
      * @param recursive 是否递归扫描子目录
      * @param shouldContinue 取消检查回调；每处理一个条目前调用一次，返回 false 时立即中止扫描
      */
+    static void scanDirectoryChunked(const QString& path,
+                                     bool recursive,
+                                     std::function<void(std::vector<ItemRecord>&& chunk, bool isFirstChunk)> onChunkReady,
+                                     const std::function<bool()>& shouldContinue);
+
     static std::vector<ItemRecord> scanDirectory(const QString& path,
                                                   bool recursive,
                                                   const std::function<bool()>& shouldContinue);

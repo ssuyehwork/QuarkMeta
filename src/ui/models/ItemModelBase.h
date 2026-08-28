@@ -28,6 +28,10 @@ public:
     virtual void loadThumbnailsForRows(const QList<int>& rows) = 0;
     virtual void migrateCache(const QString& oldPath, const QString& newPath) = 0;
     virtual void clearCacheForFolder(const QString& folderPath) = 0;
+
+    virtual void appendRecords(std::vector<QuarkMeta::ItemRecord>&& records) {
+        Q_UNUSED(records);
+    }
 };
 
 #endif // ITEMMODELBASE_H

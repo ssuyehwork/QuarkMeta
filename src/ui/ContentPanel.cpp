@@ -158,11 +158,12 @@ void ContentPanel::initDualContainers() {
     m_folderGridView->setItemDelegate(new ThumbnailDelegate(this));
     m_folderGridView->setStyleSheet("background: transparent; border: none; outline: none;");
  
-    m_folderListView = new DropTreeView(this);
-    m_folderListView->setModel(m_folderProxyModel);
-    m_folderListView->setItemDelegate(new TreeItemDelegate(this, false, true));
-    m_folderListView->setHeaderHidden(true);
-    m_folderListView->setStyleSheet("QTreeView { background: transparent; border: none; outline: none; }");
+    DropTreeView* folderTree = new DropTreeView(this);
+    folderTree->setModel(m_folderProxyModel);
+    folderTree->setItemDelegate(new TreeItemDelegate(this, false, true));
+    folderTree->setHeaderHidden(true);
+    folderTree->setStyleSheet("QTreeView { background: transparent; border: none; outline: none; }");
+    m_folderListView = folderTree;
  
     m_folderViewStack->addWidget(m_folderGridView);
     m_folderViewStack->addWidget(m_folderListView);
