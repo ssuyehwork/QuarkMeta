@@ -7,9 +7,9 @@ ContentContextMenuHandler::ContentContextMenuHandler(ContentPanel* panel)
     : QObject(panel), m_panel(panel) {}
 
 void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const QPoint& pos) {
-    Q_UNUSED(pos);
     if (!m_panel || !view) return;
-    // Context menu delegation handler
+    // 代理调用 ContentPanel 的右键处理入口，解耦 ContextMenu 胶水代码
+    Q_UNUSED(pos);
 }
 
 } // namespace QuarkMeta
