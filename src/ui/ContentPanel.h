@@ -31,6 +31,8 @@ public:
     explicit ContentPanel(QWidget* parent = nullptr);
     ~ContentPanel() override = default;
 
+    void deferredInit() {}
+
     SortType currentSortType() const { return m_sortType; }
     Qt::SortOrder currentSortOrder() const { return m_sortOrder; }
     ViewMode currentViewMode() const { return m_currentViewMode; }

@@ -22,6 +22,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QApplication>
+#include <QClipboard>
 
 namespace QuarkMeta {
 
