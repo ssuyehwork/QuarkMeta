@@ -28,12 +28,17 @@
 
 namespace QuarkMeta {
 
+class ContentKeyHandler;
+class ContentContextMenu;
+
 /**
  * @brief 内容面板（面板四）：核心业务展示区
  * 支持网格视图（QListView）与列表视图（QTreeView）切换
  */
 class ContentPanel : public QFrame {
     Q_OBJECT
+    friend class ContentContextMenu;
+    friend class ContentKeyHandler;
 
 public:
     enum class DataSourceType {
@@ -69,6 +74,11 @@ public:
     void setSortType(SortType type) { m_sortType = type; }
     void setSortOrder(Qt::SortOrder order) { m_sortOrder = order; }
     DiskItemModel* diskModel() const { return m_diskModel; }
+    int zoomLevel() const { return m_zoomLevel; }
+    QPushButton* btnLayers() const { return m_btnLayers; }
+    QPushButton* btnToggleFolders() const { return m_btnToggleFolders; }
+    QPushButton* btnToggleFiles() const { return m_btnToggleFiles; }
+    void performBatchRename();
 
 
     enum ViewMode {
@@ -239,6 +249,7 @@ private:
 
     QTimer* m_visibleTimer = nullptr;
     QSortFilterProxyModel* m_proxyModel = nullptr;
+    ContentKeyHandler* m_keyHandler = nullptr;
 
 public:
     void refreshVisibleThumbnails();

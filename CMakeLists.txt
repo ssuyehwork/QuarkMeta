@@ -233,6 +233,8 @@ set(SOURCES
     src/ui/TagManagerController.h
     src/ui/controllers/ContentContextMenu.h
     src/ui/controllers/ContentContextMenu.cpp
+    src/ui/controllers/ContentKeyHandler.h
+    src/ui/controllers/ContentKeyHandler.cpp
     src/core/ActionCommand.h
     src/core/UndoManager.h
     src/core/BasicCommands.h
