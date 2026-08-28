@@ -108,6 +108,7 @@ namespace QuarkMeta {
  
 ContentPanel::ContentPanel(QWidget* parent) 
     : QFrame(parent) { 
+    m_contextMenuHandler = new ContentContextMenuHandler(this);
     // 2026-07-xx 按照 Plan-63：启用右键菜单策略（容器级）
     setContextMenuPolicy(Qt::CustomContextMenu);
 
