@@ -137,6 +137,10 @@ set(SOURCES
     src/ui/BreadcrumbBar.h
     src/ui/ColorPicker.cpp
     src/ui/ColorPicker.h
+    src/ui/controllers/ContentContextMenuController.h
+    src/ui/controllers/ContentContextMenuController.cpp
+    src/ui/controllers/ContentActionController.h
+    src/ui/controllers/ContentActionController.cpp
     src/ui/ContentPanel.cpp
     src/ui/ContentPanel.h
     src/ui/DriveButton.cpp
