@@ -152,28 +152,7 @@ public:
     QStringList getSelectedPaths() const;
     QList<int> getSelectedTrashIds() const;
 
-    QModelIndexList getSelectedIndexes() const {
-        if (!m_viewStack) return {};
-        bool isGrid = (m_viewStack->currentWidget() == m_gridView);
-        QItemSelectionModel* selModel = isGrid ? m_gridView->selectionModel() : m_treeView->selectionModel();
-        if (!selModel) return {};
-
-        if (isGrid) {
-            // 网格视图 (GridView/JustifiedView): 提取 column == 0 的单元格索引，保证在卡片模式下正确获取选中项
-            QModelIndexList result;
-            const QModelIndexList selected = selModel->selectedIndexes();
-            result.reserve(selected.size());
-            for (const QModelIndex& idx : selected) {
-                if (idx.column() == 0) {
-                    result.append(idx);
-                }
-            }
-            return result;
-        } else {
-            // 列表视图 (TreeView): 高并发防卡死，仅获取第 0 列行索引
-            return selModel->selectedRows(0);
-        }
-    }
+    QModelIndexList getSelectedIndexes() const;
 
     /**
      * @brief 物理定位：在当前视图模型中寻找与 currentPath 相邻的文件路径
@@ -232,7 +211,6 @@ private:
      */
     void performCopy(bool cutMode);
     void performPaste();
-    void performBatchRename();
 
     QVBoxLayout* m_mainLayout = nullptr;
     QStackedWidget* m_viewStack = nullptr;
@@ -307,11 +285,7 @@ public slots:
      * @param name 文件名
      * @param edit 是否进入编辑模式
      */
-    void setPendingSelectName(const QString& name, bool edit = false) { 
-        m_pendingSelectNames.clear();
-        if (!name.isEmpty()) m_pendingSelectNames.insert(name);
-        m_isPendingEdit = edit;
-    }
+    void setPendingSelectName(const QString& name, bool edit = false);
 
     /**
      * @brief 强制重新加载当前视图的所有内容
