@@ -231,6 +231,8 @@ set(SOURCES
     src/ui/AddressHistoryPanel.h
     src/ui/TagManagerController.cpp
     src/ui/TagManagerController.h
+    src/ui/controllers/ContentContextMenu.h
+    src/ui/controllers/ContentContextMenu.cpp
     src/core/ActionCommand.h
     src/core/UndoManager.h
     src/core/BasicCommands.h

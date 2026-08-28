@@ -63,6 +63,13 @@ public:
     SortType currentSortType() const { return m_sortType; }
     Qt::SortOrder currentSortOrder() const { return m_sortOrder; }
 
+    QString currentPath() const { return m_currentPath; }
+    bool isRecursive() const { return m_isRecursive; }
+    void setContextMenuActive(bool active) { m_isContextMenuActive = active; }
+    void setSortType(SortType type) { m_sortType = type; }
+    void setSortOrder(Qt::SortOrder order) { m_sortOrder = order; }
+    DiskItemModel* diskModel() const { return m_diskModel; }
+
 
     enum ViewMode {
         ListView,
