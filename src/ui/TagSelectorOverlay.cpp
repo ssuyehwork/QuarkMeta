@@ -35,19 +35,14 @@ TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidg
     m_searchEdit->installEventFilter(this);
     m_tagGridWidget->installEventFilter(this);
 
-    // 🚨 无论在任何时候任何情况下，一旦失去焦点或外部发生点击，立即关闭浮层
-    qApp->installEventFilter(this);
-    connect(qApp, &QApplication::focusChanged, this, [this](QWidget* old, QWidget* now) {
-        Q_UNUSED(old);
-        if (!m_isClosing && isVisible() && now && now != this && !this->isAncestorOf(now)) {
-            closeOverlay();
-        }
-    });
+    if (parentWidget()) {
+        parentWidget()->installEventFilter(this);
+    }
 }
 
 TagSelectorOverlay::~TagSelectorOverlay() {
-    if (qApp) {
-        qApp->removeEventFilter(this);
+    if (parentWidget()) {
+        parentWidget()->removeEventFilter(this);
     }
 }
 

@@ -171,6 +171,8 @@ set(SOURCES
     src/ui/Logger.h
     src/ui/AppShortcutController.h
     src/ui/AppShortcutController.cpp
+    src/ui/handlers/ContentContextMenuHandler.h
+    src/ui/handlers/ContentContextMenuHandler.cpp
     src/ui/PanelMediator.h
     src/ui/PanelMediator.cpp
     src/ui/MainWindow.cpp

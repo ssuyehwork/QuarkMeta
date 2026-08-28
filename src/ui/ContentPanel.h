@@ -21,6 +21,7 @@
 #include <QIcon>
 #include "ScanStats.h"
 #include "FilterPanel.h"
+#include "handlers/ContentContextMenuHandler.h"
 #include "models/DiskItemModel.h"
 #include "models/FilterProxyModel.h"
 
@@ -132,8 +133,17 @@ public:
     // --- 业务接口 ---
     QAbstractItemModel* model() const { return m_model; }
     QSortFilterProxyModel* getProxyModel() const { return m_proxyModel; }
+    DiskItemModel* diskModel() const { return m_diskModel; }
     QStringList getSelectedPaths() const;
     QList<int> getSelectedTrashIds() const;
+    void performBatchRename();
+
+    QString currentPath() const { return m_currentPath; }
+    SortType sortType() const { return m_sortType; }
+    Qt::SortOrder sortOrder() const { return m_sortOrder; }
+    void setSortType(SortType type) { m_sortType = type; }
+    void setSortOrder(Qt::SortOrder order) { m_sortOrder = order; }
+    void setContextMenuActive(bool active) { m_isContextMenuActive = active; }
 
     QModelIndexList getSelectedIndexes() const {
         if (!m_viewStack) return {};
@@ -245,6 +255,9 @@ public:
     bool m_isPendingEdit = false;
     QString m_currentCategoryType; // 用于驱动差异化右键菜单
     bool m_isRecursive = false;
+public:
+    bool isRecursive() const { return m_isRecursive; }
+private:
     bool m_showFolders = true;
     bool m_showFiles = true;
     bool m_showHidden = false;
@@ -255,6 +268,7 @@ public:
     bool m_isContextMenuActive = false;
     std::atomic<int> m_loadRequestId{0}; // 2026-07-xx 物理请求 ID：防止异步回调导致的视图内容乱跳
 
+    ContentContextMenuHandler* m_contextMenuHandler = nullptr;
     QTimer* m_selectionTimer = nullptr; // 选中防抖定时器
     void emitSelectionChangedSignal();
     void updateGridSize();

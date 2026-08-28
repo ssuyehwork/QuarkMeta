@@ -33,31 +33,53 @@ public:
     }
 
     void undo() {
-        QMutexLocker lock(&m_mutex);
-        if (m_undoStack.empty()) return;
+        std::unique_ptr<ActionCommand> command;
+        {
+            QMutexLocker lock(&m_mutex);
+            if (m_undoStack.empty() || m_isExecuting) return;
+            m_isExecuting = true;
+            command = std::move(m_undoStack.back());
+            m_undoStack.pop_back();
+        }
 
-        auto command = std::move(m_undoStack.back());
-        m_undoStack.pop_back();
-        
-        command->undo();
-        m_redoStack.push_back(std::move(command));
-        
-        emit canUndoChanged(!m_undoStack.empty());
-        emit canRedoChanged(true);
+        if (command) {
+            command->undo();
+        }
+
+        {
+            QMutexLocker lock(&m_mutex);
+            if (command) {
+                m_redoStack.push_back(std::move(command));
+            }
+            m_isExecuting = false;
+            emit canUndoChanged(!m_undoStack.empty());
+            emit canRedoChanged(true);
+        }
     }
 
     void redo() {
-        QMutexLocker lock(&m_mutex);
-        if (m_redoStack.empty()) return;
+        std::unique_ptr<ActionCommand> command;
+        {
+            QMutexLocker lock(&m_mutex);
+            if (m_redoStack.empty() || m_isExecuting) return;
+            m_isExecuting = true;
+            command = std::move(m_redoStack.back());
+            m_redoStack.pop_back();
+        }
 
-        auto command = std::move(m_redoStack.back());
-        m_redoStack.pop_back();
-        
-        command->redo();
-        m_undoStack.push_back(std::move(command));
-        
-        emit canUndoChanged(true);
-        emit canRedoChanged(!m_redoStack.empty());
+        if (command) {
+            command->redo();
+        }
+
+        {
+            QMutexLocker lock(&m_mutex);
+            if (command) {
+                m_undoStack.push_back(std::move(command));
+            }
+            m_isExecuting = false;
+            emit canUndoChanged(true);
+            emit canRedoChanged(!m_redoStack.empty());
+        }
     }
 
     bool canUndo() const { return !m_undoStack.empty(); }
@@ -97,6 +119,7 @@ private:
     std::deque<std::unique_ptr<ActionCommand>> m_undoStack;
     std::deque<std::unique_ptr<ActionCommand>> m_redoStack;
     QMutex m_mutex;
+    bool m_isExecuting = false;
 };
 
 } // namespace QuarkMeta

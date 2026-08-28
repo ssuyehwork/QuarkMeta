@@ -44,6 +44,11 @@
 1. **重命名管道与物理 I/O 归一收敛红线**：全系统批量重命名、移动与复制规则计算（固定文本、序列、日期、原文件名、元数据变量）、同名冲突校验、Windows NTFS 大小写不敏感两阶段 UUID 中转安全重命名、缩略图与元数据 (.QuarkMeta.json) 全量同步漫游统一由 `BatchRenameService` 承载，视图层（`BatchRenameDialog`）与计算引擎（`BatchRenameEngine`）严禁就地执行同步 `std::filesystem::rename` 物理写盘。
 2. **原子撤销与双重撤销消除红线**：批量重命名操作必须生成单一次原子的 `BatchRenameCommand` 并推入全局 `UndoManager`，彻底消除视图层手动二次推入撤销快照引起的双重撤销冲突，撤销完成反馈 Toast 统一固定为 7 秒 (7000ms) 停留机制。
 
+### 多步连续 Undo 全局事务快照顶层规范 (UndoManager & OperationSnapshotEngine)
+1. **单一时间线归一收敛红线**：全系统所有可逆操作（包含单/批量重命名、移动/剪切、移入回收站/删除、星级评级、标记颜色与标签修改）的撤销与重做（Ctrl+Z / Ctrl+Y）统一收敛至 `UndoManager` 维护的单一时间线双向栈中。快照引擎（`OperationSnapshotEngine`）所捕获的操作前状态（`AssetItemSnapshot`）必须包装为 `ActionCommand` 统一推送给 `UndoManager`，绝对禁止维持两套独立且时间线错乱的撤销栈。
+2. **异步撤销时序排队与原子串行保障红线**：当撤销操作涉及磁盘异步重重命名或文件传输（如 `QtConcurrent::run` 后台 I/O 事务）时，`UndoManager` 必须具备并发执行锁保护，防止用户连按 `Ctrl+Z` 时引发前序与后续撤销事务在文件系统层面的竞争与破损。
+3. **栈深保护与永久删除物理清洗规范**：撤销栈最大深度严格限制为 50 步，超过限制自动丢弃队首最旧快照；当文件被永久彻底粉碎（`PermanentDeleteService`）时，系统强制同步清洗撤销栈中涉及该物理路径的所有关联 `ActionCommand`，杜绝因对已删除文件执行撤销而引发的物理 I/O 崩溃。
+
 ### 全局标签词库服务与磁盘 I/O 完全解耦顶层规范 (TagLexiconService)
 1. **词库维护与文件标注解耦红线**：全局标签词库（词条 CRUD、分组管理、颜色与拼音/前缀联想补全）统一由 `TagLexiconService` 承载，仅对 SQLite `global.db` 数据库（`tags` 与 `tag_groups` 表）进行持久化更新，严禁在重命名或删除全局词条时执行全盘 `.QuarkMeta.json` 磁盘扫描遍历。
 2. **底层并发访问与事务安全红线**：`TagLexiconService` 底层必须严格对接 `DatabaseManager` 的原生 `sqlite3*` 句柄与全局并发锁，统一采用 `SqlTransaction` RAII 事务和 `sqlite3_wal_checkpoint_v2` WAL 检查点，杜绝混合使用 Qt `QSqlDatabase` 引起的数据库锁冲突（`SQLITE_BUSY`）。
@@ -87,6 +92,10 @@
 ### 标准应用局域快捷键控制器顶层规范 (AppShortcutController)
 1. **彻底禁止 eventFilter 按键拦截补丁红线**：严禁采用 `eventFilter` 截获 `QKeyEvent` 原始按键的补丁做法，杜绝输入框（搜索框/重命名文本框）打字按 `Ctrl+Z` 时越权截获误触发文件大撤销的严重漏洞。
 2. **声明式 QShortcut 与 WindowContext 作用域红线**：全系统快捷键统一使用 Qt 官方声明式 `QShortcut` 实现，快捷键 Context 强制指定为 `Qt::WindowShortcut`，确保仅在应用活动窗口内生效，100% 绝不上杀侵入操作系统全局钩子，且 Qt 底层自动处理输入框获焦时的焦点协调。
+
+### 浮层弹窗事件过滤器解耦与 qApp 全局侵入禁止规范 (TagSelectorOverlay & Floating Widgets)
+1. **qApp 全局事件过滤器挂载彻底禁令红线**：全系统所有浮层、弹窗或悬浮组件（如 `TagSelectorOverlay`），绝对禁止通过 `qApp->installEventFilter(this)` 将事件过滤器挂载至全局 `QCoreApplication`。凡发现一律判定为违规平台的 Patch 补丁并打回。
+2. **失焦关闭与局域监听标准规范**：浮层与悬浮控件外部点击关闭逻辑，必须统一基于原生 `QEvent::ActivationChange` / `QEvent::WindowDeactivate` 窗口失焦事件处理，或仅在直接父控件（`parentWidget()`）上安装局域事件过滤器，确保事件响应闭包在所属 UI 层级内部，严禁污染全系统全局事件管网。
 
 ### 面板中介者与跨面板事件路由顶层解耦规范 (PanelMediator)
 1. **彻底拔除宿主友元特权与指针依赖红线**：面板中介者（PanelMediator）仅作为独立的跨面板信号路由器，构造函数显式接收各子面板与地址栏指针，绝不保存主窗口（MainWindow）宿主指针。严禁在主窗口或任何视图头文件中使用 `friend class PanelMediator` 伪解耦破坏类封装。
