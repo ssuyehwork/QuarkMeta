@@ -127,7 +127,6 @@ private:
 
 private slots:
     void onTagDeleted(const QString& text);
-    void setAsPrimaryColor(const QColor& color);
     void openTagSelectorOverlay(QWidget* targetAnchor);
 };
 
