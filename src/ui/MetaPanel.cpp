@@ -118,8 +118,14 @@ void MetaPanel::initUi() {
 
     m_lblImagePreview = new QLabel(m_topPreviewBox);
     m_lblImagePreview->setAlignment(Qt::AlignCenter);
-    m_lblImagePreview->setObjectName("MetaImagePreview");
-    m_lblImagePreview->setStyleSheet("background: transparent; border: none;");
+    m_lblImagePreview->setObjectName("MetaImagePreviewCard");
+    m_lblImagePreview->setStyleSheet(
+        "QLabel#MetaImagePreviewCard {"
+        "  background-color: #232325;"
+        "  border: 1px solid #333333;"
+        "  border-radius: 4px;"
+        "}"
+    );
     m_lblImagePreview->hide();
     previewLayout->addWidget(m_lblImagePreview, 0, Qt::AlignHCenter);
 
@@ -437,10 +443,12 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
         m_lblImagePreview->hide();
         if (m_topPreviewBox) m_topPreviewBox->hide();
     } else {
-        int side = m_container ? qBound(140, m_container->width() - 16, 210) : 200;
-        m_lblImagePreview->setFixedSize(side, side);
+        int cardWidth = m_container ? (m_container->width() - 16) : 214;
+        cardWidth = qBound(120, cardWidth, 230);
+        m_lblImagePreview->setFixedSize(cardWidth, cardWidth);
 
-        QPixmap scaled = pixmap.scaled(QSize(side, side), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        int innerSize = cardWidth - 16;
+        QPixmap scaled = pixmap.scaled(QSize(innerSize, innerSize), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         m_lblImagePreview->setPixmap(scaled);
 
         m_lblImagePreview->show();
@@ -598,6 +606,9 @@ void MetaPanel::resizeEvent(QResizeEvent* event) {
             if (m_btnAddTagBig) m_btnAddTagBig->setFixedWidth(maxW);
             
             if (m_topPreviewBox) m_topPreviewBox->setFixedWidth(maxW);
+            if (m_lblImagePreview && m_lblImagePreview->isVisible()) {
+                m_lblImagePreview->setFixedSize(maxW, maxW);
+            }
             if (m_ratingColorBox) m_ratingColorBox->setFixedWidth(maxW);
             if (m_tagBox) m_tagBox->setFixedWidth(maxW);
             if (m_tagContainer) m_tagContainer->setFixedWidth(maxW);
