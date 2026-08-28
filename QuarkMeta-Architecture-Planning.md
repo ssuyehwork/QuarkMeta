@@ -61,6 +61,11 @@
 4. **元数据中心 (MetadataManager) 门面模式规范**：元数据中心作为对外统一门面（Facade），不再直接混合磁盘 I/O 与数据库存取。序列化由 `QuarkMetaJsonStore` 承载；SQLite 持久化由 `MetaDbRepository` 承载；内存缓存由 `MetaMemoryCache` 承载。
 5. **元数据持久化脏缓冲合并落盘规范 (QuarkMetaJsonStore)**：`QuarkMetaJsonStore` 引入脏目录缓冲（Dirty Buffer Merge）与 50ms 自动防抖机制，同目录连续元数据修改先在内存中高效合流，防抖期满后执行 1 次原子落盘，且应用退出时触发强制刷盘（`flushAllDirtyBuffers`），彻底消除磁盘高频写盘震荡。
 
+### 对话框与悬浮遮罩纯 UI 职责及纯 SVG 图标化顶层规范 (TagManagerDialog & TagSelectorOverlay)
+1. **词库服务 1:1 契约绝对对齐红线**：所有标签管理对话框（`TagManagerDialog`）与悬浮选择遮罩（`TagSelectorOverlay`）必须 100% 绑定 `TagLexiconService` 标准接口（如 `getAllTagGroups()`、`getAllTagNames()`、`TagGroup`、`moveTagToGroup()`），严禁调用任何废弃的非标方法。
+2. **纯 SVG 图标渲染与文本符号/Emoji 0 容忍红线**：全界面严禁使用硬编码文本字符或 Emoji 符号（如 `"📁 "`、`"• "`、`"+ "` 等），所有分类、层级与按钮图标强制统一使用 `UiHelper::getIcon(...)` 加载标准的矢量 SVG 图标，保障视网膜屏高保真视觉呈现。
+3. **悬浮遮罩视口碰撞防护与失焦自闭环规范**：悬浮遮罩 (`TagSelectorOverlay`) 必须包含屏幕视口边界碰撞检测，支持在靠近屏幕边缘时自动反折缩进；并在焦点转移时安全触发 `closeOverlay()` 优雅自闭环销毁。
+
 ### QuickLook 空格全屏预览与代际熔断/鹰眼小地图双向联动顶层规范 (QuickLookWindow & QuickLookMinimap)
 1. **切图代际号（`previewGeneration`）原子熔断红线**：用户通过空格键呼出或方向键高频连续切换预览文件时，`QuickLookWindow` 必须通过 `std::atomic<uint64_t>` 递增代际号，秒级丢弃前序大图/文本的在途异步解码任务，确保 CPU/GPU 算力 100% 聚焦当前选中的预览文件，彻底消灭连续切图引发的卡顿与线程池阻塞。
 2. **反模式全局顶层窗口搜刮彻底禁止红线**：右键菜单快捷操作（如“添加至收藏夹”）必须严格通过 Qt 信号（`favoriteRequested`）发射给 Controller/PanelMediator 统一调度，彻底禁止在 `QApplication::topLevelWidgets()` 或全局控件树中递归搜刮 `FavoritePanel` 等私有 UI 指针。

@@ -110,7 +110,7 @@ void TagManagerDialog::initContent() {
 
     m_sidebarLayout->addStretch();
 
-    // 底部“+ 新建分组”按钮
+    // 底部“新建分组”按钮
     QPushButton* btnAddGroup = new QPushButton(UiHelper::getIcon("add", QColor("#AAAAAA"), 14), " 新建分组...", m_sidebar);
     btnAddGroup->setFixedHeight(28);
     btnAddGroup->setCursor(Qt::PointingHandCursor);
@@ -277,7 +277,9 @@ void TagManagerDialog::onSearchTextChanged(const QString& text) {
     } else {
         bool exactMatch = m_masterTags.contains(kw, Qt::CaseInsensitive);
         if (!exactMatch) {
-            m_btnAddNewTag->setText(QString("+ 新增词条 \"%1\"").arg(kw));
+            m_btnAddNewTag->setText(QString("新增词条 \"%1\"").arg(kw));
+            m_btnAddNewTag->setIcon(UiHelper::getIcon("add", QColor("#FFFFFF"), 12));
+            m_btnAddNewTag->setIconSize(QSize(12, 12));
             m_addNewTagWidget->show();
         } else {
             m_addNewTagWidget->hide();
@@ -305,9 +307,10 @@ void TagManagerDialog::showTagContextMenu(const QString& tagName, const QPoint& 
     QMenu* groupSubMenu = menu.addMenu("添加到分组...");
     UiHelper::applyMenuStyle(groupSubMenu);
     for (const auto& grp : m_allGroups) {
+        if (grp.id <= 0) continue;
         QAction* actGrp = groupSubMenu->addAction(grp.name);
         connect(actGrp, &QAction::triggered, this, [this, tagName, grp]() {
-            TagLexiconService::instance().addTagToGroup(tagName, grp.id);
+            TagLexiconService::instance().moveTagToGroup(tagName, grp.id);
             refreshSidebar();
             refreshTags();
         });
@@ -325,7 +328,7 @@ void TagManagerDialog::showTagContextMenu(const QString& tagName, const QPoint& 
     if (!act) return;
 
     if (act->data().toInt() == 1) {
-        TagLexiconService::instance().removeTagFromGroup(tagName, m_activeGroupId);
+        TagLexiconService::instance().moveTagToGroup(tagName, -1);
         refreshSidebar();
         refreshTags();
     } else if (act->data().toInt() == 2) {
@@ -338,7 +341,7 @@ void TagManagerDialog::showTagContextMenu(const QString& tagName, const QPoint& 
 }
 
 void TagManagerDialog::refreshTags() {
-    m_masterTags = TagLexiconService::instance().getAllMasterTags();
+    m_masterTags = TagLexiconService::instance().getAllTagNames();
 
     while (QLayoutItem* item = m_tagsScrollLayout->takeAt(0)) {
         delete item->widget();
@@ -355,7 +358,8 @@ void TagManagerDialog::refreshTags() {
         // 未分类
         QSet<QString> groupedTags;
         for (const auto& grp : m_allGroups) {
-            for (const auto& t : grp.tags) groupedTags.insert(t);
+            if (grp.id <= 0) continue;
+            for (const auto& t : grp.tags) groupedTags.insert(t.name);
         }
         for (const QString& t : m_masterTags) {
             if (!groupedTags.contains(t)) filteredTags << t;
@@ -364,7 +368,7 @@ void TagManagerDialog::refreshTags() {
         // 自定义分组
         for (const auto& grp : m_allGroups) {
             if (grp.id == m_activeGroupId) {
-                filteredTags = grp.tags;
+                for (const auto& t : grp.tags) filteredTags << t.name;
                 break;
             }
         }
@@ -392,11 +396,13 @@ void TagManagerDialog::refreshTags() {
     FlowLayout* flowL = new FlowLayout(flowContainer, 0, 6, 6);
 
     for (const QString& tag : finalTags) {
-        QPushButton* btn = new QPushButton("• " + tag, flowContainer);
+        QPushButton* btn = new QPushButton(tag, flowContainer);
+        btn->setIcon(UiHelper::getIcon("tag_pill", QColor("#888888"), 12));
+        btn->setIconSize(QSize(12, 12));
         btn->setCursor(Qt::PointingHandCursor);
         btn->setContextMenuPolicy(Qt::CustomContextMenu);
         btn->setStyleSheet(
-            "QPushButton { background: transparent; border: 1px solid #333; color: #BBB; border-radius: 4px; padding: 3px 10px; font-size: 11px; }"
+            "QPushButton { background: transparent; border: 1px solid #333; color: #BBB; border-radius: 4px; padding: 3px 10px; font-size: 11px; text-align: left; }"
             "QPushButton:hover { border-color: #1C97EA; color: #1C97EA; background-color: #2D2D30; }"
         );
         connect(btn, &QWidget::customContextMenuRequested, this, [this, tag](const QPoint& pos) {
