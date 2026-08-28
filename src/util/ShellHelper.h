@@ -11,40 +11,29 @@ namespace QuarkMeta {
 class ShellHelper {
 public:
     /**
-     * @brief 移入回收站
-     */
-    static bool moveToTrash(const QStringList& paths);
-
-    /**
-     * @brief 执行复制或移动
-     */
-    static bool copyOrMoveItems(const QStringList& sourcePaths, const QString& destDir, bool isMove);
-
-    /**
-     * @brief 显示文件属性对话框
-     */
-    static void showProperties(const QString& path);
-
-    /**
-     * @brief 在资源管理器中定位
+     * @brief 在 Windows 文件资源管理器中高亮定位指定物理路径
      */
     static void openInExplorer(const QString& path);
 
     /**
-     * @brief 重命名条目
+     * @brief 呼出 Windows 原生文件属性对话框
+     */
+    static void showProperties(const QString& path);
+
+    /**
+     * @brief 两阶段 UUID 安全重命名 (解决 NTFS 大小写不敏感缺陷并自动漫游元数据)
      */
     static bool renameItem(const QString& oldPath, const QString& newPath);
 
     /**
-     * @brief 格式化字节大小
+     * @brief 格式化字节大小为易读文本 (B / KB / MB / GB)
      */
     static QString formatSize(qint64 bytes);
 
     /**
-     * @brief 物理设置文件/文件夹隐藏属性 (解耦自 DatabaseManager)
+     * @brief 物理赋予文件/文件夹 Windows 隐藏属性
      */
     static void ensureHidden(const std::wstring& path);
-
 };
 
 } // namespace QuarkMeta

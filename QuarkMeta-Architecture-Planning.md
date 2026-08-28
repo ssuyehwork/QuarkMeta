@@ -61,6 +61,10 @@
 4. **元数据中心 (MetadataManager) 门面模式规范**：元数据中心作为对外统一门面（Facade），不再直接混合磁盘 I/O 与数据库存取。序列化由 `QuarkMetaJsonStore` 承载；SQLite 持久化由 `MetaDbRepository` 承载；内存缓存由 `MetaMemoryCache` 承载。
 5. **元数据持久化脏缓冲合并落盘规范 (QuarkMetaJsonStore)**：`QuarkMetaJsonStore` 引入脏目录缓冲（Dirty Buffer Merge）与 50ms 自动防抖机制，同目录连续元数据修改先在内存中高效合流，防抖期满后执行 1 次原子落盘，且应用退出时触发强制刷盘（`flushAllDirtyBuffers`），彻底消除磁盘高频写盘震荡。
 
+### 系统外壳工具职责纯粹化与两阶段安全重命名规范 (ShellHelper)
+1. **0 重度写盘/删除越权代码红线**：`ShellHelper` 彻底剥离文件传输、删除与移动等业务逻辑，全权委托为 `TrashService` 与 `DiskIoService`；仅保留 Windows 外壳原生关联操作（Explorer 定位高亮、属性框呼出、隐藏属性设置及字节格式化）。
+2. **Windows 两阶段 UUID 安全重命名规范**：`ShellHelper::renameItem` 统一接入 `FileOperationHelper::safeRename`，采用临时 UUID 独立中转文件名，彻底根治 Windows NTFS 文件系统大小写不敏感导致的重命名失败缺陷，并自动保证 `.QuarkMeta.json` 元数据、磁盘 Hash 缩略图与内存/SQLite 索引的全量漫游与同步。
+
 ### 对话框与悬浮遮罩纯 UI 职责及纯 SVG 图标化顶层规范 (TagManagerDialog & TagSelectorOverlay)
 1. **词库服务 1:1 契约绝对对齐红线**：所有标签管理对话框（`TagManagerDialog`）与悬浮选择遮罩（`TagSelectorOverlay`）必须 100% 绑定 `TagLexiconService` 标准接口（如 `getAllTagGroups()`、`getAllTagNames()`、`TagGroup`、`moveTagToGroup()`），严禁调用任何废弃的非标方法。
 2. **纯 SVG 图标渲染与文本符号/Emoji 0 容忍红线**：全界面严禁使用硬编码文本字符或 Emoji 符号（如 `"📁 "`、`"• "`、`"+ "` 等），所有分类、层级与按钮图标强制统一使用 `UiHelper::getIcon(...)` 加载标准的矢量 SVG 图标，保障视网膜屏高保真视觉呈现。

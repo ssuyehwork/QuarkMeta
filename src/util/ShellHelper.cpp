@@ -16,55 +16,26 @@
 #include "../meta/MetadataManager.h"
 #include "../meta/StatisticsService.h"
 #include "../meta/QuarkMetaJson.h"
-#include "../core/DiskTrashService.h"
+#include "../meta/FileOperationHelper.h"
 #include "DiskMediaExtractor.h"
 
 namespace QuarkMeta {
 
-bool ShellHelper::moveToTrash(const QStringList& paths) {
-    return DiskTrashService::moveToDiskTrash(paths);
-}
+void ShellHelper::openInExplorer(const QString& path) {
+    if (path.isEmpty() || path == "computer://" || path.contains("://")) return;
 
-bool ShellHelper::copyOrMoveItems(const QStringList& sourcePaths, const QString& destDir, bool isMove) {
 #ifdef Q_OS_WIN
-    if (sourcePaths.isEmpty() || destDir.isEmpty()) return false;
-    
-    std::wstring from;
-    for (const QString& p : sourcePaths) {
-        from += QDir::toNativeSeparators(p).toStdWString() + L'\0';
-    }
-    from += L'\0';
-
-    std::wstring to = QDir::toNativeSeparators(destDir).toStdWString() + L'\0' + L'\0';
-
-    SHFILEOPSTRUCTW fileOp = { 0 };
-    fileOp.wFunc = isMove ? FO_MOVE : FO_COPY;
-    fileOp.pFrom = from.c_str();
-    fileOp.pTo = to.c_str();
-    // 🚨 核心改动：移除 FOF_NOCONFIRMATION，遇到同名冲突由系统弹出确认或允许用户选择保留两者，绝不静默覆写！
-    fileOp.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMMKDIR;
-    bool ok = (SHFileOperationW(&fileOp) == 0 && !fileOp.fAnyOperationsAborted);
-
-    if (ok) {
-        for (const QString& p : sourcePaths) {
-            QFileInfo info(p);
-            QString newPath = QDir(destDir).filePath(info.fileName());
-
-            // 🚨 无论 Copy 还是 Move，自动触发整包元数据与缩略图原子漫游！
-            QuarkMetaJson::roamItemMetadata(p, newPath, isMove);
-            DiskMediaExtractor::roamThumbnailCache(p, newPath, isMove);
-        }
-    }
-    return ok;
+    QStringList args;
+    args << "/select," << QDir::toNativeSeparators(path);
+    QProcess::startDetached("explorer", args);
 #else
-    Q_UNUSED(sourcePaths);
-    Q_UNUSED(destDir);
-    Q_UNUSED(isMove);
-    return false;
+    Q_UNUSED(path);
 #endif
 }
 
 void ShellHelper::showProperties(const QString& path) {
+    if (path.isEmpty() || path.contains("://")) return;
+
 #ifdef Q_OS_WIN
     SHELLEXECUTEINFOW sei = { sizeof(sei) };
     sei.fMask = SEE_MASK_INVOKEIDLIST;
@@ -78,21 +49,22 @@ void ShellHelper::showProperties(const QString& path) {
 #endif
 }
 
-void ShellHelper::openInExplorer(const QString& path) {
-#ifdef Q_OS_WIN
-    QStringList args;
-    args << "/select," << QDir::toNativeSeparators(path);
-    QProcess::startDetached("explorer", args);
-#else
-    Q_UNUSED(path);
-#endif
-}
-
 bool ShellHelper::renameItem(const QString& oldPath, const QString& newPath) {
-    if (QFile::rename(oldPath, newPath)) {
-        // 1. 物理漫游迁移 .QuarkMeta.json 元数据 
+    if (oldPath.isEmpty() || newPath.isEmpty() || oldPath == newPath) return true;
+
+    // 🚀【核心升级】：使用两阶段 UUID safeRename，彻底解决 Windows 大小写重命名失败
+    if (FileOperationHelper::safeRename(oldPath, newPath)) {
+        // 1. 物理漫游迁移本地 .QuarkMeta.json 元数据
         QuarkMetaJson::migrateItemMetadata(oldPath, newPath);
-        // 同步数据库
+
+        // 2. 物理漫游磁盘 Hash 缩略图缓存
+        QString oldThumbHashPath = DiskMediaExtractor::getDiskThumbCachePath(oldPath);
+        QString newThumbHashPath = DiskMediaExtractor::getDiskThumbCachePath(newPath);
+        if (QFile::exists(oldThumbHashPath)) {
+            FileOperationHelper::safeRename(oldThumbHashPath, newThumbHashPath);
+        }
+
+        // 3. 同步更新 MetadataManager 内存缓存与 SQLite 索引
         MetadataManager::instance().renameItem(oldPath.toStdWString(), newPath.toStdWString());
         return true;
     }
