@@ -93,6 +93,10 @@
 1. **彻底禁止 eventFilter 按键拦截补丁红线**：严禁采用 `eventFilter` 截获 `QKeyEvent` 原始按键的补丁做法，杜绝输入框（搜索框/重命名文本框）打字按 `Ctrl+Z` 时越权截获误触发文件大撤销的严重漏洞。
 2. **声明式 QShortcut 与 WindowContext 作用域红线**：全系统快捷键统一使用 Qt 官方声明式 `QShortcut` 实现，快捷键 Context 强制指定为 `Qt::WindowShortcut`，确保仅在应用活动窗口内生效，100% 绝不上杀侵入操作系统全局钩子，且 Qt 底层自动处理输入框获焦时的焦点协调。
 
+### 浮层弹窗事件过滤器解耦与 qApp 全局侵入禁止规范 (TagSelectorOverlay & Floating Widgets)
+1. **qApp 全局事件过滤器挂载彻底禁令红线**：全系统所有浮层、弹窗或悬浮组件（如 `TagSelectorOverlay`），绝对禁止通过 `qApp->installEventFilter(this)` 将事件过滤器挂载至全局 `QCoreApplication`。凡发现一律判定为违规平台的 Patch 补丁并打回。
+2. **失焦关闭与局域监听标准规范**：浮层与悬浮控件外部点击关闭逻辑，必须统一基于原生 `QEvent::ActivationChange` / `QEvent::WindowDeactivate` 窗口失焦事件处理，或仅在直接父控件（`parentWidget()`）上安装局域事件过滤器，确保事件响应闭包在所属 UI 层级内部，严禁污染全系统全局事件管网。
+
 ### 面板中介者与跨面板事件路由顶层解耦规范 (PanelMediator)
 1. **彻底拔除宿主友元特权与指针依赖红线**：面板中介者（PanelMediator）仅作为独立的跨面板信号路由器，构造函数显式接收各子面板与地址栏指针，绝不保存主窗口（MainWindow）宿主指针。严禁在主窗口或任何视图头文件中使用 `friend class PanelMediator` 伪解耦破坏类封装。
 2. **黑盒 Model 访问与标准契约角色红线**：中介者在处理视图选中项数据读取时，必须严格通过 Qt 标准 `QModelIndex::data(index, role)` 与标准角色接口（如 `TagsRole`、`RatingRole`、`ColorRole`、`EncryptedRole`）进行传输，绝对禁止将模型强转为具体 Model 实现类指针或跨层强行读取/遍历 Model 内部私有数据结构。
