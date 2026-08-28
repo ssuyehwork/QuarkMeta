@@ -44,6 +44,11 @@
 1. **重命名管道与物理 I/O 归一收敛红线**：全系统批量重命名、移动与复制规则计算（固定文本、序列、日期、原文件名、元数据变量）、同名冲突校验、Windows NTFS 大小写不敏感两阶段 UUID 中转安全重命名、缩略图与元数据 (.QuarkMeta.json) 全量同步漫游统一由 `BatchRenameService` 承载，视图层（`BatchRenameDialog`）与计算引擎（`BatchRenameEngine`）严禁就地执行同步 `std::filesystem::rename` 物理写盘。
 2. **原子撤销与双重撤销消除红线**：批量重命名操作必须生成单一次原子的 `BatchRenameCommand` 并推入全局 `UndoManager`，彻底消除视图层手动二次推入撤销快照引起的双重撤销冲突，撤销完成反馈 Toast 统一固定为 7 秒 (7000ms) 停留机制。
 
+### 多步连续 Undo 全局事务快照顶层规范 (UndoManager & OperationSnapshotEngine)
+1. **单一时间线归一收敛红线**：全系统所有可逆操作（包含单/批量重命名、移动/剪切、移入回收站/删除、星级评级、标记颜色与标签修改）的撤销与重做（Ctrl+Z / Ctrl+Y）统一收敛至 `UndoManager` 维护的单一时间线双向栈中。快照引擎（`OperationSnapshotEngine`）所捕获的操作前状态（`AssetItemSnapshot`）必须包装为 `ActionCommand` 统一推送给 `UndoManager`，绝对禁止维持两套独立且时间线错乱的撤销栈。
+2. **异步撤销时序排队与原子串行保障红线**：当撤销操作涉及磁盘异步重重命名或文件传输（如 `QtConcurrent::run` 后台 I/O 事务）时，`UndoManager` 必须具备并发执行锁保护，防止用户连按 `Ctrl+Z` 时引发前序与后续撤销事务在文件系统层面的竞争与破损。
+3. **栈深保护与永久删除物理清洗规范**：撤销栈最大深度严格限制为 50 步，超过限制自动丢弃队首最旧快照；当文件被永久彻底粉碎（`PermanentDeleteService`）时，系统强制同步清洗撤销栈中涉及该物理路径的所有关联 `ActionCommand`，杜绝因对已删除文件执行撤销而引发的物理 I/O 崩溃。
+
 ### 全局标签词库服务与磁盘 I/O 完全解耦顶层规范 (TagLexiconService)
 1. **词库维护与文件标注解耦红线**：全局标签词库（词条 CRUD、分组管理、颜色与拼音/前缀联想补全）统一由 `TagLexiconService` 承载，仅对 SQLite `global.db` 数据库（`tags` 与 `tag_groups` 表）进行持久化更新，严禁在重命名或删除全局词条时执行全盘 `.QuarkMeta.json` 磁盘扫描遍历。
 2. **底层并发访问与事务安全红线**：`TagLexiconService` 底层必须严格对接 `DatabaseManager` 的原生 `sqlite3*` 句柄与全局并发锁，统一采用 `SqlTransaction` RAII 事务和 `sqlite3_wal_checkpoint_v2` WAL 检查点，杜绝混合使用 Qt `QSqlDatabase` 引起的数据库锁冲突（`SQLITE_BUSY`）。
