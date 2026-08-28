@@ -264,6 +264,8 @@ set(SOURCES
     src/ui/models/ItemModelBase.h
     src/ui/models/DiskItemModel.h
     src/ui/models/DiskItemModel.cpp
+    src/ui/ThemeManager.h
+    src/ui/ThemeManager.cpp
     src/ui/UiHelper.h
     src/ui/IconCacheManager.h
     src/ui/IconCacheManager.cpp
