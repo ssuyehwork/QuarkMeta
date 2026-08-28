@@ -83,6 +83,8 @@ set(SOURCES
     src/core/PermanentDeleteService.cpp
     src/core/ClipboardService.h
     src/core/ClipboardService.cpp
+    src/core/DeviceWatcher.h
+    src/core/DeviceWatcher.cpp
     src/core/TaskProgressService.h
     src/core/TaskProgressService.cpp
     src/core/AppConfig.h
