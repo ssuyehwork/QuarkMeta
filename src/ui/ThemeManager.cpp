@@ -77,6 +77,33 @@ void ThemeManager::applyMenuStyle(QWidget* menu) const {
     if (!menu) return;
     menu->setAttribute(Qt::WA_TranslucentBackground, true);
     menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+
+    // 🚀【托盘与右键菜单深色自适应】：显式注入 setStyleSheet，强制 Qt 绕过 Win32 原生 HMENU，走 Qt 自绘 QMenu
+    menu->setStyleSheet(
+        "QMenu {"
+        "   background-color: #252526;"
+        "   color: #EEEEEE;"
+        "   border: 1px solid #333333;"
+        "   border-radius: 6px;"
+        "   padding: 4px;"
+        "}"
+        "QMenu::item {"
+        "   background-color: transparent;"
+        "   color: #EEEEEE;"
+        "   padding: 6px 24px 6px 12px;"
+        "   border-radius: 4px;"
+        "   font-size: 12px;"
+        "}"
+        "QMenu::item:selected {"
+        "   background-color: #378ADD;"
+        "   color: #FFFFFF;"
+        "}"
+        "QMenu::separator {"
+        "   height: 1px;"
+        "   background-color: #333333;"
+        "   margin: 4px 6px;"
+        "}"
+    );
 }
 
 } // namespace QuarkMeta
