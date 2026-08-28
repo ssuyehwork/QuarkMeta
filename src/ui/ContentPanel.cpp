@@ -34,6 +34,9 @@
 
 namespace QuarkMeta {
 
+void ContentPanel::deferredInit() {
+}
+
 ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setObjectName("EditorContainer");
