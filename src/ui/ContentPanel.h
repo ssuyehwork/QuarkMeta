@@ -29,7 +29,6 @@
 namespace QuarkMeta {
 
 class ContentKeyHandler;
-class ContentContextMenu;
 
 /**
  * @brief 内容面板（面板四）：核心业务展示区
@@ -37,8 +36,6 @@ class ContentContextMenu;
  */
 class ContentPanel : public QFrame {
     Q_OBJECT
-    friend class ContentContextMenu;
-    friend class ContentKeyHandler;
 
 public:
     enum class DataSourceType {
@@ -67,17 +64,28 @@ public:
 
     SortType currentSortType() const { return m_sortType; }
     Qt::SortOrder currentSortOrder() const { return m_sortOrder; }
+    void setSortType(SortType type) { m_sortType = type; }
+    void setSortOrder(Qt::SortOrder order) { m_sortOrder = order; }
+    void setContextMenuActive(bool active) { m_isContextMenuActive = active; }
 
     QString currentPath() const { return m_currentPath; }
     bool isRecursive() const { return m_isRecursive; }
-    void setContextMenuActive(bool active) { m_isContextMenuActive = active; }
-    void setSortType(SortType type) { m_sortType = type; }
-    void setSortOrder(Qt::SortOrder order) { m_sortOrder = order; }
-    DiskItemModel* diskModel() const { return m_diskModel; }
     int zoomLevel() const { return m_zoomLevel; }
+    DiskItemModel* diskModel() const { return m_diskModel; }
     QPushButton* btnLayers() const { return m_btnLayers; }
     QPushButton* btnToggleFolders() const { return m_btnToggleFolders; }
     QPushButton* btnToggleFiles() const { return m_btnToggleFiles; }
+    QPushButton* btnToggleHidden() const { return m_btnToggleHidden; }
+    QStackedWidget* viewStack() const { return m_viewStack; }
+    QAbstractItemView* gridView() const { return m_gridView; }
+    QTreeView* treeView() const { return m_treeView; }
+    ContentKeyHandler* keyHandler() const { return m_keyHandler; }
+
+    /**
+     * @brief 内部业务辅助逻辑
+     */
+    void performCopy(bool cutMode);
+    void performPaste();
     void performBatchRename();
 
 
@@ -152,7 +160,28 @@ public:
     QStringList getSelectedPaths() const;
     QList<int> getSelectedTrashIds() const;
 
-    QModelIndexList getSelectedIndexes() const;
+    QModelIndexList getSelectedIndexes() const {
+        if (!m_viewStack) return {};
+        bool isGrid = (m_viewStack->currentWidget() == m_gridView);
+        QItemSelectionModel* selModel = isGrid ? m_gridView->selectionModel() : m_treeView->selectionModel();
+        if (!selModel) return {};
+
+        if (isGrid) {
+            // 网格视图 (GridView/JustifiedView): 提取 column == 0 的单元格索引，保证在卡片模式下正确获取选中项
+            QModelIndexList result;
+            const QModelIndexList selected = selModel->selectedIndexes();
+            result.reserve(selected.size());
+            for (const QModelIndex& idx : selected) {
+                if (idx.column() == 0) {
+                    result.append(idx);
+                }
+            }
+            return result;
+        } else {
+            // 列表视图 (TreeView): 高并发防卡死，仅获取第 0 列行索引
+            return selModel->selectedRows(0);
+        }
+    }
 
     /**
      * @brief 物理定位：在当前视图模型中寻找与 currentPath 相邻的文件路径
@@ -205,12 +234,6 @@ private:
     void restoreSelections();
     void initListView();
     void updateLayersButtonState();
-
-    /**
-     * @brief 内部业务辅助逻辑
-     */
-    void performCopy(bool cutMode);
-    void performPaste();
 
     QVBoxLayout* m_mainLayout = nullptr;
     QStackedWidget* m_viewStack = nullptr;
@@ -285,7 +308,11 @@ public slots:
      * @param name 文件名
      * @param edit 是否进入编辑模式
      */
-    void setPendingSelectName(const QString& name, bool edit = false);
+    void setPendingSelectName(const QString& name, bool edit = false) {
+        m_pendingSelectNames.clear();
+        if (!name.isEmpty()) m_pendingSelectNames.insert(name);
+        m_isPendingEdit = edit;
+    }
 
     /**
      * @brief 强制重新加载当前视图的所有内容
