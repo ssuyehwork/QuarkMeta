@@ -1,6 +1,8 @@
 #include "ContentContextMenuHandler.h"
 #include "../ContentPanel.h"
 #include "../FavoritePanel.h"
+#include "../ColorPicker.h"
+#include "../../core/AppConfig.h"
 #include "../UiHelper.h"
 #include "../ToolTipOverlay.h"
 #include "../BatchCreateDialog.h"
@@ -8,6 +10,7 @@
 #include "../../crypto/EncryptionManager.h"
 #include "../../core/DiskTrashService.h"
 #include "../../core/TrashService.h"
+#include "../../core/CoreEngine.h"
 #include "../../core/PermanentDeleteService.h"
 #include "../../core/ClipboardService.h"
 #include "../../core/OperationSnapshotEngine.h"
@@ -42,7 +45,7 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
     QString path = onItem ? currentIndex.data(PathRole).toString() : "";
     QFileInfo itemInfo(path);
 
-    QString currentPath = m_panel->m_currentPath;
+    QString currentPath = m_panel->currentPath();
     QString currentCategoryType = m_panel->getCurrentCategoryType();
 
     bool isComputerRoot = (currentPath.isEmpty() || currentPath == "computer://");
@@ -67,9 +70,9 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
         menu.addAction(UiHelper::getIcon("sync", QColor("#2ecc71"), 18), "还原全部")->setData(ContentPanel::ActionRestoreAll);
         menu.addAction(UiHelper::getIcon("trash", QColor("#e81123"), 18), "清空回收站")->setData(ContentPanel::ActionEmptyTrash);
 
-        m_panel->m_isContextMenuActive = true;
+        m_panel->setContextMenuActive(true);
         QAction* selectedAction = menu.exec(view->viewport()->mapToGlobal(pos));
-        m_panel->m_isContextMenuActive = false;
+        m_panel->setContextMenuActive(false);
 
         if (!selectedAction || !selectedAction->data().isValid()) return;
 
@@ -111,14 +114,14 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
 
             QString currentColorStr = currentIndex.data(ColorRole).toString();
             QWidgetAction* pickerAction = new QWidgetAction(&menu);
-            ColorStripPicker* pickerWidget = new ColorStripPicker(currentColorStr, &menu);
+            ::QuarkMeta::ColorStripPicker* pickerWidget = new ColorStripPicker(currentColorStr, &menu);
             pickerAction->setDefaultWidget(pickerWidget);
             menu.addAction(pickerAction);
 
             connect(pickerWidget, &ColorStripPicker::colorSelected, m_panel, [this, view, &menu](const QString& hexColor) {
                 auto indexes = view->selectionModel()->selectedIndexes();
                 for (const auto& idx : indexes) {
-                    if (idx.column() == 0) m_panel->m_proxyModel->setData(idx, hexColor, ColorRole);
+                    if (idx.column() == 0) m_panel->getProxyModel()->setData(idx, hexColor, ColorRole);
                 }
                 menu.close();
             });
@@ -149,14 +152,14 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
 
             QString currentColorStr = currentIndex.data(ColorRole).toString();
             QWidgetAction* pickerAction = new QWidgetAction(&menu);
-            ColorStripPicker* pickerWidget = new ColorStripPicker(currentColorStr, &menu);
+            ::QuarkMeta::ColorStripPicker* pickerWidget = new ColorStripPicker(currentColorStr, &menu);
             pickerAction->setDefaultWidget(pickerWidget);
             menu.addAction(pickerAction);
 
             connect(pickerWidget, &ColorStripPicker::colorSelected, m_panel, [this, view, &menu](const QString& hexColor) {
                 auto indexes = view->selectionModel()->selectedIndexes();
                 for (const auto& idx : indexes) {
-                    if (idx.column() == 0) m_panel->m_proxyModel->setData(idx, hexColor, ColorRole);
+                    if (idx.column() == 0) m_panel->getProxyModel()->setData(idx, hexColor, ColorRole);
                 }
                 menu.close();
             });
@@ -247,13 +250,13 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
     auto addTypeAct = [&](const QString& label, ContentPanel::SortType type) {
         QAction* act = sortMenu->addAction(label);
         act->setCheckable(true);
-        act->setChecked(m_panel->m_sortType == type);
+        act->setChecked(m_panel->sortType() == type);
         typeGroup->addAction(act);
         connect(act, &QAction::triggered, m_panel, [this, type]() {
-            m_panel->m_sortType = type;
-            AppConfig::instance().setValue("ContentPanel/RightClickSortType", static_cast<int>(type));
-            m_panel->m_proxyModel->invalidate();
-            m_panel->m_proxyModel->sort(0, m_panel->m_sortOrder);
+            m_panel->setSortType(type);
+            ::QuarkMeta::AppConfig::instance().setValue("ContentPanel/RightClickSortType", static_cast<int>(type));
+            m_panel->getProxyModel()->invalidate();
+            m_panel->getProxyModel()->sort(0, m_panel->sortOrder());
         });
     };
 
@@ -271,13 +274,13 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
     auto addOrderAct = [&](const QString& label, Qt::SortOrder order) {
         QAction* act = sortMenu->addAction(label);
         act->setCheckable(true);
-        act->setChecked(m_panel->m_sortOrder == order);
+        act->setChecked(m_panel->sortOrder() == order);
         orderGroup->addAction(act);
         connect(act, &QAction::triggered, m_panel, [this, order]() {
-            m_panel->m_sortOrder = order;
-            AppConfig::instance().setValue("ContentPanel/RightClickSortOrder", static_cast<int>(order));
-            m_panel->m_proxyModel->invalidate();
-            m_panel->m_proxyModel->sort(0, order);
+            m_panel->setSortOrder(order);
+            ::QuarkMeta::AppConfig::instance().setValue("ContentPanel/RightClickSortOrder", static_cast<int>(order));
+            m_panel->getProxyModel()->invalidate();
+            m_panel->getProxyModel()->sort(0, order);
         });
     };
 
@@ -292,9 +295,9 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
         delMenu->addAction("永久删除")->setData(ContentPanel::ActionSecureDelete);
     }
 
-    m_panel->m_isContextMenuActive = true;
+    m_panel->setContextMenuActive(true);
     QAction* selectedAction = menu.exec(view->viewport()->mapToGlobal(pos));
-    m_panel->m_isContextMenuActive = false;
+    m_panel->setContextMenuActive(false);
 
     if (!selectedAction || !selectedAction->data().isValid()) return;
 
@@ -334,11 +337,11 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
             bool pin = (action == ContentPanel::ActionPin);
             for (const QModelIndex& idx : indexes) {
                 if (idx.column() == 0) {
-                    m_panel->m_proxyModel->setData(idx, pin, IsLockedRole);
+                    m_panel->getProxyModel()->setData(idx, pin, IsLockedRole);
                 }
             }
-            m_panel->m_proxyModel->invalidate();
-            m_panel->m_proxyModel->sort(0, m_panel->m_proxyModel->sortOrder());
+            m_panel->getProxyModel()->invalidate();
+            m_panel->getProxyModel()->sort(0, m_panel->getProxyModel()->sortOrder());
             break;
         }
         case ContentPanel::ActionEncrypt: {
@@ -366,7 +369,7 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
                         }
                     }
                     QMetaObject::invokeMethod(QCoreApplication::instance(), [self, currentDir]() {
-                        if (self && self->m_currentPath == currentDir) self->loadDirectory(currentDir, self->m_isRecursive);
+                        if (self && self->currentPath() == currentDir) self->loadDirectory(currentDir, self->isRecursive());
                         ToolTipOverlay::instance()->showText(QCursor::pos(), "加密任务处理完成", 1500, QColor("#2ecc71"));
                     });
                 });
@@ -466,7 +469,7 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
                             selectedPaths,
                             "已成功添加至收藏夹",
                             [this, selectedPaths]() {
-                                emit m_panel->requestAddFavorite(selectedPaths);
+                                QMetaObject::invokeMethod(m_panel, "requestAddFavorite", Q_ARG(QStringList, selectedPaths));
                                 return true;
                             },
                             [](const QVector<AssetItemSnapshot>& beforeState) {
@@ -543,8 +546,8 @@ void ContentContextMenuHandler::showContextMenu(QAbstractItemView* view, const Q
                 DeepThumbnailExtractor::instance().extractBatchAsync(
                     targetPaths,
                     [weakThis](const QString& itemPath, bool success) {
-                        if (weakThis && success && weakThis->m_diskModel) {
-                            weakThis->m_diskModel->reloadThumbnailForPath(itemPath);
+                        if (weakThis && success && weakThis->diskModel()) {
+                            weakThis->diskModel()->reloadThumbnailForPath(itemPath);
                         }
                     },
                     [weakThis](int successCount, int totalCount) {

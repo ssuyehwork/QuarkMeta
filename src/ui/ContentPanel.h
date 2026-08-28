@@ -133,8 +133,17 @@ public:
     // --- 业务接口 ---
     QAbstractItemModel* model() const { return m_model; }
     QSortFilterProxyModel* getProxyModel() const { return m_proxyModel; }
+    DiskItemModel* diskModel() const { return m_diskModel; }
     QStringList getSelectedPaths() const;
     QList<int> getSelectedTrashIds() const;
+    void performBatchRename();
+
+    QString currentPath() const { return m_currentPath; }
+    SortType sortType() const { return m_sortType; }
+    Qt::SortOrder sortOrder() const { return m_sortOrder; }
+    void setSortType(SortType type) { m_sortType = type; }
+    void setSortOrder(Qt::SortOrder order) { m_sortOrder = order; }
+    void setContextMenuActive(bool active) { m_isContextMenuActive = active; }
 
     QModelIndexList getSelectedIndexes() const {
         if (!m_viewStack) return {};
@@ -246,6 +255,9 @@ public:
     bool m_isPendingEdit = false;
     QString m_currentCategoryType; // 用于驱动差异化右键菜单
     bool m_isRecursive = false;
+public:
+    bool isRecursive() const { return m_isRecursive; }
+private:
     bool m_showFolders = true;
     bool m_showFiles = true;
     bool m_showHidden = false;
