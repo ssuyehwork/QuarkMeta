@@ -550,6 +550,10 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
         return record.encrypted;
     } else if (role == TagsRole) {
         return record.tags;
+    } else if (role == NoteRole) {
+        return record.note;
+    } else if (role == UrlRole) {
+        return record.url;
     } else if (role == IsEmptyRole) {
         return record.isDir && record.isEmpty;
     } else if (role == AspectRatioRole) {

@@ -1,9 +1,7 @@
 #include "MetaPanel.h"
-#include "SvgIcons.h"
-#include "ToolTipOverlay.h"
 #include "UiHelper.h"
-#include "../meta/MetadataManager.h"
-#include "../meta/QuarkMetaJson.h"
+#include "ToolTipOverlay.h"
+#include "components/FlowLayout.h"
 #include "../util/ShellHelper.h"
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -24,13 +22,13 @@
 namespace QuarkMeta {
 
 MetaPanel::MetaPanel(QWidget* parent) : QFrame(parent) {
-    setObjectName("MetadataContainer"); 
-    setAttribute(Qt::WA_StyledBackground, true); 
-    setMinimumWidth(230); 
+    setObjectName("MetadataContainer");
+    setAttribute(Qt::WA_StyledBackground, true);
+    setMinimumWidth(230);
     setStyleSheet("color: #EEEEEE;");
 
-    m_mainLayout = new QVBoxLayout(this); 
-    m_mainLayout->setContentsMargins(0, 0, 0, 0); 
+    m_mainLayout = new QVBoxLayout(this);
+    m_mainLayout->setContentsMargins(0, 0, 0, 0);
     m_mainLayout->setSpacing(0);
     
     m_adjustTimer = new QTimer(this);
@@ -79,41 +77,37 @@ QWidget* MetaPanel::createCollapsibleSection(const QString& title, QWidget* cont
 }
 
 void MetaPanel::initUi() {
-    // 头部面板标识 (权威还原：蓝字 + 数据库图标 "all_data" + "元数据属性")
-    QWidget* header = new QWidget(this); 
-    header->setObjectName("ContainerHeader"); 
+    QWidget* header = new QWidget(this);
+    header->setObjectName("ContainerHeader");
     header->setFixedHeight(32);
     header->setStyleSheet("QWidget#ContainerHeader { background-color: #252526; border-bottom: 1px solid #333333; }");
     QHBoxLayout* headerLayout = new QHBoxLayout(header);
     headerLayout->setContentsMargins(12, 0, 8, 0);
     headerLayout->setSpacing(6);
     
-    QLabel* iconLabel = new QLabel(header); 
-    iconLabel->setPixmap(UiHelper::getIcon("all_data", QColor("#4a90e2"), 16).pixmap(16, 16)); 
+    QLabel* iconLabel = new QLabel(header);
+    iconLabel->setPixmap(UiHelper::getIcon("all_data", QColor("#4a90e2"), 16).pixmap(16, 16));
     headerLayout->addWidget(iconLabel);
     
-    QLabel* titleLabel = new QLabel("元数据属性", header); 
-    titleLabel->setStyleSheet("font-size: 12px; font-weight: bold; color: #4a90e2; background: transparent; border: none;"); 
+    QLabel* titleLabel = new QLabel("元数据属性", header);
+    titleLabel->setStyleSheet("font-size: 12px; font-weight: bold; color: #4a90e2; background: transparent; border: none;");
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
     m_mainLayout->addWidget(header);
 
-    // 滚动区域
-    m_scrollArea = new QScrollArea(this); 
-    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded); 
+    m_scrollArea = new QScrollArea(this);
+    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_scrollArea->setWidgetResizable(true); 
+    m_scrollArea->setWidgetResizable(true);
     m_scrollArea->setStyleSheet("QScrollArea { border: none; background: transparent; }");
     
-    m_container = new QWidget(m_scrollArea); 
-    m_containerLayout = new QVBoxLayout(m_container); 
+    m_container = new QWidget(m_scrollArea);
+    m_containerLayout = new QVBoxLayout(m_container);
     m_containerLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
-    m_containerLayout->setContentsMargins(8, 8, 8, 8); 
+    m_containerLayout->setContentsMargins(8, 8, 8, 8);
     m_containerLayout->setSpacing(8);
 
-    // =========================================================================
-    // 顺序 1: 顶部预览与色板区 (有则显，无则完全隐藏)
-    // =========================================================================
+    // 1. 顶部预览与色板区
     m_topPreviewBox = new QWidget(m_container);
     m_topPreviewBox->setObjectName("TopPreviewBox");
     m_topPreviewBox->setStyleSheet("QWidget#TopPreviewBox { background: transparent; border: none; }");
@@ -128,43 +122,37 @@ void MetaPanel::initUi() {
     m_lblImagePreview->hide();
     previewLayout->addWidget(m_lblImagePreview);
 
-    m_paletteFlowLayout = new FlowLayout(nullptr, 4, 4, 4);
-    m_paletteFlowLayout->setContentsMargins(0, 0, 0, 0);
-    QWidget* paletteContainer = new QWidget(m_topPreviewBox);
-    paletteContainer->setLayout(m_paletteFlowLayout);
-    previewLayout->addWidget(paletteContainer);
+    m_paletteContainer = new QWidget(m_topPreviewBox);
+    m_paletteFlowLayout = new FlowLayout(m_paletteContainer, 0, 4, 4);
+    previewLayout->addWidget(m_paletteContainer);
 
     m_topPreviewBox->hide();
     m_containerLayout->addWidget(m_topPreviewBox);
 
-    // =========================================================================
-    // 顺序 2: 文件名编辑区 (大字高亮)
-    // =========================================================================
+    // 2. 文件名编辑区
     m_nameEdit = new ElasticEdit(m_container);
     m_nameEdit->setPlaceholderText("文件名...");
     m_nameEdit->setStyleSheet(
         "QTextEdit { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding: 4px 8px; "
         "font-size: 13px; font-weight: bold; color: #FFFFFF; }"
         "QTextEdit:focus { border-color: #378ADD; }"
+        "QTextEdit:disabled { background: #1E1E1E; color: #777777; border-color: #2A2A2A; }"
     );
     m_nameEdit->installEventFilter(this);
     m_containerLayout->addWidget(m_nameEdit);
 
-    // =========================================================================
-    // 顺序 3: 备注说明区 (可折叠：▼ 备注说明)
-    // =========================================================================
+    // 3. 备注说明区
     m_noteEdit = new ElasticEdit(m_container);
     m_noteEdit->setPlaceholderText("添加备注说明...");
     m_noteEdit->setStyleSheet(
         "QTextEdit { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding: 4px 8px; font-size: 12px; color: #AAAAAA; }"
         "QTextEdit:focus { border-color: #378ADD; color: #FFFFFF; }"
+        "QTextEdit:disabled { background: #1E1E1E; color: #555555; }"
     );
     m_noteEdit->installEventFilter(this);
     m_containerLayout->addWidget(createCollapsibleSection("备注说明", m_noteEdit, true));
 
-    // =========================================================================
-    // 顺序 4: 关联网址区
-    // =========================================================================
+    // 4. 关联网址区
     m_linkEdit = new QLineEdit(m_container);
     m_linkEdit->setPlaceholderText("添加关联网址...");
     m_linkEdit->setFixedHeight(28);
@@ -189,10 +177,12 @@ void MetaPanel::initUi() {
     connect(m_actOpenLink, &QAction::triggered, this, [this]() {
         QString urlStr = m_linkEdit->text().trimmed();
         if (!urlStr.isEmpty()) {
-            if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) {
-                urlStr = "https://" + urlStr;
+            QUrl url = QUrl::fromUserInput(urlStr);
+            if (url.isValid() && (url.scheme().toLower() == "http" || url.scheme().toLower() == "https")) {
+                QDesktopServices::openUrl(url);
+            } else {
+                ToolTipOverlay::instance()->showText(QCursor::pos(), "无效的 Web 网址格式", 1500, QColor("#e81123"));
             }
-            QDesktopServices::openUrl(QUrl(urlStr));
         }
     });
 
@@ -203,15 +193,12 @@ void MetaPanel::initUi() {
 
     m_containerLayout->addWidget(createCollapsibleSection("关联网址", m_linkEdit, true));
 
-    // =========================================================================
-    // 顺序 5: 星级评级 + 颜色色标条 (权威还原：带 no_color ⊘ 清除按钮与全矢量 SVG 图标)
-    // =========================================================================
+    // 5. 星级评级 + 颜色色标条
     m_ratingColorBox = new QWidget(m_container);
     QVBoxLayout* ratingColorLayout = new QVBoxLayout(m_ratingColorBox);
     ratingColorLayout->setContentsMargins(0, 2, 0, 2);
     ratingColorLayout->setSpacing(6);
 
-    // 星级行 (清除 ⊘ + 5 星)
     QWidget* ratingRow = new QWidget(m_ratingColorBox);
     ratingRow->setStyleSheet("QWidget { background: transparent; border: none; }");
     QHBoxLayout* starLayout = new QHBoxLayout(ratingRow);
@@ -226,9 +213,7 @@ void MetaPanel::initUi() {
     btnClearStar->setProperty("tooltipText", "清除评级");
     btnClearStar->installEventFilter(this);
     btnClearStar->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333333; border-radius: 4px; }");
-    connect(btnClearStar, &QPushButton::clicked, this, [this]() {
-        setRating(0, true);
-    });
+    connect(btnClearStar, &QPushButton::clicked, this, [this]() { setRating(0, true); });
     starLayout->addWidget(btnClearStar);
 
     for (int i = 1; i <= 5; ++i) {
@@ -238,7 +223,6 @@ void MetaPanel::initUi() {
         btnStar->setIcon(UiHelper::getIcon("star", QColor("#555555"), 18));
         btnStar->setIconSize(QSize(18, 18));
         btnStar->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333333; border-radius: 3px; }");
-        
         connect(btnStar, &QPushButton::clicked, this, [this, i]() {
             int newRating = (m_currentRating == i) ? 0 : i;
             setRating(newRating, true);
@@ -249,7 +233,6 @@ void MetaPanel::initUi() {
     starLayout->addStretch();
     ratingColorLayout->addWidget(ratingRow);
 
-    // 颜色标记行 (无色标 ⊘ + 8 基础纯色圆点)
     QWidget* colorRow = new QWidget(m_ratingColorBox);
     colorRow->setStyleSheet("QWidget { background: transparent; border: none; }");
     QHBoxLayout* colorLayout = new QHBoxLayout(colorRow);
@@ -264,9 +247,7 @@ void MetaPanel::initUi() {
     btnNoColor->setProperty("tooltipText", "无色标");
     btnNoColor->installEventFilter(this);
     btnNoColor->setStyleSheet("QPushButton { border: none; background: transparent; } QPushButton:hover { background: #333333; border-radius: 4px; }");
-    connect(btnNoColor, &QPushButton::clicked, this, [this]() {
-        setColor(L"", true);
-    });
+    connect(btnNoColor, &QPushButton::clicked, this, [this]() { setColor(L"", true); });
     colorLayout->addWidget(btnNoColor);
 
     static const QVector<QPair<QString, QString>> s_colorMap = {
@@ -289,7 +270,7 @@ void MetaPanel::initUi() {
         std::wstring colorName = pair.first.toStdWString();
         connect(btnColor, &QPushButton::clicked, this, [this, colorName]() {
             if (m_currentColor == colorName) {
-                setColor(L"", true); // 反选清除
+                setColor(L"", true);
             } else {
                 setColor(colorName, true);
             }
@@ -301,9 +282,7 @@ void MetaPanel::initUi() {
     ratingColorLayout->addWidget(colorRow);
     m_containerLayout->addWidget(m_ratingColorBox);
 
-    // =========================================================================
-    // 顺序 6: 标签管理区 (可折叠：▼ 标签管理，使用纯矢量 SVG 按钮，绝无 [+] 文本符号)
-    // =========================================================================
+    // 6. 标签管理区
     m_tagBox = new QWidget(m_container);
     QVBoxLayout* tagL = new QVBoxLayout(m_tagBox);
     tagL->setContentsMargins(0, 0, 0, 0);
@@ -315,10 +294,9 @@ void MetaPanel::initUi() {
     m_btnAddTagBig->setStyleSheet(
         "QPushButton { background-color: #252526; border: 1px solid #3c3c3c; border-radius: 4px; padding: 0 10px; color: #AAAAAA; font-size: 12px; text-align: center; }"
         "QPushButton:hover { background-color: #2a2d2e; border-color: #378ADD; color: #FFFFFF; }"
+        "QPushButton:disabled { background: #1E1E1E; color: #555555; }"
     );
-    connect(m_btnAddTagBig, &QPushButton::clicked, this, [this]() {
-        openTagSelectorOverlay(m_btnAddTagBig);
-    });
+    connect(m_btnAddTagBig, &QPushButton::clicked, this, [this]() { openTagSelectorOverlay(m_btnAddTagBig); });
     tagL->addWidget(m_btnAddTagBig);
 
     m_tagContainer = new QWidget(m_tagBox);
@@ -335,35 +313,29 @@ void MetaPanel::initUi() {
         "QPushButton { background-color: #2D2D30; border: 1px solid #555555; border-radius: 4px; padding: 0; }"
         "QPushButton:hover { background-color: #378ADD; border-color: #378ADD; }"
     );
-    connect(m_btnAddTagSmall, &QPushButton::clicked, this, [this]() {
-        openTagSelectorOverlay(m_btnAddTagSmall);
-    });
+    connect(m_btnAddTagSmall, &QPushButton::clicked, this, [this]() { openTagSelectorOverlay(m_btnAddTagSmall); });
     m_btnAddTagSmall->hide();
 
     tagL->addWidget(m_tagContainer);
     m_containerLayout->addWidget(createCollapsibleSection("标签管理", m_tagBox, true));
 
-    // =========================================================================
-    // 顺序 7: 基础物理属性区 (可折叠：▼ 基础属性)
-    // =========================================================================
+    // 7. 基础物理属性区
     m_infoSectionWidget = new QWidget(m_container);
     QVBoxLayout* infoL = new QVBoxLayout(m_infoSectionWidget);
     infoL->setContentsMargins(0, 0, 0, 0);
     infoL->setSpacing(4);
 
-    addInfoRow(infoL, "文件类型", lblType); 
+    addInfoRow(infoL, "文件类型", lblType);
     addInfoRow(infoL, "文件大小", lblSize);
     addInfoRow(infoL, "图片尺寸", lblDimensions);
-    addInfoRow(infoL, "创建时间", lblCtime); 
-    addInfoRow(infoL, "修改时间", lblMtime); 
+    addInfoRow(infoL, "创建时间", lblCtime);
+    addInfoRow(infoL, "修改时间", lblMtime);
     addInfoRow(infoL, "访问时间", lblAtime);
     addInfoRow(infoL, "加密状态", lblEncrypted);
 
     m_containerLayout->addWidget(createCollapsibleSection("基础属性", m_infoSectionWidget, true));
 
-    // =========================================================================
-    // 顺序 8: 物理路径区 (可折叠：▼ 物理路径，权威还原两个标准独立大按钮)
-    // =========================================================================
+    // 8. 物理路径区
     QWidget* pathBox = new QWidget(m_container);
     QVBoxLayout* pathL = new QVBoxLayout(pathBox);
     pathL->setContentsMargins(0, 0, 0, 0);
@@ -384,7 +356,7 @@ void MetaPanel::initUi() {
     m_btnCopyPath->setStyleSheet("QPushButton { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; color: #CCCCCC; font-size: 11px; } QPushButton:hover { background: #333333; color: #FFFFFF; }");
     connect(m_btnCopyPath, &QPushButton::clicked, this, [this]() {
         QString p = m_pathEdit->text().trimmed();
-        if (!p.isEmpty()) {
+        if (!p.isEmpty() && !p.startsWith("已选中")) {
             QApplication::clipboard()->setText(QDir::toNativeSeparators(p));
             ToolTipOverlay::instance()->showText(QCursor::pos(), "已复制路径", 1200, QColor("#2ecc71"));
         }
@@ -397,7 +369,7 @@ void MetaPanel::initUi() {
     m_btnOpenLocation->setStyleSheet("QPushButton { background: #252526; border: 1px solid #3c3c3c; border-radius: 4px; color: #CCCCCC; font-size: 11px; } QPushButton:hover { background: #378ADD; border-color: #378ADD; color: #FFFFFF; }");
     connect(m_btnOpenLocation, &QPushButton::clicked, this, [this]() {
         QString p = m_pathEdit->text().trimmed();
-        if (!p.isEmpty()) {
+        if (!p.isEmpty() && !p.startsWith("已选中")) {
             ShellHelper::openInExplorer(p);
         }
     });
@@ -410,7 +382,7 @@ void MetaPanel::initUi() {
     m_scrollArea->setWidget(m_container);
     m_mainLayout->addWidget(m_scrollArea);
 
-    updateControlsState(false);
+    updateControlsState(false, false, false);
 }
 
 void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
@@ -419,17 +391,8 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
         return;
     }
 
-    QStringList currentTags;
-    for (int i = 0; i < m_tagFlowLayout->count(); ++i) {
-        TagPill* pill = qobject_cast<TagPill*>(m_tagFlowLayout->itemAt(i)->widget());
-        if (pill) {
-            QString tagStr = pill->property("tagText").toString();
-            if (!tagStr.isEmpty()) currentTags.append(tagStr);
-        }
-    }
-
     QWidget* topWidget = this->topLevelWidget();
-    m_tagSelectorOverlay = new TagSelectorOverlay(currentTags, topWidget);
+    m_tagSelectorOverlay = new TagSelectorOverlay(m_currentTagsSet.values(), topWidget);
 
     QPoint globalPos = targetAnchor->mapToGlobal(QPoint(0, targetAnchor->height() + 4));
     QPoint parentPos = topWidget ? topWidget->mapFromGlobal(globalPos) : globalPos;
@@ -447,28 +410,21 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     m_tagSelectorOverlay->move(parentPos);
     m_tagSelectorOverlay->show();
 
-    connect(m_tagSelectorOverlay, &TagSelectorOverlay::selectionChanged, this, [this](const QStringList& selectedTags) {
-        setTags(selectedTags);
-    });
+    connect(m_tagSelectorOverlay, &TagSelectorOverlay::selectionChanged, this, [this](const QStringList& newSelectedTags) {
+        QSet<QString> newSet(newSelectedTags.begin(), newSelectedTags.end());
 
-    connect(m_tagSelectorOverlay, &TagSelectorOverlay::overlayClosed, this, [this]() {
-        if (m_selectedPaths.isEmpty()) return;
-
-        QStringList finalTags;
-        for (int i = 0; i < m_tagFlowLayout->count(); ++i) {
-            TagPill* pill = qobject_cast<TagPill*>(m_tagFlowLayout->itemAt(i)->widget());
-            if (pill) {
-                QString tagStr = pill->property("tagText").toString();
-                if (!tagStr.isEmpty()) finalTags.append(tagStr);
+        for (const QString& t : newSet) {
+            if (!m_currentTagsSet.contains(t)) {
+                emit tagAddRequested(m_selectedPaths, t);
+            }
+        }
+        for (const QString& t : m_currentTagsSet) {
+            if (!newSet.contains(t)) {
+                emit tagRemoveRequested(m_selectedPaths, t);
             }
         }
 
-        for (const QString& path : m_selectedPaths) {
-            std::wstring wpath = path.toStdWString();
-            MetadataManager::instance().setTags(wpath, finalTags, true);
-        }
-
-        emit tagsChanged(m_selectedPaths, finalTags);
+        setTags(newSelectedTags);
     });
 }
 
@@ -489,7 +445,14 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
 void MetaPanel::setSelectedPaths(const QStringList& paths) {
     m_selectedPaths = paths;
     bool hasSelection = !m_selectedPaths.isEmpty();
-    updateControlsState(hasSelection);
+    bool isMulti = m_selectedPaths.size() > 1;
+
+    m_isReadOnlyMode = false;
+    if (hasSelection && (m_selectedPaths.first().endsWith(".amenc", Qt::CaseInsensitive) || m_selectedPaths.first().contains("trash://"))) {
+        m_isReadOnlyMode = true;
+    }
+
+    updateControlsState(hasSelection, isMulti, m_isReadOnlyMode);
 
     if (!hasSelection) {
         m_isInternalUpdating = true;
@@ -510,78 +473,84 @@ void MetaPanel::setSelectedPaths(const QStringList& paths) {
         setTags({});
         setPalettes({});
         m_isInternalUpdating = false;
+    } else if (isMulti) {
+        m_isInternalUpdating = true;
+        setImagePreview(QPixmap());
+        if (m_nameEdit) {
+            m_nameEdit->setPlainText(QString("已选中 %1 个项目").arg(m_selectedPaths.size()));
+        }
+        if (m_pathEdit) {
+            m_pathEdit->setText(QString("已选中 %1 个项目").arg(m_selectedPaths.size()));
+        }
+        if (lblType) lblType->setText("混合项目");
+        if (lblSize) lblSize->setText("-");
+        if (lblDimensions) lblDimensions->setText("-");
+        if (lblCtime) lblCtime->setText("-");
+        if (lblMtime) lblMtime->setText("-");
+        if (lblAtime) lblAtime->setText("-");
+        if (lblEncrypted) lblEncrypted->setText("-");
+        setPalettes({});
+        m_isInternalUpdating = false;
     }
 }
 
-void MetaPanel::updateControlsState(bool hasSelection) {
-    if (m_nameEdit) m_nameEdit->setEnabled(hasSelection);
-    if (m_noteEdit) m_noteEdit->setEnabled(hasSelection);
-    if (m_linkEdit) m_linkEdit->setEnabled(hasSelection);
-    if (m_btnAddTagBig) m_btnAddTagBig->setEnabled(hasSelection);
-    if (m_btnAddTagSmall) m_btnAddTagSmall->setEnabled(hasSelection);
-    if (m_ratingColorBox) m_ratingColorBox->setEnabled(hasSelection);
-    if (m_btnCopyPath) m_btnCopyPath->setEnabled(hasSelection);
-    if (m_btnOpenLocation) m_btnOpenLocation->setEnabled(hasSelection);
+void MetaPanel::updateControlsState(bool hasSelection, bool isMultiSelection, bool isReadOnly) {
+    if (m_nameEdit) {
+        m_nameEdit->setEnabled(hasSelection && !isMultiSelection && !isReadOnly);
+    }
+    if (m_noteEdit) {
+        m_noteEdit->setEnabled(hasSelection && !isReadOnly);
+    }
+    if (m_linkEdit) {
+        m_linkEdit->setEnabled(hasSelection && !isReadOnly);
+    }
+    if (m_btnAddTagBig) {
+        m_btnAddTagBig->setEnabled(hasSelection && !isReadOnly);
+    }
+    if (m_btnAddTagSmall) {
+        m_btnAddTagSmall->setEnabled(hasSelection && !isReadOnly);
+    }
+    if (m_ratingColorBox) {
+        m_ratingColorBox->setEnabled(hasSelection && !isReadOnly);
+    }
+    if (m_btnCopyPath) {
+        m_btnCopyPath->setEnabled(hasSelection && !isMultiSelection);
+    }
+    if (m_btnOpenLocation) {
+        m_btnOpenLocation->setEnabled(hasSelection && !isMultiSelection);
+    }
 }
 
 void MetaPanel::addInfoRow(QVBoxLayout* layout, const QString& label, QLabel*& valueLabel) {
-    QWidget* row = new QWidget(m_container); 
-    QHBoxLayout* rl = new QHBoxLayout(row); 
-    rl->setContentsMargins(0, 1, 0, 1); 
-    rl->setSpacing(6); 
+    QWidget* row = new QWidget(m_container);
+    QHBoxLayout* rl = new QHBoxLayout(row);
+    rl->setContentsMargins(0, 1, 0, 1);
+    rl->setSpacing(6);
     
-    QLabel* kl = new QLabel(label, row); 
+    QLabel* kl = new QLabel(label, row);
     kl->setFixedWidth(65);
-    kl->setStyleSheet("font-size: 11px; color: #888888;"); 
+    kl->setStyleSheet("font-size: 11px; color: #888888;");
     rl->addWidget(kl, 0, Qt::AlignTop);
 
-    valueLabel = new QLabel("-", row); 
-    valueLabel->setWordWrap(true); 
+    valueLabel = new QLabel("-", row);
+    valueLabel->setWordWrap(true);
     valueLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
     valueLabel->setStyleSheet("font-size: 11px; color: #CCCCCC; line-height: 1.4;");
-    valueLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop); 
-    rl->addWidget(valueLabel, 1); 
+    valueLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    rl->addWidget(valueLabel, 1);
     
     layout->addWidget(row);
 }
 
-void MetaPanel::onTagDeleted(const QString& text) { 
-    if (m_selectedPaths.isEmpty()) return; 
- 
-    for (int i = 0; i < m_tagFlowLayout->count(); ++i) { 
-        QLayoutItem* item = m_tagFlowLayout->itemAt(i); 
-        TagPill* pill = qobject_cast<TagPill*>(item->widget()); 
-        if (pill && pill->property("tagText").toString() == text) { 
-            m_tagFlowLayout->takeAt(i); 
-            pill->deleteLater(); 
-            delete item; 
-            break; 
-        } 
-    } 
+void MetaPanel::onTagDeleted(const QString& text) {
+    if (m_selectedPaths.isEmpty() || m_isReadOnlyMode) return;
 
-    QStringList remainingTags;
-    for (int i = 0; i < m_tagFlowLayout->count(); ++i) {
-        TagPill* pill = qobject_cast<TagPill*>(m_tagFlowLayout->itemAt(i)->widget());
-        if (pill) {
-            remainingTags.append(pill->property("tagText").toString());
-        }
-    }
+    emit tagRemoveRequested(m_selectedPaths, text);
 
-    if (remainingTags.isEmpty()) {
-        m_btnAddTagBig->show();
-        m_btnAddTagSmall->hide();
-    }
-
-    for (const QString& path : m_selectedPaths) {
-        MetadataManager::instance().setTags(path.toStdWString(), remainingTags, true);
-    }
- 
-    emit tagRemoveRequested(m_selectedPaths, text); 
-    emit tagsChanged(m_selectedPaths, remainingTags);
-
-    adjustFlowHeights(); 
-    if (m_container) m_container->adjustSize(); 
-} 
+    QStringList remainingTags = m_currentTagsSet.values();
+    remainingTags.removeAll(text);
+    setTags(remainingTags);
+}
 
 void MetaPanel::resizeEvent(QResizeEvent* event) {
     QFrame::resizeEvent(event);
@@ -594,7 +563,7 @@ void MetaPanel::resizeEvent(QResizeEvent* event) {
             m_container->setFixedWidth(viewportW);
         }
         
-        int maxW = viewportW - 16; 
+        int maxW = viewportW - 16;
         if (maxW > 50) {
             auto syncWidthAndHeight = [maxW](ElasticEdit* edit) {
                 if (edit && edit->width() != maxW) {
@@ -667,23 +636,25 @@ void MetaPanel::updateInfo(const QString& n, const QString& t, const QString& s,
     m_isInternalUpdating = true;
     
     QFileInfo info(n);
-    m_nameEdit->setPlainText(info.completeBaseName());
-    m_nameEdit->adjustHeight();
-    m_nameEdit->setProperty("oldPath", p);
-    m_nameEdit->setProperty("suffix", info.suffix());
-    
-    lblType->setText(t); 
-    lblSize->setText(s); 
-    lblCtime->setText(ct); 
-    lblMtime->setText(mt); 
-    lblAtime->setText(at); 
-    
-    m_pathEdit->setText(p);
-    m_pathEdit->setCursorPosition(0);
+    if (m_selectedPaths.size() <= 1) {
+        m_nameEdit->setPlainText(info.completeBaseName());
+        m_nameEdit->adjustHeight();
+        m_nameEdit->setProperty("oldPath", p);
+        m_nameEdit->setProperty("suffix", info.suffix());
+
+        lblType->setText(t);
+        lblSize->setText(s);
+        lblCtime->setText(ct);
+        lblMtime->setText(mt);
+        lblAtime->setText(at);
+
+        m_pathEdit->setText(p);
+        m_pathEdit->setCursorPosition(0);
+    }
 
     lblEncrypted->setText(e ? "已加密" : "未加密");
     
-    if (width > 0 && height > 0) {
+    if (width > 0 && height > 0 && m_selectedPaths.size() <= 1) {
         lblDimensions->setText(QString("%1 x %2 像素").arg(width).arg(height));
         if (lblDimensions->parentWidget()) lblDimensions->parentWidget()->show();
     } else {
@@ -696,11 +667,11 @@ void MetaPanel::updateInfo(const QString& n, const QString& t, const QString& s,
 }
 
 void MetaPanel::setTags(const QStringList& tags) {
+    m_currentTagsSet = QSet<QString>(tags.begin(), tags.end());
+
     while (QLayoutItem* item = m_tagFlowLayout->takeAt(0)) {
-        TagPill* pill = qobject_cast<TagPill*>(item->widget());
-        if (pill) {
-            pill->hide();
-            m_tagPool.append(pill);
+        if (item->widget() && item->widget() != m_btnAddTagSmall) {
+            item->widget()->deleteLater();
         }
         delete item;
     }
@@ -712,15 +683,9 @@ void MetaPanel::setTags(const QStringList& tags) {
         m_btnAddTagBig->hide();
 
         for (const QString& tag : tags) {
-            TagPill* pill = nullptr;
-            if (!m_tagPool.isEmpty()) {
-                pill = m_tagPool.takeFirst();
-                pill->setData(tag);
-            } else {
-                pill = new TagPill(tag, m_tagContainer);
-                connect(pill, &TagPill::deleteRequested, this, &MetaPanel::onTagDeleted);
-            }
+            TagPill* pill = new TagPill(tag, m_tagContainer);
             pill->setProperty("tagText", tag);
+            connect(pill, &TagPill::deleteRequested, this, &MetaPanel::onTagDeleted);
             pill->show();
             m_tagFlowLayout->addWidget(pill);
         }
@@ -746,10 +711,7 @@ void MetaPanel::setRating(int rating, bool fromUser) {
         m_starBtns[i]->setIconSize(QSize(18, 18));
     }
 
-    if (fromUser && !m_selectedPaths.isEmpty()) {
-        for (const QString& p : m_selectedPaths) {
-            MetadataManager::instance().setRating(p.toStdWString(), rating, true);
-        }
+    if (fromUser && !m_selectedPaths.isEmpty() && !m_isReadOnlyMode) {
         emit metadataChanged(rating, m_currentColor);
     }
 }
@@ -769,17 +731,14 @@ void MetaPanel::setColor(const std::wstring& color, bool fromUser) {
         ).arg(hex).arg(active ? "2px solid #FFFFFF" : "1px solid transparent"));
     }
 
-    if (fromUser && !m_selectedPaths.isEmpty()) {
-        for (const QString& p : m_selectedPaths) {
-            MetadataManager::instance().setColor(p.toStdWString(), color, true);
-        }
+    if (fromUser && !m_selectedPaths.isEmpty() && !m_isReadOnlyMode) {
         emit metadataChanged(m_currentRating, color);
     }
 }
 
-void MetaPanel::setNote(const QString& note) { 
+void MetaPanel::setNote(const QString& note) {
     m_isInternalUpdating = true;
-    m_noteEdit->setPlainText(note); 
+    m_noteEdit->setPlainText(note);
     m_noteEdit->adjustHeight();
     if (m_container) m_container->adjustSize();
     m_isInternalUpdating = false;
@@ -789,9 +748,9 @@ void MetaPanel::setNote(const std::wstring& note) {
     setNote(QString::fromStdWString(note));
 }
 
-void MetaPanel::setURL(const QString& url) { 
+void MetaPanel::setURL(const QString& url) {
     m_isInternalUpdating = true;
-    m_linkEdit->setText(url); 
+    m_linkEdit->setText(url);
     m_linkEdit->setCursorPosition(0);
     if (m_actOpenLink) {
         m_actOpenLink->setVisible(!url.trimmed().isEmpty());
@@ -808,25 +767,16 @@ void MetaPanel::setPalettes(const QVector<QPair<QColor, float>>& palette) {
     if (!m_paletteFlowLayout) return;
 
     while (QLayoutItem* item = m_paletteFlowLayout->takeAt(0)) {
-        ColorPill* pill = qobject_cast<ColorPill*>(item->widget());
-        if (pill) {
-            pill->hide();
-            m_colorPool.append(pill);
+        if (item->widget()) {
+            item->widget()->deleteLater();
         }
         delete item;
     }
 
     for (const auto& entry : palette) {
-        ColorPill* pill = nullptr;
-        if (!m_colorPool.isEmpty()) {
-            pill = m_colorPool.takeFirst();
-            pill->setData(entry.first, entry.second);
-        } else {
-            pill = new ColorPill(entry.first, entry.second, m_topPreviewBox);
-            pill->setStyleSheet("background: transparent; border: none;");
-            connect(pill, &ColorPill::colorSelected, [this](const QColor& c){ emit searchByColor(c); });
-            connect(pill, &ColorPill::requestSetAsPrimary, this, &MetaPanel::setAsPrimaryColor);
-        }
+        ColorPill* pill = new ColorPill(entry.first, entry.second, m_paletteContainer);
+        pill->setStyleSheet("background: transparent; border: none;");
+        connect(pill, &ColorPill::colorSelected, this, [this](const QColor& c){ emit searchByColor(c); });
         pill->show();
         m_paletteFlowLayout->addWidget(pill);
     }
@@ -848,35 +798,28 @@ bool MetaPanel::eventFilter(QObject* watched, QEvent* event) {
         ToolTipOverlay::hideTip();
     }
 
-    if (m_isInternalUpdating) return QFrame::eventFilter(watched, event);
+    if (m_isInternalUpdating || m_isReadOnlyMode) return QFrame::eventFilter(watched, event);
 
     if (watched == m_linkEdit) {
-        if (event->type() == QEvent::FocusIn) {
-            m_isUserEditing = true;
-        } else if (event->type() == QEvent::FocusOut) {
-            m_isUserEditing = false;
-        }
+        if (event->type() == QEvent::FocusIn) m_isUserEditing = true;
+        else if (event->type() == QEvent::FocusOut) m_isUserEditing = false;
     } else if (event->type() == QEvent::FocusIn) {
-        if (watched == m_noteEdit || watched == m_nameEdit) {
-            m_isUserEditing = true;
-        }
+        if (watched == m_noteEdit || watched == m_nameEdit) m_isUserEditing = true;
     } else if (event->type() == QEvent::FocusOut) {
-        if (watched == m_noteEdit || watched == m_nameEdit) {
-            m_isUserEditing = false;
-        }
+        if (watched == m_noteEdit || watched == m_nameEdit) m_isUserEditing = false;
     }
 
     if (watched == m_noteEdit && event->type() == QEvent::FocusOut) {
         if (!m_selectedPaths.isEmpty()) {
-            QString newNote = m_noteEdit->toPlainText();
-            emit noteEdited(m_selectedPaths, newNote);
+            emit noteEdited(m_selectedPaths, m_noteEdit->toPlainText());
         }
     } else if (watched == m_linkEdit && event->type() == QEvent::FocusOut) {
         if (!m_selectedPaths.isEmpty()) {
-            QString newUrl = m_linkEdit->text().trimmed();
-            emit linkEdited(m_selectedPaths, newUrl);
+            emit linkEdited(m_selectedPaths, m_linkEdit->text().trimmed());
         }
     } else if (watched == m_nameEdit && event->type() == QEvent::FocusOut) {
+        if (m_selectedPaths.size() > 1) return true;
+
         QString oldPath = m_nameEdit->property("oldPath").toString();
         QString newName = m_nameEdit->toPlainText().trimmed();
         
@@ -901,13 +844,6 @@ bool MetaPanel::eventFilter(QObject* watched, QEvent* event) {
         }
     }
     return QFrame::eventFilter(watched, event);
-}
-
-void MetaPanel::setAsPrimaryColor(const QColor& color) {
-    QString currentPath = m_pathEdit->text().trimmed();
-    if (!currentPath.isEmpty()) {
-        emit primaryColorChanged(currentPath, color);
-    }
 }
 
 } // namespace QuarkMeta
