@@ -369,4 +369,4 @@ target_include_directories(QuarkMeta PRIVATE
 if(MSVC)
     target_link_options(QuarkMeta PRIVATE "/MANIFESTUAC:level='asInvoker' uiAccess='false'")
 endif()
-# Force Refresh CMake: 2026-08-28 19:30 (Force MOC re-compilation for TagLexiconService)
+# Force Rebuild TagLexiconService: 2026-08-28 19:40
