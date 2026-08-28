@@ -158,6 +158,8 @@ void PanelMediator::setupConnections() {
                 metaPanel->setRating(idx.data(RatingRole).toInt(), false);
                 metaPanel->setColor(idx.data(ColorRole).toString().toStdWString(), false);
                 metaPanel->setTags(idx.data(TagsRole).toStringList());
+                metaPanel->setNote(idx.data(NoteRole).toString());
+                metaPanel->setURL(idx.data(UrlRole).toString());
 
                 QVariant decData = idx.data(Qt::DecorationRole);
                 QPixmap previewPixmap;
