@@ -93,7 +93,7 @@ bool OperationSnapshotEngine::executeWithSnapshot(
             []() {
                 // 回调闭包留空或传入 dummy 即可，因为在 4.1 节中 UndoToastOverlay 已经并轨至 UndoManager
             },
-            5000
+            7000
         );
     }
 
