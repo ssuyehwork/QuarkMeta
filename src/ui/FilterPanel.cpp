@@ -653,6 +653,7 @@ void FilterPanel::rebuildGroups() {
 
         QPushButton* btnSort = new QPushButton(g);
         btnSort->setFixedSize(16, 16);
+        btnSort->setIconSize(QSize(12, 12));
         btnSort->setIcon(UiHelper::getIcon(m_createDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
         btnSort->setFlat(true);
         btnSort->setCursor(Qt::PointingHandCursor);
@@ -716,6 +717,7 @@ void FilterPanel::rebuildGroups() {
 
         QPushButton* btnSort = new QPushButton(g);
         btnSort->setFixedSize(16, 16);
+        btnSort->setIconSize(QSize(12, 12));
         btnSort->setIcon(UiHelper::getIcon(m_modifyDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
         btnSort->setFlat(true);
         btnSort->setCursor(Qt::PointingHandCursor);
