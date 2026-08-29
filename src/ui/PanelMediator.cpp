@@ -141,20 +141,22 @@ void PanelMediator::setupConnections() {
                 return;
             }
 
-            // 检查当前选中的项目是否与被修改的行相吻合
+            // 检查当前选中的项目是否与被修改的项目相吻合（精确通过 PathRole 进行文件物理绝对路径比对，100% 免疫排序与过滤）
             QModelIndexList selected = contentPanel->getSelectedIndexes();
             if (selected.isEmpty()) return;
 
             QModelIndex currentSel = selected.first();
-            // 直接在 View/ProxyModel 视角比对选中行，防止排序过滤时源模型与代理模型行号错位
-            if (currentSel.row() >= topLeft.row() && currentSel.row() <= topLeft.row()) {
+            QString selPath = currentSel.data(PathRole).toString();
+            QString changedPath = topLeft.data(PathRole).toString();
+
+            if (!selPath.isEmpty() && selPath == changedPath) {
                 if (roles.isEmpty() || roles.contains(RatingRole)) {
                     int newRating = currentSel.data(RatingRole).toInt();
-                    metaPanel->setRating(newRating, false); // 👈 实时同步右侧星星！
+                    metaPanel->setRating(newRating, false); // 👈 0 毫秒瞬间同步右侧星星！
                 }
                 if (roles.isEmpty() || roles.contains(ColorRole)) {
                     QString newColor = currentSel.data(ColorRole).toString();
-                    metaPanel->setColor(newColor, false);   // 👈 实时同步右侧色标！
+                    metaPanel->setColor(newColor, false);   // 👈 0 毫秒瞬间同步右侧色标！
                 }
             }
         });
