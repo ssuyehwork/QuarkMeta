@@ -116,11 +116,6 @@
 2. **黑盒 Model 访问与标准契约角色红线**：中介者在处理视图选中项数据读取时，必须严格通过 Qt 标准 `QModelIndex::data(index, role)` 与标准角色接口（如 `TagsRole`、`RatingRole`、`ColorRole`、`EncryptedRole`）进行传输，绝对禁止将模型强转为具体 Model 实现类指针或跨层强行读取/遍历 Model 内部私有数据结构。
 3. **QPointer 内存安全与 UI 呈现纯洁性红线**：中介者内部引用的所有 UI 组件统一采用 `QPointer<T>` 安全指针包装，防止野指针解引用风险；彻底剥离中介者内部的 HTML 文本拼接、全局屏幕坐标居中计算及 UI 动画控制算式，确保中介者职责纯净单一。
 
-### 全局状态栏与系统/视图状态流转顶层解耦规范 (StatusBar & Event Flow)
-1. **视图层统计与系统层状态分层协同红线**：底栏状态栏必须严格划分为“系统后台全局任务状态”（由 `CoreController` 统一分发，如索引/扫描/就绪）与“当前视口局部统计信息”（由 `ContentPanel` / `PanelMediator` 统一分发，如“X个项目，选中了Y个”）。
-2. **状态流转与信号连线 100% 显式闭环规范**：视图层（`ContentPanel`）计算出的视口项统计与选中变化事件必须通过标准 Qt 信号（如 `statusBarStatsUpdated`）与宿主主窗口或面板中介者显式绑定，绝对禁止出现槽函数断链或僵尸槽函数。
-3. **选中项与筛选变更实时同步响应红线**：当用户在双隐式容器间切换选区、通过键盘全选或在 `FilterPanel` 中调整筛选条件时，状态栏信息必须实时无缝更新，确保底栏状态 UI 100% 忠实反映当前视口的操作上下文。
-
 ### 路径导航与历史栈服务顶层解耦规范 (NavigationService)
 1. **全局路径状态与历史栈统一收敛红线**：全系统路径状态（`m_currentUrl`）、协议归一化解析（`file://`、`computer://`、`trash://`）、前进/后退双向历史栈状态机、上级路径解析以及最近访问记录持久化必须 100% 独立于 `NavigationService` 领域服务，主窗口（MainWindow）与视图层严禁持有路径历史栈变量或自行计算层级关系。
 2. **UI 零感知与单向事件流广播规范**：`NavigationService` 归属于 Domain 领域层，绝对禁止包含任何 UI 视图或控制器头文件。路径变更（`currentUrlChanged`）与导航按钮可用性（`navStateChanged`）统一通过单向信号广播，由 Controller 层（如 `PanelMediator`）订阅并联动更新 UI 状态与清空临时搜索/筛选视图。
