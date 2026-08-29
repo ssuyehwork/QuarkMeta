@@ -53,7 +53,6 @@ ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptio
 
     m.starSize = rm.starSize;
     m.starSpacing = rm.starSpacing;
-    m.banW = rm.banW;
     m.banRect = rm.banRect;
     m.starsStartX = rm.starsStartX;
 
