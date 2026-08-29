@@ -68,6 +68,17 @@ FavoritePanel::FavoritePanel(QWidget* parent)
 
     initUi();
     loadFavorites();
+
+    // 订阅系统图标异步提取完成通知，实时刷新视图
+    connect(&IconLoadNotifier::instance(), &IconLoadNotifier::iconLoaded, this, [this]() {
+        if (m_favoriteView && m_favoriteView->viewport()) {
+            m_favoriteView->viewport()->update();
+        }
+    });
+}
+
+void FavoritePanel::saveFavorites() {
+    // 兼容性存根：SQLite 变动时已即时自动持久化到 global.db
 }
 
 void FavoritePanel::setFocusHighlight(bool visible) {
