@@ -108,6 +108,8 @@ set(SOURCES
     src/meta/TrashRepository.h
     src/meta/DatabaseManager.cpp
     src/meta/DatabaseManager.h
+    src/meta/ExtensionColorDao.h
+    src/meta/ExtensionColorDao.cpp
     src/meta/DatabaseMigrator.h
     src/meta/BatchRenameEngine.cpp
     src/meta/BatchRenameEngine.h
