@@ -96,7 +96,7 @@ QPair<QColor, QColor> ColorPaletteEngine::getExtensionBadgeColors(const QString&
     }
 
     // 3. 动态生成新配色并物理落盘写入 global.db
-    uint hashVal = qHash(e);
+    uint hashVal = static_cast<uint>(qHash(e));
     int hue = static_cast<int>(hashVal % 360);
     int saturation = 130 + static_cast<int>((hashVal >> 8) % 80);
     int lightness = 80 + static_cast<int>((hashVal >> 16) % 60);
