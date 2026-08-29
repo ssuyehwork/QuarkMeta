@@ -138,11 +138,18 @@ void FavoritePanel::initUi() {
     connect(m_favoriteView, &QWidget::customContextMenuRequested, this, &FavoritePanel::onFavoriteContextMenu);
     connect(m_favoriteView, &DropTreeView::pathsDropped, this, &FavoritePanel::onPathsDroppedToFavorite);
 
-    // 模型数据变动监听
-    auto updateFavAndSave = [this](){ saveFavorites(); };
-    connect(m_favoriteModel, &QStandardItemModel::rowsMoved, this, updateFavAndSave);
-    connect(m_favoriteModel, &QStandardItemModel::rowsInserted, this, updateFavAndSave);
-    connect(m_favoriteModel, &QStandardItemModel::rowsRemoved, this, updateFavAndSave);
+    // 模型数据变动监听 (拖拽排序时更新数据库 sort_order)
+    auto updateSortOrder = [this](){
+        if (!m_favoriteModel) return;
+        QList<QPair<QString, int>> orders;
+        for (int i = 0; i < m_favoriteModel->rowCount(); ++i) {
+            QStandardItem* item = m_favoriteModel->item(i);
+            QString path = item->data(Qt::UserRole + 1).toString();
+            orders.append({ path, i + 1 });
+        }
+        FavoriteDao::updateSortOrders(orders);
+    };
+    connect(m_favoriteModel, &QStandardItemModel::rowsMoved, this, updateSortOrder);
 }
 
 void FavoritePanel::onFavoriteClicked(const QModelIndex& index) {
@@ -224,7 +231,6 @@ void FavoritePanel::onPathsDroppedToFavorite(const QStringList& paths, const QMo
     for (const QString& path : paths) {
         addFavoriteItem(path);
     }
-    saveFavorites();
 }
 
 void FavoritePanel::loadFavorites() {
@@ -251,17 +257,6 @@ void FavoritePanel::loadFavorites() {
     }
 }
 
-void FavoritePanel::saveFavorites() {
-    if (!m_favoriteModel) return;
-
-    QList<QPair<QString, int>> orders;
-    for (int i = 0; i < m_favoriteModel->rowCount(); ++i) {
-        QStandardItem* item = m_favoriteModel->item(i);
-        QString path = item->data(Qt::UserRole + 1).toString();
-        orders.append({ path, i + 1 });
-    }
-    FavoriteDao::updateSortOrders(orders);
-}
 
 bool FavoritePanel::containsPath(const QString& path) const {
     if (path.isEmpty()) return false;
