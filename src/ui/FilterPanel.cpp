@@ -402,6 +402,11 @@ void FilterPanel::rebuildDateCheckboxes(bool isCreateDate, bool descending) {
             m_filterModel->setState(st);
         });
     }
+
+    if (m_scrollArea && m_scrollArea->widget()) {
+        m_scrollArea->widget()->updateGeometry();
+    }
+    update();
 }
 
 void FilterPanel::rebuildGroups() {
