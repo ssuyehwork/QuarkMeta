@@ -110,6 +110,8 @@ set(SOURCES
     src/meta/DatabaseManager.h
     src/meta/ExtensionColorDao.h
     src/meta/ExtensionColorDao.cpp
+    src/meta/FavoriteDao.h
+    src/meta/FavoriteDao.cpp
     src/meta/DatabaseMigrator.h
     src/meta/BatchRenameEngine.cpp
     src/meta/BatchRenameEngine.h
