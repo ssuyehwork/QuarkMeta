@@ -169,53 +169,60 @@ void FavoritePanel::onFavoriteContextMenu(const QPoint& pos) {
     if (!index.isValid()) return;
 
     QString path = index.data(Qt::UserRole + 1).toString();
-    QString curIconKey = index.data(Qt::UserRole + 2).toString();
-    QString curColorHex = index.data(Qt::UserRole + 3).toString();
-    if (curIconKey.isEmpty()) curIconKey = "folder";
-    if (curColorHex.isEmpty()) curColorHex = "#FDB70A";
+    QFileInfo fi(path);
 
     QMenu menu(this);
     UiHelper::applyMenuStyle(&menu);
 
-    QMenu* iconMenu = menu.addMenu(UiHelper::getIcon("folder", QColor("#EEEEEE")), "切换图标");
-    static const QPair<QString, QString> iconOptions[] = {
-        { "folder", "标准文件夹" },
-        { "star", "星号" },
-        { "heart", "红心" },
-        { "bookmark", "书签" },
-        { "tag", "标签" }
-    };
-    for (const auto& opt : iconOptions) {
-        QAction* act = iconMenu->addAction(UiHelper::getIcon(opt.first, QColor(curColorHex)), opt.second);
-        connect(act, &QAction::triggered, this, [this, path, opt, curColorHex, index]() {
-            FavoriteDao::updateFavorite(path, opt.first, curColorHex);
-            QIcon newIcon = UiHelper::getIcon(opt.first, QColor(curColorHex), 18);
-            m_favoriteModel->itemFromIndex(index)->setIcon(newIcon);
-            m_favoriteModel->itemFromIndex(index)->setData(opt.first, Qt::UserRole + 2);
-        });
-    }
+    // Only folders allow changing SVG icons and color tags
+    if (fi.isDir()) {
+        QString curIconKey = index.data(Qt::UserRole + 2).toString();
+        QString curColorHex = index.data(Qt::UserRole + 3).toString();
+        if (curIconKey.isEmpty()) curIconKey = "folder_filled";
+        if (curColorHex.isEmpty()) curColorHex = "#FDB70A";
 
-    QMenu* colorMenu = menu.addMenu(UiHelper::getIcon("circle_filled", QColor(curColorHex)), "切换色标");
-    static const QPair<QString, QString> colorOptions[] = {
-        { "#FDB70A", "金色" },
-        { "#E24B4A", "红色" },
-        { "#EF9F27", "橙色" },
-        { "#639922", "绿色" },
-        { "#1D9E75", "青色" },
-        { "#378ADD", "蓝色" },
-        { "#7F77DD", "紫色" }
-    };
-    for (const auto& opt : colorOptions) {
-        QAction* act = colorMenu->addAction(UiHelper::getIcon("circle_filled", QColor(opt.first)), opt.second);
-        connect(act, &QAction::triggered, this, [this, path, curIconKey, opt, index]() {
-            FavoriteDao::updateFavorite(path, curIconKey, opt.first);
-            QIcon newIcon = UiHelper::getIcon(curIconKey, QColor(opt.first), 18);
-            m_favoriteModel->itemFromIndex(index)->setIcon(newIcon);
-            m_favoriteModel->itemFromIndex(index)->setData(opt.first, Qt::UserRole + 3);
-        });
-    }
+        QMenu* iconMenu = menu.addMenu(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "切换图标");
+        static const QString iconKeys[] = {
+            "folder_filled",
+            "star_filled",
+            "heart_filled",
+            "bookmark_filled",
+            "tag_filled"
+        };
+        for (const QString& key : iconKeys) {
+            // Icon only - text label is empty string ""
+            QAction* act = iconMenu->addAction(UiHelper::getIcon(key, QColor(curColorHex)), "");
+            connect(act, &QAction::triggered, this, [this, path, key, curColorHex, index]() {
+                FavoriteDao::updateFavorite(path, key, curColorHex);
+                QIcon newIcon = UiHelper::getIcon(key, QColor(curColorHex), 18);
+                m_favoriteModel->itemFromIndex(index)->setIcon(newIcon);
+                m_favoriteModel->itemFromIndex(index)->setData(key, Qt::UserRole + 2);
+            });
+        }
 
-    menu.addSeparator();
+        QMenu* colorMenu = menu.addMenu(UiHelper::getIcon("circle_filled", QColor(curColorHex)), "切换色标");
+        static const QString colorHexes[] = {
+            "#FDB70A",
+            "#E24B4A",
+            "#EF9F27",
+            "#639922",
+            "#1D9E75",
+            "#378ADD",
+            "#7F77DD"
+        };
+        for (const QString& hex : colorHexes) {
+            // Icon only - text label is empty string ""
+            QAction* act = colorMenu->addAction(UiHelper::getIcon("circle_filled", QColor(hex)), "");
+            connect(act, &QAction::triggered, this, [this, path, curIconKey, hex, index]() {
+                FavoriteDao::updateFavorite(path, curIconKey, hex);
+                QIcon newIcon = UiHelper::getIcon(curIconKey, QColor(hex), 18);
+                m_favoriteModel->itemFromIndex(index)->setIcon(newIcon);
+                m_favoriteModel->itemFromIndex(index)->setData(hex, Qt::UserRole + 3);
+            });
+        }
+
+        menu.addSeparator();
+    }
 
     QAction* removeAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE")), "取消收藏");
     connect(removeAct, &QAction::triggered, this, [this, path, index]() {
@@ -244,14 +251,20 @@ void FavoritePanel::loadFavorites() {
         QFileInfo fi(rec.path);
         if (!fi.exists()) continue;
 
-        QColor itemColor = QColor(rec.colorHex);
-        if (!itemColor.isValid()) itemColor = QColor("#FDB70A");
+        QIcon icon;
+        if (fi.isDir()) {
+            QColor itemColor = QColor(rec.colorHex);
+            if (!itemColor.isValid()) itemColor = QColor("#FDB70A");
+            QString iconKey = rec.iconKey.isEmpty() ? "folder_filled" : rec.iconKey;
+            icon = UiHelper::getIcon(iconKey, itemColor, 18);
+        } else {
+            icon = ShellIconManager::getFileIcon(rec.path);
+        }
 
-        QIcon icon = UiHelper::getIcon(rec.iconKey.isEmpty() ? "folder" : rec.iconKey, itemColor, 18);
         QStandardItem* item = new QStandardItem(icon, rec.name.isEmpty() ? fi.fileName() : rec.name);
         item->setData(rec.path, Qt::UserRole + 1);
-        item->setData(rec.iconKey, Qt::UserRole + 2);
-        item->setData(rec.colorHex, Qt::UserRole + 3);
+        item->setData(rec.iconKey.isEmpty() ? "folder_filled" : rec.iconKey, Qt::UserRole + 2);
+        item->setData(rec.colorHex.isEmpty() ? "#FDB70A" : rec.colorHex, Qt::UserRole + 3);
 
         m_favoriteModel->appendRow(item);
     }
@@ -287,13 +300,22 @@ void FavoritePanel::addFavoriteItem(const QString& path) {
     QFileInfo fi(cleanPath);
     if (!fi.exists()) return;
 
-    FavoriteDao::addFavorite(cleanPath, "folder", "#FDB70A");
+    QIcon icon;
+    QString iconKey = "folder_filled";
+    QString colorHex = "#FDB70A";
 
-    QIcon icon = UiHelper::getIcon("folder", QColor("#FDB70A"), 18);
+    if (fi.isDir()) {
+        FavoriteDao::addFavorite(cleanPath, iconKey, colorHex);
+        icon = UiHelper::getIcon(iconKey, QColor(colorHex), 18);
+    } else {
+        FavoriteDao::addFavorite(cleanPath, "", "");
+        icon = ShellIconManager::getFileIcon(cleanPath);
+    }
+
     QStandardItem* item = new QStandardItem(icon, fi.fileName().isEmpty() ? cleanPath : fi.fileName());
     item->setData(cleanPath, Qt::UserRole + 1);
-    item->setData("folder", Qt::UserRole + 2);
-    item->setData("#FDB70A", Qt::UserRole + 3);
+    item->setData(iconKey, Qt::UserRole + 2);
+    item->setData(colorHex, Qt::UserRole + 3);
 
     m_favoriteModel->appendRow(item);
 }
