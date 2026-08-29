@@ -1,22 +1,15 @@
 #include "ThumbnailDelegate.h"
+#include "CardLayoutEngine.h"
 #include "ContentPanel.h"
 #include "CardPainterHelper.h"
-#include "../core/ModelContract.h"
 #include "ElidedTextUtility.h"
-#include "../meta/MetadataManager.h"
+#include "UiHelper.h"
+#include "../core/ModelContract.h"
+
 #include <QPainter>
-#include <QPainterPath>
-#include <QIcon>
-#include <QPixmap>
 #include <QStyleOptionViewItem>
 #include <QFileInfo>
-#include <QMouseEvent>
 #include <QLineEdit>
-#include <QTimer>
-#include <QAbstractItemView>
-#include <QFile>
-#include "UiHelper.h"
-#include "ToolTipOverlay.h"
 
 namespace QuarkMeta {
 
@@ -31,50 +24,25 @@ void ThumbnailDelegate::setIsEmptyRole(int role) { m_isEmptyRole = role; }
 void ThumbnailDelegate::setColorRole(int role) { m_colorRole = role; }
 
 ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptionViewItem& option) const {
+    // 🚀【归一化对接】：直接从 CardLayoutEngine 提取数据
+    CardLayout l = CardLayoutEngine::calculate(option.rect, option.decorationSize.width());
     Metrics m;
-    const int textHeight = 36;
-    const int ratingHeight = 24;
-    const int gap = 4;
-
-    m.ratingH = ratingHeight;
-    // 底部预留高度增加，包含星级区域和间隙
-    m.cardRect = option.rect.adjusted(3, 3, -3, -(textHeight + m.ratingH + gap + 3));
-    
-    // 星级坐标脱离卡片范围
-    m.ratingY = m.cardRect.bottom() + gap;
-
-    m.textRect = QRect(option.rect.left() + 3,
-                       m.ratingY + m.ratingH - 5,
-                       option.rect.width() - 6,
-                       textHeight);
-    
-    int zoom = option.decorationSize.width(); // 物理缩放级别
-
-    m.starSize = 14;
-    m.starSpacing = -2;
-    int banW = 12;
-
-    if (zoom < 100) {
-        m.starSize = 12; 
-        m.starSpacing = -2;
-        banW = 10;
-    }
-
-    int banGap = 2; // 保持间隙一致性
-    int infoTotalW = banW + banGap + (5 * m.starSize) + (4 * m.starSpacing);
-    int infoStartX = m.cardRect.left() + (m.cardRect.width() - infoTotalW) / 2;
-    
-    m.banRect = QRect(infoStartX, m.ratingY + (m.ratingH - banW) / 2, banW, banW);
-    m.starsStartX = infoStartX + banW + banGap;
-
+    m.cardRect = l.coverRect;
+    m.textRect = l.textRect;
+    m.banRect = l.banRect;
+    m.ratingH = l.capsuleRect.height();
+    m.ratingY = l.capsuleRect.top();
+    m.starSize = l.starRects[0].width();
+    m.starSpacing = (l.starRects[1].left() - l.starRects[0].right());
+    m.starsStartX = l.starRects[0].left();
     return m;
 }
 
 void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     if (!index.isValid()) return;
 
-
-    Metrics m = calculateMetrics(option);
+    // 🚀【全要素归一化提取】
+    CardLayout l = CardLayoutEngine::calculate(option.rect, option.decorationSize.width());
     bool isSelected = (option.state & QStyle::State_Selected);
 
     bool hasThumb = index.data(m_hasThumbnailRole).toBool();
@@ -84,71 +52,57 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         thumb = decoData.value<QPixmap>();
     } else if (decoData.canConvert<QIcon>()) {
         QIcon icon = decoData.value<QIcon>();
-        if (!icon.isNull()) {
-            thumb = icon.pixmap(m.cardRect.size());
-        }
+        if (!icon.isNull()) thumb = icon.pixmap(l.coverRect.size());
     }
 
-    // 2026-11-14 执行第三步：图形文件等待缩略图时，绘制轻量灰色占位背景
     bool isWaitingThumb = false;
     if (m_pathRole != -1 && thumb.isNull()) {
         QString path = index.data(m_pathRole).toString();
         QString ext = QFileInfo(path).suffix().toLower();
-        if (UiHelper::isGraphicsFile(ext) || ext == "svg") {
-            isWaitingThumb = true;
-        }
+        if (UiHelper::isGraphicsFile(ext) || ext == "svg") isWaitingThumb = true;
     }
 
     bool isGrid = option.widget ? option.widget->property("gridMode").toBool() : false;
 
-    // ① 绘制主体卡片底色及缩略图 Cover
-    CardPainterHelper::drawCardCover(painter, m.cardRect, isSelected, hasThumb, thumb, 
+    // ① 绘制缩略图 Cover
+    CardPainterHelper::drawCardCover(painter, l.coverRect, isSelected, hasThumb, thumb,
                                      qvariant_cast<QIcon>(decoData), isGrid, isWaitingThumb);
 
-    // ② 绘制卡片边框
-    CardPainterHelper::drawCardBorder(painter, m.cardRect, isSelected);
+    // ② 绘制卡片外边框
+    CardPainterHelper::drawCardBorder(painter, l.coverRect, isSelected);
 
-    // ③ 绘制状态互斥标记
+    // ③ 绘制置顶标记
     if (m_pinnedRole != -1) {
         bool isPinned = index.data(m_pinnedRole).toBool();
-        CardPainterHelper::drawStatusIndicators(painter, m.cardRect, isPinned);
+        CardPainterHelper::drawStatusIndicators(painter, l.coverRect, isPinned);
     }
 
-    // ④ 绘制自适应扩展名徽章（直接从内存模型取值，零 QFileInfo 磁盘 I/O）
+    // ④ 绘制扩展名徽章
     if (m_pathRole != -1) {
         QString type = (m_typeRole != -1) ? index.data(m_typeRole).toString() : "";
-        QString ext;
-        if (type == "folder") {
-            ext = "DIR";
-        } else {
-            QString path = index.data(m_pathRole).toString();
-            int dotIdx = path.lastIndexOf('.');
-            int slashIdx = std::max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-            if (dotIdx > slashIdx && dotIdx != -1) {
-                ext = path.mid(dotIdx + 1).toUpper();
-            }
-        }
+        QString ext = (type == "folder") ? "DIR" : QFileInfo(index.data(m_pathRole).toString()).suffix().toUpper();
         if (ext.isEmpty()) ext = "FILE";
-
-        CardPainterHelper::drawExtensionBadge(painter, m.cardRect, ext, hasThumb);
+        CardPainterHelper::drawExtensionBadge(painter, l.coverRect, ext, hasThumb);
     }
 
-    // ⑤ 绘制评级星级与彩色胶囊底色
+    // ⑤ 绘制归一化色标与星级 (带 5px 呼吸间距)
     if (m_ratingRole != -1) {
         int rating = index.data(m_ratingRole).toInt();
         QString colorStr = (m_colorRole != -1) ? index.data(m_colorRole).toString() : "";
 
-        CardPainterHelper::drawRatingStars(painter, m.banRect, m.cardRect, m.starSize, m.starSpacing, m.ratingY, m.ratingH, m.starsStartX,
+        CardPainterHelper::drawRatingStars(painter, l.banRect, l.coverRect,
+                                          l.starRects[0].width(), 5,
+                                          l.capsuleRect.top(), l.capsuleRect.height(), l.starRects[0].left(),
                                           rating, colorStr, isSelected);
     }
 
-    // ⑥ 绘制截断文字 (调用私有方法处理)
-    drawFileNameText(painter, m.textRect, isSelected, index, option);
+    // ⑥ 绘制文件名 (限制2行)
+    drawFileNameText(painter, l.textRect, isSelected, index, option);
 
-    // ⑦ 绘制空文件夹特异虚线边框
+    // ⑦ 空文件夹虚线边框
     if (!isSelected && m_isEmptyRole != -1 && m_typeRole != -1) {
         if (index.data(m_typeRole).toString() == "folder" && index.data(m_isEmptyRole).toBool()) {
-            CardPainterHelper::drawEmptyFolderBorder(painter, m.cardRect);
+            CardPainterHelper::drawEmptyFolderBorder(painter, l.coverRect);
         }
     }
 }
@@ -194,18 +148,9 @@ QWidget* ThumbnailDelegate::createEditor(QWidget* parent, const QStyleOptionView
     return editor; 
 } 
  
-void ThumbnailDelegate::updateEditorGeometry(QWidget* editor, 
-                                              const QStyleOptionViewItem& option, 
-                                              const QModelIndex& /*index*/) const { 
-    Metrics m = calculateMetrics(option); 
-    // 根据当前视图设备的 DPI 比例动态自适应放缩微调 
-    double dpr = option.widget ? option.widget->devicePixelRatio() : 1.0; 
-    int offsetLeft = static_cast<int>(1 * dpr); 
-    int offsetTop = static_cast<int>(5 * dpr); 
-    int offsetRight = static_cast<int>(-1 * dpr); 
-    int offsetBottom = static_cast<int>(-5 * dpr); 
- 
-    editor->setGeometry(m.textRect.adjusted(offsetLeft, offsetTop, offsetRight, offsetBottom)); 
+void ThumbnailDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const {
+    CardLayout l = CardLayoutEngine::calculate(option.rect, option.decorationSize.width());
+    editor->setGeometry(l.textRect.adjusted(1, 4, -1, -4));
 } 
  
 void ThumbnailDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const { 
