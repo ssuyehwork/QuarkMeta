@@ -60,6 +60,7 @@ QuickLookWindow& QuickLookWindow::instance() {
 
 QuickLookWindow::QuickLookWindow() : QWidget(nullptr) {
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::Tool);
+    m_previewThreadPool.setMaxThreadCount(2);
     
     setupUi();
     installEventFilter(this);
@@ -204,7 +205,7 @@ void QuickLookWindow::renderImage(const QString& path) {
     static const QSet<QString> QT_NATIVE_FORMATS = {"png", "jpg", "jpeg", "bmp", "gif"};
 
     QPointer<QuickLookWindow> weakThis(this);
-    (void)QtConcurrent::run([weakThis, path, ext]() {
+    (void)QtConcurrent::run(&m_previewThreadPool, [weakThis, path, ext]() {
         if (!weakThis) return;
         
         QImage img;
