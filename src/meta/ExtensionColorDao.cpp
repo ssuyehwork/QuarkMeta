@@ -6,8 +6,10 @@
 namespace QuarkMeta {
 
 bool ExtensionColorDao::initTable() {
-    sqlite3* db = DatabaseManager::getGlobalDatabaseHandle();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
     if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
 
     const char* sql = "CREATE TABLE IF NOT EXISTS extension_colors ("
                       "extension TEXT PRIMARY KEY, "
@@ -26,8 +28,10 @@ bool ExtensionColorDao::initTable() {
 }
 
 bool ExtensionColorDao::getColorForExtension(const QString& ext, QColor& outBg, QColor& outText) {
-    sqlite3* db = DatabaseManager::getGlobalDatabaseHandle();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
     if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
 
     const char* sql = "SELECT bg_color, text_color FROM extension_colors WHERE extension = ?;";
     sqlite3_stmt* stmt = nullptr;
@@ -51,8 +55,10 @@ bool ExtensionColorDao::getColorForExtension(const QString& ext, QColor& outBg, 
 }
 
 bool ExtensionColorDao::saveExtensionColor(const QString& ext, const QColor& bg, const QColor& text, bool isCustom) {
-    sqlite3* db = DatabaseManager::getGlobalDatabaseHandle();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
     if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
 
     const char* sql = "INSERT INTO extension_colors (extension, bg_color, text_color, is_custom, updated_at) "
                       "VALUES (?, ?, ?, ?, ?) "
@@ -78,14 +84,16 @@ bool ExtensionColorDao::saveExtensionColor(const QString& ext, const QColor& bg,
     sqlite3_finalize(stmt);
 
     // 固化 PASSIVE 检查点到 global.db 主文件
-    DatabaseManager::flushWalCheckpoint();
+    sqlite3_wal_checkpoint_v2(db, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
     return success;
 }
 
 QMap<QString, QPair<QColor, QColor>> ExtensionColorDao::loadAllColors() {
     QMap<QString, QPair<QColor, QColor>> resultMap;
-    sqlite3* db = DatabaseManager::getGlobalDatabaseHandle();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
     if (!db) return resultMap;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
 
     const char* sql = "SELECT extension, bg_color, text_color FROM extension_colors;";
     sqlite3_stmt* stmt = nullptr;
