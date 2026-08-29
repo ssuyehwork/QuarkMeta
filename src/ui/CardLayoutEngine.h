@@ -2,7 +2,6 @@
 
 #include <QRect>
 #include <QPoint>
-#include <algorithm>
 
 namespace QuarkMeta {
 
@@ -16,10 +15,13 @@ struct CardLayout {
     QRect pinRect;         // 置顶图标
     QRect capsuleRect;     // 底部色标星级胶囊条
     QRect banRect;         // ⊘ 禁选按钮
-    QRect starRects[5];    // 5 颗星各自精确矩形 (自带 5px 呼吸间距)
+    QRect starRects[5];    // 5 颗星各自精确矩形
     QRect textRect;        // 文件名区域 (最多2行)
 
-    // 零误差交互命中查询：返回 1~5 (星级), 0 (禁选⊘), -1 (未命中)
+    // 🚀【精确设为 14px】
+    int starSize = 14;
+    int starSpacing = 0;
+
     int hitStar(const QPoint& pt) const {
         if (banRect.contains(pt)) return 0;
         for (int i = 0; i < 5; ++i) {
@@ -34,11 +36,6 @@ struct CardLayout {
 
 class CardLayoutEngine {
 public:
-    /**
-     * @brief 统一计算卡片全要素几何坐标
-     * @param totalRect 单元格总分配区域
-     * @param zoomLevel 当前缩放级别
-     */
     static CardLayout calculate(const QRect& totalRect, int zoomLevel = 96);
 };
 

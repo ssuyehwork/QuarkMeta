@@ -10,6 +10,7 @@
 #include <QStyleOptionViewItem>
 #include <QFileInfo>
 #include <QLineEdit>
+#include <QHelpEvent>
 
 namespace QuarkMeta {
 
@@ -24,7 +25,6 @@ void ThumbnailDelegate::setIsEmptyRole(int role) { m_isEmptyRole = role; }
 void ThumbnailDelegate::setColorRole(int role) { m_colorRole = role; }
 
 ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptionViewItem& option) const {
-    // 🚀【归一化对接】：直接从 CardLayoutEngine 提取数据
     CardLayout l = CardLayoutEngine::calculate(option.rect, option.decorationSize.width());
     Metrics m;
     m.cardRect = l.coverRect;
@@ -32,8 +32,8 @@ ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptio
     m.banRect = l.banRect;
     m.ratingH = l.capsuleRect.height();
     m.ratingY = l.capsuleRect.top();
-    m.starSize = l.starRects[0].width();
-    m.starSpacing = (l.starRects[1].left() - l.starRects[0].right());
+    m.starSize = l.starSize;
+    m.starSpacing = l.starSpacing;
     m.starsStartX = l.starRects[0].left();
     return m;
 }
@@ -41,7 +41,6 @@ ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptio
 void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     if (!index.isValid()) return;
 
-    // 🚀【全要素归一化提取】
     CardLayout l = CardLayoutEngine::calculate(option.rect, option.decorationSize.width());
     bool isSelected = (option.state & QStyle::State_Selected);
 
@@ -85,15 +84,24 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         CardPainterHelper::drawExtensionBadge(painter, l.coverRect, ext, hasThumb);
     }
 
-    // ⑤ 绘制归一化色标与星级 (带 5px 呼吸间距)
+    // ⑤ 绘制色标胶囊底色与星级 (精准 11 个参数完全对齐)
     if (m_ratingRole != -1) {
         int rating = index.data(m_ratingRole).toInt();
         QString colorStr = (m_colorRole != -1) ? index.data(m_colorRole).toString() : "";
 
-        CardPainterHelper::drawRatingStars(painter, l.banRect, l.coverRect,
-                                          l.starRects[0].width(), 5,
-                                          l.capsuleRect.top(), l.capsuleRect.height(), l.starRects[0].left(),
-                                          rating, colorStr, isSelected);
+        CardPainterHelper::drawRatingStars(
+            painter,
+            l.banRect,
+            l.coverRect,
+            l.starSize,
+            l.starSpacing,
+            l.capsuleRect.top(),
+            l.capsuleRect.height(),
+            l.starRects[0].left(),
+            rating,
+            colorStr,
+            isSelected
+        );
     }
 
     // ⑥ 绘制文件名 (限制2行)
@@ -117,7 +125,6 @@ void ThumbnailDelegate::drawFileNameText(QPainter* painter, const QRect& textRec
     textFont.setPointSize(8);
     painter->setFont(textFont);
 
-    // 调用提取的静态排版工具方法，限制文件名最多2行
     QString displayName = ElidedTextUtility::elideTwoLinesText(name, option.fontMetrics, textRect.width() - 8);
     painter->drawText(textRect.adjusted(4, 0, -4, 0), Qt::AlignCenter | Qt::TextWordWrap, displayName);
     painter->restore();
@@ -127,81 +134,54 @@ QSize ThumbnailDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
     return QStyledItemDelegate::sizeHint(option, index);
 }
 
-QWidget* ThumbnailDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& /*option*/, const QModelIndex& index) const { 
+QWidget* ThumbnailDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex& index) const {
     FileNameLineEdit* editor = new FileNameLineEdit(parent); 
-    editor->setStyleSheet( 
-        "QLineEdit {" 
-        "  background-color: #2D2D2D;" 
-        "  color: #FFFFFF;" 
-        "  selection-background-color: #3498db;" 
-        "  border: 1px solid #3498db;" 
-        "  border-radius: 4px;" 
-        "  padding: 0px 4px;" 
-        "  margin: 0px;" 
-        "  font-size: 8pt;" 
-        "}" 
-    ); 
- 
-    bool isFolder = (index.data(m_typeRole).toString() == "folder"); 
-    editor->setIsFolder(isFolder); 
+    editor->setStyleSheet("QLineEdit { background-color: #2D2D2D; color: #FFFFFF; selection-background-color: #3498db; border: 1px solid #3498db; border-radius: 4px; padding: 0px 4px; font-size: 8pt; }");
+    editor->setIsFolder(index.data(m_typeRole).toString() == "folder");
     editor->installEventFilter(const_cast<ThumbnailDelegate*>(this)); 
     return editor; 
 } 
- 
+
 void ThumbnailDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const {
     CardLayout l = CardLayoutEngine::calculate(option.rect, option.decorationSize.width());
     editor->setGeometry(l.textRect.adjusted(1, 4, -1, -4));
 } 
- 
+
 void ThumbnailDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const { 
     QString value = index.model()->data(index, Qt::EditRole).toString(); 
     FileNameLineEdit* lineEdit = qobject_cast<FileNameLineEdit*>(editor);  
-    if (lineEdit) { 
-        lineEdit->setText(value); // 纯粹同步赋值，高亮交由 FileNameLineEdit::focusInEvent 完美同步接管 
-    } 
+    if (lineEdit) lineEdit->setText(value);
 } 
 
 void ThumbnailDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const {
     QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor);
     if (!lineEdit) return;
-
     QString newName = lineEdit->text().trimmed();
-    if (newName.isEmpty()) return;
-
-    // 🚀【方案 A 核心】：仅调用标准的 setData，没有任何 parent 向上引用的非标代码！
-    model->setData(index, newName, Qt::EditRole);
+    if (!newName.isEmpty()) model->setData(index, newName, Qt::EditRole);
 }
 
 bool ThumbnailDelegate::eventFilter(QObject* obj, QEvent* event) {
     if (event->type() == QEvent::KeyPress) {
-        QKeyEvent* keyEvent = reinterpret_cast<QKeyEvent*>(event); 
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
         QLineEdit* editor = qobject_cast<QLineEdit*>(obj); 
         if (editor) { 
-            int key = keyEvent->key();
-            if (key == Qt::Key_Up || key == Qt::Key_Down) {
+            if (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down) {
                 keyEvent->accept();
-                return true; // 彻底吞噬，不让 View 漂移（对应用户原话：“用户按下向上/向下方向键时则不该向上游动选中上方/下方的项目”）
+                return true;
             }
-            if (key == Qt::Key_Left || key == Qt::Key_Right) {
+            if (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right) {
                 if (editor->hasSelectedText()) {
-                    // 全选高亮状态（对应用户原话：“如果用户按下向左/向右方向键，应该将光标定位到名称最前面或最后面，而不是'.'的后面，除非处于非全选状态”）
-                    if (key == Qt::Key_Left) {
-                        editor->setCursorPosition(0);
-                    } else {
-                        // 2026-07-26 极致重构：按下向右键光标一键定位到文件名基名（不含扩展名部分）的末端（点号前面）（对应用户原话：“我指的是文件名，不是后缀名...基名”）
+                    if (keyEvent->key() == Qt::Key_Left) editor->setCursorPosition(0);
+                    else {
                         QString val = editor->text();
                         int lastDot = val.lastIndexOf('.');
-                        if (lastDot > 0) {
-                            editor->setCursorPosition(lastDot);
-                        } else {
-                            editor->setCursorPosition(val.length());
-                        }
+                        editor->setCursorPosition(lastDot > 0 ? lastDot : val.length());
                     }
-                    editor->deselect(); // 清除全选高亮状态
+                    editor->deselect();
                     keyEvent->accept();
-                    return true; // 吞噬该事件，不让其触发默认定位
+                    return true;
                 }
-                return false; // 非全选状态，走默认逐字位移
+                return false;
             }
         } 
     } 
@@ -210,9 +190,6 @@ bool ThumbnailDelegate::eventFilter(QObject* obj, QEvent* event) {
 
 bool ThumbnailDelegate::helpEvent(QHelpEvent* event, QAbstractItemView* view, 
                                 const QStyleOptionViewItem& option, const QModelIndex& index) {
-    Metrics m = calculateMetrics(option);
-    QRect statusRect(m.cardRect.right() - 22, m.cardRect.top() + 8, 16, 16);
-
     return QStyledItemDelegate::helpEvent(event, view, option, index);
 }
 

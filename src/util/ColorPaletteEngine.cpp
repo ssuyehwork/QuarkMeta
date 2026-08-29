@@ -69,17 +69,48 @@ QString ColorPaletteEngine::normalizeColorHex(const QString& colorStr) {
 }
 
 QColor ColorPaletteEngine::getExtensionColor(const QString& ext) {
+    return getExtensionBadgeColors(ext).first;
+}
+
+QPair<QColor, QColor> ColorPaletteEngine::getExtensionBadgeColors(const QString& ext) {
     QString e = ext.toLower().trimmed();
-    if (e == "psd" || e == "psb") return QColor("#31A8FF");
-    if (e == "ai" || e == "eps")  return QColor("#FF9A00");
-    if (e == "svg")               return QColor("#FFB13B");
-    if (e == "png")               return QColor("#2ECC71");
-    if (e == "jpg" || e == "jpeg") return QColor("#E67E22");
-    if (e == "gif")               return QColor("#9B59B6");
-    if (e == "webp")              return QColor("#1ABC9C");
-    if (e == "pdf")               return QColor("#E74C3C");
-    if (e == "txt" || e == "md")  return QColor("#95A5A6");
-    return QColor("#7F8C8D");
+
+    // 1. 特性定制扩展名配色
+    if (e == "psd" || e == "psb") {
+        return { QColor("#001D26"), QColor("#02B1DD") };
+    }
+    if (e == "eps") {
+        return { QColor("#35483D"), QColor("#F88025") };
+    }
+    if (e == "ai") {
+        return { QColor("#F88025"), QColor("#35483D") };
+    }
+    if (e == "svg") {
+        return { QColor("#FFB13B"), QColor("#1A1A1A") };
+    }
+    if (e == "png") {
+        return { QColor("#2ECC71"), QColor("#FFFFFF") };
+    }
+    if (e == "jpg" || e == "jpeg") {
+        return { QColor("#E67E22"), QColor("#FFFFFF") };
+    }
+    if (e == "pdf") {
+        return { QColor("#E74C3C"), QColor("#FFFFFF") };
+    }
+
+    // 2. 其他未指定扩展名：基于 qHash 确定性 HSL 生成唯一背景色
+    uint hashVal = qHash(e);
+    int hue = static_cast<int>(hashVal % 360);
+    int saturation = 130 + static_cast<int>((hashVal >> 8) % 80); // 130~210
+    int lightness = 80 + static_cast<int>((hashVal >> 16) % 60);  // 80~140
+
+    QColor bgColor = QColor::fromHsl(hue, saturation, lightness);
+
+    // 3. 计算亮度自动平衡文字颜色 (YIQ Luminance)
+    double luminance = (0.299 * bgColor.red() + 0.587 * bgColor.green() + 0.114 * bgColor.blue()) / 255.0;
+    QColor textColor = (luminance < 0.55) ? QColor("#FFFFFF") : QColor("#1A1A1A");
+
+    return { bgColor, textColor };
 }
 
 QColor ColorPaletteEngine::extractDominantColor(const QString& filePath) {
