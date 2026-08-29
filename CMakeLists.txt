@@ -262,6 +262,8 @@ set(SOURCES
     src/ui/dialogs/FramelessConfirmDialog.cpp
     src/ui/dialogs/FramelessMessageBox.h
     src/ui/dialogs/FramelessMessageBox.cpp
+    src/ui/RatingBarLayout.h
+    src/ui/RatingBarLayout.cpp
     src/ui/ToolTipOverlay.cpp
     src/ui/ToolTipOverlay.h
     src/ui/TreeItemDelegate.h

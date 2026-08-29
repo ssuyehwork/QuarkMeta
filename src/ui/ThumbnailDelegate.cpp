@@ -1,4 +1,5 @@
 #include "ThumbnailDelegate.h"
+#include "RatingBarLayout.h"
 #include "ContentPanel.h"
 #include "CardPainterHelper.h"
 #include "../core/ModelContract.h"
@@ -37,10 +38,7 @@ ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptio
     const int gap = 4;
 
     m.ratingH = ratingHeight;
-    // 底部预留高度增加，包含星级区域和间隙
     m.cardRect = option.rect.adjusted(3, 3, -3, -(textHeight + m.ratingH + gap + 3));
-    
-    // 星级坐标脱离卡片范围
     m.ratingY = m.cardRect.bottom() + gap;
 
     m.textRect = QRect(option.rect.left() + 3,
@@ -48,24 +46,16 @@ ThumbnailDelegate::Metrics ThumbnailDelegate::calculateMetrics(const QStyleOptio
                        option.rect.width() - 6,
                        textHeight);
     
-    int zoom = option.decorationSize.width(); // 物理缩放级别
+    int zoom = option.decorationSize.width();
 
-    m.starSize = 14;
-    m.starSpacing = -2;
-    int banW = 12;
+    // 🚀【统一调用 RatingBarLayout】：彻底消灭手写算式！
+    RatingBarMetrics rm = RatingBarLayout::calculate(m.cardRect, RatingBarMode::GridCard, zoom, m.ratingH);
 
-    if (zoom < 100) {
-        m.starSize = 12; 
-        m.starSpacing = -2;
-        banW = 10;
-    }
-
-    int banGap = 2; // 保持间隙一致性
-    int infoTotalW = banW + banGap + (5 * m.starSize) + (4 * m.starSpacing);
-    int infoStartX = m.cardRect.left() + (m.cardRect.width() - infoTotalW) / 2;
-    
-    m.banRect = QRect(infoStartX, m.ratingY + (m.ratingH - banW) / 2, banW, banW);
-    m.starsStartX = infoStartX + banW + banGap;
+    m.starSize = rm.starSize;
+    m.starSpacing = rm.starSpacing;
+    m.banW = rm.banW;
+    m.banRect = rm.banRect;
+    m.starsStartX = rm.starsStartX;
 
     return m;
 }

@@ -1,6 +1,7 @@
 #include "ContentKeyHandler.h"
 #include "../ContentPanel.h"
 #include "../ThumbnailDelegate.h"
+#include "../RatingBarLayout.h"
 #include "../ToolTipOverlay.h"
 #include "../ShellIconManager.h"
 #include "../../core/TrashService.h"
@@ -137,21 +138,14 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
         QModelIndex indexCol2 = index.model()->index(index.row(), 2, index.parent());
         QRect col2Rect = treeView->visualRect(indexCol2);
 
-        int banW = 12;
-        int starSize = 18;
-        int banGap = 2;
-        int starSpacing = -4;
-        int totalW = banW + banGap + 5 * starSize + 4 * starSpacing;
-        int startX = col2Rect.left() + (col2Rect.width() - totalW) / 2;
+        // 🚀【统一调用 RatingBarLayout】：彻底消灭手写的 18 / -4 / 12！
+        RatingBarMetrics rm = RatingBarLayout::calculate(col2Rect, RatingBarMode::TreeRow);
 
-        QRect banHitbox(startX, col2Rect.top() + (col2Rect.height() - banW) / 2, banW, banW);
-        bool isBanHit = banHitbox.contains(pos);
+        bool isBanHit = rm.banRect.contains(pos);
         int hitStar = -1;
 
-        int starsStartX = startX + banW + banGap;
         for (int i = 0; i < 5; ++i) {
-            QRect starRect(starsStartX + i * (starSize + starSpacing), col2Rect.top() + (col2Rect.height() - starSize) / 2, starSize, starSize);
-            if (starRect.contains(pos)) {
+            if (rm.starRect(i).contains(pos)) {
                 hitStar = i + 1;
                 break;
             }
