@@ -1,6 +1,6 @@
 #include "ContentKeyHandler.h"
 #include "../ContentPanel.h"
-#include "../ThumbnailDelegate.h"
+#include "../CardLayoutEngine.h"
 #include "../RatingBarLayout.h"
 #include "../ToolTipOverlay.h"
 #include "../ShellIconManager.h"
@@ -92,41 +92,26 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
     QModelIndex index = view->indexAt(pos);
     if (!index.isValid()) return false;
 
-    // 1. 网格/自适应视图下的星级 Hitbox 点击计算
-    ThumbnailDelegate* thumbDel = qobject_cast<ThumbnailDelegate*>(view->itemDelegateForIndex(index));
-    if (thumbDel) {
-        QStyleOptionViewItem opt;
-        opt.rect = view->visualRect(index);
-        opt.decorationSize = view->iconSize();
-        if (opt.decorationSize.width() <= 0) opt.decorationSize = QSize(96, 96);
-        ThumbnailDelegate::Metrics m = thumbDel->calculateMetrics(opt);
+    // 1. 🚀【网格/自适应视图】：直接调用 CardLayoutEngine 归一化命中查询！
+    if (view != m_panel->findChild<QTreeView*>()) {
+        QRect itemRect = view->visualRect(index);
+        CardLayout l = CardLayoutEngine::calculate(itemRect, m_panel->zoomLevel());
+        int hitVal = l.hitStar(pos);
 
-        bool isBanHit = m.banRect.contains(pos);
-        int hitStar = -1;
-        for (int i = 0; i < 5; ++i) {
-            if (m.starRect(i).contains(pos)) {
-                hitStar = i + 1;
-                break;
-            }
-        }
-
-        if (isBanHit || hitStar != -1) {
+        if (hitVal != -1) {
             bool isSelected = view->selectionModel() && view->selectionModel()->isSelected(index);
             if (!isSelected) return false;
 
-            int newValue = isBanHit ? 0 : hitStar;
             auto selectedIndexes = view->selectionModel()->selectedIndexes();
             for (const auto& selIdx : selectedIndexes) {
                 if (selIdx.column() == 0) {
-                    m_panel->getProxyModel()->setData(selIdx, newValue, RatingRole);
+                    m_panel->getProxyModel()->setData(selIdx, hitVal, RatingRole);
                 }
             }
 
-            QAbstractItemView::EditTriggers currentTriggers = view->editTriggers();
+            QAbstractItemView::EditTriggers cur = view->editTriggers();
             view->setEditTriggers(QAbstractItemView::NoEditTriggers);
-            QTimer::singleShot(0, view, [view, currentTriggers]() {
-                view->setEditTriggers(currentTriggers);
-            });
+            QTimer::singleShot(0, view, [view, cur]() { view->setEditTriggers(cur); });
             event->accept();
             return true;
         }
