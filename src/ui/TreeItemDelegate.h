@@ -155,7 +155,7 @@ public:
                 painter->restore();
             }
 
-            // 4. 文本排版向右偏移（在 32px 行高下，固定起始起点 40px = 6px left + 26px 卡片 + 8px 间距，保持绝对对齐与稳定）
+            // 4. 文本排版向右偏移：动态紧跟左侧正方形微卡片右边缘 + 10px，自适应缩放行高
             QString name = index.data(Qt::DisplayRole).toString();
             QColor textColor = selected ? QColor("#FFFFFF") : QColor("#EEEEEE");
 
@@ -163,7 +163,7 @@ public:
             painter->setFont(option.font);
 
             QRect textRect = option.rect;
-            textRect.setLeft(option.rect.left() + 40);
+            textRect.setLeft(squareRect.right() + 10);
 
             QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideMiddle, textRect.width() - 10);
             painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
