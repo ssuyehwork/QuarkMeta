@@ -277,7 +277,9 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         }
 
         if (idx.isValid()) {
-            QString path = idx.data(PathRole).toString();
+            // 🚀 确保即使焦点处于列表视图第 1~6 列，也能正确从第 0 列 sibling 获取完整 PathRole 属性
+            QModelIndex nameIdx = idx.sibling(idx.row(), 0);
+            QString path = nameIdx.data(PathRole).toString();
             if (!path.isEmpty()) {
                 QFileInfo info(path);
                 if (!info.isDir()) {

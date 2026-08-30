@@ -201,6 +201,7 @@ void ContentPanel::initGridView() {
         m_gridView->setItemDelegate(delegate);
     }
 
+    m_gridView->installEventFilter(this);
     m_gridView->viewport()->installEventFilter(this);
     connect(m_gridView, &QAbstractItemView::doubleClicked, this, &ContentPanel::onDoubleClicked);
     connect(m_gridView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &ContentPanel::onSelectionChanged);
@@ -218,6 +219,7 @@ void ContentPanel::initListView() {
     m_treeView->setRootIsDecorated(false);
     m_treeView->setItemDelegate(new TreeItemDelegate(this, true, true));
     m_treeView->setModel(m_proxyModel);
+    m_treeView->installEventFilter(this);
     m_treeView->viewport()->installEventFilter(this);
 
     auto* header = m_treeView->header();
