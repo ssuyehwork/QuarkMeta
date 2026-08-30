@@ -1,6 +1,7 @@
 #include "DiskItemModel.h"
 #include "UiHelper.h"
 #include "ShellIconManager.h"
+#include "ThumbnailPipelineService.h"
 #include "ModelContract.h"
 #include <QDateTime>
 #include <QFileInfo>

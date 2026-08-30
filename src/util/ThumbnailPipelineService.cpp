@@ -1,5 +1,6 @@
 #include "ThumbnailPipelineService.h"
 #include "ColorPaletteEngine.h"
+#include "DiskMediaExtractor.h"
 #include <QImageReader>
 #include <QCryptographicHash>
 #include <QDir>
