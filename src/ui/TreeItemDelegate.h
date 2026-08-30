@@ -81,14 +81,14 @@ public:
 
             QRect squareRect(option.rect.left() + 6, option.rect.top() + padding, side, side);
 
-            // 1. 绘制微型卡片背景
-            painter->setPen(Qt::NoPen);
-            painter->setBrush(Qt::transparent);
+            // 1. 绘制 1:1 正方形微型卡片暗色底板与边框
+            painter->setPen(QPen(QColor("#383838"), 1));
+            painter->setBrush(QColor("#252526"));
             QPainterPath cardPath;
             cardPath.addRoundedRect(squareRect, 4, 4);
             painter->drawPath(cardPath);
 
-            // 2. 图像/图标平滑居中绘制（严格约束在 1:1 正方形 squareRect 内部）
+            // 2. 图像/图标平滑 Center-Crop 正方形满铺绘制
             QVariant decoData = index.data(Qt::DecorationRole);
             bool hasThumb = index.data(HasThumbnailRole).toBool();
 
@@ -98,7 +98,7 @@ public:
                     thumb = decoData.value<QPixmap>();
                 } else if (decoData.canConvert<QIcon>()) {
                     QIcon icon = decoData.value<QIcon>();
-                    if (!icon.isNull()) thumb = icon.pixmap(squareRect.size());
+                    if (!icon.isNull()) thumb = icon.pixmap(squareRect.size() * 2);
                 }
 
                 if (!thumb.isNull()) {
@@ -107,8 +107,8 @@ public:
                     clipPath.addRoundedRect(squareRect, 4, 4);
                     painter->setClipPath(clipPath);
 
-                    // 强制将缩略图在 1:1 正方形 squareRect 内部按物理比例居中渲染
-                    QPixmap scaled = thumb.scaled(squareRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    // 🚀【核心 Center-Crop 算法】：按 Expands 模式等比放大裁切，完全平铺充满 1:1 正方形微卡片，消除浮动长条感
+                    QPixmap scaled = thumb.scaled(squareRect.size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
                     int x = squareRect.center().x() - scaled.width() / 2;
                     int y = squareRect.center().y() - scaled.height() / 2;
                     painter->drawPixmap(x, y, scaled);
