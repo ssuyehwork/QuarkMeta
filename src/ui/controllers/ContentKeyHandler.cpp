@@ -224,7 +224,16 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         if (selectedPaths.size() > 1) {
             m_panel->performBatchRename();
         } else {
-            view->edit(view->currentIndex());
+            QModelIndex idx = view->currentIndex();
+            if (!idx.isValid() && view->selectionModel()) {
+                auto selected = view->selectionModel()->selectedIndexes();
+                if (!selected.isEmpty()) idx = selected.first();
+            }
+            if (idx.isValid()) {
+                QModelIndex nameIdx = idx.sibling(idx.row(), 0);
+                view->setCurrentIndex(nameIdx);
+                view->edit(nameIdx);
+            }
         }
         return true;
     }
