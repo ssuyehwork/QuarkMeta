@@ -75,6 +75,7 @@ QString ThemeManager::getGlobalStyleSheet() const {
         QTreeView {
             background-color: #1E1E1E;
             alternate-background-color: #252526;
+            qproperty-alternateBase: #252526;
             color: #EEEEEE;
             border: none;
             outline: 0;
@@ -82,6 +83,9 @@ QString ThemeManager::getGlobalStyleSheet() const {
         QTreeView::item {
             height: 28px;
             border: none;
+        }
+        QTreeView::item:alternate {
+            background-color: #252526;
         }
         QTreeView::item:hover {
             background-color: #2A2D2E;

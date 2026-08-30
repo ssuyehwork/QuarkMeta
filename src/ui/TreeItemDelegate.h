@@ -53,12 +53,22 @@ public:
         if (index.column() >= 1) {
             opt.displayAlignment = Qt::AlignCenter;
         }
+
+        // 斑马纹交替行背景处理：如果既未选中也未悬停，且属于 Alternate 行，显式绘制暗色背景 #252526，杜绝原生 Palette 露白
+        bool isAlternate = (opt.features & QStyleOptionViewItem::Alternate);
+        if (!selected && !hover) {
+            painter->save();
+            QColor bg = isAlternate ? QColor("#252526") : QColor("#1E1E1E");
+            painter->setBrush(bg);
+            painter->setPen(Qt::NoPen);
+            painter->drawRect(option.rect);
+            painter->restore();
+        }
+
         opt.state &= ~QStyle::State_Selected;
         opt.state &= ~QStyle::State_MouseOver;
-        if (selected || hover) {
-            opt.features &= ~QStyleOptionViewItem::Alternate;
-            opt.backgroundBrush = QBrush();
-        }
+        opt.features &= ~QStyleOptionViewItem::Alternate;
+        opt.backgroundBrush = QBrush();
         
         if (selected) {
             opt.palette.setColor(QPalette::Text, Qt::white);
