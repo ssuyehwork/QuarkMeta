@@ -88,7 +88,7 @@ public:
             cardPath.addRoundedRect(squareRect, 4, 4);
             painter->drawPath(cardPath);
 
-            // 2. 图像/图标平滑居中绘制
+            // 2. 图像/图标平滑居中绘制（严格约束在 1:1 正方形 squareRect 内部）
             QVariant decoData = index.data(Qt::DecorationRole);
             bool hasThumb = index.data(HasThumbnailRole).toBool();
 
@@ -107,6 +107,7 @@ public:
                     clipPath.addRoundedRect(squareRect, 4, 4);
                     painter->setClipPath(clipPath);
 
+                    // 强制将缩略图在 1:1 正方形 squareRect 内部按物理比例居中渲染
                     QPixmap scaled = thumb.scaled(squareRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
                     int x = squareRect.center().x() - scaled.width() / 2;
                     int y = squareRect.center().y() - scaled.height() / 2;
@@ -116,22 +117,20 @@ public:
                 } else {
                     QIcon icon = qvariant_cast<QIcon>(decoData);
                     if (!icon.isNull()) {
-                        int iconSize = qRound(side * 0.65);
+                        int iconSize = qRound(side * 0.75);
                         QRect iconRect(squareRect.center().x() - iconSize / 2,
                                        squareRect.center().y() - iconSize / 2,
                                        iconSize, iconSize);
-                        // 🚨 物理修复 ②：传入 Qt::AlignCenter，强制占位符图标在微卡片内部绝对居中！
                         icon.paint(painter, iconRect, Qt::AlignCenter);
                     }
                 }
             } else {
                 QIcon icon = qvariant_cast<QIcon>(decoData);
                 if (!icon.isNull()) {
-                    int iconSize = qRound(side * 0.65);
+                    int iconSize = qRound(side * 0.75);
                     QRect iconRect(squareRect.center().x() - iconSize / 2,
                                    squareRect.center().y() - iconSize / 2,
                                    iconSize, iconSize);
-                    // 🚨 物理修复 ②：传入 Qt::AlignCenter，强制占位符图标在微卡片内部绝对居中！
                     icon.paint(painter, iconRect, Qt::AlignCenter);
                 }
             }
