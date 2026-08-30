@@ -478,7 +478,7 @@ void MainWindow::setupCustomTitleBarButtons() {
     m_sizeSlider->setStyleSheet( 
         "QSlider { background: transparent; margin-right: 5px; }" 
         "QSlider::groove:horizontal { height: 3px; background: #3F3F3F; border-radius: 2px; }" 
-        "QSlider::sub-page:horizontal { background: #3498db; border-radius: 2px; }"
+        "QSlider::sub-page:horizontal { background: #3F3F3F; border-radius: 2px; }"
         "QSlider::handle:horizontal { width: 10px; height: 10px; background: #8E8E93; border-radius: 5px; margin: -4px 0; }" 
         "QSlider::handle:horizontal:hover { background: #CCCCCC; }" 
     ); 
