@@ -59,20 +59,7 @@ QImage ThumbnailPipelineService::decodeImageToThumbnail(const QString& filePath,
         return QImage();
     }
 
-    QImageReader reader(filePath);
-    reader.setAutoTransform(true);
-    reader.setDecideFormatFromContent(true);
-
-    QSize origSize = reader.size();
-    if (origSize.isValid() && origSize.width() > 0 && origSize.height() > 0) {
-        QSize scaled = origSize.scaled(QSize(targetSize * 2, targetSize * 2), Qt::KeepAspectRatio);
-        reader.setScaledSize(scaled);
-    }
-
-    QImage img = reader.read();
-    if (img.isNull()) return QImage();
-
-    return img.scaled(QSize(targetSize, targetSize), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    return DiskMediaExtractor::getCapsuleThumbnail(filePath, targetSize);
 }
 
 void ThumbnailPipelineService::loadBatchAsync(const QStringList& filePaths, 

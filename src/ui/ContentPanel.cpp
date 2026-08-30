@@ -615,19 +615,12 @@ void ContentPanel::refreshVisibleThumbnails() {
     if (btmIdx.isValid()) bottom = qMin(m_proxyModel->rowCount() - 1, btmIdx.row() + 4);
 
     QList<int> visibleRows;
-    QStringList visiblePaths;
     for (int r = top; r <= bottom; ++r) {
         QModelIndex proxyIdx = m_proxyModel->index(r, 0);
         QModelIndex srcIdx = m_proxyModel->mapToSource(proxyIdx);
         if (srcIdx.isValid()) visibleRows.append(srcIdx.row());
-        QString p = proxyIdx.data(PathRole).toString();
-        if (!p.isEmpty()) visiblePaths << p;
     }
 
-    QPointer<ContentPanel> weakThis(this);
-    ThumbnailPipelineService::instance().loadBatchAsync(visiblePaths, m_zoomLevel, [weakThis](const QString& path, const QPixmap&) {
-        if (weakThis) weakThis->updateItemMetadata(path);
-    });
     m_model->loadThumbnailsForRows(visibleRows);
 }
 
