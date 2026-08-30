@@ -30,6 +30,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QHeaderView>
+#include <QScrollBar>
 #include <QtConcurrent>
 #include <QFileInfo>
 #include <QDir>
