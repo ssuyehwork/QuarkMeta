@@ -28,7 +28,13 @@ class TreeItemDelegate : public QStyledItemDelegate {
 public:
     explicit TreeItemDelegate(QObject* parent = nullptr, bool showStatus = true, bool drawMiniCards = false)
         : QStyledItemDelegate(parent), m_showStatus(showStatus), m_drawMiniCards(drawMiniCards) {}
-    
+
+    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+        QSize sz = QStyledItemDelegate::sizeHint(option, index);
+        sz.setHeight(32); // 🚀 显式锁定列表行高为 32px (绝对突破默认 20px 限制)
+        return sz;
+    }
+
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         if (!index.isValid()) return;
 
@@ -146,7 +152,7 @@ public:
                 painter->restore();
             }
 
-            // 4. 文本排版向右偏移
+            // 4. 文本排版向右偏移（在 32px 行高下，固定起始起点 40px = 6px left + 26px 卡片 + 8px 间距，保持绝对对齐与稳定）
             QString name = index.data(Qt::DisplayRole).toString();
             QColor textColor = selected ? QColor("#FFFFFF") : QColor("#EEEEEE");
 
@@ -154,7 +160,7 @@ public:
             painter->setFont(option.font);
 
             QRect textRect = option.rect;
-            textRect.setLeft(squareRect.right() + 10);
+            textRect.setLeft(option.rect.left() + 40);
 
             QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideMiddle, textRect.width() - 10);
             painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
