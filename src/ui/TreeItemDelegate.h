@@ -31,7 +31,10 @@ public:
 
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         QSize sz = QStyledItemDelegate::sizeHint(option, index);
-        sz.setHeight(32); // 🚀 显式锁定列表行高为 32px (绝对突破默认 20px 限制)
+        const QAbstractItemView* view = qobject_cast<const QAbstractItemView*>(option.widget);
+        int iconH = view ? view->iconSize().height() : 24;
+        int h = qBound(28, iconH + 8, 120);
+        sz.setHeight(h);
         return sz;
     }
 
