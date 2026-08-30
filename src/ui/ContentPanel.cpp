@@ -165,6 +165,7 @@ void ContentPanel::initUi() {
     m_mainLayout->addWidget(titleBar);
 
     m_viewStack = new QStackedWidget(this);
+    m_viewStack->setFrameShape(QFrame::NoFrame);
     initGridView();
     initListView();
     m_viewStack->addWidget(m_gridView);
@@ -180,6 +181,7 @@ void ContentPanel::initUi() {
 
 void ContentPanel::initGridView() {
     m_gridView = new DropJustifiedView(this);
+    m_gridView->setFrameShape(QFrame::NoFrame);
     m_gridView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_gridView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_gridView->setEditTriggers(QAbstractItemView::EditKeyPressed);
@@ -208,6 +210,7 @@ void ContentPanel::initGridView() {
 
 void ContentPanel::initListView() {
     m_treeView = new DropTreeView(this);
+    m_treeView->setFrameShape(QFrame::NoFrame);
     m_treeView->setAlternatingRowColors(true);
     m_treeView->setSortingEnabled(true);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
