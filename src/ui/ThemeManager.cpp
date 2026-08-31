@@ -26,25 +26,25 @@ QString ThemeManager::getGlobalStyleSheet() const {
         QMainWindow, QDialog { background-color: #1E1E1E; color: #EEEEEE; }
         QWidget#CentralWidget { background-color: #1E1E1E; }
 
-        /* 🚀【全局唯一样式真理源】：100% 还原 Dual-mode version 视觉契约 */
+        /* 🚀【全局唯一样式真理源】：卡片 5px 实体物理切缝 + Dual-mode 深色风格 */
         QSplitter {
             background: transparent;
             border: none;
         }
         QSplitter::handle:horizontal {
             background-color: #1E1E1E;
-            width: 5px;
+            width: 1px;
         }
         QSplitter::handle:horizontal:hover {
-            background-color: #2A2A2A;
+            background-color: #378ADD;
         }
 
-        /* 2. 五大实体栏区卡片底板与 1px 精细边界 (Dual-mode 纯正还原) */
+        /* 2. 五大实体栏区卡片底板（通过左右各 2px margin + 1px 分隔手柄构建 5px 物理缝隙） */
         #SidebarContainer, #FavoriteContainer, #EditorContainer, #MetadataContainer, #FilterContainer {
             background-color: #1E1E1E;
             border: 1px solid #333333;
             border-radius: 0px;
-            margin: 0px;
+            margin: 0px 2px;
             padding: 0px;
         }
         #ContainerHeader {
