@@ -320,13 +320,13 @@ void MainWindow::setupSplitters() {
     m_bodyLayout->setSpacing(0);
 
     m_mainSplitter = new QSplitter(Qt::Horizontal, bodyWrapper);
-    m_mainSplitter->setHandleWidth(1); 
+    m_mainSplitter->setHandleWidth(5);
     m_mainSplitter->setChildrenCollapsible(false);
     m_mainSplitter->setStyleSheet(QString(
-        "QSplitter { background: transparent; border: none; spacing: 0px; }"
-        "QSplitter::handle { background-color: %1; width: 1px; margin: 0px; padding: 0px; }"
-        "QSplitter::handle:hover { background-color: %2; }"
-    ).arg(qssColor(BackgroundDeep)).arg(qssColor(PrimaryBlue)));
+        "QSplitter { background: transparent; border: none; }"
+        "QSplitter::handle { background-color: transparent; width: 5px; }"
+        "QSplitter::handle:hover { background-color: %1; }"
+    ).arg(qssColor(PrimaryBlue)));
 
     m_navPanel = new NavPanel(this);
     m_navPanel->setObjectName("SidebarContainer");
