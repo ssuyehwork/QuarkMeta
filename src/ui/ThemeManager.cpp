@@ -26,9 +26,16 @@ QString ThemeManager::getGlobalStyleSheet() const {
         QMainWindow, QDialog { background-color: #1E1E1E; color: #EEEEEE; }
         QWidget#CentralWidget { background-color: #1E1E1E; }
         #SidebarContainer, #FavoriteContainer, #EditorContainer, #MetadataContainer, #FilterContainer {
-            background-color: #1E1E1E; border: none; border-radius: 0px; margin: 0px; padding: 0px;
+            background-color: #1E1E1E;
+            border: 1px solid #333333;
+            border-radius: 4px;
         }
-        #ContainerHeader { background-color: #252526; border-bottom: 1px solid #333333; }
+        #ContainerHeader {
+            background-color: #252526;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            border-bottom: 1px solid #333333;
+        }
 
         /* 2. 统一全软件 QMenu 菜单 (包括托盘菜单与右键菜单) */
         QMenu {
