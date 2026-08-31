@@ -27,13 +27,14 @@ QString ThemeManager::getGlobalStyleSheet() const {
         QWidget#CentralWidget { background-color: #1E1E1E; }
         #SidebarContainer, #FavoriteContainer, #EditorContainer, #MetadataContainer, #FilterContainer {
             background-color: #1E1E1E;
-            border: 1px solid #333333;
-            border-radius: 4px;
+            border: none;
+            border-radius: 0px;
+            margin: 0px;
+            padding: 0px;
         }
         #ContainerHeader {
             background-color: #252526;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
+            border-radius: 0px;
             border-bottom: 1px solid #333333;
         }
 

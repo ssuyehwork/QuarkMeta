@@ -316,15 +316,15 @@ void MainWindow::setupSplitters() {
     QWidget* bodyWrapper = new QWidget(centralC);
     bodyWrapper->setStyleSheet("background: transparent;");
     m_bodyLayout = new QVBoxLayout(bodyWrapper);
-    m_bodyLayout->setContentsMargins(5, 5, 5, 5);
-    m_bodyLayout->setSpacing(5);
+    m_bodyLayout->setContentsMargins(0, 0, 0, 0);
+    m_bodyLayout->setSpacing(0);
 
     m_mainSplitter = new QSplitter(Qt::Horizontal, bodyWrapper);
     m_mainSplitter->setHandleWidth(5);
     m_mainSplitter->setChildrenCollapsible(false);
     m_mainSplitter->setStyleSheet(QString(
-        "QSplitter { background: transparent; border: none; }"
-        "QSplitter::handle { background: transparent; width: 5px; }"
+        "QSplitter { background: transparent; border: none; spacing: 0px; }"
+        "QSplitter::handle { background-color: #141414; width: 5px; margin: 0px; padding: 0px; }"
         "QSplitter::handle:hover { background-color: %1; }"
     ).arg(qssColor(PrimaryBlue)));
 
