@@ -8,6 +8,7 @@
 #include <QDropEvent>
 #include <QMimeData>
 #include <QTimer>
+#include "RowLayoutEngine.h"
 
 namespace QuarkMeta {
 
@@ -36,10 +37,8 @@ protected:
         painter->setFont(font());
 
         if (logicalIndex == 0) {
-            int side = m_zoomLevel - 6;
-            if (side <= 0) side = 16;
-            int textStartX = rect.left() + 6 + side + 10;
-
+            // 🚀 唯一调用 RowLayoutEngine，表头起点与数据行 100% 垂直共线
+            int textStartX = rect.left() + RowLayoutEngine::calculateHeaderTextStartX(m_zoomLevel);
             QRect textRect = rect;
             textRect.setLeft(textStartX);
             painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, title);
