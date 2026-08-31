@@ -101,7 +101,7 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
 
     setObjectName("FilterContainer");
     setAttribute(Qt::WA_StyledBackground, true);
-    setMinimumWidth(230);
+    setMinimumWidth(228);
     setStyleSheet("color: #EEEEEE;");
 
     m_mainLayout = new QVBoxLayout(this);
