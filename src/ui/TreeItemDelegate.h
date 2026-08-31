@@ -33,7 +33,7 @@ public:
         QSize sz = QStyledItemDelegate::sizeHint(option, index);
         const QAbstractItemView* view = qobject_cast<const QAbstractItemView*>(option.widget);
         int iconH = view ? view->iconSize().height() : 24;
-        int h = qBound(28, iconH + 8, 120);
+        int h = qBound(30, iconH + 8, 230);
         sz.setHeight(h);
         return sz;
     }
