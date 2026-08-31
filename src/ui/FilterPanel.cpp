@@ -1047,6 +1047,7 @@ QWidget* FilterPanel::buildGroup(const QString& title, QVBoxLayout*& outContentL
         "QPushButton {"
         "  background: transparent;"
         "  border: none;"
+        "  outline: none;"
         "  color: #AAAAAA;"
         "  font-size: 11px;"
         "  font-weight: 600;"
@@ -1057,7 +1058,8 @@ QWidget* FilterPanel::buildGroup(const QString& title, QVBoxLayout*& outContentL
         "  padding-bottom: 0px;"
         "  margin: 0px;"
         "}"
-        "QPushButton:hover { color: #EEEEEE; }"
+        "QPushButton:hover { color: #EEEEEE; background: transparent; }"
+        "QPushButton:checked { background: transparent; color: #EEEEEE; border: none; }"
         "QPushButton:pressed { background: transparent; }");
     hdrRowLayout->addWidget(hdr);
 
