@@ -324,6 +324,7 @@ void MainWindow::setupSplitters() {
         "#SidebarContainer, #FavoriteContainer, #EditorContainer, #MetadataContainer, #FilterContainer {"
         "  background-color: #1E1E1E;"
         "  border: 1px solid #2A2A2A;"
+        "  margin: 0px 2px;"
         "}"
         "QScrollBar:vertical { border: none; background: transparent; width: 8px; margin: 0px; }"
         "QScrollBar::handle:vertical { background: #3E3E42; min-height: 20px; border-radius: 4px; }"

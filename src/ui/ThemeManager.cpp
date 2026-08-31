@@ -39,12 +39,12 @@ QString ThemeManager::getGlobalStyleSheet() const {
             background-color: #378ADD;
         }
 
-        /* 2. 五大实体栏区卡片底板与 1px 精细边界 */
+        /* 2. 五大实体栏区卡片底板与 1px 精细边界（通过 margin 建立 5px 实体物理切缝） */
         #SidebarContainer, #FavoriteContainer, #EditorContainer, #MetadataContainer, #FilterContainer {
             background-color: #1E1E1E;
             border: 1px solid #2A2A2A;
             border-radius: 0px;
-            margin: 0px;
+            margin: 0px 2px;
             padding: 0px;
         }
         #ContainerHeader {
