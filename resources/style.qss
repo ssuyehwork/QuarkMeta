@@ -1108,11 +1108,11 @@ QTableWidget::item, QTableView::item {
     border: none;
 }
 QTableWidget::item:hover, QTableView::item:hover {
-    background-color: #2A2D2E;
+    background-color: transparent;
 }
 QTableWidget::item:selected, QTableView::item:selected {
-    background-color: rgba(55, 138, 221, 0.3);
-    color: #FFFFFF;
+    background-color: transparent;
+    color: #EEEEEE;
 }
 
 QHeaderView {
