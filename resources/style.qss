@@ -1108,11 +1108,11 @@ QTableWidget::item, QTableView::item {
     border: none;
 }
 QTableWidget::item:hover, QTableView::item:hover {
-    background-color: transparent;
+    background-color: #2A2D2E;
 }
 QTableWidget::item:selected, QTableView::item:selected {
-    background-color: transparent;
-    color: #EEEEEE;
+    background-color: rgba(55, 138, 221, 0.3);
+    color: #FFFFFF;
 }
 
 QHeaderView {
@@ -1781,15 +1781,15 @@ QRadioButton::indicator {
     width: 14px;
     height: 14px;
     border-radius: 8px;
-    border: 1px solid #444444;
-    background: #1E1E1E;
+    border: 1px solid #555555;
+    background: transparent;
 }
 QRadioButton::indicator:hover {
-    border-color: #378ADD;
+    border-color: #888888;
 }
 QRadioButton::indicator:checked {
-    border: 1px solid #378ADD;
-    background: #378ADD;
+    border: 1px solid #CCCCCC;
+    background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 #FFFFFF, stop:0.45 #FFFFFF, stop:0.5 transparent, stop:1 transparent);
 }
 
 /* 全局 QSpinBox 数字框暗色规整 */
