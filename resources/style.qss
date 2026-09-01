@@ -916,20 +916,31 @@ QWidget#FilterGroupHdrRow {
 }
 QPushButton#FilterGroupHdrBtn {
     background: transparent;
-    color: #EEEEEE;
-    font-size: 12px;
-    font-weight: bold;
+    color: #AAAAAA;
+    font-size: 11px;
+    font-weight: 600;
     border: none;
+    outline: none;
     text-align: left;
-    padding-left: 4px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin: 0px;
 }
 QPushButton#FilterGroupHdrBtn:hover {
-    color: #FFFFFF;
+    color: #EEEEEE;
+    background: transparent;
 }
 QPushButton#FilterGroupHdrBtn:checked {
     background: transparent;
     color: #EEEEEE;
     border: none;
+    outline: none;
+}
+QPushButton#FilterGroupHdrBtn:pressed {
+    background: transparent;
+    color: #EEEEEE;
 }
 QPushButton#FilterGroupHdrBtn:focus {
     outline: none;
