@@ -215,6 +215,584 @@ QLabel#StatusBarLeft[indexing='true'] {
     font-weight: bold;
 }
 
+/* 批次三：对话框、浮层与小组件选择器外联 */
+QLabel#UndoToastMsgLabel {
+    color: #EEEEEE;
+    font-size: 12px;
+    font-family: 'Segoe UI', 'Microsoft YaHei';
+}
+QPushButton#UndoToastBtnUndo {
+    background-color: #378ADD;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    padding: 0 12px;
+}
+QPushButton#UndoToastBtnUndo:hover {
+    background-color: #4a9ce8;
+}
+QPushButton#UndoToastBtnUndo:pressed {
+    background-color: #2b73be;
+}
+QWidget#UndoToastSeparator {
+    background-color: #4E4E52;
+}
+QPushButton#UndoToastBtnClose {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+}
+QPushButton#UndoToastBtnClose:hover {
+    background-color: #3E3E42;
+}
+
+QLabel#TaskProgressTitleLabel {
+    color: #EEEEEE;
+    font-size: 11px;
+    font-weight: bold;
+    background: transparent;
+}
+QProgressBar#TaskProgressBar {
+    border: 1px solid #3c3c3c;
+    border-radius: 3px;
+    background-color: #1E1E1E;
+    text-align: center;
+    color: transparent;
+}
+QProgressBar#TaskProgressBar::chunk {
+    background-color: #378ADD;
+    border-radius: 2px;
+}
+QLabel#TaskProgressDetailLabel {
+    color: #888888;
+    font-size: 11px;
+    background: transparent;
+}
+QLabel#TaskProgressCountLabel {
+    color: #378ADD;
+    font-size: 11px;
+    font-weight: bold;
+    background: transparent;
+}
+
+QWidget#QLContainer {
+    background-color: #1E1E1E;
+    border: 1px solid #333333;
+    border-radius: 8px;
+}
+QLabel#QLEmptyPromptLabel {
+    color: #888888;
+    font-size: 16px;
+    font-weight: bold;
+    background: transparent;
+}
+QLabel#QLInfoLabel {
+    color: #777;
+}
+QLabel#QLInfoLabelWarn {
+    color: #FF8C00;
+    font-weight: bold;
+    font-size: 14px;
+}
+QWidget#QLGraphicsView {
+    background: transparent;
+    border: none;
+}
+
+QLineEdit#TagSelectorSearchEdit, QLineEdit#TagManagerSearchEdit {
+    background: #1E1E1E;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #EEEEEE;
+    font-size: 12px;
+}
+QLineEdit#TagSelectorSearchEdit:focus, QLineEdit#TagManagerSearchEdit:focus {
+    border-color: #378ADD;
+}
+QPushButton#TagSelectorToggleBtn, QPushButton#TagManagerToggleBtn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 0px;
+}
+QPushButton#TagSelectorToggleBtn:hover, QPushButton#TagManagerToggleBtn:hover {
+    background-color: #3E3E42;
+}
+QListWidget#TagSelectorGroupList {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: #CCCCCC;
+    font-size: 12px;
+}
+QListWidget#TagSelectorGroupList::item {
+    height: 26px;
+    padding-left: 6px;
+    border-radius: 4px;
+}
+QListWidget#TagSelectorGroupList::item:hover {
+    background-color: #3E3E42;
+    color: #FFFFFF;
+}
+QListWidget#TagSelectorGroupList::item:selected {
+    background-color: #378ADD;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+QWidget#TagSelectorGridWidget, QWidget#TagManagerContentWidget {
+    background-color: #1E1E1E;
+}
+QScrollArea#TagSelectorScrollArea {
+    border: 1px solid #333;
+    background-color: #1E1E1E;
+    border-radius: 4px;
+}
+
+QLabel#HistoryEmptyLabel {
+    color: #666666;
+    font-size: 12px;
+    padding: 4px 8px;
+}
+QWidget#HistoryTitleRow {
+    background: transparent;
+}
+QLabel#HistoryTitleLabel {
+    color: #888888;
+    font-size: 11px;
+}
+QPushButton#HistoryBtnClearAll {
+    background: transparent;
+    border: none;
+    color: #888888;
+    font-size: 11px;
+}
+QPushButton#HistoryBtnClearAll:hover {
+    color: #E81123;
+}
+QWidget#HistorySep {
+    background: #333333;
+    border: none;
+    max-height: 1px;
+}
+QWidget#HistoryRow {
+    background: transparent;
+    border-radius: 4px;
+}
+QWidget#HistoryRow:hover {
+    background: #3E3E42;
+}
+QLabel#HistoryItemLabel {
+    color: #CCCCCC;
+    font-size: 12px;
+    background: transparent;
+}
+QPushButton#HistoryBtnRemove {
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+}
+QPushButton#HistoryBtnRemove:hover {
+    background-color: #4E4E52;
+}
+
+QWidget#TagManagerTopBar {
+    background: transparent;
+    border-bottom: 1px solid #333;
+}
+QFrame#TagManagerSidebar {
+    background-color: #252526;
+    border-right: 1px solid #333;
+}
+QLabel#TagManagerSideTitle {
+    color: #888;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+QPushButton#TagManagerBtnAddGroup {
+    background-color: #2D2D30;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #EEE;
+    font-size: 11px;
+    padding: 4px 8px;
+}
+QPushButton#TagManagerBtnAddGroup:hover {
+    background-color: #378ADD;
+    border-color: #378ADD;
+    color: #FFF;
+}
+QScrollArea#TagManagerScrollArea {
+    border: none;
+    background-color: #1E1E1E;
+}
+QPushButton#TagManagerBtnAddNewTag {
+    background-color: #252526;
+    border: 1px solid #3C3C3C;
+    border-radius: 4px;
+    color: #EEEEEE;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+QPushButton#TagManagerBtnAddNewTag:hover {
+    background-color: #2D2D30;
+    border-color: #378ADD;
+    color: #FFFFFF;
+}
+
+QWidget#ColorPickerBottomBox {
+    background: #252526;
+    border: 1px solid #378ADD;
+    border-radius: 4px;
+}
+QLineEdit#ColorPickerHexEdit {
+    background: transparent;
+    border: none;
+    color: #EEEEEE;
+    font-family: monospace;
+    font-size: 12px;
+}
+QPushButton#ColorPickerBtnConfirm {
+    border: none;
+    background: transparent;
+}
+QPushButton#ColorPickerBtnConfirm:hover {
+    background: #3E3E42;
+    border-radius: 2px;
+}
+QWidget#ColorPickerToleranceRow {
+    background: transparent;
+}
+QLabel#ColorPickerToleranceLabel {
+    color: #AAAAAA;
+    font-size: 11px;
+    background: transparent;
+    border: none;
+}
+
+QWidget#ConflictCard {
+    background-color: #232325;
+    border-radius: 6px;
+    border: 1px solid #333336;
+}
+QLabel#ConflictNameLabel {
+    color: #FFFFFF;
+    font-weight: bold;
+    font-size: 13px;
+}
+QLabel#ConflictInfoLabel {
+    color: #AAAAAA;
+    font-size: 11px;
+}
+QLabel#ConflictTagBadge {
+    background-color: #333336;
+    color: #888888;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+}
+QRadioButton#ConflictRadio {
+    color: #FFFFFF;
+    font-size: 12px;
+}
+QCheckBox#ConflictApplyAllCheckBox {
+    color: #888888;
+    font-size: 12px;
+}
+QPushButton#ConflictSubmitBtn {
+    background-color: #378ADD;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+}
+QPushButton#ConflictSubmitBtn:hover {
+    background-color: #4a9ce8;
+}
+QPushButton#ConflictSubmitBtn:pressed {
+    background-color: #2b73be;
+}
+
+QLabel#BatchCreateTitleLabel {
+    color: #BBB;
+    font-weight: bold;
+}
+QLabel#BatchCreateRuleLabel {
+    color: #888;
+    font-size: 11px;
+}
+QScrollArea#BatchCreateScroll {
+    background: transparent;
+    border: none;
+}
+QPushButton#BatchCreateCancelBtn {
+    background: transparent;
+    color: #BBB;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+QPushButton#BatchCreateCancelBtn:hover {
+    background: #3E3E42;
+}
+QPushButton#BatchCreateOkBtn {
+    background: #007ACC;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+}
+QPushButton#BatchCreateOkBtn:hover {
+    background: #1C97EA;
+}
+QPushButton#BatchCreateOkBtn:disabled {
+    background: #333333;
+    color: #666666;
+}
+
+QPushButton#BatchRenameDeletePresetBtn {
+    background: transparent;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    color: #888888;
+}
+QPushButton#BatchRenameDeletePresetBtn:hover {
+    background: #3E3E42;
+    color: #E81123;
+    border-color: #E81123;
+}
+QGroupBox#BatchRenameRulesGroup {
+    padding-top: 15px;
+    margin-top: 5px;
+}
+QGroupBox#BatchRenameRulesGroup::title {
+    top: -2px;
+    left: 8px;
+}
+QScrollArea#BatchRenameScroll {
+    background: transparent;
+    border: none;
+    padding: 0px;
+    margin: 0px;
+}
+QPushButton#BatchRenameExecuteBtn {
+    background-color: #007ACC;
+    color: #FFFFFF;
+    font-weight: bold;
+    font-size: 13px;
+    border: none;
+    border-radius: 4px;
+}
+QPushButton#BatchRenameExecuteBtn:hover {
+    background-color: #1C97EA;
+}
+QPushButton#BatchRenameExecuteBtn:disabled {
+    background-color: #333333;
+    color: #666666;
+}
+
+QWidget#FramelessTitleBar {
+    background-color: transparent;
+    border: none;
+}
+QLabel#FramelessTitleLabel {
+    color: #AAAAAA;
+    font-size: 12px;
+    font-weight: bold;
+}
+QWidget#FramelessLine {
+    background-color: #333333;
+    border: none;
+}
+
+QWidget#FileDialogTopRow, QWidget#FileDialogBottomRow {
+    background-color: #252526;
+    border-bottom: 1px solid #333333;
+}
+QListWidget#FileDialogSidebar {
+    background-color: #252526;
+    border: none;
+    border-right: 1px solid #333333;
+    color: #CCCCCC;
+    outline: none;
+}
+QListWidget#FileDialogSidebar::item {
+    height: 28px;
+    padding-left: 8px;
+    border-radius: 4px;
+    margin: 2px 4px;
+}
+QListWidget#FileDialogSidebar::item:hover {
+    background-color: #3E3E42;
+    color: #FFFFFF;
+}
+QListWidget#FileDialogSidebar::item:selected {
+    background-color: #378ADD;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+QListWidget#FileDialogListView {
+    background-color: #1E1E1E;
+    border: none;
+    color: #EEEEEE;
+    outline: none;
+}
+QListWidget#FileDialogListView::item {
+    height: 28px;
+    padding-left: 8px;
+    border-radius: 4px;
+}
+QListWidget#FileDialogListView::item:hover {
+    background-color: #2A2D2E;
+}
+QListWidget#FileDialogListView::item:selected {
+    background-color: rgba(55, 138, 221, 0.3);
+    color: #FFFFFF;
+}
+QLineEdit#FileDialogFileEdit, QComboBox#FileDialogFilterCombo {
+    background: #1E1E1E;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    color: #EEEEEE;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+QPushButton#FileDialogCancelBtn {
+    background-color: transparent;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    color: #CCCCCC;
+    padding: 6px 16px;
+    font-size: 12px;
+}
+QPushButton#FileDialogCancelBtn:hover {
+    background-color: #3E3E42;
+    color: #FFFFFF;
+}
+QPushButton#FileDialogOkBtn {
+    background-color: #3498db;
+    border: none;
+    border-radius: 4px;
+    color: #FFFFFF;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: bold;
+}
+QPushButton#FileDialogOkBtn:hover {
+    background-color: #2980b9;
+}
+
+QComboBox#RuleCombo {
+    background: #1E1E1E;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 2px 5px;
+    color: #EEE;
+}
+QComboBox#RuleCombo::drop-down {
+    border: none;
+}
+QLineEdit#RuleTextEdit, QSpinBox#RuleStartSpin {
+    background: #1E1E1E;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 2px 5px;
+    color: #EEE;
+}
+QPushButton#RuleDeleteBtn {
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+}
+QPushButton#RuleDeleteBtn:hover {
+    background-color: #3E3E42;
+}
+
+QWidget#ClickableRowActive {
+    background: #2A2A2A;
+    border-radius: 4px;
+}
+QWidget#ClickableRowNormal {
+    background: transparent;
+}
+QLabel#TagPillLabel {
+    color: #EEEEEE;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+}
+QPushButton#TagPillCloseBtn {
+    border: none;
+    background: transparent;
+    padding: 0px;
+}
+QPushButton#TagPillCloseBtn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 7px;
+}
+
+QLineEdit#MetaInfoPathEdit {
+    background: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+    color: #CCCCCC;
+}
+
+QLabel#FramelessInputLabel, QLabel#FramelessConfirmLabel {
+    color: #EEEEEE;
+    font-size: 13px;
+}
+QLineEdit#FramelessInputEdit {
+    background: #1E1E1E;
+    border: 1px solid #3C3C3C;
+    border-radius: 4px;
+    padding: 6px;
+    color: #EEEEEE;
+    font-size: 12px;
+}
+QLineEdit#FramelessInputEdit:focus {
+    border-color: #007ACC;
+}
+QPushButton#FramelessBtnCancel {
+    background: transparent;
+    color: #BBB;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 6px 16px;
+}
+QPushButton#FramelessBtnCancel:hover {
+    background: #3E3E42;
+}
+QPushButton#FramelessBtnOk {
+    background: #007ACC;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-weight: bold;
+}
+QPushButton#FramelessBtnOk:hover {
+    background: #1C97EA;
+}
+QPushButton#FramelessBtnOkConfirm {
+    background: #E81123;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-weight: bold;
+}
+QPushButton#FramelessBtnOkConfirm:hover {
+    background: #F42637;
+}
+
 /* 各 UI 面板专属组件选择器外联 */
 QLabel#ContentPanelTitleLabel {
     font-size: 13px;
