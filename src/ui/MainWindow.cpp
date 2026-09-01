@@ -223,12 +223,7 @@ void MainWindow::initToolbar() {
         btn->setProperty("tooltipText", tip);
         btn->installEventFilter(this);
 
-        btn->setStyleSheet(
-            "QPushButton { background: transparent; border: none; border-radius: 4px; }"
-            "QPushButton:hover { background: #3E3E42; }"
-            "QPushButton:pressed { background: #4E4E52; }"
-            "QPushButton:disabled { opacity: 0.3; }"
-        );
+        btn->setObjectName("NavControlBtn");
         return btn;
     };
 
@@ -264,14 +259,14 @@ void MainWindow::initToolbar() {
 void MainWindow::setupSplitters() {
     QWidget* centralC = new QWidget(this);
     centralC->setObjectName("CentralWidget");
-    centralC->setStyleSheet("#CentralWidget { background-color: #1E1E1E; }"); 
+    // CentralWidget style in style.qss
     QVBoxLayout* mainL = new QVBoxLayout(centralC);
     mainL->setContentsMargins(0, 0, 0, 0); 
     mainL->setSpacing(0); 
 
     m_titleBarWidget = new QWidget(centralC);
     m_titleBarWidget->setObjectName("TitleBar");
-    m_titleBarWidget->setStyleSheet(QString("QWidget#TitleBar { border: none; border-bottom: 1px solid %1; background: transparent; }").arg(qssColor(BorderColor)));
+    // TitleBar style in style.qss
     m_titleBarWidget->setFixedHeight(34);
     m_titleBarLayout = new QHBoxLayout(m_titleBarWidget);
     m_titleBarLayout->setContentsMargins(5, 0, kLayoutEdgeMargin, 0); 
@@ -281,17 +276,17 @@ void MainWindow::setupSplitters() {
     m_logoLabel->setFixedSize(18, 18);
     m_logoLabel->setPixmap(UiHelper::getIcon("ferrex", BrandOrange).pixmap(16, 16));
     m_logoLabel->setAlignment(Qt::AlignCenter);
-    m_logoLabel->setStyleSheet("background: transparent; border: none;");
+    m_logoLabel->setObjectName("TitleLogoLabel");
     m_titleBarLayout->addWidget(m_logoLabel);
 
     m_appNameLabel = new QLabel("QuarkMeta", m_titleBarWidget);
-    m_appNameLabel->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: bold;").arg(BrandOrange.name()));
+    m_appNameLabel->setObjectName("AppNameLabel");
     m_titleBarLayout->addWidget(m_appNameLabel);
     m_titleBarLayout->addStretch();
 
     m_navBarWidget = new QWidget(centralC);
     m_navBarWidget->setObjectName("NavBar");
-    m_navBarWidget->setStyleSheet("QWidget#NavBar { border: none; background: transparent; }");
+    // NavBar style in style.qss
     m_navBarWidget->setFixedHeight(42); 
     
     m_navBarLayout = new QHBoxLayout(m_navBarWidget);
@@ -308,7 +303,7 @@ void MainWindow::setupSplitters() {
     }
 
     QWidget* bodyWrapper = new QWidget(centralC);
-    bodyWrapper->setStyleSheet("background: transparent;");
+    bodyWrapper->setObjectName("BodyWrapper");
     m_bodyLayout = new QVBoxLayout(bodyWrapper);
     m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin); 
     m_bodyLayout->setSpacing(0);
@@ -317,13 +312,7 @@ void MainWindow::setupSplitters() {
     m_mainSplitter = new QSplitter(Qt::Horizontal, bodyWrapper);
     m_mainSplitter->setHandleWidth(1); 
     m_mainSplitter->setChildrenCollapsible(false);
-    m_mainSplitter->setStyleSheet(QString(
-        "QSplitter { background: transparent; border: none; }"
-        "QSplitter::handle:horizontal { background-color: #1E1E1E; width: 1px; }"
-        "QSplitter::handle:horizontal:hover { background-color: %1; }"
-        "#SidebarContainer, #FavoriteContainer, #EditorContainer, #MetadataContainer, #FilterContainer {"
-        "  background-color: #1E1E1E;"
-        "  border: 1px solid #333333;"
+    // QSplitter style in style.qss
         "  margin: 0px 2px;"
         "}"
         "QScrollBar:vertical { border: none; background: transparent; width: 8px; margin: 0px; }"
@@ -383,7 +372,7 @@ void MainWindow::setupSplitters() {
     statusL->setSpacing(0);
 
     m_statusLeft = new QLabel("就绪中...", m_statusBarWidget);
-    m_statusLeft->setStyleSheet(QString("font-size: 11px; color: %1; background: transparent;").arg(qssColor(TextDim)));
+    m_statusLeft->setObjectName("StatusBarLeft");
 
     statusL->addWidget(m_statusLeft);
     statusL->addStretch(1);
@@ -391,11 +380,13 @@ void MainWindow::setupSplitters() {
     auto updateStatus = [this]() {
         m_statusLeft->setText(CoreController::instance().statusText());
         if (CoreController::instance().isIndexing()) {
-            m_statusLeft->setStyleSheet(QString("font-size: 11px; color: %1; background: transparent; font-weight: bold;")
-                                      .arg(qssColor(PrimaryBlue)));
+            m_statusLeft->setProperty("indexing", true);
+            m_statusLeft->style()->unpolish(m_statusLeft);
+            m_statusLeft->style()->polish(m_statusLeft);
         } else {
-            m_statusLeft->setStyleSheet(QString("font-size: 11px; color: %1; background: transparent;")
-                                      .arg(qssColor(TextDim)));
+            m_statusLeft->setProperty("indexing", false);
+            m_statusLeft->style()->unpolish(m_statusLeft);
+            m_statusLeft->style()->polish(m_statusLeft);
         }
     };
     connect(&CoreController::instance(), &CoreController::statusTextChanged, this, updateStatus);
@@ -432,12 +423,7 @@ void MainWindow::setupCustomTitleBarButtons() {
         btn->setIcon(icon);
         btn->setIconSize(QSize(18, 18));
         
-        btn->setStyleSheet(QString(
-            "QPushButton { background: transparent; border: none; border-radius: 4px; padding: 0; }"
-            "QPushButton:hover { background: %1; }"
-            "QPushButton:pressed { background: #4E4E52; }"
-        ).arg(hoverColor));
-        return btn;
+        btn->setObjectName("TitleControlBtn");
     };
 
     m_btnViewMenu = createTitleBtn("grid");  
@@ -485,13 +471,7 @@ void MainWindow::setupCustomTitleBarButtons() {
     m_sizeSlider->setRange(30, 230);  
     m_sizeSlider->setFixedSize(110, 20); 
     m_sizeSlider->setCursor(Qt::PointingHandCursor); 
-    m_sizeSlider->setStyleSheet( 
-        "QSlider { background: transparent; margin-right: 5px; }" 
-        "QSlider::groove:horizontal { height: 3px; background: #3F3F3F; border-radius: 2px; }" 
-        "QSlider::sub-page:horizontal { background: #378ADD; border-radius: 2px; }" 
-        "QSlider::handle:horizontal { width: 10px; height: 10px; background: #8E8E93; border-radius: 5px; margin: 5px 0; }" 
-        "QSlider::handle:horizontal:hover { background: #CCCCCC; }" 
-    ); 
+    m_sizeSlider->setObjectName("SizeSlider");
      
     connect(m_sizeSlider, &QSlider::valueChanged, this, [this](int value) { 
         m_contentPanel->setZoomLevel(value); 
@@ -564,12 +544,7 @@ void MainWindow::setupCustomTitleBarButtons() {
     m_btnMax->installEventFilter(m_hoverFilter);
 
     m_btnClose = createTitleBtn("close", qssColor(ErrorRed));
-    m_btnClose->setStyleSheet(QString(
-        "QPushButton { background-color: %1; border: none; border-radius: 4px; padding: 0; }"
-        "QPushButton:hover { background-color: %1; }"
-        "QPushButton:pressed { background-color: #A50000; }"
-    ).arg(qssColor(ErrorRed)));
-    m_btnClose->setProperty("tooltipText", "关闭项目");
+    m_btnClose->setObjectName("TitleCloseBtn");
     m_btnClose->installEventFilter(m_hoverFilter);
 
     m_btnCreate->installEventFilter(m_hoverFilter);
@@ -679,10 +654,7 @@ void MainWindow::initDriveBar() {
     m_driveBarWidget = new QWidget(this);
     m_driveBarWidget->setObjectName("DriveBar");
     m_driveBarWidget->setFixedHeight(42);
-    m_driveBarWidget->setStyleSheet(QString(
-        "QWidget#DriveBar { background-color: %1; border-bottom: 1px solid %2; }"
-    ).arg(qssColor(BackgroundHeader)).arg(qssColor(BorderColor)));
-    m_driveBarWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    // DriveBar style in style.qss
     connect(m_driveBarWidget, &QWidget::customContextMenuRequested, this, &MainWindow::onDriveBarContextMenu);
 
     m_driveBarLayout = new QHBoxLayout(m_driveBarWidget);
@@ -692,15 +664,7 @@ void MainWindow::initDriveBar() {
     m_btnTagManager = new QPushButton(UiHelper::getIcon("tag", QColor("#1abc9c"), 18), " 标签管理", m_driveBarWidget);
     m_btnTagManager->setFixedHeight(28);
     m_btnTagManager->setCursor(Qt::PointingHandCursor);
-    m_btnTagManager->setStyleSheet(QString(
-        "QPushButton { background-color: %1; border: 1px solid %2; border-radius: 4px; padding: 0 12px; color: %3; font-weight: bold; font-size: 13px; }"
-        "QPushButton:hover { background-color: %4; border-color: #1abc9c; color: #FFFFFF; }"
-        "QPushButton:pressed { background-color: %5; }"
-    ).arg(qssColor(BackgroundHeader))
-     .arg(qssColor(BorderColor))
-     .arg(qssColor(TextMain))
-     .arg(qssColor(BackgroundHover))
-     .arg(qssColor(PressedBackground)));
+    m_btnTagManager->setObjectName("BtnTagManager");
 
     connect(m_btnTagManager, &QPushButton::clicked, this, [this]() {
         TagManagerDialog::showDialog(this, NavigationService::instance().currentUrl(), false);

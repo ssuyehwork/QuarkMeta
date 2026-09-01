@@ -43,6 +43,178 @@ QSplitter::handle:horizontal:hover {
     border-top-right-radius: 0px;
 }
 
+/* 批次二：顶层窗口与导航栏外联选择器 */
+QLabel#TitleLogoLabel {
+    background: transparent;
+    border: none;
+}
+QLabel#AppNameLabel {
+    color: #ff551c;
+    font-size: 12px;
+    font-weight: bold;
+}
+QWidget#BodyWrapper {
+    background: transparent;
+}
+QPushButton#NavControlBtn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+}
+QPushButton#NavControlBtn:hover {
+    background: #3E3E42;
+}
+QPushButton#NavControlBtn:pressed {
+    background: #4E4E52;
+}
+QPushButton#NavControlBtn:disabled {
+    opacity: 0.3;
+}
+QPushButton#TitleControlBtn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+}
+QPushButton#TitleControlBtn:hover {
+    background: #3E3E42;
+}
+QPushButton#TitleControlBtn:pressed {
+    background: #4E4E52;
+}
+QPushButton#TitleCloseBtn {
+    background-color: #e81123;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+}
+QPushButton#TitleCloseBtn:hover {
+    background-color: #e81123;
+}
+QPushButton#TitleCloseBtn:pressed {
+    background-color: #A50000;
+}
+QSlider#SizeSlider {
+    background: transparent;
+    margin-right: 5px;
+}
+QSlider#SizeSlider::groove:horizontal {
+    height: 3px;
+    background: #3F3F3F;
+    border-radius: 2px;
+}
+QSlider#SizeSlider::sub-page:horizontal {
+    background: #378ADD;
+    border-radius: 2px;
+}
+QSlider#SizeSlider::handle:horizontal {
+    width: 10px;
+    height: 10px;
+    background: #8E8E93;
+    border-radius: 5px;
+    margin: -3px 0;
+}
+QSlider#SizeSlider::handle:horizontal:hover {
+    background: #CCCCCC;
+}
+QWidget#DriveBar {
+    background-color: #252526;
+    border-bottom: 1px solid #333333;
+}
+QPushButton#BtnTagManager {
+    background-color: #252526;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    padding: 0 12px;
+    color: #888888;
+    font-weight: bold;
+    font-size: 13px;
+}
+QPushButton#BtnTagManager:hover {
+    background-color: #3E3E42;
+    border-color: #1abc9c;
+    color: #FFFFFF;
+}
+QPushButton#BtnTagManager:pressed {
+    background-color: #4E4E52;
+}
+
+QWidget#AddressContainer {
+    background: #1E1E1E;
+    border: 1px solid #333333;
+    border-radius: 6px;
+}
+QWidget#AddressContainer[focused='true'] {
+    border: 1px solid #3498db;
+}
+QStackedWidget#AddressPathStack {
+    background: transparent;
+    border: none;
+}
+QLineEdit#AddressPathEdit {
+    background: transparent;
+    border: none;
+    color: #EEEEEE;
+    padding-left: 8px;
+}
+QPushButton#BtnRefreshAddress {
+    background: transparent;
+    border: none;
+    border-left: 1px solid #333333;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+QPushButton#BreadcrumbNodeBtn {
+    background: transparent;
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    color: #CCCCCC;
+    font-size: 12px;
+    padding: 0 4px;
+}
+QPushButton#BreadcrumbNodeBtn:hover {
+    background: #3E3E42;
+    color: #FFFFFF;
+}
+QPushButton#BreadcrumbNodeBtn:pressed {
+    background: #4E4E52;
+}
+QLabel#BreadcrumbSep {
+    background: transparent;
+    border: none;
+    padding: 0 1px;
+}
+
+QWidget#SearchContainer {
+    background: transparent;
+}
+QLineEdit#SearchEdit {
+    background-color: #1E1E1E;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    color: #EEEEEE;
+    padding-left: 28px;
+    padding-right: 24px;
+    font-size: 12px;
+}
+QLineEdit#SearchEdit:focus {
+    border-color: #FDB70A;
+}
+
+QLabel#StatusBarLeft {
+    font-size: 11px;
+    color: #888888;
+    background: transparent;
+}
+QLabel#StatusBarLeft[indexing='true'] {
+    font-size: 11px;
+    color: #378ADD;
+    background: transparent;
+    font-weight: bold;
+}
+
 /* 各 UI 面板专属组件选择器外联 */
 QLabel#ContentPanelTitleLabel {
     font-size: 13px;
