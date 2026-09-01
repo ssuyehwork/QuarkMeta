@@ -309,7 +309,7 @@ void MainWindow::setupSplitters() {
     m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin); 
     m_bodyLayout->setSpacing(0);
 
-    // 5px 实体物理缝隙（QSplitter 原生 5px 句柄，不依赖 margin 侵占物理空间）
+    // 5px 实体物理缝隙 (2px margin + 1px handle + 2px margin) + Dual-mode 深色样式
     m_mainSplitter = new QSplitter(Qt::Horizontal, bodyWrapper);
     m_mainSplitter->setHandleWidth(5);
     m_mainSplitter->setChildrenCollapsible(false);

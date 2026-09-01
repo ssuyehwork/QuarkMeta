@@ -52,7 +52,7 @@ private:
     QPointer<MetaPanel> m_metaPanel;
     QPointer<FilterPanel> m_filterPanel;
 
-    // 🚀【物理基准】：面板基准设为 230px，QSplitter 句柄为 5px（原生提供 5px 物理切缝）
+    // 🚀【物理基准】：面板基准 230px，QSplitter 句柄宽度 5px（旧版本原始机制，不叠加额外 margin）
     static constexpr int kBasePanelWidth = 230;
     static constexpr int kContentBaseWidth = 230;
     static constexpr int kSplitterHandleWidth = 5;
