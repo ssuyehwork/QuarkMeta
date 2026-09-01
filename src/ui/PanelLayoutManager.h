@@ -52,10 +52,10 @@ private:
     QPointer<MetaPanel> m_metaPanel;
     QPointer<FilterPanel> m_filterPanel;
 
-    // 🚀【物理基准】：面板基准设为 230px，QSplitter 句柄为 1px（结合 2px margin 形成 5px 物理切缝）
+    // 🚀【物理基准】：面板基准设为 230px，QSplitter 句柄为 5px（原生提供 5px 物理切缝）
     static constexpr int kBasePanelWidth = 230;
     static constexpr int kContentBaseWidth = 230;
-    static constexpr int kSplitterHandleWidth = 1;
+    static constexpr int kSplitterHandleWidth = 5;
 };
 
 } // namespace QuarkMeta
