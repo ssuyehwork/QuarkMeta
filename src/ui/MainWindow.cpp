@@ -75,6 +75,7 @@ using namespace QuarkMeta::Style;
 #include "FramelessFileDialog.h"
 #include "../core/NavigationService.h"
 #include <QSlider>
+#include <QStyle>
 #include <QSignalBlocker>
 
 #include <QtConcurrent>
@@ -211,7 +212,7 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void MainWindow::initToolbar() {
-    auto createBtn = [this](const QString& iconKey, const QString& tip) {
+    auto createBtn = [this](const QString& iconKey, const QString& tip) -> QPushButton* {
         QPushButton* btn = new QPushButton(this);
         btn->setAttribute(Qt::WA_Hover);
         btn->setFixedSize(32, 28);
@@ -313,19 +314,6 @@ void MainWindow::setupSplitters() {
     m_mainSplitter->setHandleWidth(1); 
     m_mainSplitter->setChildrenCollapsible(false);
     // QSplitter style in style.qss
-        "  margin: 0px 2px;"
-        "}"
-        "QScrollBar:vertical { border: none; background: transparent; width: 8px; margin: 0px; }"
-        "QScrollBar::handle:vertical { background: #3E3E42; min-height: 20px; border-radius: 4px; }"
-        "QScrollBar::handle:vertical:hover { background: #505054; }"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { width: 0px; height: 0px; }"
-        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }"
-        "QScrollBar:horizontal { border: none; background: transparent; height: 8px; margin: 0px; }"
-        "QScrollBar::handle:horizontal { background: #3E3E42; min-width: 20px; border-radius: 4px; }"
-        "QScrollBar::handle:horizontal:hover { background: #505054; }"
-        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; height: 0px; }"
-        "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: none; }"
-    ).arg(qssColor(PrimaryBlue)));
 
     m_navPanel = new NavPanel(this);
     m_navPanel->setObjectName("SidebarContainer");
@@ -414,9 +402,8 @@ void MainWindow::setupCustomTitleBarButtons() {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(5);
 
-    auto createTitleBtn = [this](const QString& iconKey, const QString& hoverColor = "#3E3E42") {
-        Q_UNUSED(hoverColor);
-        QPushButton* btn = new QPushButton(this);
+    auto createTitleBtn = [this](const QString& iconKey) -> QPushButton* {
+                QPushButton* btn = new QPushButton(this);
         btn->setAttribute(Qt::WA_Hover);
         btn->setFixedSize(24, 24);
         
@@ -545,7 +532,7 @@ void MainWindow::setupCustomTitleBarButtons() {
     m_btnMax->setProperty("tooltipText", "最大化/还原");
     m_btnMax->installEventFilter(m_hoverFilter);
 
-    m_btnClose = createTitleBtn("close", qssColor(ErrorRed));
+    m_btnClose = createTitleBtn("close");
     m_btnClose->setObjectName("TitleCloseBtn");
     m_btnClose->setProperty("tooltipText", "关闭项目");
     m_btnClose->installEventFilter(m_hoverFilter);
@@ -658,6 +645,7 @@ void MainWindow::initDriveBar() {
     m_driveBarWidget->setObjectName("DriveBar");
     m_driveBarWidget->setFixedHeight(42);
     // DriveBar style in style.qss
+    m_driveBarWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_driveBarWidget, &QWidget::customContextMenuRequested, this, &MainWindow::onDriveBarContextMenu);
 
     m_driveBarLayout = new QHBoxLayout(m_driveBarWidget);
