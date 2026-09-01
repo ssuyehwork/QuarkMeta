@@ -1722,6 +1722,89 @@ QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
     border: 1px solid #378ADD;
 }
 
+/* 全局 QComboBox 下拉框暗色规整 */
+QComboBox {
+    background-color: #252526;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    padding: 2px 8px;
+    color: #EEEEEE;
+    font-size: 12px;
+}
+QComboBox:hover {
+    border-color: #444444;
+}
+QComboBox:focus {
+    border-color: #378ADD;
+}
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: none;
+}
+QComboBox QAbstractItemView {
+    background-color: #252526;
+    border: 1px solid #333333;
+    selection-background-color: #378ADD;
+    selection-color: #FFFFFF;
+    color: #EEEEEE;
+    outline: 0;
+    padding: 2px;
+}
+
+/* 全局 QGroupBox 分组框暗色规整 */
+QGroupBox {
+    color: #EEEEEE;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    margin-top: 8px;
+    padding-top: 12px;
+    font-size: 12px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 10px;
+    padding: 0 4px;
+    color: #888888;
+    background-color: #1E1E1E;
+}
+
+/* 全局 QRadioButton 单选框暗色规整 */
+QRadioButton {
+    color: #EEEEEE;
+    font-size: 12px;
+    spacing: 6px;
+}
+QRadioButton::indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 8px;
+    border: 1px solid #444444;
+    background: #1E1E1E;
+}
+QRadioButton::indicator:hover {
+    border-color: #378ADD;
+}
+QRadioButton::indicator:checked {
+    border: 1px solid #378ADD;
+    background: #378ADD;
+}
+
+/* 全局 QSpinBox 数字框暗色规整 */
+QSpinBox {
+    background-color: #252526;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: #EEEEEE;
+    font-size: 12px;
+}
+QSpinBox:focus {
+    border-color: #378ADD;
+}
+
 /* 统一 QTreeView 列表视图暗色斑马纹与高亮 */
 QTreeView {
     background-color: #1E1E1E;
