@@ -953,6 +953,23 @@ QPushButton#BatchCreateOkBtn:disabled {
     color: #666666;
 }
 
+QPushButton#BatchRenameSecBtn {
+    background-color: transparent;
+    color: #CCCCCC;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    font-size: 11px;
+}
+QPushButton#BatchRenameSecBtn:hover {
+    background-color: #3E3E42;
+    color: #FFFFFF;
+    border-color: #555555;
+}
+QPushButton#BatchRenameSecBtn:disabled {
+    background-color: #1E1E1E;
+    color: #555555;
+    border-color: #2D2D2D;
+}
 QPushButton#BatchRenameDeletePresetBtn {
     background: transparent;
     border: 1px solid #3c3c3c;
@@ -1051,6 +1068,72 @@ QListWidget#FileDialogListView::item:hover {
 QListWidget#FileDialogListView::item:selected {
     background-color: rgba(55, 138, 221, 0.3);
     color: #FFFFFF;
+}
+
+/* 全局通用 QPushButton 暗色兜底规整 (防止未带 objectName 的按钮回退 Windows 原生灰白) */
+QPushButton {
+    background-color: transparent;
+    color: #EEEEEE;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+}
+QPushButton:hover {
+    background-color: #3E3E42;
+    color: #FFFFFF;
+    border-color: #555555;
+}
+QPushButton:pressed {
+    background-color: #4E4E52;
+}
+QPushButton:disabled {
+    background-color: #1E1E1E;
+    color: #555555;
+    border-color: #2D2D2D;
+}
+
+/* 统一 QTableWidget & QTableView & QHeaderView 表格组件暗色样式 */
+QTableWidget, QTableView {
+    background-color: #1E1E1E;
+    alternate-background-color: #252526;
+    color: #EEEEEE;
+    gridline-color: #333333;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    outline: 0;
+}
+QTableWidget::item, QTableView::item {
+    padding: 4px;
+    border: none;
+}
+QTableWidget::item:hover, QTableView::item:hover {
+    background-color: #2A2D2E;
+}
+QTableWidget::item:selected, QTableView::item:selected {
+    background-color: rgba(55, 138, 221, 0.3);
+    color: #FFFFFF;
+}
+
+QHeaderView {
+    background-color: #252526;
+    border: none;
+}
+QHeaderView::section {
+    background-color: #252526;
+    color: #888888;
+    padding: 6px 10px;
+    border: none;
+    border-right: 1px solid #333333;
+    border-bottom: 1px solid #333333;
+    font-size: 12px;
+    font-weight: bold;
+}
+QHeaderView::section:horizontal {
+    border-top: none;
+}
+QHeaderView::section:last {
+    border-right: none;
 }
 QLineEdit#FileDialogFileEdit, QComboBox#FileDialogFilterCombo {
     background: #1E1E1E;

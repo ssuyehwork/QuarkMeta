@@ -93,6 +93,8 @@ void BatchRenameDialog::initContent() {
     // 导入/导出按钮
     m_btnImportPreset = new QPushButton("导入...", presetGroup);
     m_btnExportPreset = new QPushButton("导出...", presetGroup);
+    m_btnImportPreset->setObjectName("BatchRenameSecBtn");
+    m_btnExportPreset->setObjectName("BatchRenameSecBtn");
     m_btnImportPreset->setFixedHeight(25);
     m_btnExportPreset->setFixedHeight(25);
     m_btnImportPreset->setFixedWidth(80);
@@ -119,6 +121,7 @@ void BatchRenameDialog::initContent() {
     m_targetPathEdit->setFixedHeight(25);
     m_targetPathEdit->setEnabled(false);
     m_btnBrowse = new QPushButton("浏览...", targetGroup);
+    m_btnBrowse->setObjectName("BatchRenameSecBtn");
     m_btnBrowse->setFixedSize(80, 25);
     m_btnBrowse->setEnabled(false);
     pathL->addWidget(m_targetPathEdit);
