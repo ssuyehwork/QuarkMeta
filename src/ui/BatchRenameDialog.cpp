@@ -180,7 +180,7 @@ void BatchRenameDialog::initContent() {
     m_table->setAlternatingRowColors(true); // 开启斑马纹
     m_table->setShowGrid(false);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_table->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_table->setSelectionMode(QAbstractItemView::NoSelection);
     m_table->setIconSize(QSize(20, 20)); // 最左侧微型缩略图/图标尺寸
     m_table->setFocusPolicy(Qt::NoFocus); // 彻底消除选中单元格四周的虚线焦点框
 
