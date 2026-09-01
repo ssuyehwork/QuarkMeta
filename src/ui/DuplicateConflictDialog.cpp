@@ -8,6 +8,7 @@
 namespace QuarkMeta {
 
 static QWidget* createCard(const DuplicateItemInfo& item, const QString& badgeText, bool isExisting) {
+    Q_UNUSED(isExisting);
     QWidget* card = new QWidget();
     card->setFixedSize(320, 320);
     card->setObjectName("ConflictCard");

@@ -50,6 +50,7 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
     m_titleLayout->addStretch();
 
     auto createTitleBtn = [this](const QString& iconName, const QString& tooltip, const QString& hoverColor) {
+        Q_UNUSED(hoverColor);
         QPushButton* btn = new QPushButton();
         btn->setFixedSize(20, 20);
         btn->setIcon(UiHelper::getIcon(iconName, QColor("#CCCCCC"), 16));
