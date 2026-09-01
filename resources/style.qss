@@ -43,6 +43,341 @@ QSplitter::handle:horizontal:hover {
     border-top-right-radius: 0px;
 }
 
+/* 各 UI 面板专属组件选择器外联 */
+QLabel#ContentPanelTitleLabel {
+    font-size: 13px;
+    font-weight: bold;
+    color: #41F2F2;
+    background: transparent;
+    border: none;
+}
+QPushButton#ViewModeToolBtn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+}
+QPushButton#ViewModeToolBtn:hover, QPushButton#ViewModeToolBtn:checked {
+    background: #3E3E42;
+}
+
+QLabel#NavPanelTitleLabel {
+    color: #2ecc71;
+    font-size: 13px;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+}
+QPushButton#NavTrashBtn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+}
+QPushButton#NavTrashBtn:hover {
+    background-color: #3E3E42;
+}
+QPushButton#NavTrashBtn:pressed {
+    background-color: #4E4E52;
+}
+
+QLabel#FavoritePanelTitleLabel {
+    color: #FDB70A;
+    font-size: 13px;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+}
+QPushButton#FavPickerIconBtn {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+QPushButton#FavPickerIconBtn:hover {
+    background-color: #3E3E42;
+    border: 1px solid #555555;
+}
+
+QWidget#FilterContainerWidget, QWidget#FilterGroupWrapper, QWidget#FilterGroupContent {
+    background: transparent;
+}
+QPushButton#FilterBtnClearAll {
+    background: transparent;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    color: #888888;
+    font-size: 11px;
+    padding: 0 6px;
+}
+QPushButton#FilterBtnClearAll:hover {
+    background: #3E3E42;
+    color: #EEEEEE;
+    border-color: #555555;
+}
+QPushButton#FilterBtnPin {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 0px;
+}
+QPushButton#FilterBtnPin:hover {
+    background-color: #3E3E42;
+}
+QPushButton#FilterBtnPin:checked {
+    background-color: #378ADD;
+}
+QPushButton#FilterBtnToggleGroups {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 0px;
+}
+QPushButton#FilterBtnToggleGroups:hover {
+    background-color: #3E3E42;
+}
+QScrollArea#FilterScrollArea {
+    border: none;
+    background: transparent;
+}
+QLineEdit#FilterSearchEdit {
+    background: #1E1E1E;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: #EEEEEE;
+    font-size: 11px;
+}
+QLineEdit#FilterSearchEdit:focus {
+    border-color: #378ADD;
+}
+QPushButton#FilterBtnSort {
+    background: transparent;
+    border: none;
+}
+QPushButton#FilterBtnSort:hover {
+    background: #3E3E42;
+    border-radius: 2px;
+}
+QLabel#FilterSepLabel {
+    color: #AAA;
+}
+QWidget#FilterGroupHdrRow {
+    background-color: #252526;
+    border: 1px solid #333333;
+    border-radius: 4px;
+}
+QPushButton#FilterGroupHdrBtn {
+    background: transparent;
+    color: #EEEEEE;
+    font-size: 12px;
+    font-weight: bold;
+    border: none;
+    text-align: left;
+    padding-left: 4px;
+}
+QPushButton#FilterGroupHdrBtn:hover {
+    color: #FFFFFF;
+}
+QPushButton#FilterGroupHdrBtn:checked {
+    background: transparent;
+    color: #EEEEEE;
+    border: none;
+}
+QPushButton#FilterGroupHdrBtn:focus {
+    outline: none;
+}
+QLabel#FilterItemLabel {
+    font-size: 12px;
+    color: #CCCCCC;
+    background: transparent;
+}
+QLabel#FilterItemCountLabel {
+    font-size: 11px;
+    color: #555555;
+    background: transparent;
+}
+
+/* 元数据面板专属组件选择器外联 */
+QLabel#MetaPanelTitleLabel {
+    font-size: 12px;
+    font-weight: bold;
+    color: #4a90e2;
+    background: transparent;
+    border: none;
+}
+QScrollArea#MetaScrollArea {
+    border: none;
+    background: transparent;
+}
+QWidget#TopPreviewBox {
+    background: transparent;
+    border: none;
+}
+QLabel#MetaImagePreview {
+    background: transparent;
+    border: none;
+}
+QTextEdit#MetaNameEdit {
+    background: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+QTextEdit#MetaNameEdit:focus {
+    border-color: #378ADD;
+}
+QTextEdit#MetaNameEdit:disabled {
+    background: #1E1E1E;
+    color: #777777;
+    border-color: #2A2A2A;
+}
+QTextEdit#MetaNoteEdit {
+    background: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #AAAAAA;
+}
+QTextEdit#MetaNoteEdit:focus {
+    border-color: #378ADD;
+    color: #FFFFFF;
+}
+QTextEdit#MetaNoteEdit:disabled {
+    background: #1E1E1E;
+    color: #555555;
+}
+QLineEdit#MetaLinkEdit {
+    background: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding-left: 8px;
+    font-size: 12px;
+    color: #378ADD;
+}
+QLineEdit#MetaLinkEdit:focus {
+    border-color: #378ADD;
+}
+QLineEdit#MetaLinkEdit:disabled {
+    background: #1E1E1E;
+    color: #555555;
+}
+QToolButton#MetaLinkToolBtn {
+    border: none;
+    border-left: 1px solid #3c3c3c;
+    background: transparent;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+QToolButton#MetaLinkToolBtn:hover {
+    background: #3E3E42;
+}
+QPushButton#CollapsibleHeaderBtn {
+    border: none;
+    background: transparent;
+    color: #888888;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: left;
+    padding: 0;
+}
+QPushButton#CollapsibleHeaderBtn:hover {
+    color: #FFFFFF;
+}
+QWidget#MetaRatingRow, QWidget#MetaColorRow {
+    background: transparent;
+    border: none;
+}
+QPushButton#MetaBtnClearStar, QPushButton#MetaBtnNoColor {
+    border: none;
+    background: transparent;
+}
+QPushButton#MetaBtnClearStar:hover, QPushButton#MetaBtnNoColor:hover {
+    background: #333333;
+    border-radius: 4px;
+}
+QPushButton#MetaBtnStar {
+    border: none;
+    background: transparent;
+}
+QPushButton#MetaBtnStar:hover {
+    background: #333333;
+    border-radius: 3px;
+}
+QPushButton#BtnAddTagBig {
+    background-color: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    padding: 0 10px;
+    color: #AAAAAA;
+    font-size: 12px;
+    text-align: center;
+}
+QPushButton#BtnAddTagBig:hover {
+    background-color: #2a2d2e;
+    border-color: #378ADD;
+    color: #FFFFFF;
+}
+QPushButton#BtnAddTagBig:disabled {
+    background: #1E1E1E;
+    color: #555555;
+}
+QPushButton#BtnAddTagSmall {
+    background-color: #2D2D30;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 0;
+}
+QPushButton#BtnAddTagSmall:hover {
+    background-color: #378ADD;
+    border-color: #378ADD;
+}
+QLineEdit#MetaPathEdit {
+    background: #1E1E1E;
+    border: 1px solid #2A2A2A;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+    color: #CCCCCC;
+}
+QPushButton#BtnCopyPath {
+    background: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    color: #CCCCCC;
+    font-size: 11px;
+}
+QPushButton#BtnCopyPath:hover {
+    background: #333333;
+    color: #FFFFFF;
+}
+QPushButton#BtnOpenLocation {
+    background: #252526;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    color: #CCCCCC;
+    font-size: 11px;
+}
+QPushButton#BtnOpenLocation:hover {
+    background: #378ADD;
+    border-color: #378ADD;
+    color: #FFFFFF;
+}
+QLabel#MetaInfoKeyLabel {
+    font-size: 11px;
+    color: #888888;
+}
+QLabel#MetaInfoValueLabel {
+    font-size: 11px;
+    color: #CCCCCC;
+    line-height: 1.4;
+}
+QWidget#MetaColorPill {
+    background: transparent;
+    border: none;
+}
+
 /* 统一全软件 QMenu 菜单 (包括托盘菜单与右键菜单) */
 QMenu {
     background-color: #252526;
