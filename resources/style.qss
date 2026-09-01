@@ -9,7 +9,7 @@ QWidget#CentralWidget { background-color: #1E1E1E; }
 }
 #NavBar {
     background-color: #1E1E1E;
-    border-bottom: 1px solid #333333;
+    border-bottom: none;
 }
 
 /* 卡片 5px 实体物理切缝 + Dual-mode 深色风格 */
