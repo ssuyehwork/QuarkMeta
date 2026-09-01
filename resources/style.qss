@@ -1,5 +1,6 @@
 /* 全局基础样式 */
-QMainWindow { background-color: #1E1E1E; color: #EEEEEE; }
+QMainWindow, QDialog { background-color: #1E1E1E; color: #EEEEEE; }
+QWidget#CentralWidget { background-color: #1E1E1E; }
 
 /* 标题栏与导航栏切割线 */
 #TitleBar {
@@ -11,12 +12,27 @@ QMainWindow { background-color: #1E1E1E; color: #EEEEEE; }
     border-bottom: 1px solid #333333;
 }
 
-/* 核心容器样式 - 强化 1 像素物理切割感 */
+/* 卡片 5px 实体物理切缝 + Dual-mode 深色风格 */
+QSplitter {
+    background: transparent;
+    border: none;
+}
+QSplitter::handle:horizontal {
+    background-color: #1E1E1E;
+    width: 1px;
+}
+QSplitter::handle:horizontal:hover {
+    background-color: #378ADD;
+}
+
+/* 核心容器样式 - 强化 1 像素物理切割感及 5px 缝隙 */
 #SidebarContainer, #FavoriteContainer, #ListContainer, #EditorContainer, #MetadataContainer, #FilterContainer {
     background-color: #1E1E1E;
     border: 1px solid #333333;
     border-radius: 0px;
     color: #EEEEEE;
+    margin: 0px 2px;
+    padding: 0px;
 }
 
 /* 容器标题栏样式 (回归绝对直角设计) */
@@ -25,6 +41,35 @@ QMainWindow { background-color: #1E1E1E; color: #EEEEEE; }
     border-bottom: 1px solid #333333;
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
+}
+
+/* 统一全软件 QMenu 菜单 (包括托盘菜单与右键菜单) */
+QMenu {
+    background-color: #252526;
+    color: #EEEEEE;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    padding: 4px;
+}
+QMenu::item {
+    background-color: transparent;
+    color: #EEEEEE;
+    padding: 6px 24px 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+QMenu::item:selected {
+    background-color: #3E3E42;
+    color: #FFFFFF;
+}
+QMenu::item:disabled {
+    color: #666666;
+    background-color: transparent;
+}
+QMenu::separator {
+    height: 1px;
+    background-color: #333333;
+    margin: 4px 6px;
 }
 
 /* 底部状态栏 */
@@ -88,14 +133,38 @@ QCheckBox::indicator:checked {
     image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc4QUREIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWxpbmUgcG9pbnRzPSIyMCA2IDkgMTcgNCAxMiI+PC9wb2x5bGluZT48L3N2Zz4=);
 }
 
-/* 统一输入框与多行文本框样式，应用 6px 圆角规范 */
+/* 统一输入框与多行文本框样式 */
 QLineEdit, QPlainTextEdit, QTextEdit {
-    background: #1E1E1E;
+    background: #252526;
     border: 1px solid #333333;
-    border-radius: 6px;
+    border-radius: 4px;
     color: #EEEEEE;
-    padding-left: 8px;
+    padding-left: 6px;
 }
-QLineEdit:focus {
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
     border: 1px solid #378ADD;
+}
+
+/* 统一 QTreeView 列表视图暗色斑马纹与高亮 */
+QTreeView {
+    background-color: #1E1E1E;
+    alternate-background-color: #252526;
+    qproperty-alternateBase: #252526;
+    color: #EEEEEE;
+    border: none;
+    outline: 0;
+}
+QTreeView::item {
+    height: 28px;
+    border: none;
+}
+QTreeView::item:alternate {
+    background-color: #252526;
+}
+QTreeView::item:hover {
+    background-color: #2A2D2E;
+}
+QTreeView::item:selected {
+    background-color: rgba(55, 138, 221, 0.3);
+    color: #FFFFFF;
 }
