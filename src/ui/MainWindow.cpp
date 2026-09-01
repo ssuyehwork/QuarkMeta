@@ -415,6 +415,7 @@ void MainWindow::setupCustomTitleBarButtons() {
     layout->setSpacing(5);
 
     auto createTitleBtn = [this](const QString& iconKey, const QString& hoverColor = "#3E3E42") {
+        Q_UNUSED(hoverColor);
         QPushButton* btn = new QPushButton(this);
         btn->setAttribute(Qt::WA_Hover);
         btn->setFixedSize(24, 24);
@@ -424,6 +425,7 @@ void MainWindow::setupCustomTitleBarButtons() {
         btn->setIconSize(QSize(18, 18));
         
         btn->setObjectName("TitleControlBtn");
+        return btn;
     };
 
     m_btnViewMenu = createTitleBtn("grid");  
@@ -545,6 +547,7 @@ void MainWindow::setupCustomTitleBarButtons() {
 
     m_btnClose = createTitleBtn("close", qssColor(ErrorRed));
     m_btnClose->setObjectName("TitleCloseBtn");
+    m_btnClose->setProperty("tooltipText", "关闭项目");
     m_btnClose->installEventFilter(m_hoverFilter);
 
     m_btnCreate->installEventFilter(m_hoverFilter);
