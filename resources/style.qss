@@ -25,7 +25,7 @@ QSplitter::handle:horizontal:hover {
     background-color: #378ADD;
 }
 
-/* 核心容器样式 - 强化 1 像素物理切割感及 5px 缝隙 */
+/* 核心容器样式 - 强化 1 像素物理切割感及 5px 缝隙 (2px margin + 1px handle + 2px margin) */
 #SidebarContainer, #FavoriteContainer, #ListContainer, #EditorContainer, #MetadataContainer, #FilterContainer {
     background-color: #1E1E1E;
     border: 1px solid #333333;
