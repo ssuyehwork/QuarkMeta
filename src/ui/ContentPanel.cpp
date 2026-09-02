@@ -34,6 +34,10 @@
 
 namespace QuarkMeta {
 
+QTreeView* ContentPanel::treeView() const {
+    return static_cast<QTreeView*>(m_treeView);
+}
+
 ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setObjectName("EditorContainer");
