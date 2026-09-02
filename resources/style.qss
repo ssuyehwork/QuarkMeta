@@ -1822,6 +1822,9 @@ QTreeView {
 QTreeView::branch {
     background: transparent;
 }
+QTreeView::branch:selected {
+    background-color: rgba(55, 138, 221, 0.3);
+}
 QTreeView::branch:has-children:closed {
     image: url(:/Icon/arrow_right.svg);
 }
