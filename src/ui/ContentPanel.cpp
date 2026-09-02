@@ -113,7 +113,7 @@ void ContentPanel::initUi() {
     titleL->setSpacing(5);
 
     QLabel* iconLabel = new QLabel(titleBar);
-    iconLabel->setPixmap(UiHelper::getIcon("eye", QColor("#41F2F2"), 18).pixmap(18, 18));
+    iconLabel->setPixmap(UiHelper::getIcon("image_picture", QColor("#41F2F2"), 18).pixmap(18, 18));
     titleL->addWidget(iconLabel);
 
     QLabel* titleLabel = new QLabel("内容", titleBar);
