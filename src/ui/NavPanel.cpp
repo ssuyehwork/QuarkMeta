@@ -144,6 +144,7 @@ void NavPanel::initUi() {
     m_treeView->setAnimated(true);
     m_treeView->setIndentation(20);
     m_treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_treeView->setAllColumnsShowFocus(true);
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_treeView->setExpandsOnDoubleClick(true);
     m_treeView->setDragEnabled(true);
