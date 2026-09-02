@@ -94,7 +94,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     ToolTipOverlay::instance();
 
-    setMinimumSize(240, 400); 
+    setMinimumSize(475, 400);
     setWindowTitle("QuarkMeta");
 
     m_hoverFilter = new HoverEventFilter(this);
