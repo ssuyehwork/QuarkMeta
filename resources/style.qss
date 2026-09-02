@@ -1822,8 +1822,11 @@ QTreeView {
 QTreeView::branch {
     background: transparent;
 }
+QTreeView::branch:hover {
+    background-color: #2A2D2E;
+}
 QTreeView::branch:selected {
-    background-color: rgba(55, 138, 221, 0.3);
+    background-color: rgba(55, 138, 221, 0.15);
 }
 QTreeView::branch:has-children:closed {
     image: url(:/Icon/arrow_right.svg);
@@ -1842,6 +1845,6 @@ QTreeView::item:hover {
     background-color: #2A2D2E;
 }
 QTreeView::item:selected {
-    background-color: rgba(55, 138, 221, 0.3);
+    background-color: rgba(55, 138, 221, 0.15);
     color: #FFFFFF;
 }
