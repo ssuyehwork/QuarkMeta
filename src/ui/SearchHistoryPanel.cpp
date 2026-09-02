@@ -126,10 +126,14 @@ void SearchHistoryPanel::rebuild() {
 
 void SearchHistoryPanel::showBelow(QWidget* anchor) {
     if (!anchor) return;
-    QPoint pos = anchor->mapToGlobal(QPoint(0, anchor->height() + 3));
-    move(pos);
-    setFixedWidth(anchor->width());
     rebuild();
+    int panelWidth = anchor->width();
+    setFixedWidth(panelWidth);
+
+    QPoint rightPos = anchor->mapToGlobal(QPoint(anchor->width(), anchor->height() + 3));
+    QPoint pos(rightPos.x() - panelWidth, rightPos.y());
+
+    move(pos);
     show();
     raise();
 }
