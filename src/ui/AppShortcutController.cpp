@@ -50,11 +50,11 @@ bool AppShortcutController::isEditingFocus() {
         return true;
     }
 
-    // 4. ItemView 状态检查: 焦点控件属于正在编辑的 QAbstractItemView 内部
-    QWidget* p = focusW;
+    // 4. ItemView 行内编辑器检查: 焦点控件属于 QAbstractItemView 内部的子控件（且既不是 view 本身也不是 viewport）
+    QWidget* p = focusW->parentWidget();
     while (p) {
         if (auto view = qobject_cast<QAbstractItemView*>(p)) {
-            if (view->state() == QAbstractItemView::EditingState) {
+            if (focusW != view && focusW != view->viewport()) {
                 return true;
             }
         }
