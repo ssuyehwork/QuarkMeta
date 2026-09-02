@@ -62,8 +62,6 @@ void PanelLayoutManager::initLayout() {
             selfPtr->updateDynamicMinimumSize();
         }
     });
-
-    updateDynamicMinimumSize();
 }
 
 void PanelLayoutManager::resetSplitterLayout() {
