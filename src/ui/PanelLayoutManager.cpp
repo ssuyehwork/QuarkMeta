@@ -42,15 +42,27 @@ void PanelLayoutManager::initLayout() {
     m_mainSplitter->setStretchFactor(3, 0);
     m_mainSplitter->setStretchFactor(4, 0);
 
+    bool isImmersive = AppConfig::instance().getValue("MainWindow/IsImmersiveMode", false).toBool();
+    if (isImmersive) {
+        if (m_navPanel) m_navPanel->setVisible(false);
+        if (m_favoritePanel) m_favoritePanel->setVisible(false);
+        if (m_metaPanel) m_metaPanel->setVisible(false);
+        if (m_filterPanel) m_filterPanel->setVisible(false);
+        emit panelVisibilityChanged("nav", false);
+        emit panelVisibilityChanged("favorite", false);
+        emit panelVisibilityChanged("meta", false);
+        emit panelVisibilityChanged("filter", false);
+    }
+
     // 【归一化修复】splitter状态恢复必须延迟到下一轮事件循环，确保此时子控件已完成首次布局、窗口geometry已经是最终值
     QByteArray state = AppConfig::instance().getValue("MainWindow/SplitterState").toByteArray();
     QPointer<QSplitter> splitterPtr = m_mainSplitter;
     QPointer<PanelLayoutManager> selfPtr(this);
-    QTimer::singleShot(0, [splitterPtr, state, selfPtr]() {
+    QTimer::singleShot(0, [splitterPtr, state, selfPtr, isImmersive]() {
         if (!splitterPtr) return;
-        if (!state.isEmpty()) {
+        if (!state.isEmpty() && !isImmersive) {
             splitterPtr->restoreState(state);
-        } else {
+        } else if (!isImmersive) {
             QList<int> sizes;
             sizes << kBasePanelWidth << kBasePanelWidth << kContentBaseWidth << kBasePanelWidth << kBasePanelWidth;
             splitterPtr->setSizes(sizes);
@@ -125,6 +137,9 @@ void PanelLayoutManager::savePreImmersiveState() {
     AppConfig::instance().setValue("MainWindow/PreImmersiveFavoriteVisible", isPanelVisible("favorite"));
     AppConfig::instance().setValue("MainWindow/PreImmersiveMetaVisible", isPanelVisible("meta"));
     AppConfig::instance().setValue("MainWindow/PreImmersiveFilterVisible", isPanelVisible("filter"));
+    if (m_mainSplitter) {
+        AppConfig::instance().setValue("MainWindow/PreImmersiveSplitterState", m_mainSplitter->saveState());
+    }
     AppConfig::instance().sync();
 }
 
@@ -133,6 +148,7 @@ void PanelLayoutManager::restorePreImmersiveState() {
     bool favVis = AppConfig::instance().getValue("MainWindow/PreImmersiveFavoriteVisible", true).toBool();
     bool metaVis = AppConfig::instance().getValue("MainWindow/PreImmersiveMetaVisible", true).toBool();
     bool filterVis = AppConfig::instance().getValue("MainWindow/PreImmersiveFilterVisible", true).toBool();
+    QByteArray preSplitterState = AppConfig::instance().getValue("MainWindow/PreImmersiveSplitterState").toByteArray();
 
     if (!navVis && !favVis && !metaVis && !filterVis) {
         navVis = favVis = metaVis = filterVis = true;
@@ -142,6 +158,11 @@ void PanelLayoutManager::restorePreImmersiveState() {
     if (m_favoritePanel) m_favoritePanel->setVisible(favVis);
     if (m_metaPanel) m_metaPanel->setVisible(metaVis);
     if (m_filterPanel) m_filterPanel->setVisible(filterVis);
+
+    if (m_mainSplitter && !preSplitterState.isEmpty()) {
+        m_mainSplitter->restoreState(preSplitterState);
+        m_mainSplitter->setHandleWidth(kSplitterHandleWidth);
+    }
 
     updateDynamicMinimumSize();
     emit panelVisibilityChanged("nav", navVis);
@@ -230,7 +251,12 @@ void PanelLayoutManager::updateDynamicMinimumSize() {
 }
 
 void PanelLayoutManager::saveLayoutState() {
-    if (m_mainSplitter) {
+    AppConfig::instance().setValue("MainWindow/IsImmersiveMode", isImmersiveMode());
+    AppConfig::instance().setValue("MainWindow/NavVisible", isPanelVisible("nav"));
+    AppConfig::instance().setValue("MainWindow/FavoriteVisible", isPanelVisible("favorite"));
+    AppConfig::instance().setValue("MainWindow/MetaVisible", isPanelVisible("meta"));
+    AppConfig::instance().setValue("MainWindow/FilterVisible", isPanelVisible("filter"));
+    if (m_mainSplitter && !isImmersiveMode()) {
         AppConfig::instance().setValue("MainWindow/SplitterState", m_mainSplitter->saveState());
     }
     AppConfig::instance().sync();

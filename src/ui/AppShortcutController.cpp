@@ -25,6 +25,12 @@ AppShortcutController::AppShortcutController(QWidget* targetWindow,
     initShortcuts();
 }
 
+AppShortcutController::~AppShortcutController() {
+    if (qApp) {
+        qApp->removeEventFilter(this);
+    }
+}
+
 bool AppShortcutController::isEditingFocus() {
     QWidget* focusW = QApplication::focusWidget();
     if (!focusW) return false;

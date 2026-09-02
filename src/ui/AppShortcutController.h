@@ -20,7 +20,7 @@ public:
     explicit AppShortcutController(QWidget* targetWindow,
                                   SearchController* searchController,
                                   QObject* parent = nullptr);
-    ~AppShortcutController() override = default;
+    ~AppShortcutController() override;
 
     static bool isEditingFocus();
 
