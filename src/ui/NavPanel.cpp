@@ -170,10 +170,16 @@ void NavPanel::updateRecentVisitedList() {
     m_recentRootItem->removeRows(0, m_recentRootItem->rowCount());
 
     QStringList history = NavigationHistoryService::instance().getHistory();
+    QSet<QString> seenPaths;
     int count = 0;
+
     for (const QString& path : history) {
         if (count >= 14) break;
         if (path.isEmpty() || path == "computer://" || path.startsWith("分类: ")) continue;
+
+        QString normalizedKey = QDir::cleanPath(path).toLower();
+        if (seenPaths.contains(normalizedKey)) continue;
+        seenPaths.insert(normalizedKey);
 
         QFileInfo info(path);
         if (!info.exists() || !info.isDir()) continue;
