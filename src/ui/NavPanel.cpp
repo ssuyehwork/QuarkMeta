@@ -190,7 +190,7 @@ void NavPanel::updateRecentVisitedList() {
 
         QStandardItem* child = new QStandardItem(icon, displayName);
         child->setData(path, Qt::UserRole + 1);
-        child->setToolTip(QDir::toNativeSeparators(path));
+        child->setData(QDir::toNativeSeparators(path), Qt::UserRole + 2);
 
         m_recentRootItem->appendRow(child);
         count++;
