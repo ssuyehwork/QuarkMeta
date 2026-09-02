@@ -1,6 +1,7 @@
 #include "NavigationHistoryService.h"
 #include "AppConfig.h"
 #include "../meta/MetadataManager.h"
+#include <QDir>
 
 namespace QuarkMeta {
 
