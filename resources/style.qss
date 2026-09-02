@@ -1819,6 +1819,15 @@ QTreeView {
     border: none;
     outline: 0;
 }
+QTreeView::branch {
+    background: transparent;
+}
+QTreeView::branch:has-children:closed {
+    image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM3OEFERCI+PHBhdGggZD0iTTkgMThsNi02LTYtNnYxMnoiLz48L3N2Zz4=);
+}
+QTreeView::branch:has-children:open {
+    image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iTTYgOWw2IDYgNi02SDZ6Ii8+PC9zdmc+);
+}
 QTreeView::item {
     height: 28px;
     border: none;
