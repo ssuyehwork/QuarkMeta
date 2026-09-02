@@ -48,6 +48,8 @@ private:
     struct PathNode {
         QString name;
         QString fullPath;
+
+        PathNode(const QString& n, const QString& p) : name(n), fullPath(p) {}
     };
 
     void clearButtons();

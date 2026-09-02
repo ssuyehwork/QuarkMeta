@@ -22,7 +22,7 @@ void BreadcrumbBar::setPath(const QString& path) {
     m_nodes.clear();
 
     if (path == "computer://") {
-        m_nodes.append({"此电脑", "computer://"});
+        m_nodes.append(PathNode("此电脑", "computer://"));
     } else {
         QString normPath = QDir::toNativeSeparators(path);
         QStringList parts = normPath.split(QDir::separator(), Qt::SkipEmptyParts);
@@ -30,7 +30,7 @@ void BreadcrumbBar::setPath(const QString& path) {
         QString currentBuildPath;
         if (normPath.contains(":") && normPath.indexOf(":") == 1) {
             QString drive = normPath.left(3); // "C:\"
-            m_nodes.append({drive, drive});
+            m_nodes.append(PathNode(drive, drive));
             currentBuildPath = drive;
 
             if (parts.size() > 0 && parts[0].contains(":")) {
@@ -43,7 +43,7 @@ void BreadcrumbBar::setPath(const QString& path) {
                 currentBuildPath += QDir::separator();
             }
             currentBuildPath += parts[i];
-            m_nodes.append({parts[i], currentBuildPath});
+            m_nodes.append(PathNode(parts[i], currentBuildPath));
         }
     }
 
