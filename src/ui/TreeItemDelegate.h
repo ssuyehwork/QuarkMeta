@@ -62,9 +62,18 @@ public:
             // 根据控件是否开启斑马纹与行号奇偶精准赋值底色
             bg = (useAlternate && index.row() % 2 == 1) ? QColor("#252526") : QColor("#1E1E1E");
         }
+        // 计算覆盖从 0 到视口最右侧的完整行矩形
+        QRect fullRowRect = option.rect;
+        if (const QAbstractItemView* view = qobject_cast<const QAbstractItemView*>(option.widget)) {
+            if (view->viewport()) {
+                fullRowRect.setLeft(0);
+                fullRowRect.setWidth(view->viewport()->width());
+            }
+        }
+
         painter->setBrush(bg);
         painter->setPen(Qt::NoPen);
-        painter->drawRect(option.rect);
+        painter->drawRect(fullRowRect);
         painter->restore();
 
         QStyleOptionViewItem opt = option;

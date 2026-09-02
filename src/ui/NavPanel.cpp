@@ -96,6 +96,9 @@ void NavPanel::deferredInit() {
     m_model->appendRow(m_recentRootItem);
 
     updateRecentVisitedList();
+    if (m_treeView && m_recentRootItem->index().isValid()) {
+        m_treeView->expand(m_recentRootItem->index());
+    }
 
     // 5. 新增：回收站 (固定主节点，在“最近访问”正下方)
     QIcon trashIcon = UiHelper::getIcon("trash", QColor("#e81123"), 18);
@@ -140,6 +143,8 @@ void NavPanel::initUi() {
     }
     m_treeView->setAnimated(true);
     m_treeView->setIndentation(20);
+    m_treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_treeView->setAllColumnsShowFocus(true);
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_treeView->setExpandsOnDoubleClick(true);
     m_treeView->setDragEnabled(true);
@@ -172,7 +177,7 @@ void NavPanel::updateRecentVisitedList() {
 
     for (const QString& path : history) {
         if (count >= 14) break;
-        if (path.isEmpty() || path == "computer://" || path.startsWith("分类: ")) continue;
+        if (path.isEmpty() || path == "computer://" || path.startsWith("trash") || path.startsWith("分类: ")) continue;
 
         QString normalizedKey = QDir::cleanPath(path).toLower();
         if (seenPaths.contains(normalizedKey)) continue;
@@ -197,10 +202,6 @@ void NavPanel::updateRecentVisitedList() {
 
         m_recentRootItem->appendRow(child);
         count++;
-    }
-
-    if (m_treeView && m_recentRootItem->index().isValid()) {
-        m_treeView->expand(m_recentRootItem->index());
     }
 }
 
