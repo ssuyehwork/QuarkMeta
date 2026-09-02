@@ -1396,7 +1396,7 @@ QWidget#FilterGroupHdrRow {
     border-radius: 4px;
 }
 QPushButton#FilterGroupHdrBtn {
-    background: transparent;
+    background-color: transparent;
     color: #AAAAAA;
     font-size: 11px;
     font-weight: 600;
@@ -1411,19 +1411,24 @@ QPushButton#FilterGroupHdrBtn {
 }
 QPushButton#FilterGroupHdrBtn:hover {
     color: #EEEEEE;
-    background: transparent;
+    background-color: transparent;
 }
 QPushButton#FilterGroupHdrBtn:checked {
-    background: transparent;
+    background-color: transparent;
     color: #EEEEEE;
     border: none;
     outline: none;
 }
+QPushButton#FilterGroupHdrBtn:checked:hover {
+    background-color: transparent;
+    color: #FFFFFF;
+}
 QPushButton#FilterGroupHdrBtn:pressed {
-    background: transparent;
+    background-color: transparent;
     color: #EEEEEE;
 }
 QPushButton#FilterGroupHdrBtn:focus {
+    background-color: transparent;
     outline: none;
 }
 QLabel#FilterItemLabel {
