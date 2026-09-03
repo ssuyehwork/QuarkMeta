@@ -126,12 +126,27 @@ MainWindow::MainWindow(QWidget* parent)
 void MainWindow::initUi() {
     Q_ASSERT(m_hoverFilter && "事件过滤器必须在 initUi() 之前创建");
 
-    // 【归一化修复】窗口自身尺寸必须先于分栏状态确定，否则splitter会基于错误的临时宽度做比例分配
-    QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
-    if (!savedGeom.isEmpty()) {
-        restoreGeometry(savedGeom);
+    // 【归一化修复】：无论上次是否最大化，先给窗口赋予最大化前的常规尺寸（让 Windows 底层登记真实 rcNormalPosition）
+    QRect savedNormal = AppConfig::instance().getValue("MainWindow/NormalGeometry").toRect();
+    if (savedNormal.isValid() && savedNormal.width() >= 475 && savedNormal.height() >= 400) {
+        setGeometry(savedNormal);
+        Logger::log(QString("[MainWindow] initUi applied savedNormal geometry: (%1,%2,%3x%4)")
+            .arg(savedNormal.x()).arg(savedNormal.y()).arg(savedNormal.width()).arg(savedNormal.height()));
     } else {
-        resize(1180, 800);
+        QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
+        if (!savedGeom.isEmpty()) {
+            restoreGeometry(savedGeom);
+            Logger::log("[MainWindow] initUi restored legacy geometry");
+        } else {
+            resize(1180, 800);
+            Logger::log("[MainWindow] initUi resized to default 1180x800");
+        }
+    }
+
+    bool wasMax = AppConfig::instance().getValue("MainWindow/WasMaximized", false).toBool();
+    if (wasMax) {
+        setWindowState(windowState() | Qt::WindowMaximized);
+        Logger::log("[MainWindow] initUi restored maximized state");
     }
 
     initToolbar();
@@ -631,6 +646,19 @@ void MainWindow::changeEvent(QEvent* event) {
 void MainWindow::closeEvent(QCloseEvent* event) {
     AppConfig::instance().setValue("MainWindow/LastPath", NavigationService::instance().currentUrl());
     AppConfig::instance().setValue("MainWindow/Geometry", saveGeometry());
+
+    // 1. 明确记录是否最大化
+    bool maxState = isMaximized();
+    AppConfig::instance().setValue("MainWindow/WasMaximized", maxState);
+
+    // 2. 核心：如果当前是最大化，保存其 normalGeometry；如果是正常状态，直接保存 geometry()
+    QRect normalRect = maxState ? normalGeometry() : geometry();
+    if (normalRect.isValid() && normalRect.width() > 0) {
+        AppConfig::instance().setValue("MainWindow/NormalGeometry", normalRect);
+    }
+
+    Logger::log(QString("[MainWindow] closeEvent saved maxState=%1, normalRect=(%2,%3,%4x%5)")
+        .arg(maxState).arg(normalRect.x()).arg(normalRect.y()).arg(normalRect.width()).arg(normalRect.height()));
 
     if (m_panelLayoutManager) {
         m_panelLayoutManager->saveLayoutState();
