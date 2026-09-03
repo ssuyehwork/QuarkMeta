@@ -797,6 +797,36 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
             }
         }
     }
+
+    if (msg->message == WM_SETCURSOR) {
+        WORD hitTest = LOWORD(msg->lParam);
+        HCURSOR hCursor = nullptr;
+
+        switch (hitTest) {
+        case HTLEFT:
+        case HTRIGHT:
+            hCursor = LoadCursor(NULL, IDC_SIZEWE);
+            break;
+        case HTTOP:
+        case HTBOTTOM:
+            hCursor = LoadCursor(NULL, IDC_SIZENS);
+            break;
+        case HTTOPLEFT:
+        case HTBOTTOMRIGHT:
+            hCursor = LoadCursor(NULL, IDC_SIZENWSE);
+            break;
+        case HTTOPRIGHT:
+        case HTBOTTOMLEFT:
+            hCursor = LoadCursor(NULL, IDC_SIZENESW);
+            break;
+        }
+
+        if (hCursor) {
+            SetCursor(hCursor);
+            *result = TRUE;
+            return true;
+        }
+    }
 #else
     Q_UNUSED(message);
     Q_UNUSED(result);
