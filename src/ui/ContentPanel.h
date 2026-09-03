@@ -89,6 +89,9 @@ public:
     void updateLayersButtonState();
     void restoreActiveView();
     void restoreSelections();
+    void incrementModelGeneration();
+    void reloadThumbnailForPath(const QString& path);
+    bool isTreeView(QObject* view) const;
 
     // 3. 排序策略控制器
     ContentSortController* sortController() const { return m_sortController; }
@@ -191,10 +194,7 @@ private:
 
     // UI 组件指针
     QVBoxLayout* m_mainLayout = nullptr;
-    QPushButton* m_btnLayers = nullptr;
-    QPushButton* m_btnToggleHidden = nullptr;
-    QPushButton* m_btnToggleFolders = nullptr;
-    QPushButton* m_btnToggleFiles = nullptr;
+    class ContentHeaderWidget* m_headerWidget = nullptr;
 
     QStackedWidget* m_viewStack = nullptr;
     QAbstractItemView* m_gridView = nullptr;

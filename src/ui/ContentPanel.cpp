@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "ContentPanel.h"
+#include "ContentHeaderWidget.h"
 #include "controllers/ContentContextMenu.h"
 #include "controllers/ContentKeyHandler.h"
 #include "controllers/ContentSortController.h"
@@ -100,74 +101,28 @@ ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
 }
 
 void ContentPanel::initUi() {
-    QWidget* titleBar = new QWidget(this);
-    titleBar->setObjectName("ContainerHeader");
-    titleBar->setFixedHeight(32);
+    // ── 顶部 Header 区域 ──
+    m_headerWidget = new ContentHeaderWidget(this);
+    m_headerWidget->setFilterState(m_currentFilter);
 
-    QHBoxLayout* titleL = new QHBoxLayout(titleBar);
-    titleL->setContentsMargins(15, 0, 5, 0);
-    titleL->setSpacing(5);
-
-    QLabel* iconLabel = new QLabel(titleBar);
-    iconLabel->setPixmap(UiHelper::getIcon("image_picture", QColor("#41F2F2"), 18).pixmap(18, 18));
-    titleL->addWidget(iconLabel);
-
-    QLabel* titleLabel = new QLabel("内容", titleBar);
-    titleLabel->setObjectName("ContentPanelTitleLabel");
-    titleL->addWidget(titleLabel);
-    titleL->addStretch();
-
-    auto setupToggleBtn = [this, titleBar, titleL](QPushButton*& btn, const QString& icon, const QColor& actCol, bool checked, const QString& tip, auto slot) {
-        btn = new QPushButton(titleBar);
-        btn->setCheckable(true);
-        btn->setFixedSize(24, 24);
-        btn->setChecked(checked);
-        btn->setIcon(UiHelper::getIcon(icon, checked ? actCol : QColor("#888888"), 16));
-        btn->setProperty("tooltipText", tip);
-        btn->installEventFilter(this);
-        btn->setObjectName("ViewModeToolBtn");
-        connect(btn, &QPushButton::clicked, this, slot);
-        titleL->addWidget(btn, 0, Qt::AlignVCenter);
-    };
-
-    setupToggleBtn(m_btnToggleHidden, "eye", QColor("#3498db"), m_currentFilter.showHidden, "显示/隐藏隐藏项目", [this]() {
-        m_currentFilter.showHidden = m_btnToggleHidden->isChecked();
-        m_btnToggleHidden->setIcon(UiHelper::getIcon("eye", m_currentFilter.showHidden ? QColor("#3498db") : QColor("#888888"), 16));
-        AppConfig::instance().setValue("ContentPanel/ShowHidden", m_currentFilter.showHidden);
+    connect(m_headerWidget, &ContentHeaderWidget::filterStateChanged, this, [this](const FilterState& state) {
+        m_currentFilter = state;
+        AppConfig::instance().setValue("ContentPanel/ShowHidden", state.showHidden);
+        AppConfig::instance().setValue("ContentPanel/ShowFolders", state.showFolders);
+        AppConfig::instance().setValue("ContentPanel/ShowFiles", state.showFiles);
         applyFilters();
     });
 
-    setupToggleBtn(m_btnToggleFolders, "folder_filled", QColor("#FDB70A"), m_currentFilter.showFolders, "显示/隐藏文件夹", [this]() {
-        m_currentFilter.showFolders = m_btnToggleFolders->isChecked();
-        m_btnToggleFolders->setIcon(UiHelper::getIcon("folder_filled", m_currentFilter.showFolders ? QColor("#FDB70A") : QColor("#B0B0B0"), 16));
-        AppConfig::instance().setValue("ContentPanel/ShowFolders", m_currentFilter.showFolders);
-        applyFilters();
-    });
-
-    setupToggleBtn(m_btnToggleFiles, "file", QColor("#2ecc71"), m_currentFilter.showFiles, "显示/隐藏文件", [this]() {
-        m_currentFilter.showFiles = m_btnToggleFiles->isChecked();
-        m_btnToggleFiles->setIcon(UiHelper::getIcon("file", m_currentFilter.showFiles ? QColor("#2ecc71") : QColor("#B0B0B0"), 16));
-        AppConfig::instance().setValue("ContentPanel/ShowFiles", m_currentFilter.showFiles);
-        applyFilters();
-    });
-
-    m_btnLayers = new QPushButton(titleBar);
-    m_btnLayers->setCheckable(true);
-    m_btnLayers->setFixedSize(24, 24);
-    m_btnLayers->setIcon(UiHelper::getIcon("layers", QColor("#2ecc71"), 18));
-    m_btnLayers->setProperty("tooltipText", "显示子文件夹中的项目");
-    m_btnLayers->installEventFilter(this);
-    m_btnLayers->setObjectName("ViewModeToolBtn");
-    connect(m_btnLayers, &QPushButton::clicked, this, [this]() {
+    connect(m_headerWidget, &ContentHeaderWidget::recursiveToggled, this, [this](bool recursive) {
         if (m_currentPath.isEmpty() || m_currentPath == "computer://") {
-            m_btnLayers->setChecked(false);
+            if (m_headerWidget) m_headerWidget->setRecursive(false);
             return;
         }
-        loadDirectory(m_currentPath, m_btnLayers->isChecked());
+        m_isRecursive = recursive;
+        loadDirectory(m_currentPath, recursive);
     });
-    titleL->addWidget(m_btnLayers, 0, Qt::AlignVCenter);
 
-    m_mainLayout->addWidget(titleBar);
+    m_mainLayout->addWidget(m_headerWidget);
 
     m_viewStack = new QStackedWidget(this);
     m_viewStack->setFrameShape(QFrame::NoFrame);
@@ -262,9 +217,21 @@ void ContentPanel::applySort() {
 
 void ContentPanel::setIsRecursive(bool recursive) {
     m_isRecursive = recursive;
-    if (m_btnLayers) {
-        m_btnLayers->setChecked(recursive);
+    if (m_headerWidget) {
+        m_headerWidget->setRecursive(recursive);
     }
+}
+
+void ContentPanel::incrementModelGeneration() {
+    if (m_diskModel) m_diskModel->incrementGeneration();
+}
+
+void ContentPanel::reloadThumbnailForPath(const QString& path) {
+    if (m_diskModel) m_diskModel->reloadThumbnailForPath(path);
+}
+
+bool ContentPanel::isTreeView(QObject* view) const {
+    return (view == m_treeView);
 }
 
 void ContentPanel::startVisibleTimer() {
@@ -572,10 +539,9 @@ void ContentPanel::setPendingSelectName(const QString& name, bool edit) {
 }
 
 void ContentPanel::updateLayersButtonState() {
-    if (!m_btnLayers) return;
+    if (!m_headerWidget) return;
     bool isComp = m_currentPath.isEmpty() || m_currentPath == "computer://";
-    m_btnLayers->setEnabled(!isComp);
-    m_btnLayers->setProperty("tooltipText", isComp ? "“此电脑”不支持递归显示" : "显示子文件夹中的项目");
+    m_headerWidget->setLayersEnabled(!isComp, isComp ? "“此电脑”不支持递归显示" : "显示子文件夹中的项目");
 }
 
 ContentPanel::DataSourceType ContentPanel::dataSourceType() const {

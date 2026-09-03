@@ -95,7 +95,7 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
     if (!index.isValid()) return false;
 
     // 1. 网格/自适应视图：归一化 Hitbox 查询
-    if (view != m_panel->treeView()) {
+    if (!m_panel->isTreeView(view)) {
         QRect itemRect = view->visualRect(index);
         CardLayout l = CardLayoutEngine::calculate(itemRect, m_panel->zoomLevel());
         int hitVal = l.hitStar(pos);
