@@ -175,14 +175,6 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
         }
     }
 
-    if (msg->message == WM_NCLBUTTONDOWN) {
-        WPARAM hitTest = msg->wParam;
-        if (hitTest >= HTLEFT && hitTest <= HTBOTTOMRIGHT) {
-            ::ReleaseCapture();
-            *result = ::DefWindowProcW(msg->hwnd, WM_NCLBUTTONDOWN, msg->wParam, msg->lParam);
-            return true;
-        }
-    }
 #else
     Q_UNUSED(message);
     Q_UNUSED(result);
