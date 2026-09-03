@@ -461,7 +461,6 @@ void ContentPanel::updateStatusBarStats() {
         : QString("%1个项目，选中了%2个").arg(visibleCount).arg(selectedCount);
 
     emit statusBarMessageReady(statusText);
-    emit statusBarStatsUpdated(0, 0, visibleCount);
 }
 
 void ContentPanel::recalculateAndEmitStats() {
