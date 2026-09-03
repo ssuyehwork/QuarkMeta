@@ -11,10 +11,10 @@
 #include <QLineEdit>
 #include <QToolButton>
 #include <QSlider>
-#include <cmath>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#include <windowsx.h>
 #endif
 
 namespace QuarkMeta {
@@ -32,11 +32,111 @@ FramelessWindowHelper::FramelessWindowHelper(QWidget* window, QWidget* titleBar)
         m_window->setWindowFlags(requiredFlags);
     }
     
-    // 安装至全局应用事件总线，穿透所有子控件的物理遮蔽
     QCoreApplication::instance()->installEventFilter(this);
+    QCoreApplication::instance()->installNativeEventFilter(this);
 }
 
-FramelessWindowHelper::~FramelessWindowHelper() = default;
+FramelessWindowHelper::~FramelessWindowHelper() {
+    if (QCoreApplication::instance()) {
+        QCoreApplication::instance()->removeNativeEventFilter(this);
+    }
+}
+
+bool FramelessWindowHelper::nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) {
+    Q_UNUSED(eventType);
+#ifdef Q_OS_WIN
+    MSG* msg = static_cast<MSG*>(message);
+    if (!m_window || reinterpret_cast<HWND>(m_window->winId()) != msg->hwnd) {
+        return false;   // 只处理自己管的这个窗口，不要拦别的窗口的消息
+    }
+
+    // 1. 客户区计算：整个窗口都是客户区，不留原生标题栏/边框空间
+    if (msg->message == WM_NCCALCSIZE) {
+        *result = 0;
+        return true;
+    }
+
+    // 2. 最大化尺寸修正：避免盖住任务栏
+    if (msg->message == WM_GETMINMAXINFO) {
+        MINMAXINFO* mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
+        HMONITOR monitor = MonitorFromWindow(msg->hwnd, MONITOR_DEFAULTTONEAREST);
+        if (monitor) {
+            MONITORINFO monitorInfo = {};
+            monitorInfo.cbSize = sizeof(MONITORINFO);
+            GetMonitorInfo(monitor, &monitorInfo);
+            RECT workArea = monitorInfo.rcWork;
+            RECT monitorArea = monitorInfo.rcMonitor;
+            mmi->ptMaxPosition.x = workArea.left - monitorArea.left;
+            mmi->ptMaxPosition.y = workArea.top - monitorArea.top;
+            mmi->ptMaxSize.x = workArea.right - workArea.left;
+            mmi->ptMaxSize.y = workArea.bottom - workArea.top;
+        }
+        *result = 0;
+        return true;
+    }
+
+    // 3. 命中测试：告诉Windows鼠标现在停在哪个可交互区域（标题栏/边缘），把移动和缩放完全交给系统原生处理
+    if (msg->message == WM_NCHITTEST) {
+        if (m_window->isMaximized() || m_window->isFullScreen()) {
+            return false;   // 最大化时不需要边缘缩放判定
+        }
+
+        const LONG dpi = GetDpiForWindow(msg->hwnd);
+        const int margin = MulDiv(kBaseResizeMargin, dpi, 96);
+
+        POINT screenPt = { GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam) };
+        RECT wr;
+        GetWindowRect(msg->hwnd, &wr);
+        int x = screenPt.x - wr.left;
+        int y = screenPt.y - wr.top;
+        int w = wr.right - wr.left;
+        int h = wr.bottom - wr.top;
+
+        bool left   = x >= 0 && x < margin;
+        bool right  = x >= w - margin && x < w;
+        bool top    = y >= 0 && y < margin;
+        bool bottom = y >= h - margin && y < h;
+
+        if (top && left)     { *result = HTTOPLEFT;     return true; }
+        if (top && right)    { *result = HTTOPRIGHT;    return true; }
+        if (bottom && left)  { *result = HTBOTTOMLEFT;  return true; }
+        if (bottom && right) { *result = HTBOTTOMRIGHT; return true; }
+        if (left)            { *result = HTLEFT;        return true; }
+        if (right)           { *result = HTRIGHT;       return true; }
+        if (top)             { *result = HTTOP;         return true; }
+        if (bottom)          { *result = HTBOTTOM;      return true; }
+
+        // 落在标题栏区域内、且不是按钮控件，交给系统原生拖拽移动
+        if (m_titleBar) {
+            QPoint localPt = m_window->mapFromGlobal(QPoint(screenPt.x, screenPt.y));
+            QWidget* childAtPt = m_window->childAt(localPt);
+            bool inTitleBar = m_titleBar->rect().contains(m_titleBar->mapFromGlobal(QPoint(screenPt.x, screenPt.y)));
+
+            bool isInteractive = false;
+            QWidget* wWidget = childAtPt;
+            while (wWidget && wWidget != m_titleBar && wWidget != m_window) {
+                if (qobject_cast<QPushButton*>(wWidget) ||
+                    qobject_cast<QToolButton*>(wWidget) ||
+                    qobject_cast<QLineEdit*>(wWidget) ||
+                    qobject_cast<QSlider*>(wWidget)) {
+                    isInteractive = true;
+                    break;
+                }
+                wWidget = wWidget->parentWidget();
+            }
+
+            if (inTitleBar && !isInteractive) {
+                *result = HTCAPTION;
+                return true;
+            }
+        }
+    }
+#else
+    Q_UNUSED(message);
+    Q_UNUSED(result);
+#endif
+    return false;
+}
 
 void FramelessWindowHelper::setAlwaysOnTop(QWidget* window, bool onTop) {
     if (!window) return;
@@ -59,183 +159,35 @@ bool FramelessWindowHelper::isAlwaysOnTop(QWidget* window) {
     return (window->windowFlags() & Qt::WindowStaysOnTopHint) != 0;
 }
 
-FramelessWindowHelper::ResizeDirection FramelessWindowHelper::calculateResizeDirection(const QPoint& pos) const {
-    if (!m_window || m_window->isMaximized() || m_window->isFullScreen()) return None;
-
-    int margin = kBaseResizeMargin;
-    if (m_window->windowHandle() && m_window->windowHandle()->screen()) {
-        margin = qRound(m_window->windowHandle()->screen()->logicalDotsPerInch() / 96.0 * kBaseResizeMargin);
-    }
-
-    const int w = m_window->width();
-    const int h = m_window->height();
-
-    bool left   = pos.x() >= 0 && pos.x() <= margin;
-    bool right  = pos.x() >= (w - margin) && pos.x() <= w;
-    bool top    = pos.y() >= 0 && pos.y() <= margin;
-    bool bottom = pos.y() >= (h - margin) && pos.y() <= h;
-
-    if (top && left)     return TopLeft;
-    if (top && right)    return TopRight;
-    if (bottom && left)  return BottomLeft;
-    if (bottom && right) return BottomRight;
-    if (left)            return Left;
-    if (right)           return Right;
-    if (top)             return Top;
-    if (bottom)          return Bottom;
-
-    return None;
-}
-
-void FramelessWindowHelper::updateCursorShape(ResizeDirection dir) {
-    if (!m_window) return;
-
-    switch (dir) {
-        case Left:        case Right:       m_window->setCursor(Qt::SizeHorCursor);  break;
-        case Top:         case Bottom:      m_window->setCursor(Qt::SizeVerCursor);  break;
-        case TopLeft:     case BottomRight: m_window->setCursor(Qt::SizeFDiagCursor); break;
-        case TopRight:    case BottomLeft:  m_window->setCursor(Qt::SizeBDiagCursor); break;
-        default:                            m_window->setCursor(Qt::ArrowCursor);    break;
-    }
-}
-
 bool FramelessWindowHelper::eventFilter(QObject* obj, QEvent* event) {
     if (!m_window || !m_window->isVisible()) return false;
 
-    // 仅拦截属于当前窗口及其子控件树的事件
     QWidget* widget = qobject_cast<QWidget*>(obj);
     if (!widget || (widget != m_window && !m_window->isAncestorOf(widget))) {
         return false;
     }
 
-    QEvent::Type type = event->type();
-
-    // 1. 边缘检测与光标切换（监听全窗口范围内所有子控件的 MouseMove / HoverMove）
-    if (type == QEvent::MouseMove || type == QEvent::HoverMove) {
-        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-        QPoint globalPos = mouseEvent->globalPosition().toPoint();
-        QPoint localPos = m_window->mapFromGlobal(globalPos);
-
-        // 如果正在拉伸中，锁定几何形状计算，防止依赖动态 mapFromGlobal 导致原点跳变闪烁
-        if (m_isResizing) {
-            const QPoint delta = globalPos - m_resizeStartGlobalPos;
-            QRect r = m_resizeStartGeometry;
-
-            int minW = m_window->minimumWidth();
-            int minH = m_window->minimumHeight();
-
-            if (m_resizeDir == Left || m_resizeDir == TopLeft || m_resizeDir == BottomLeft) {
-                int newLeft = r.left() + delta.x();
-                if (r.right() - newLeft + 1 < minW) newLeft = r.right() - minW + 1;
-                r.setLeft(newLeft);
+    if (event->type() == QEvent::MouseButtonDblClick && m_titleBar &&
+        (widget == m_titleBar || m_titleBar->isAncestorOf(widget))) {
+        bool isInteractive = false;
+        QWidget* wWidget = widget;
+        while (wWidget && wWidget != m_titleBar && wWidget != m_window) {
+            if (qobject_cast<QPushButton*>(wWidget) ||
+                qobject_cast<QToolButton*>(wWidget) ||
+                qobject_cast<QLineEdit*>(wWidget) ||
+                qobject_cast<QSlider*>(wWidget)) {
+                isInteractive = true;
+                break;
             }
-            if (m_resizeDir == Right || m_resizeDir == TopRight || m_resizeDir == BottomRight) {
-                int newRight = r.right() + delta.x();
-                if (newRight - r.left() + 1 < minW) newRight = r.left() + minW - 1;
-                r.setRight(newRight);
-            }
-            if (m_resizeDir == Top || m_resizeDir == TopLeft || m_resizeDir == TopRight) {
-                int newTop = r.top() + delta.y();
-                if (r.bottom() - newTop + 1 < minH) newTop = r.bottom() - minH + 1;
-                r.setTop(newTop);
-            }
-            if (m_resizeDir == Bottom || m_resizeDir == BottomLeft || m_resizeDir == BottomRight) {
-                int newBottom = r.bottom() + delta.y();
-                if (newBottom - r.top() + 1 < minH) newBottom = r.top() + minH - 1;
-                r.setBottom(newBottom);
-            }
-
-            m_window->setGeometry(r);
-            return true;
+            wWidget = wWidget->parentWidget();
         }
-
-        // 仅在非拉伸非拖拽非最大化时动态更新光标形状
-        if (!m_isDragging && !m_window->isMaximized()) {
-            ResizeDirection dir = calculateResizeDirection(localPos);
-            updateCursorShape(dir);
-            
-            // 如果处于边缘且按住了左键，直接启动拉伸
-            if (dir != None && (mouseEvent->buttons() & Qt::LeftButton)) {
-                m_isResizing = true;
-                m_resizeDir = dir;
-                m_resizeStartGlobalPos = globalPos;
-                m_resizeStartGeometry  = m_window->geometry();
-                return true;
-            }
-        }
-    }
-
-    // 2. 鼠标按下：判定边缘拉伸启动
-    if (type == QEvent::MouseButtonPress) {
-        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-        if (mouseEvent->button() == Qt::LeftButton && !m_window->isMaximized()) {
-            QPoint globalPos = mouseEvent->globalPosition().toPoint();
-            QPoint localPos = m_window->mapFromGlobal(globalPos);
-            ResizeDirection dir = calculateResizeDirection(localPos);
-
-            if (dir != None) {
-                m_isResizing = true;
-                m_isDragging = false;
-                m_resizeDir = dir;
-                m_resizeStartGlobalPos = globalPos;
-                m_resizeStartGeometry  = m_window->geometry();
-                return true; // 消费事件，防止子控件响应点击
-            }
-        }
-    }
-
-    // 3. 鼠标释放：重置状态
-    if (type == QEvent::MouseButtonRelease) {
-        if (m_isResizing) {
-            m_isResizing = false;
-            m_resizeDir = None;
-            updateCursorShape(None);
-            return true;
-        }
-        if (m_isDragging) {
-            m_isDragging = false;
-            return true;
-        }
-    }
-
-    // 4. 标题栏交互（双击最大化与按住拖动窗口）
-    if (m_titleBar && (widget == m_titleBar || m_titleBar->isAncestorOf(widget))) {
-        bool isInteractive = (
-            qobject_cast<QPushButton*>(widget) ||
-            qobject_cast<QToolButton*>(widget) ||
-            qobject_cast<QLineEdit*>(widget) ||
-            qobject_cast<QSlider*>(widget)
-        );
 
         if (!isInteractive) {
-            if (type == QEvent::MouseButtonDblClick) {
-                QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-                if (mouseEvent->button() == Qt::LeftButton) {
-                    if (m_window->isMaximized()) m_window->showNormal();
-                    else m_window->showMaximized();
-                    return true;
-                }
-            } else if (type == QEvent::MouseButtonPress) {
-                QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-                if (mouseEvent->button() == Qt::LeftButton && !m_isResizing) {
-                    m_isDragging = true;
-                    m_dragStartGlobalPos = mouseEvent->globalPosition().toPoint() - m_window->frameGeometry().topLeft();
-                    return true;
-                }
-            } else if (type == QEvent::MouseMove && m_isDragging) {
-                QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-                if (mouseEvent->buttons() & Qt::LeftButton) {
-                    if (m_window->isMaximized()) {
-                        const double ratio = static_cast<double>(mouseEvent->globalPosition().toPoint().x()) / m_window->width();
-                        m_window->showNormal();
-                        const int newX = mouseEvent->globalPosition().toPoint().x() - static_cast<int>(m_window->width() * ratio);
-                        m_window->move(newX, mouseEvent->globalPosition().toPoint().y() - 10);
-                        m_dragStartGlobalPos = mouseEvent->globalPosition().toPoint() - m_window->frameGeometry().topLeft();
-                    } else {
-                        m_window->move(mouseEvent->globalPosition().toPoint() - m_dragStartGlobalPos);
-                    }
-                    return true;
-                }
+            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+            if (mouseEvent->button() == Qt::LeftButton) {
+                if (m_window->isMaximized()) m_window->showNormal();
+                else m_window->showMaximized();
+                return true;
             }
         }
     }
