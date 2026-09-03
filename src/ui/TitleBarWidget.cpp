@@ -127,7 +127,6 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
     m_btnClose = createTitleBtn("close", "关闭项目");
     m_btnClose->setObjectName("TitleCloseBtn");
 
-    QWidget* win = window();
     connect(m_btnMin, &QPushButton::clicked, this, [this]() {
         if (window()) window()->showMinimized();
     });
