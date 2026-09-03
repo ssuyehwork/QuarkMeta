@@ -82,36 +82,19 @@ void MainWindow::initUi() {
     mainL->setContentsMargins(0, 0, 0, 0);
     mainL->setSpacing(0);
 
-    // 1. 标题栏、导航栏与盘符栏子组件组装
+    // 1. 顶层子组件实例化 (TitleBar / NavBar / DriveBar)
     m_titleBarWidget = new TitleBarWidget(centralC, m_hoverFilter);
     m_navBarWidget   = new NavBarWidget(centralC, m_hoverFilter);
     m_driveBarWidget = new DriveBarWidget(centralC);
 
-    // 常用句柄初始化 (保持指针 100% 绑定透明)
-    m_addressBar        = m_navBarWidget->addressBar();
-    m_searchController  = m_navBarWidget->searchController();
-    m_btnBack           = m_navBarWidget->backButton();
-    m_btnForward        = m_navBarWidget->forwardButton();
-    m_btnUp             = m_navBarWidget->upButton();
-
-    m_btnViewMenu       = m_titleBarWidget->btnViewMenu();
-    m_sizeSlider        = m_titleBarWidget->sizeSlider();
-    m_btnToggleDriveBar = m_titleBarWidget->btnToggleDriveBar();
-    m_btnLayout         = m_titleBarWidget->btnLayout();
-    m_btnCreate         = m_titleBarWidget->btnCreate();
-    m_btnPinTop         = m_titleBarWidget->btnPinTop();
-    m_btnMin            = m_titleBarWidget->btnMin();
-    m_btnMax            = m_titleBarWidget->btnMax();
-    m_btnClose          = m_titleBarWidget->btnClose();
-
-    m_driveBarLayout    = m_driveBarWidget->driveBarLayout();
-    m_btnTagManager     = m_driveBarWidget->tagManagerButton();
+    m_addressBar       = m_navBarWidget->addressBar();
+    m_searchController = m_navBarWidget->searchController();
 
     connect(m_titleBarWidget, &TitleBarWidget::driveBarToggleRequested, this, [this](bool visible) {
         if (m_driveBarWidget) m_driveBarWidget->setVisible(visible);
     });
 
-    // 2. 主 Splitter 与 5 大 Panel 挂载
+    // 2. 主 Splitter 与 5 大 Panel 骨架挂载
     QWidget* bodyWrapper = new QWidget(centralC);
     bodyWrapper->setObjectName("BodyWrapper");
     m_bodyLayout = new QVBoxLayout(bodyWrapper);
@@ -138,7 +121,7 @@ void MainWindow::initUi() {
 
     m_titleBarWidget->bindContentPanel(m_contentPanel);
 
-    // 3. 布局管理器与核心控制器（停机坪挂载）
+    // 3. 控制器停机坪挂载
     m_panelLayoutManager = new PanelLayoutManager(this, m_mainSplitter, m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, this);
     m_panelLayoutManager->initLayout();
     m_titleBarWidget->bindLayoutManager(m_panelLayoutManager);
@@ -153,7 +136,9 @@ void MainWindow::initUi() {
 
     m_shortcutController = new AppShortcutController(this, m_searchController, this);
     connect(m_shortcutController, &AppShortcutController::togglePinRequested, this, [this]() {
-        if (m_btnPinTop) m_btnPinTop->setChecked(!m_btnPinTop->isChecked());
+        if (m_titleBarWidget && m_titleBarWidget->btnPinTop()) {
+            m_titleBarWidget->btnPinTop()->setChecked(!m_titleBarWidget->btnPinTop()->isChecked());
+        }
     });
     connect(m_shortcutController, &AppShortcutController::toggleImmersiveRequested, this, [this]() {
         if (m_panelLayoutManager) m_panelLayoutManager->toggleImmersiveMode();
@@ -172,7 +157,9 @@ void MainWindow::initUi() {
     statusL->addWidget(m_statusLeft);
     statusL->addStretch(1);
 
-    connect(m_contentPanel, &ContentPanel::statusBarStatsUpdated, this, &MainWindow::onStatusBarStatsUpdated);
+    connect(m_contentPanel, &ContentPanel::statusBarMessageReady, this, [this](const QString& msg) {
+        if (m_statusLeft) m_statusLeft->setText(msg);
+    });
 
     auto updateStatus = [this]() {
         m_statusLeft->setText(CoreController::instance().statusText());
@@ -187,6 +174,7 @@ void MainWindow::initUi() {
     m_taskProgressToolBar = new TaskProgressToolBar(centralC);
     m_taskProgressToolBar->hide();
 
+    // 5. 将顶级部件拼装至主布局
     mainL->addWidget(m_titleBarWidget);
     mainL->addWidget(m_driveBarWidget);
     mainL->addWidget(m_navBarWidget);
@@ -219,26 +207,10 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 
 void MainWindow::onStatusBarStatsUpdated(int fileCount, int folderCount, int totalCount) {
     Q_UNUSED(fileCount); Q_UNUSED(folderCount); Q_UNUSED(totalCount);
-    if (!m_statusLeft || !m_contentPanel || !m_contentPanel->getProxyModel()) return;
-
-    int visibleCount = m_contentPanel->getProxyModel()->rowCount();
-    int fullCount = m_contentPanel->model() ? m_contentPanel->model()->rowCount() : visibleCount;
-    int hiddenCount = fullCount - visibleCount;
-    int selectedCount = m_contentPanel->getSelectedIndexes().size();
-
-    QString statusText = (hiddenCount > 0)
-        ? QString("%1个项目，%2个已隐藏，选中了%3个").arg(visibleCount).arg(hiddenCount).arg(selectedCount)
-        : QString("%1个项目，选中了%2个").arg(visibleCount).arg(selectedCount);
-
-    m_statusLeft->setText(statusText);
 }
 
 void MainWindow::updateStatusBar() {
     onStatusBarStatsUpdated(0, 0, 0);
-}
-
-void MainWindow::onPinToggled(bool checked) {
-    Q_UNUSED(checked);
 }
 
 void MainWindow::changeEvent(QEvent* event) {
@@ -246,9 +218,9 @@ void MainWindow::changeEvent(QEvent* event) {
         if (isMinimized() && m_searchController && m_searchController->historyPanel()) {
             m_searchController->historyPanel()->hide();
         }
-        if (m_btnMax) {
+        if (m_titleBarWidget && m_titleBarWidget->btnMax()) {
             QString iconKey = isMaximized() ? "restore_line" : "maximize";
-            m_btnMax->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
+            m_titleBarWidget->btnMax()->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
         }
         if (m_bodyLayout) {
             m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin);

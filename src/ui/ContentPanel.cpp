@@ -450,7 +450,18 @@ void ContentPanel::emitSelectionChangedSignal() {
 }
 
 void ContentPanel::updateStatusBarStats() {
-    if (m_proxyModel) emit statusBarStatsUpdated(0, 0, m_proxyModel->rowCount());
+    if (!m_proxyModel) return;
+    int visibleCount = m_proxyModel->rowCount();
+    int fullCount = m_model ? m_model->rowCount() : visibleCount;
+    int hiddenCount = fullCount - visibleCount;
+    int selectedCount = getSelectedIndexes().size();
+
+    QString statusText = (hiddenCount > 0)
+        ? QString("%1个项目，%2个已隐藏，选中了%3个").arg(visibleCount).arg(hiddenCount).arg(selectedCount)
+        : QString("%1个项目，选中了%2个").arg(visibleCount).arg(selectedCount);
+
+    emit statusBarMessageReady(statusText);
+    emit statusBarStatsUpdated(0, 0, visibleCount);
 }
 
 void ContentPanel::recalculateAndEmitStats() {

@@ -149,6 +149,7 @@ signals:
     void dataSourceChanged(const QString& source);
     void directoryStatsReady(const QuarkMeta::ScanStats& stats);
     void statusBarStatsUpdated(int fileCount, int folderCount, int totalCount);
+    void statusBarMessageReady(const QString& message);
 
 public slots:
     void setZoomLevel(int level);

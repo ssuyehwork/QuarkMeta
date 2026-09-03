@@ -59,15 +59,9 @@ protected:
     void keyPressEvent(QKeyEvent* event) override;
     void changeEvent(QEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
-    // 2026-04-11 按照用户要求：showEvent 是执行 ToolTipOverlay GPU 真实预热的唯一合法时机
     void showEvent(QShowEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
-
-private slots:
-    void onPinToggled(bool checked);
-
-protected:
     void closeEvent(QCloseEvent* event) override;
 
 private:
@@ -80,11 +74,11 @@ private:
     void initUi();
     void updateStatusBar();
 
-    // 复合地址栏与控制器句柄
+    // 导航与搜索组件句柄
     AddressBar* m_addressBar = nullptr;
     SearchController* m_searchController = nullptr;
 
-    // UI Panels
+    // 5 大核心面板与 Splitter
     NavPanel* m_navPanel = nullptr;
     FavoritePanel* m_favoritePanel = nullptr;
     ContentPanel* m_contentPanel = nullptr;
@@ -92,25 +86,6 @@ private:
     FilterPanel* m_filterPanel = nullptr;
 
     QSplitter* m_mainSplitter = nullptr;
-
-    // 常用控件转发句柄 (保持 100% 向后兼容)
-    QPushButton* m_btnBack    = nullptr;
-    QPushButton* m_btnForward = nullptr;
-    QPushButton* m_btnUp      = nullptr;
-
-    QPushButton* m_btnViewMenu = nullptr;
-    QSlider* m_sizeSlider = nullptr;
-
-    QPushButton* m_btnToggleDriveBar = nullptr;
-    QPushButton* m_btnLayout = nullptr;
-    QPushButton* m_btnCreate = nullptr;
-    QPushButton* m_btnPinTop = nullptr;
-    QPushButton* m_btnMin = nullptr;
-    QPushButton* m_btnMax = nullptr;
-    QPushButton* m_btnClose = nullptr;
-
-    QHBoxLayout* m_driveBarLayout = nullptr;
-    QPushButton* m_btnTagManager = nullptr;
 
     // 状态管理
     bool m_isPinned = false;
