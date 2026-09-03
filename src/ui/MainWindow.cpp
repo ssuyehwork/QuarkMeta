@@ -64,6 +64,9 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QSlider>
+#include <QAbstractButton>
+#include <QComboBox>
+#include <QSpinBox>
 #include "UiHelper.h"
 #include "StyleLibrary.h"
 #include "SvgIconRenderer.h"
@@ -718,7 +721,17 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
     MSG* msg = static_cast<MSG*>(message);
 
     if (msg->message == WM_NCCALCSIZE) {
-        // 告诉Windows：客户区 = 整个窗口矩形（不留标题栏/边框空间，因为我们自己画标题栏）
+        if (msg->wParam == TRUE && isMaximized()) {
+            NCCALCSIZE_PARAMS* pnc = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
+            HMONITOR monitor = MonitorFromWindow(msg->hwnd, MONITOR_DEFAULTTONEAREST);
+            if (monitor) {
+                MONITORINFO monitorInfo = {};
+                monitorInfo.cbSize = sizeof(MONITORINFO);
+                if (GetMonitorInfo(monitor, &monitorInfo)) {
+                    pnc->rgrc[0] = monitorInfo.rcWork;
+                }
+            }
+        }
         *result = 0;
         return true;
     }
@@ -748,7 +761,17 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
         POINT screenPt = { GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam) };
 
         if (!isMaximized() && !isFullScreen()) {
-            const int margin = 6;
+            LONG dpi = 96;
+            HMODULE user32 = GetModuleHandleW(L"user32.dll");
+            if (user32) {
+                using GetDpiForWindowFunc = UINT(WINAPI*)(HWND);
+                auto pGetDpiForWindow = reinterpret_cast<GetDpiForWindowFunc>(GetProcAddress(user32, "GetDpiForWindow"));
+                if (pGetDpiForWindow) {
+                    dpi = static_cast<LONG>(pGetDpiForWindow(msg->hwnd));
+                }
+            }
+            const int margin = MulDiv(6, dpi, 96);
+
             RECT wr;
             if (GetWindowRect(msg->hwnd, &wr)) {
                 int x = screenPt.x - wr.left;
@@ -781,10 +804,11 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
             bool isInteractive = false;
             QWidget* wWidget = childAtPt;
             while (wWidget && wWidget != m_titleBarWidget && wWidget != this) {
-                if (qobject_cast<QPushButton*>(wWidget) ||
-                    qobject_cast<QToolButton*>(wWidget) ||
+                if (qobject_cast<QAbstractButton*>(wWidget) ||
                     qobject_cast<QLineEdit*>(wWidget) ||
-                    qobject_cast<QSlider*>(wWidget)) {
+                    qobject_cast<QSlider*>(wWidget) ||
+                    qobject_cast<QComboBox*>(wWidget) ||
+                    qobject_cast<QSpinBox*>(wWidget)) {
                     isInteractive = true;
                     break;
                 }
