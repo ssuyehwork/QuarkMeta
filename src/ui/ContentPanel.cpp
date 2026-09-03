@@ -80,13 +80,9 @@ ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
     });
 
     m_zoomLevel = AppConfig::instance().getValue("UI/GridZoomLevel", 96).toInt();
-    m_showFolders = AppConfig::instance().getValue("ContentPanel/ShowFolders", true).toBool();
-    m_showFiles = AppConfig::instance().getValue("ContentPanel/ShowFiles", true).toBool();
-    m_showHidden = AppConfig::instance().getValue("ContentPanel/ShowHidden", false).toBool();
-
-    m_currentFilter.showFolders = m_showFolders;
-    m_currentFilter.showFiles = m_showFiles;
-    m_currentFilter.showHidden = m_showHidden;
+    m_currentFilter.showFolders = AppConfig::instance().getValue("ContentPanel/ShowFolders", true).toBool();
+    m_currentFilter.showFiles = AppConfig::instance().getValue("ContentPanel/ShowFiles", true).toBool();
+    m_currentFilter.showHidden = AppConfig::instance().getValue("ContentPanel/ShowHidden", false).toBool();
 
     connect(&TrashService::instance(), &TrashService::trashOperationCompleted, this, &ContentPanel::refreshAll);
     connect(&PermanentDeleteService::instance(), &PermanentDeleteService::permanentDeleteCompleted, this, &ContentPanel::refreshAll);
@@ -134,27 +130,24 @@ void ContentPanel::initUi() {
         titleL->addWidget(btn, 0, Qt::AlignVCenter);
     };
 
-    setupToggleBtn(m_btnToggleHidden, "eye", QColor("#3498db"), m_showHidden, "显示/隐藏隐藏项目", [this]() {
-        m_showHidden = m_btnToggleHidden->isChecked();
-        m_btnToggleHidden->setIcon(UiHelper::getIcon("eye", m_showHidden ? QColor("#3498db") : QColor("#888888"), 16));
-        AppConfig::instance().setValue("ContentPanel/ShowHidden", m_showHidden);
-        m_currentFilter.showHidden = m_showHidden;
+    setupToggleBtn(m_btnToggleHidden, "eye", QColor("#3498db"), m_currentFilter.showHidden, "显示/隐藏隐藏项目", [this]() {
+        m_currentFilter.showHidden = m_btnToggleHidden->isChecked();
+        m_btnToggleHidden->setIcon(UiHelper::getIcon("eye", m_currentFilter.showHidden ? QColor("#3498db") : QColor("#888888"), 16));
+        AppConfig::instance().setValue("ContentPanel/ShowHidden", m_currentFilter.showHidden);
         applyFilters();
     });
 
-    setupToggleBtn(m_btnToggleFolders, "folder_filled", QColor("#FDB70A"), m_showFolders, "显示/隐藏文件夹", [this]() {
-        m_showFolders = m_btnToggleFolders->isChecked();
-        m_btnToggleFolders->setIcon(UiHelper::getIcon("folder_filled", m_showFolders ? QColor("#FDB70A") : QColor("#B0B0B0"), 16));
-        AppConfig::instance().setValue("ContentPanel/ShowFolders", m_showFolders);
-        m_currentFilter.showFolders = m_showFolders;
+    setupToggleBtn(m_btnToggleFolders, "folder_filled", QColor("#FDB70A"), m_currentFilter.showFolders, "显示/隐藏文件夹", [this]() {
+        m_currentFilter.showFolders = m_btnToggleFolders->isChecked();
+        m_btnToggleFolders->setIcon(UiHelper::getIcon("folder_filled", m_currentFilter.showFolders ? QColor("#FDB70A") : QColor("#B0B0B0"), 16));
+        AppConfig::instance().setValue("ContentPanel/ShowFolders", m_currentFilter.showFolders);
         applyFilters();
     });
 
-    setupToggleBtn(m_btnToggleFiles, "file", QColor("#2ecc71"), m_showFiles, "显示/隐藏文件", [this]() {
-        m_showFiles = m_btnToggleFiles->isChecked();
-        m_btnToggleFiles->setIcon(UiHelper::getIcon("file", m_showFiles ? QColor("#2ecc71") : QColor("#B0B0B0"), 16));
-        AppConfig::instance().setValue("ContentPanel/ShowFiles", m_showFiles);
-        m_currentFilter.showFiles = m_showFiles;
+    setupToggleBtn(m_btnToggleFiles, "file", QColor("#2ecc71"), m_currentFilter.showFiles, "显示/隐藏文件", [this]() {
+        m_currentFilter.showFiles = m_btnToggleFiles->isChecked();
+        m_btnToggleFiles->setIcon(UiHelper::getIcon("file", m_currentFilter.showFiles ? QColor("#2ecc71") : QColor("#B0B0B0"), 16));
+        AppConfig::instance().setValue("ContentPanel/ShowFiles", m_currentFilter.showFiles);
         applyFilters();
     });
 
@@ -264,6 +257,13 @@ void ContentPanel::ensureSourceModelIsDiskModel() {
 void ContentPanel::applySort() {
     if (m_sortController) {
         m_sortController->applySortToModel(m_proxyModel);
+    }
+}
+
+void ContentPanel::setIsRecursive(bool recursive) {
+    m_currentFilter.isRecursive = recursive;
+    if (m_btnLayers) {
+        m_btnLayers->setChecked(recursive);
     }
 }
 
