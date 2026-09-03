@@ -25,6 +25,8 @@ class HoverEventFilter;
 class AddressBar;
 class TaskProgressToolBar;
 class SearchController; 
+class DriveBarWidget;
+class NavBarWidget;
 class NavPanel;
 class FavoritePanel;
 class ContentPanel;
@@ -73,14 +75,8 @@ private:
     QHBoxLayout* m_titleBarLayout = nullptr;
     QLabel* m_logoLabel = nullptr;
     QLabel* m_appNameLabel = nullptr;
-    QWidget* m_navBarWidget = nullptr;
-    QVBoxLayout* m_navBarMainLayout = nullptr;
-    QWidget* m_navRow1Widget = nullptr;
-    QHBoxLayout* m_navRow1Layout = nullptr;
-    bool m_navBarIsTwoRowMode = false;
+    NavBarWidget* m_navBarWidget = nullptr;
     QVBoxLayout* m_bodyLayout = nullptr; // 2026-05-08 按照用户要求：提升为成员变量以支持动态边距切换
-
-    void updateNavBarResponsiveLayout();
 
     void initUi();
     void updateStatusBar();
@@ -123,7 +119,7 @@ private:
     QPushButton* m_btnClose = nullptr;
 
     // 盘符管理栏组件
-    QWidget* m_driveBarWidget = nullptr;
+    DriveBarWidget* m_driveBarWidget = nullptr;
     QHBoxLayout* m_driveBarLayout = nullptr;
     QPushButton* m_btnTagManager = nullptr;
 

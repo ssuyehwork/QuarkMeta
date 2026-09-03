@@ -5,6 +5,8 @@
 #include "AppShortcutController.h"
 #include "PanelMediator.h"
 #include "SearchController.h" 
+#include "DriveBarWidget.h"
+#include "NavBarWidget.h"
 #include "SearchHistoryPanel.h" 
 #include <QDateTime>
 #include <algorithm>
@@ -207,49 +209,12 @@ bool MainWindow::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void MainWindow::initToolbar() {
-    auto createBtn = [this](const QString& iconKey, const QString& tip) -> QPushButton* {
-        QPushButton* btn = new QPushButton(this);
-        btn->setAttribute(Qt::WA_Hover);
-        btn->setFixedSize(32, 28);
-        
-        QIcon icon = UiHelper::getIcon(iconKey, QColor("#EEEEEE"));
-        btn->setIcon(icon);
-        btn->setIconSize(QSize(18, 18));
-        
-        btn->setProperty("tooltipText", tip);
-        btn->installEventFilter(this);
-
-        btn->setObjectName("NavControlBtn");
-        return btn;
-    };
-
-    m_btnBack = createBtn("nav_prev", "");
-    m_btnBack->setProperty("tooltipText", "后退");
-    m_btnBack->installEventFilter(m_hoverFilter);
-
-    m_btnForward = createBtn("nav_next", "");
-    m_btnForward->setProperty("tooltipText", "前进");
-    m_btnForward->installEventFilter(m_hoverFilter);
-
-    m_btnUp = createBtn("arrow_up", "");
-    m_btnUp->setProperty("tooltipText", "上级");
-    m_btnUp->installEventFilter(m_hoverFilter);
-
-    connect(m_btnBack, &QPushButton::clicked, &NavigationService::instance(), &NavigationService::goBack);
-    connect(m_btnForward, &QPushButton::clicked, &NavigationService::instance(), &NavigationService::goForward);
-    connect(m_btnUp, &QPushButton::clicked, &NavigationService::instance(), &NavigationService::goUp);
-
-    connect(&NavigationService::instance(), &NavigationService::navStateChanged, this,
-            [this](bool canBack, bool canForward, bool canUp) {
-        m_btnBack->setEnabled(canBack);
-        m_btnForward->setEnabled(canForward);
-        m_btnUp->setEnabled(canUp);
-    });
-
-    m_addressBar = new AddressBar(this);
-    m_addressBar->setMinimumWidth(80);
-
-    m_searchController = new SearchController(this);
+    m_navBarWidget = new NavBarWidget(this, m_hoverFilter);
+    m_addressBar = m_navBarWidget->addressBar();
+    m_searchController = m_navBarWidget->searchController();
+    m_btnBack = m_navBarWidget->backButton();
+    m_btnForward = m_navBarWidget->forwardButton();
+    m_btnUp = m_navBarWidget->upButton();
 }
 
 void MainWindow::setupSplitters() {
@@ -279,30 +244,6 @@ void MainWindow::setupSplitters() {
     m_appNameLabel->setObjectName("AppNameLabel");
     m_titleBarLayout->addWidget(m_appNameLabel);
     m_titleBarLayout->addStretch();
-
-    m_navBarWidget = new QWidget(centralC);
-    m_navBarWidget->setObjectName("NavBar");
-    m_navBarWidget->setFixedHeight(42); 
-
-    m_navBarMainLayout = new QVBoxLayout(m_navBarWidget);
-    m_navBarMainLayout->setContentsMargins(kLayoutEdgeMargin, 2, kLayoutEdgeMargin, 2);
-    m_navBarMainLayout->setSpacing(2);
-
-    m_navRow1Widget = new QWidget(m_navBarWidget);
-    m_navRow1Layout = new QHBoxLayout(m_navRow1Widget);
-    m_navRow1Layout->setContentsMargins(0, 0, 0, 0);
-    m_navRow1Layout->setSpacing(5);
-    m_navRow1Layout->setAlignment(Qt::AlignVCenter);
-
-    m_navRow1Layout->addWidget(m_btnBack);
-    m_navRow1Layout->addWidget(m_btnForward);
-    m_navRow1Layout->addWidget(m_btnUp);
-    m_navRow1Layout->addWidget(m_addressBar, 1);
-    if (m_searchController && m_searchController->toolbarWidget()) {
-        m_navRow1Layout->addWidget(m_searchController->toolbarWidget());
-    }
-
-    m_navBarMainLayout->addWidget(m_navRow1Widget);
 
     QWidget* bodyWrapper = new QWidget(centralC);
     bodyWrapper->setObjectName("BodyWrapper");
@@ -637,62 +578,13 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 }
 
 void MainWindow::initDriveBar() {
-    m_driveBarWidget = new QWidget(this);
-    m_driveBarWidget->setObjectName("DriveBar");
-    m_driveBarWidget->setFixedHeight(42);
-
-    m_driveBarLayout = new QHBoxLayout(m_driveBarWidget);
-    m_driveBarLayout->setContentsMargins(15, 5, 15, 5);
-    m_driveBarLayout->setSpacing(8);
-
-    m_btnTagManager = new QPushButton(UiHelper::getIcon("tag", QColor("#1abc9c"), 18), " 标签管理", m_driveBarWidget);
-    m_btnTagManager->setFixedHeight(28);
-    m_btnTagManager->setCursor(Qt::PointingHandCursor);
-    m_btnTagManager->setObjectName("BtnTagManager");
-
-    connect(m_btnTagManager, &QPushButton::clicked, this, [this]() {
-        TagManagerDialog::showDialog(this, NavigationService::instance().currentUrl(), false);
-    });
-
-    m_driveBarLayout->addWidget(m_btnTagManager);
-    m_driveBarLayout->addStretch();
-}
-
-void MainWindow::updateNavBarResponsiveLayout() {
-    if (!m_navBarWidget || !m_searchController || !m_searchController->toolbarWidget()) return;
-
-    QWidget* searchW = m_searchController->toolbarWidget();
-    QLineEdit* searchEdit = m_searchController->searchEdit();
-
-    // 规则一：响应式折行
-    // 窄屏判别阈值：当 m_navBarWidget 宽度不足以容纳 [前进/后退/上级]+[最小地址栏]+[搜索框] 时（约 650px）
-    bool needTwoRow = (m_navBarWidget->width() < 650);
-
-    if (needTwoRow && !m_navBarIsTwoRowMode) {
-        m_navBarIsTwoRowMode = true;
-        m_navRow1Layout->removeWidget(searchW);
-        m_navBarMainLayout->addWidget(searchW);
-        if (searchEdit) {
-            searchEdit->setFixedWidth(QWIDGETSIZE_MAX);
-            searchEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        }
-        searchW->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        m_navBarWidget->setFixedHeight(78);
-    } else if (!needTwoRow && m_navBarIsTwoRowMode) {
-        m_navBarIsTwoRowMode = false;
-        m_navBarMainLayout->removeWidget(searchW);
-        m_navRow1Layout->addWidget(searchW);
-        if (searchEdit) {
-            searchEdit->setFixedSize(230, 32);
-        }
-        searchW->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-        m_navBarWidget->setFixedHeight(42);
-    }
+    m_driveBarWidget = new DriveBarWidget(this);
+    m_driveBarLayout = m_driveBarWidget->driveBarLayout();
+    m_btnTagManager  = m_driveBarWidget->tagManagerButton();
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event) {
     QMainWindow::resizeEvent(event);
-    updateNavBarResponsiveLayout();
 }
 
 bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
