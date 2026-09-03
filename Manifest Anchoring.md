@@ -291,7 +291,24 @@
 
 ---
 
-# 📋 架构职责档案库 ([02] - [06])
+# 📋 架构职责档案库 ([01] - [06])
+
+[01] src/main.cpp
+模块归属：外壳与应用启动层 (Native Shell & Lifecycle)
+职责数量：6
+职责 1：初始化 QApplication 框架并配置高 DPI 缩放策略
+职责 2：执行 Win32/跨平台单实例互斥量哨兵检测
+职责 3：设置全局 QPalette 暗黑主题调色板
+职责 4：初始化 Win32 COM 环境亲和性
+职责 5：初始化与启动中控控制器 CoreController
+职责 6：挂接 aboutToQuit 信号并执行四阶段 Clean Shutdown 优雅清场闭卷
+持有的核心状态/字段：HANDLE hMutex（单实例句柄）、QApplication a（全局应用实例）
+异味与风险诊断：
+【造轮子判定】：无
+【打补丁判定】：无
+【归属判定】：纯粹（属于程序入口与全局生命周期接管）
+
+
 
 [02] src/core/CentralEventHub.cpp
 模块归属：全局解耦事件总线 (Event Bus)
