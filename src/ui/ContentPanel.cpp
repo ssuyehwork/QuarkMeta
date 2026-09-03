@@ -333,17 +333,7 @@ void ContentPanel::onDoubleClicked(const QModelIndex& index) {
     if (QFileInfo(path).isDir()) {
         emit directorySelected(path);
     } else {
-        AppCommand cmd;
-        cmd.type = AppCommandType::RecordAccess;
-        cmd.targetPaths << path;
-        CoreEngine::instance().executeCommand(cmd);
-
-        QString ext = QFileInfo(path).suffix().toLower();
-        static const QSet<QString> whiteList = {
-            "jpg", "jpeg", "png", "bmp", "webp", "gif", "ico", "cur", "ani", "psd", "ai", "eps", "pdf", "svg",
-            "txt", "md", "markdown", "log", "cpp", "h", "hpp", "c", "py", "js", "css", "html", "json", "xml", "ini", "conf", "yaml", "yml"
-        };
-        if (whiteList.contains(ext)) emit requestQuickLook(path);
+        emit fileActivated(path);
     }
 }
 
@@ -472,13 +462,14 @@ void ContentPanel::recalculateAndEmitStats() {
 
 void ContentPanel::refreshVisibleThumbnails() {
     QAbstractItemView* view = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
-    if (!view || !m_model || CoreController::isShuttingDown()) return;
+    if (!view || !m_model || !m_proxyModel || CoreController::isShuttingDown() || !view->viewport()) return;
 
-    int top = 0, bottom = m_proxyModel->rowCount() - 1;
-    QModelIndex topIdx = view->indexAt(QPoint(10, 10));
-    QModelIndex btmIdx = view->indexAt(QPoint(view->viewport()->width() - 10, view->viewport()->height() - 10));
-    if (topIdx.isValid()) top = qMax(0, topIdx.row() - 4);
-    if (btmIdx.isValid()) bottom = qMin(m_proxyModel->rowCount() - 1, btmIdx.row() + 4);
+    QRect vpRect = view->viewport()->rect();
+    QModelIndex topIdx = view->indexAt(vpRect.topLeft());
+    QModelIndex btmIdx = view->indexAt(vpRect.bottomRight());
+
+    int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : 0;
+    int bottom = btmIdx.isValid() ? qMin(m_proxyModel->rowCount() - 1, btmIdx.row() + 4) : m_proxyModel->rowCount() - 1;
 
     QList<int> visibleRows;
     for (int r = top; r <= bottom; ++r) {

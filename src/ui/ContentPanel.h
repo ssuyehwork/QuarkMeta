@@ -143,6 +143,7 @@ signals:
     void zoomLevelChanged(int level);
     void viewModeChanged(ViewMode mode);
     void requestQuickLook(const QString& path);
+    void fileActivated(const QString& path);
     void selectionChanged(const QStringList& paths);
     void directorySelected(const QString& path);
     void requestAddFavorite(const QStringList& paths);
