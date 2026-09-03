@@ -261,7 +261,7 @@ void ContentPanel::applySort() {
 }
 
 void ContentPanel::setIsRecursive(bool recursive) {
-    m_currentFilter.isRecursive = recursive;
+    m_isRecursive = recursive;
     if (m_btnLayers) {
         m_btnLayers->setChecked(recursive);
     }
@@ -386,11 +386,14 @@ void ContentPanel::updateGridSize() {
 
 void ContentPanel::applyFilters(const FilterState& state) {
     QString currentKw = m_currentFilter.keyword; // 1. 暂存当前搜索框中的活跃关键词
+    bool sf = m_currentFilter.showFolders;
+    bool sfi = m_currentFilter.showFiles;
+    bool sh = m_currentFilter.showHidden;
     m_currentFilter = state;
     m_currentFilter.keyword = currentKw;          // 2. 锁定并恢复关键词，严禁被空状态冲刷
-    m_currentFilter.showFolders = m_showFolders;
-    m_currentFilter.showFiles = m_showFiles;
-    m_currentFilter.showHidden = m_showHidden;
+    m_currentFilter.showFolders = sf;
+    m_currentFilter.showFiles = sfi;
+    m_currentFilter.showHidden = sh;
     applyFilters();
 }
 
@@ -418,13 +421,7 @@ void ContentPanel::migrateModelCache(const QString& oldPath, const QString& newP
 void ContentPanel::clearFolderCache(const QString& folderPath) { if (m_model) m_model->clearCacheForFolder(folderPath); }
 
 void ContentPanel::onSelectionChanged() {
-    if (!m_selectionTimer) {
-        m_selectionTimer = new QTimer(this);
-        m_selectionTimer->setSingleShot(true);
-        m_selectionTimer->setInterval(30);
-        connect(m_selectionTimer, &QTimer::timeout, this, &ContentPanel::emitSelectionChangedSignal);
-    }
-    m_selectionTimer->start();
+    emitSelectionChangedSignal();
 }
 
 void ContentPanel::emitSelectionChangedSignal() {

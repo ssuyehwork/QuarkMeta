@@ -67,7 +67,7 @@ public:
 
     // 1. 状态与配置查询
     QString currentPath() const { return m_currentPath; }
-    bool isRecursive() const { return m_currentFilter.isRecursive; }
+    bool isRecursive() const { return m_isRecursive; }
     int zoomLevel() const { return m_zoomLevel; }
     ViewMode currentViewMode() const { return m_currentViewMode; }
     bool canPaste(const QString& targetOverride = QString()) const;
@@ -183,6 +183,7 @@ private:
     QSet<QString> m_pendingSelectNames;
     bool m_isPendingEdit = false;
     QString m_currentCategoryType;
+    bool m_isRecursive = false;
     ViewMode m_currentViewMode = GridView;
     std::atomic<bool> m_isLoading{false};
     bool m_isContextMenuActive = false;
