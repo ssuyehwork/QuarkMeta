@@ -25,6 +25,7 @@ class HoverEventFilter;
 class AddressBar;
 class TaskProgressToolBar;
 class SearchController; 
+class TitleBarWidget;
 class DriveBarWidget;
 class NavBarWidget;
 class NavPanel;
@@ -71,24 +72,18 @@ protected:
 
 private:
 
-    QWidget* m_titleBarWidget = nullptr;
-    QHBoxLayout* m_titleBarLayout = nullptr;
-    QLabel* m_logoLabel = nullptr;
-    QLabel* m_appNameLabel = nullptr;
+    TitleBarWidget* m_titleBarWidget = nullptr;
     NavBarWidget* m_navBarWidget = nullptr;
-    QVBoxLayout* m_bodyLayout = nullptr; // 2026-05-08 按照用户要求：提升为成员变量以支持动态边距切换
+    DriveBarWidget* m_driveBarWidget = nullptr;
+    QVBoxLayout* m_bodyLayout = nullptr;
 
     void initUi();
     void updateStatusBar();
-    void initDriveBar();
 
-    void initToolbar();
-    void setupSplitters();
-    void setupCustomTitleBarButtons();
-
-    // 复合地址栏
+    // 复合地址栏与控制器句柄
     AddressBar* m_addressBar = nullptr;
-    
+    SearchController* m_searchController = nullptr;
+
     // UI Panels
     NavPanel* m_navPanel = nullptr;
     FavoritePanel* m_favoritePanel = nullptr;
@@ -98,18 +93,14 @@ private:
 
     QSplitter* m_mainSplitter = nullptr;
 
-    // 工具栏组件
+    // 常用控件转发句柄 (保持 100% 向后兼容)
     QPushButton* m_btnBack    = nullptr;
     QPushButton* m_btnForward = nullptr;
     QPushButton* m_btnUp      = nullptr;
 
-    SearchController* m_searchController = nullptr;
-    
-    // 排列方式视图按钮及中性缩放滑杆 (Modification_Plan-47)
     QPushButton* m_btnViewMenu = nullptr;
     QSlider* m_sizeSlider = nullptr;
 
-    // 标题栏按钮组 (用于 frameless 时的模拟，此处作为标准按钮展示)
     QPushButton* m_btnToggleDriveBar = nullptr;
     QPushButton* m_btnLayout = nullptr;
     QPushButton* m_btnCreate = nullptr;
@@ -118,8 +109,6 @@ private:
     QPushButton* m_btnMax = nullptr;
     QPushButton* m_btnClose = nullptr;
 
-    // 盘符管理栏组件
-    DriveBarWidget* m_driveBarWidget = nullptr;
     QHBoxLayout* m_driveBarLayout = nullptr;
     QPushButton* m_btnTagManager = nullptr;
 

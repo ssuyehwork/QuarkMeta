@@ -183,6 +183,8 @@ set(SOURCES
     src/ui/DriveBarWidget.cpp
     src/ui/NavBarWidget.h
     src/ui/NavBarWidget.cpp
+    src/ui/TitleBarWidget.h
+    src/ui/TitleBarWidget.cpp
     src/ui/SearchController.h
     src/ui/SearchController.cpp
     src/ui/TrayController.cpp
