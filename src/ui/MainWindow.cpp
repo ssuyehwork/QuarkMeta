@@ -36,11 +36,6 @@
 #include "TaskProgressToolBar.h"
 #include "../core/VolumeOnlineManager.h"
 
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <windowsx.h>
-#endif
-
 #include "SearchHistoryPanel.h"
 #include "SvgIcons.h"
 
@@ -64,9 +59,6 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QSlider>
-#include <QAbstractButton>
-#include <QComboBox>
-#include <QSpinBox>
 #include "UiHelper.h"
 #include "StyleLibrary.h"
 #include "SvgIconRenderer.h"
@@ -112,7 +104,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     initUi();
 
-    FramelessWindowHelper::apply(this, m_titleBarWidget);
+    m_framelessHelper = FramelessWindowHelper::apply(this, m_titleBarWidget);
     if (m_isPinned) {
         FramelessWindowHelper::setAlwaysOnTop(this, true);
     }
@@ -716,146 +708,10 @@ void MainWindow::resizeEvent(QResizeEvent* event) {
 }
 
 bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
-    Q_UNUSED(eventType);
-#ifdef Q_OS_WIN
-    MSG* msg = static_cast<MSG*>(message);
-
-    if (msg->message == WM_NCCALCSIZE) {
-        if (msg->wParam == TRUE && isMaximized()) {
-            NCCALCSIZE_PARAMS* pnc = reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
-            HMONITOR monitor = MonitorFromWindow(msg->hwnd, MONITOR_DEFAULTTONEAREST);
-            if (monitor) {
-                MONITORINFO monitorInfo = {};
-                monitorInfo.cbSize = sizeof(MONITORINFO);
-                if (GetMonitorInfo(monitor, &monitorInfo)) {
-                    pnc->rgrc[0] = monitorInfo.rcWork;
-                }
-            }
-        }
-        *result = 0;
+    if (m_framelessHelper && m_framelessHelper->handleNativeEvent(message, result)) {
         return true;
     }
-
-    if (msg->message == WM_GETMINMAXINFO) {
-        // 修正最大化时的尺寸，让它精确匹配"工作区"（即排除任务栏后的可用屏幕区域）
-        MINMAXINFO* mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
-        HMONITOR monitor = MonitorFromWindow(msg->hwnd, MONITOR_DEFAULTTONEAREST);
-        if (monitor) {
-            MONITORINFO monitorInfo = {};
-            monitorInfo.cbSize = sizeof(MONITORINFO);
-            GetMonitorInfo(monitor, &monitorInfo);
-
-            RECT workArea = monitorInfo.rcWork;
-            RECT monitorArea = monitorInfo.rcMonitor;
-
-            mmi->ptMaxPosition.x = workArea.left - monitorArea.left;
-            mmi->ptMaxPosition.y = workArea.top - monitorArea.top;
-            mmi->ptMaxSize.x = workArea.right - workArea.left;
-            mmi->ptMaxSize.y = workArea.bottom - workArea.top;
-        }
-        *result = 0;
-        return true;
-    }
-
-    if (msg->message == WM_NCHITTEST) {
-        POINT screenPt = { GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam) };
-
-        if (!isMaximized() && !isFullScreen()) {
-            LONG dpi = 96;
-            HMODULE user32 = GetModuleHandleW(L"user32.dll");
-            if (user32) {
-                using GetDpiForWindowFunc = UINT(WINAPI*)(HWND);
-                auto pGetDpiForWindow = reinterpret_cast<GetDpiForWindowFunc>(GetProcAddress(user32, "GetDpiForWindow"));
-                if (pGetDpiForWindow) {
-                    dpi = static_cast<LONG>(pGetDpiForWindow(msg->hwnd));
-                }
-            }
-            const int margin = MulDiv(6, dpi, 96);
-
-            RECT wr;
-            if (GetWindowRect(msg->hwnd, &wr)) {
-                int x = screenPt.x - wr.left;
-                int y = screenPt.y - wr.top;
-                int w = wr.right - wr.left;
-                int h = wr.bottom - wr.top;
-
-                bool left   = x >= 0 && x < margin;
-                bool right  = x >= w - margin && x < w;
-                bool top    = y >= 0 && y < margin;
-                bool bottom = y >= h - margin && y < h;
-
-                if (top && left)     { *result = HTTOPLEFT;     return true; }
-                if (top && right)    { *result = HTTOPRIGHT;    return true; }
-                if (bottom && left)  { *result = HTBOTTOMLEFT;  return true; }
-                if (bottom && right) { *result = HTBOTTOMRIGHT; return true; }
-                if (left)            { *result = HTLEFT;        return true; }
-                if (right)           { *result = HTRIGHT;       return true; }
-                if (top)             { *result = HTTOP;         return true; }
-                if (bottom)          { *result = HTBOTTOM;      return true; }
-            }
-        }
-
-        // 标题栏 HTCAPTION 响应（非交互组件位置返回 HTCAPTION 由 Windows 原生驱动平滑拖拽）
-        if (m_titleBarWidget) {
-            QPoint localPt = mapFromGlobal(QPoint(screenPt.x, screenPt.y));
-            QWidget* childAtPt = childAt(localPt);
-            bool inTitleBar = m_titleBarWidget->rect().contains(m_titleBarWidget->mapFromGlobal(QPoint(screenPt.x, screenPt.y)));
-
-            bool isInteractive = false;
-            QWidget* wWidget = childAtPt;
-            while (wWidget && wWidget != m_titleBarWidget && wWidget != this) {
-                if (qobject_cast<QAbstractButton*>(wWidget) ||
-                    qobject_cast<QLineEdit*>(wWidget) ||
-                    qobject_cast<QSlider*>(wWidget) ||
-                    qobject_cast<QComboBox*>(wWidget) ||
-                    qobject_cast<QSpinBox*>(wWidget)) {
-                    isInteractive = true;
-                    break;
-                }
-                wWidget = wWidget->parentWidget();
-            }
-
-            if (inTitleBar && !isInteractive) {
-                *result = HTCAPTION;
-                return true;
-            }
-        }
-    }
-
-    if (msg->message == WM_SETCURSOR) {
-        WORD hitTest = LOWORD(msg->lParam);
-        HCURSOR hCursor = nullptr;
-
-        switch (hitTest) {
-        case HTLEFT:
-        case HTRIGHT:
-            hCursor = LoadCursor(NULL, IDC_SIZEWE);
-            break;
-        case HTTOP:
-        case HTBOTTOM:
-            hCursor = LoadCursor(NULL, IDC_SIZENS);
-            break;
-        case HTTOPLEFT:
-        case HTBOTTOMRIGHT:
-            hCursor = LoadCursor(NULL, IDC_SIZENWSE);
-            break;
-        case HTTOPRIGHT:
-        case HTBOTTOMLEFT:
-            hCursor = LoadCursor(NULL, IDC_SIZENESW);
-            break;
-        }
-
-        if (hCursor) {
-            SetCursor(hCursor);
-            *result = TRUE;
-            return true;
-        }
-    }
-#else
-    Q_UNUSED(message);
-    Q_UNUSED(result);
-#endif
-    return false;
+    return QMainWindow::nativeEvent(eventType, message, result);
 }
 
 } // namespace QuarkMeta

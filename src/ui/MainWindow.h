@@ -34,6 +34,7 @@ class SearchHistoryPanel;
 class AppShortcutController;
 class PanelMediator;
 class PanelLayoutManager;
+class FramelessWindowHelper;
 
 /**
  * @brief 主窗口类
@@ -158,6 +159,7 @@ private:
     AppShortcutController* m_shortcutController = nullptr;
     PanelMediator* m_panelMediator = nullptr;
     PanelLayoutManager*       m_panelLayoutManager = nullptr;
+    FramelessWindowHelper*    m_framelessHelper = nullptr;
 
 };
 
