@@ -740,6 +740,60 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
         *result = 0;
         return true;
     }
+
+    if (msg->message == WM_NCHITTEST) {
+        POINT screenPt = { GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam) };
+
+        if (!isMaximized() && !isFullScreen()) {
+            const int margin = 6;
+            RECT wr;
+            if (GetWindowRect(msg->hwnd, &wr)) {
+                int x = screenPt.x - wr.left;
+                int y = screenPt.y - wr.top;
+                int w = wr.right - wr.left;
+                int h = wr.bottom - wr.top;
+
+                bool left   = x >= 0 && x < margin;
+                bool right  = x >= w - margin && x < w;
+                bool top    = y >= 0 && y < margin;
+                bool bottom = y >= h - margin && y < h;
+
+                if (top && left)     { *result = HTTOPLEFT;     return true; }
+                if (top && right)    { *result = HTTOPRIGHT;    return true; }
+                if (bottom && left)  { *result = HTBOTTOMLEFT;  return true; }
+                if (bottom && right) { *result = HTBOTTOMRIGHT; return true; }
+                if (left)            { *result = HTLEFT;        return true; }
+                if (right)           { *result = HTRIGHT;       return true; }
+                if (top)             { *result = HTTOP;         return true; }
+                if (bottom)          { *result = HTBOTTOM;      return true; }
+            }
+        }
+
+        // 标题栏 HTCAPTION 响应（非交互组件位置返回 HTCAPTION 由 Windows 原生驱动平滑拖拽）
+        if (m_titleBarWidget) {
+            QPoint localPt = mapFromGlobal(QPoint(screenPt.x, screenPt.y));
+            QWidget* childAtPt = childAt(localPt);
+            bool inTitleBar = m_titleBarWidget->rect().contains(m_titleBarWidget->mapFromGlobal(QPoint(screenPt.x, screenPt.y)));
+
+            bool isInteractive = false;
+            QWidget* wWidget = childAtPt;
+            while (wWidget && wWidget != m_titleBarWidget && wWidget != this) {
+                if (qobject_cast<QPushButton*>(wWidget) ||
+                    qobject_cast<QToolButton*>(wWidget) ||
+                    qobject_cast<QLineEdit*>(wWidget) ||
+                    qobject_cast<QSlider*>(wWidget)) {
+                    isInteractive = true;
+                    break;
+                }
+                wWidget = wWidget->parentWidget();
+            }
+
+            if (inTitleBar && !isInteractive) {
+                *result = HTCAPTION;
+                return true;
+            }
+        }
+    }
 #else
     Q_UNUSED(message);
     Q_UNUSED(result);
