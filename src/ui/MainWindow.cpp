@@ -5,6 +5,8 @@
 #include "TitleBarWidget.h"
 #include "NavBarWidget.h"
 #include "DriveBarWidget.h"
+#include "UiHelper.h"
+#include "SearchHistoryPanel.h"
 #include "AppShortcutController.h"
 #include "PanelMediator.h"
 #include "SearchController.h"
