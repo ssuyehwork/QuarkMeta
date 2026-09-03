@@ -88,6 +88,11 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
                     mmi->ptMaxSize.y = workArea.bottom - workArea.top;
                 }
             }
+            if (m_window) {
+                QSize minSz = m_window->minimumSize();
+                if (minSz.width() > 0) mmi->ptMinTrackSize.x = minSz.width();
+                if (minSz.height() > 0) mmi->ptMinTrackSize.y = minSz.height();
+            }
         }
         *result = 0;
         return true;
@@ -171,6 +176,41 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
         if (hCursor) {
             ::SetCursor(hCursor);
             *result = TRUE;
+            return true;
+        }
+    }
+
+    if (msg->message == WM_NCLBUTTONDOWN) {
+        WPARAM hitTest = msg->wParam;
+        if (hitTest >= HTLEFT && hitTest <= HTBOTTOMRIGHT) {
+            int dir = 0;
+            switch (hitTest) {
+            case HTLEFT:        dir = 1; break; // WMSZ_LEFT
+            case HTRIGHT:       dir = 2; break; // WMSZ_RIGHT
+            case HTTOP:         dir = 3; break; // WMSZ_TOP
+            case HTTOPLEFT:     dir = 4; break; // WMSZ_TOPLEFT
+            case HTTOPRIGHT:    dir = 5; break; // WMSZ_TOPRIGHT
+            case HTBOTTOM:      dir = 6; break; // WMSZ_BOTTOM
+            case HTBOTTOMLEFT:  dir = 7; break; // WMSZ_BOTTOMLEFT
+            case HTBOTTOMRIGHT: dir = 8; break; // WMSZ_BOTTOMRIGHT
+            }
+            if (dir > 0) {
+                ::ReleaseCapture();
+                ::SendMessageW(msg->hwnd, WM_SYSCOMMAND, 0xF000 | dir, msg->lParam);
+                *result = 0;
+                return true;
+            }
+        }
+    }
+
+    if (msg->message == WM_NCLBUTTONDBLCLK) {
+        if (msg->wParam == HTCAPTION) {
+            if (m_window->isMaximized()) {
+                m_window->showNormal();
+            } else {
+                m_window->showMaximized();
+            }
+            *result = 0;
             return true;
         }
     }
