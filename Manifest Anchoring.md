@@ -285,3 +285,19 @@
 [262] src/util/DeepThumbnailExtractor.cpp
 [263] src/util/ShellHelper.cpp
 [264] src/util/ShellHelper.h
+
+### 📄 [05] src/core/CoreEngine.h
+- **模块归属**：业务决策与调度指挥中心 (Domain Core)
+- **核心职责**：核心业务决策大脑的接口与数据结构定义。定义 `AppCommandType` 命令枚举、`AppCommand` 数据包结构及 `CancellationToken` 异步取消令牌，声明命令执行入口 `executeCommand` 与各类属性修改私有处理句柄。
+
+### 📄 [06] src/core/CoreController.cpp
+- **模块归属**：核心中控控制器 (Core Controller)
+- **核心职责**：系统中控控制器的核心逻辑实现。负责在启动阶段顺序预热底层单例与设备监听器，提供系统初始化序列 `startSystem`，以及实现基于双轨模式（内存极速检索 + 磁盘 I/O 流式补全）的异步搜索 `performSearch` 与任务中止机制。
+
+### 📄 [07] src/core/CoreController.h
+- **模块归属**：核心中控控制器 (Core Controller)
+- **核心职责**：系统中控控制器的接口声明与全局状态属性定义。声明 `isIndexing` 与 `statusText` 属性，提供全局初始化 `initializeCoreComponents`、全局导航代际号管理、异步搜索 `performSearch` 接口及搜索状态信号。
+
+### 📄 [08] src/core/PhysicalDiskSearchExtractor.cpp
+- **模块归属**：磁盘搜索提取工具 (Search Extractor)
+- **核心职责**：物理磁盘递归搜索引擎实现。使用 `QDirIterator` 深度遍历指定目录，执行文件名不区分大小写的关键词匹配与 `seenPaths` 内存去重，采用 50 项批次流式回调通知，支持原子标志位实时中断。
