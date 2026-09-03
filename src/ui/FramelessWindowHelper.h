@@ -8,10 +8,11 @@
 #include <QPoint>
 #include <QRect>
 #include <QPointer>
+#include <QAbstractNativeEventFilter>
 
 namespace QuarkMeta {
 
-class FramelessWindowHelper : public QObject {
+class FramelessWindowHelper : public QObject, public QAbstractNativeEventFilter {
     Q_OBJECT
 
 public:
@@ -19,12 +20,14 @@ public:
     static void setAlwaysOnTop(QWidget* window, bool onTop);
     static bool isAlwaysOnTop(QWidget* window);
 
+    bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override;
+
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
     explicit FramelessWindowHelper(QWidget* window, QWidget* titleBar = nullptr);
-    ~FramelessWindowHelper() override = default;
+    ~FramelessWindowHelper() override;
 
     enum ResizeDirection {
         None = 0,
