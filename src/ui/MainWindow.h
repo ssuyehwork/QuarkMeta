@@ -86,22 +86,12 @@ private:
     void updateStatusBar();
     void initDriveBar();
 
-    /**
-     * @brief 统一导航调度向前兼容转调接口
-     */
-    void unifiedNavigateTo(const QString& url, bool record = true);
-
     void initToolbar();
     void setupSplitters();
     void setupCustomTitleBarButtons();
-    void resetSplitterLayout();
 
     // 复合地址栏
     AddressBar* m_addressBar = nullptr;
-
-    // 六个面板
-    // 2026-04-11 按照用户要求：记录当前预览的文件路径，用于驱动方向键切图
-    QString m_currentQuickLookPath;
     
     // UI Panels
     NavPanel* m_navPanel = nullptr;
@@ -113,7 +103,6 @@ private:
     QSplitter* m_mainSplitter = nullptr;
 
     // 工具栏组件
-    QToolBar* m_toolbar    = nullptr;
     QPushButton* m_btnBack    = nullptr;
     QPushButton* m_btnForward = nullptr;
     QPushButton* m_btnUp      = nullptr;
@@ -137,11 +126,9 @@ private:
     QWidget* m_driveBarWidget = nullptr;
     QHBoxLayout* m_driveBarLayout = nullptr;
     QPushButton* m_btnTagManager = nullptr;
-    void onDriveBarContextMenu(const QPoint& pos);
 
     // 状态管理
     bool m_isPinned = false;
-    QString m_currentDataSource; // "category" or "nav"
     bool m_panelsInitialized = false; // 2026-04-12 状态锁：确保面板仅初始化一次
 
     // 底部状态栏
@@ -149,11 +136,9 @@ private:
     QWidget* m_statusBarWidget = nullptr;
     TaskProgressToolBar* m_taskProgressToolBar = nullptr;
 
-
     // 系统托盘控制器
     TrayController* m_trayController = nullptr;
     HoverEventFilter*     m_hoverFilter     = nullptr;
-    QTimer* m_sidebarRefreshTimer = nullptr;
 
     // 模块化控制器与中介者
     AppShortcutController* m_shortcutController = nullptr;

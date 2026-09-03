@@ -88,7 +88,7 @@ MainWindow::~MainWindow() {
 }
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent), m_currentDataSource("nav") {
+    : QMainWindow(parent) {
     setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint);
 
     m_panelsInitialized = false;
@@ -332,7 +332,6 @@ void MainWindow::setupSplitters() {
     m_filterPanel->setObjectName("FilterContainer");
 
     connect(m_contentPanel, &ContentPanel::dataSourceChanged, this, [this](const QString& source) {
-        m_currentDataSource = source;
         if (m_navPanel) m_navPanel->setFocusHighlight(source == "nav");
     });
 
@@ -564,10 +563,6 @@ void MainWindow::setupCustomTitleBarButtons() {
     connect(m_btnPinTop, &QPushButton::toggled, this, &MainWindow::onPinToggled);
 }
 
-void MainWindow::unifiedNavigateTo(const QString& url, bool record) {
-    NavigationService::instance().navigateTo(url, record);
-}
-
 void MainWindow::onStatusBarStatsUpdated(int fileCount, int folderCount, int totalCount) {
     if (!m_statusLeft || !m_contentPanel || !m_contentPanel->getProxyModel()) return;
 
@@ -646,9 +641,6 @@ void MainWindow::initDriveBar() {
     m_driveBarWidget->setObjectName("DriveBar");
     m_driveBarWidget->setFixedHeight(42);
     // DriveBar style in style.qss
-    m_driveBarWidget->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_driveBarWidget, &QWidget::customContextMenuRequested, this, &MainWindow::onDriveBarContextMenu);
-
     m_driveBarLayout = new QHBoxLayout(m_driveBarWidget);
     m_driveBarLayout->setContentsMargins(15, 5, 15, 5);
     m_driveBarLayout->setSpacing(8);
@@ -664,10 +656,6 @@ void MainWindow::initDriveBar() {
 
     m_driveBarLayout->addWidget(m_btnTagManager);
     m_driveBarLayout->addStretch();
-}
-
-void MainWindow::onDriveBarContextMenu(const QPoint& pos) {
-    Q_UNUSED(pos);
 }
 
 void MainWindow::updateNavBarResponsiveLayout() {
