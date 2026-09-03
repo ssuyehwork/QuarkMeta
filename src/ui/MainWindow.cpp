@@ -60,6 +60,10 @@
 #include <QWidgetAction>
 #include <QGridLayout>
 #include <QTimer>
+#include <QToolButton>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QSlider>
 #include "UiHelper.h"
 #include "StyleLibrary.h"
 #include "SvgIconRenderer.h"
@@ -75,7 +79,6 @@ using namespace QuarkMeta::Style;
 #include "FramelessDialog.h"
 #include "FramelessFileDialog.h"
 #include "../core/NavigationService.h"
-#include <QSlider>
 #include <QStyle>
 #include <QSignalBlocker>
 
