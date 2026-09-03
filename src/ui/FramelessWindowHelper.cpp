@@ -36,6 +36,8 @@ FramelessWindowHelper::FramelessWindowHelper(QWidget* window, QWidget* titleBar)
     QCoreApplication::instance()->installEventFilter(this);
 }
 
+FramelessWindowHelper::~FramelessWindowHelper() = default;
+
 void FramelessWindowHelper::setAlwaysOnTop(QWidget* window, bool onTop) {
     if (!window) return;
 

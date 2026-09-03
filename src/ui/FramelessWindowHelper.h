@@ -24,7 +24,7 @@ protected:
 
 private:
     explicit FramelessWindowHelper(QWidget* window, QWidget* titleBar = nullptr);
-    ~FramelessWindowHelper() override = default;
+    ~FramelessWindowHelper() override;
 
     enum ResizeDirection {
         None = 0,
