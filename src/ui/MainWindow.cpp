@@ -91,6 +91,8 @@ MainWindow::~MainWindow() {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), m_currentDataSource("nav") {
+    setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint);
+
     m_panelsInitialized = false;
 
     ToolTipOverlay::instance();
