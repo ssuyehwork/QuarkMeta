@@ -291,72 +291,62 @@
 
 ---
 
-# 📋 架构职责档案库 (Files [01] - [05])
+# 📋 架构职责档案库 ([02] - [06])
 
-## `[01] src/main.cpp`
-- **模块归属**：外壳与应用启动层 (Native Shell & Lifecycle)
-- **职责数量**：6
-  - 职责 1：初始化 `QApplication` 框架并配置高 DPI 缩放策略
-  - 职责 2：执行 Win32/跨平台单实例互斥量哨兵检测
-  - 职责 3：设置全局 `QPalette` 暗黑主题调色板
-  - 职责 4：初始化 Win32 COM 环境亲和性
-  - 职责 5：初始化与启动中控控制器 `CoreController`
-  - 职责 6：挂接 `aboutToQuit` 信号并执行四阶段 Clean Shutdown 优雅清场闭卷
-- **持有的核心状态/字段**：`HANDLE hMutex`（单实例句柄）、`QApplication a`（全局应用实例）
-- **异味与风险诊断**：
-  - 【造轮子判定】：无
-  - 【打补丁判定】：无
-  - 【归属判定】：纯粹（属于程序入口与全局生命周期接管）
+[02] src/core/CentralEventHub.cpp
+模块归属：全局解耦事件总线 (Event Bus)
+职责数量：2
+职责 1：注册 QuarkMeta::AppEvent 元类型以支持 Qt 跨线程信号槽传输
+职责 2：发射 eventOccurred 信号向全系统解耦广播 AppEvent 数据包
+持有的核心状态/字段：static CentralEventHub s_instance（单例静态实例引用）
+异味与风险诊断：
+【造轮子判定】：无
+【打补丁判定】：无
+【归属判定】：纯粹（属于全局解耦事件总线实现）
 
----
+[03] src/core/CentralEventHub.h
+模块归属：全局解耦事件总线 (Event Bus)
+职责数量：2
+职责 1：定义 AppEventType 强类型事件枚举与 AppEvent 统一数据包结构体
+职责 2：声明 CentralEventHub 单例接口、publishEvent 广播入口及 eventOccurred 信号
+持有的核心状态/字段：无成员变量（无状态消息传输中枢）
+异味与风险诊断：
+【造轮子判定】：无
+【打补丁判定】：无
+【归属判定】：纯粹（属于事件定义与总线声明）
 
-## `[02] src/core/CentralEventHub.cpp`
-- **模块归属**：全局解耦事件总线 (Event Bus)
-- **职责数量**：2
-  - 职责 1：注册 `QuarkMeta::AppEvent` 元类型
-  - 职责 2：发射 `eventOccurred` 信号解耦广播 `AppEvent`
-- **持有的核心状态/字段**：`static CentralEventHub s_instance`（单例静态实例引用）
-- **异味与风险诊断**：
-  - 【造轮子判定】：无
-  - 【打补丁判定】：无
-  - 【归属判定】：纯粹（属于全局事件解耦总线实现）
+[04] src/core/CoreEngine.cpp
+模块归属：业务决策与调度指挥中心 (Domain Core)
+职责数量：3
+职责 1：路由与分发 AppCommand 业务命令（星级、颜色、标签、置顶、备注、网址、访问历史等）
+职责 2：校验命令合法性并调度 MetadataManager 与 TagLexiconService 执行真实写盘与状态修改
+职责 3：操作成功后构造 AppEvent 并驱动 CentralEventHub 进行全网增量事件广播
+持有的核心状态/字段：static CoreEngine s_instance（静态单例对象）
+异味与风险诊断：
+【造轮子判定】：部分命令（如 handleSetRating、handleSetColor）直接在本类内部循环触发事件广播，与 src/core/commands/ 命令模式层存在潜在逻辑分流重叠
+【打补丁判定】：无
+【归属判定】：纯粹（属于领域核心决策与指挥大脑）
 
----
+[05] src/core/CoreEngine.h
+模块归属：业务决策与调度指挥中心 (Domain Core)
+职责数量：2
+职责 1：定义 AppCommandType 强类型命令枚举与 AppCommand 命令数据包结构
+职责 2：定义 CancellationToken 线程安全取消令牌与 CoreEngine 单例接口声明
+持有的核心状态/字段：std::atomic<bool> m_canceled（位于 CancellationToken 中，持有取消状态原子标志）
+异味与风险诊断：
+【造轮子判定】：无
+【打补丁判定】：无
+【归属判定】：纯粹（属于命令接口与取消令牌定义）
 
-## `[03] src/core/CentralEventHub.h`
-- **模块归属**：全局解耦事件总线 (Event Bus)
-- **职责数量**：2
-  - 职责 1：定义 `AppEventType` 强类型事件枚举与 `AppEvent` 统一数据包结构体
-  - 职责 2：声明 `CentralEventHub` 单例接口与 `publishEvent` 广播入口
-- **持有的核心状态/字段**：无成员变量（纯无状态消息传输中枢）
-- **异味与风险诊断**：
-  - 【造轮子判定】：无
-  - 【打补丁判定】：无
-  - 【归属判定】：纯粹（属于事件定义与总线声明）
-
----
-
-## `[04] src/core/CoreEngine.cpp`
-- **模块归属**：业务决策与调度指挥中心 (Domain Core)
-- **职责数量**：3
-  - 职责 1：路由与分发 `AppCommand` 业务命令（星级/颜色/标签/置顶/备注/网址/访问历史）
-  - 职责 2：校验命令合法性并调度 `MetadataManager` 与 `TagLexiconService` 执行真实写盘
-  - 职责 3：操作完成后构造 `AppEvent` 并驱动 `CentralEventHub` 进行全网广播
-- **持有的核心状态/字段**：`static CoreEngine s_instance`（静态单例对象）
-- **异味与风险诊断**：
-  - 【造轮子判定】：部分命令（如 `handleSetRating`、`handleSetColor`）直接在本类循环广播，与 Command 命令模式层存在潜在职责边界混淆
-  - 【打补丁判定】：无
-  - 【归属判定】：纯粹（属于领域核心决策与指挥大脑）
-
----
-
-## `[05] src/core/CoreEngine.h`
-- **模块归属**：业务决策与调度指挥中心 (Domain Core)
-- **职责数量**：2
-  - 职责 1：定义 `AppCommandType` 强类型命令枚举与 `AppCommand` 命令数据包结构
-  - 职责 2：定义 `CancellationToken` 线程安全取消令牌与 `CoreEngine` 单例接口声明
-- **持有的核心状态/字段**：`std::atomic<bool> m_canceled`（位于 `CancellationToken` 中，持有取消状态原子标志）
-- **异味与风险诊断**：
-  - 【造轮子判定】：无
-  - 【打补丁判定】：无
-  - 【归属判定】：纯粹（属于命令接口与取消令牌定义）
+[06] src/core/CoreController.cpp
+模块归属：核心中控控制器 (Core Controller)
+职责数量：4
+职责 1：按顺序预热和初始化设备监听器 DeviceWatcher、数据库 DatabaseManager、元数据 MetadataManager 与特征提取 MediaExtractorPipeline
+职责 2：管理异步系统启动链条 startSystem 并更新系统就绪状态文本
+职责 3：协调基于双轨模式（内存极速检索 + 磁盘 I/O 流式补全）的异步搜索 performSearch 与 abortSearch 中止机制
+职责 4：维护全局导航代际号 s_navigationGeneration 与系统停机状态标志 s_isShuttingDown
+持有的核心状态/字段：std::atomic<bool> m_isSearchAborted、std::atomic<bool> m_isSearching、std::atomic<int> m_currentSearchId、static std::atomic<bool> s_isShuttingDown、static std::atomic<uint64_t> s_navigationGeneration
+异味与风险诊断：
+【造轮子判定】：无
+【打补丁判定】：存在初始化定时器 failureFlushTimer 周期性异步触发 DiskMediaExtractor::flushPendingFailures 的定时落盘补丁迹象
+【归属判定】：纯粹（属于中控协调与初始化流程管理）
