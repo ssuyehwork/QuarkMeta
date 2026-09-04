@@ -1,13 +1,24 @@
 #include "ContentHeaderWidget.h"
 #include "UiHelper.h"
 #include "../core/AppConfig.h"
+#include <QStyleOption>
+#include <QPainter>
 
 namespace QuarkMeta {
 
 ContentHeaderWidget::ContentHeaderWidget(QWidget* parent)
     : QWidget(parent) {
-    setFixedHeight(28);
+    setAttribute(Qt::WA_StyledBackground, true);
+    setFixedHeight(32);
     initUi();
+}
+
+void ContentHeaderWidget::paintEvent(QPaintEvent* event) {
+    Q_UNUSED(event);
+    QStyleOption opt;
+    opt.initFrom(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
 
 void ContentHeaderWidget::initUi() {
