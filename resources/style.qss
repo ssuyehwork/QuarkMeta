@@ -1459,6 +1459,35 @@ QLabel#FilterItemCountLabel {
     background: transparent;
 }
 
+/* FilterPanel 顶部 Header 栏无损迁移 */
+QWidget#ContainerHeader {
+    background-color: #252526;
+    border-bottom: none;
+}
+
+/* FilterPanel 滚动区域无损迁移 */
+QScrollArea#FilterScrollArea {
+    border: none;
+    background: transparent;
+}
+
+QScrollArea#FilterScrollArea QScrollBar:vertical {
+    border-left: 1px solid #333333;
+}
+
+/* FilterPanel 分类圆点基础静态样式 */
+QLabel#FilterItemDot {
+    border-radius: 5px;
+}
+
+/* FilterPanel 标题标签基础静态样式 */
+QLabel#FilterTitleLabel {
+    font-size: 13px;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+}
+
 /* 元数据面板专属组件选择器外联 */
 QLabel#MetaPanelTitleLabel {
     font-size: 12px;
