@@ -19,7 +19,7 @@ protected:
     void paintEvent(QPaintEvent* event) override {
         QFrame::paintEvent(event);
         QPainter p(this);
-        p.setPen(QColor("#333333"));
+        p.setPen(QPen(QColor("#444444"), 1));
         p.drawLine(0, height() - 1, width(), height() - 1);
     }
 };
@@ -31,7 +31,7 @@ protected:
     void paintEvent(QPaintEvent* event) override {
         QFrame::paintEvent(event);
         QPainter p(this);
-        p.setPen(QColor("#333333"));
+        p.setPen(QPen(QColor("#444444"), 1));
         p.drawLine(width() - 1, 0, width() - 1, height());
     }
 };

@@ -26,7 +26,7 @@ protected:
         style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 
         p.setRenderHint(QPainter::Antialiasing);
-        p.setPen(QColor("#333333"));
+        p.setPen(QPen(QColor("#4E4E52"), 1));
         p.setBrush(Qt::NoBrush);
         p.drawRoundedRect(rect().adjusted(0, 0, -1, -1), 6, 6);
     }
@@ -139,7 +139,7 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Plain);
     line->setObjectName("FramelessLine");
-    line->setStyleSheet("background-color: #333333; max-height: 1px; min-height: 1px; border: none;");
+    line->setStyleSheet("background-color: #444444; max-height: 1px; min-height: 1px; border: none;");
     m_mainLayout->addWidget(line);
 
     m_contentArea = new QWidget();

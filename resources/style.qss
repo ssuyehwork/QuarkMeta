@@ -9,7 +9,7 @@ QWidget#CentralWidget { background-color: #1E1E1E; }
 }
 #NavBar {
     background-color: #1E1E1E;
-    border-bottom: 1px solid #333333;
+    border-bottom: 1px solid #444444;
 }
 
 /* 卡片 5px 实体物理切缝 + Dual-mode 深色风格 */
@@ -119,8 +119,8 @@ QSlider#SizeSlider::handle:horizontal:hover {
 }
 QWidget#DriveBar {
     background-color: #252526;
-    border-top: 1px solid #333333;
-    border-bottom: 1px solid #333333;
+    border-top: 1px solid #444444;
+    border-bottom: 1px solid #444444;
 }
 QPushButton#BtnTagManager {
     background-color: #252526;
@@ -219,7 +219,7 @@ QLabel#StatusBarLeft[indexing='true'] {
 /* 批次二重构样式：对话框与弹窗类外联 QSS 选择器 */
 QWidget#DialogContainer {
     background-color: #1E1E1E;
-    border: 1px solid #333333;
+    border: 1px solid #4E4E52;
     border-radius: 6px;
 }
 QWidget#DialogContentArea {
@@ -803,11 +803,11 @@ QPushButton#HistoryBtnRemove:hover {
 
 QWidget#TagManagerTopBar, QFrame#TagManagerTopBar {
     background: transparent;
-    border-bottom: 1px solid #333333;
+    border-bottom: 1px solid #444444;
 }
 QFrame#TagManagerSidebar {
     background-color: #252526;
-    border-right: 1px solid #333333;
+    border-right: 1px solid #444444;
 }
 QLabel#TagManagerSideTitle {
     color: #888;
