@@ -1515,12 +1515,6 @@ QLabel#FilterItemCountLabel {
     background: transparent;
 }
 
-/* FilterPanel 顶部 Header 栏无损迁移 */
-QWidget#ContainerHeader {
-    background-color: #252526;
-    border-bottom: none;
-}
-
 /* FilterPanel 滚动区域无损迁移 */
 QScrollArea#FilterScrollArea {
     border: none;
