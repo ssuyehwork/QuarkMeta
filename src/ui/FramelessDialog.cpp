@@ -24,6 +24,11 @@ protected:
         opt.initFrom(this);
         QPainter p(this);
         style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setPen(QColor("#333333"));
+        p.setBrush(Qt::NoBrush);
+        p.drawRoundedRect(rect().adjusted(0, 0, -1, -1), 6, 6);
     }
 };
 } // namespace
@@ -134,6 +139,7 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
     line->setFrameShape(QFrame::HLine);
     line->setFrameShadow(QFrame::Plain);
     line->setObjectName("FramelessLine");
+    line->setStyleSheet("background-color: #333333; max-height: 1px; min-height: 1px; border: none;");
     m_mainLayout->addWidget(line);
 
     m_contentArea = new QWidget();

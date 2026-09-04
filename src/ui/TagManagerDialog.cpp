@@ -7,8 +7,35 @@
 #include <QApplication>
 #include <QMenu>
 #include <QAction>
+#include <QPainter>
 
 namespace QuarkMeta {
+
+namespace {
+class TagManagerTopBarFrame : public QFrame {
+public:
+    explicit TagManagerTopBarFrame(QWidget* parent = nullptr) : QFrame(parent) {}
+protected:
+    void paintEvent(QPaintEvent* event) override {
+        QFrame::paintEvent(event);
+        QPainter p(this);
+        p.setPen(QColor("#333333"));
+        p.drawLine(0, height() - 1, width(), height() - 1);
+    }
+};
+
+class TagManagerSidebarFrame : public QFrame {
+public:
+    explicit TagManagerSidebarFrame(QWidget* parent = nullptr) : QFrame(parent) {}
+protected:
+    void paintEvent(QPaintEvent* event) override {
+        QFrame::paintEvent(event);
+        QPainter p(this);
+        p.setPen(QColor("#333333"));
+        p.drawLine(width() - 1, 0, width() - 1, height());
+    }
+};
+} // namespace
 
 void TagManagerDialog::showDialog(QWidget* parent, const QString& currentPath, bool isMirrorSource) {
     TagManagerDialog* dlg = new TagManagerDialog(currentPath, isMirrorSource, parent);
@@ -35,7 +62,7 @@ void TagManagerDialog::initContent() {
     mainL->setSpacing(0);
 
     // 1. 顶部操作栏
-    QFrame* topBar = new QFrame(this);
+    QFrame* topBar = new TagManagerTopBarFrame(this);
     topBar->setFixedHeight(40);
     topBar->setObjectName("TagManagerTopBar");
     topBar->setAttribute(Qt::WA_StyledBackground, true);
@@ -83,7 +110,7 @@ void TagManagerDialog::initContent() {
     bodyL->setSpacing(0);
 
     // A. 侧边栏
-    m_sidebar = new QFrame(bodyWidget);
+    m_sidebar = new TagManagerSidebarFrame(bodyWidget);
     m_sidebar->setFixedWidth(180);
     m_sidebar->setObjectName("TagManagerSidebar");
     m_sidebar->setAttribute(Qt::WA_StyledBackground, true);
