@@ -570,6 +570,7 @@ void MetaPanel::addInfoRow(QVBoxLayout* layout, const QString& label, QLabel*& v
 }
 
 void MetaPanel::onTagDeleted(const QString& text) {
+    if (text.trimmed().isEmpty()) return;
     if (m_selectedPaths.isEmpty() || m_isReadOnlyMode) return;
 
     emit tagRemoveRequested(m_selectedPaths, text);
@@ -682,7 +683,9 @@ void MetaPanel::setTags(const QStringList& tags) {
         for (const QString& tag : tags) {
             TagPill* pill = new TagPill(tag, m_tagContainer);
             pill->setProperty("tagText", tag);
-            connect(pill, &TagPill::deleteRequested, this, &MetaPanel::onTagDeleted);
+            connect(pill, &TagPill::deleteRequested, this, [this, tag]() {
+                onTagDeleted(tag);
+            });
             pill->show();
             m_tagFlowLayout->addWidget(pill);
         }
