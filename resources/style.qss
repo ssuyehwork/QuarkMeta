@@ -553,6 +553,36 @@ QPushButton#TagSelectorBtn:hover {
     color: #FFFFFF;
 }
 
+/* TagSelectorOverlay 标签按钮 1:1 无损迁移 */
+QPushButton#TagOverlayBtn {
+    background-color: transparent;
+    color: #BBBBBB;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 11px;
+    text-align: left;
+}
+
+/* 未选中状态悬停 */
+QPushButton#TagOverlayBtn[selected="false"]:hover {
+    border-color: #1ABC9C;
+    color: #FFFFFF;
+}
+
+/* 已选中状态 */
+QPushButton#TagOverlayBtn[selected="true"] {
+    background-color: rgba(28, 151, 234, 0.35);
+    color: #FFFFFF;
+    border: 1px solid #1C97EA;
+}
+
+/* 键盘聚焦状态（优先于普通悬停） */
+QPushButton#TagOverlayBtn[focused="true"] {
+    border: 1px solid #1C97EA;
+    color: #FFFFFF;
+}
+
 QFrame#AddressHistoryPanel, QFrame#SearchHistoryPanel {
     background-color: #252526;
     border: 1px solid #444444;
