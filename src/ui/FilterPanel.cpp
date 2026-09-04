@@ -111,12 +111,6 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
     QWidget* topBar = new QWidget(this);
     topBar->setObjectName("ContainerHeader");
     topBar->setFixedHeight(32);
-    topBar->setStyleSheet(
-        "QWidget#ContainerHeader {"
-        "  background-color: #252526;"
-        "  border-bottom: none;"
-        "}"
-    );
     QHBoxLayout* topL = new QHBoxLayout(topBar);
     topL->setContentsMargins(15, 0, 5, 0);
     topL->setSpacing(5);
