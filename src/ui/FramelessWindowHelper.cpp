@@ -34,11 +34,17 @@ FramelessWindowHelper::FramelessWindowHelper(QWidget* window, QWidget* titleBar)
 
     if (m_window) {
         m_window->setMouseTracking(true);
-        m_window->installEventFilter(this);
+        if (QCoreApplication::instance()) {
+            QCoreApplication::instance()->installEventFilter(this);
+        }
     }
 }
 
-FramelessWindowHelper::~FramelessWindowHelper() = default;
+FramelessWindowHelper::~FramelessWindowHelper() {
+    if (QCoreApplication::instance()) {
+        QCoreApplication::instance()->removeEventFilter(this);
+    }
+}
 
 bool FramelessWindowHelper::isInteractiveWidget(QWidget* child, QWidget* titleBar, QWidget* window) {
     QWidget* wWidget = child;
@@ -162,14 +168,20 @@ bool FramelessWindowHelper::isAlwaysOnTop(QWidget* window) {
 }
 
 bool FramelessWindowHelper::eventFilter(QObject* obj, QEvent* event) {
-    if (!m_window || obj != m_window) return false;
+    if (!m_window || !m_window->isVisible()) return false;
+
+    QWidget* widget = qobject_cast<QWidget*>(obj);
+    if (!widget || (widget != m_window && !m_window->isAncestorOf(widget))) {
+        return false;
+    }
 
     QEvent::Type type = event->type();
 
     if (type == QEvent::MouseButtonPress) {
         auto* me = static_cast<QMouseEvent*>(event);
         if (me->button() == Qt::LeftButton && !m_window->isMaximized()) {
-            m_resizeDir = getResizeDirection(me->pos());
+            QPoint windowLocalPos = m_window->mapFromGlobal(me->globalPosition().toPoint());
+            m_resizeDir = getResizeDirection(windowLocalPos);
             if (m_resizeDir != 0) {
                 m_isResizing = true;
                 m_resizeStartGlobalPos = me->globalPosition().toPoint();
@@ -200,7 +212,8 @@ bool FramelessWindowHelper::eventFilter(QObject* obj, QEvent* event) {
             m_window->setGeometry(newGeom);
             return true;
         } else if (!m_window->isMaximized()) {
-            updateCursorShape(getResizeDirection(me->pos()));
+            QPoint windowLocalPos = m_window->mapFromGlobal(me->globalPosition().toPoint());
+            updateCursorShape(getResizeDirection(windowLocalPos));
         }
     } else if (type == QEvent::MouseButtonRelease) {
         if (m_isResizing) {
