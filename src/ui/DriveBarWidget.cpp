@@ -2,6 +2,8 @@
 #include "UiHelper.h"
 #include "TagManagerDialog.h"
 #include "../core/NavigationService.h"
+#include <QPainter>
+#include <QStyleOption>
 
 namespace QuarkMeta {
 
@@ -9,7 +11,16 @@ DriveBarWidget::DriveBarWidget(QWidget* parent)
     : QWidget(parent) {
     setObjectName("DriveBar");
     setFixedHeight(42);
+    setAttribute(Qt::WA_StyledBackground, true);
     initUi();
+}
+
+void DriveBarWidget::paintEvent(QPaintEvent* event) {
+    Q_UNUSED(event);
+    QStyleOption opt;
+    opt.initFrom(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 }
 
 void DriveBarWidget::initUi() {

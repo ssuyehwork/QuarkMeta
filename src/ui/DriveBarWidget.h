@@ -19,6 +19,9 @@ public:
     QPushButton* tagManagerButton() const { return m_btnTagManager; }
     QHBoxLayout* driveBarLayout() const { return m_driveBarLayout; }
 
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
 private:
     void initUi();
 
