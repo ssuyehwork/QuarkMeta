@@ -17,6 +17,17 @@ QSplitter {
     background: transparent;
     border: none;
 }
+/* MetaPanel 色彩选择圆点按钮基础样式 */
+QPushButton#MetaPanelColorBtn {
+    border-radius: 8px;
+    border: 1px solid transparent;
+}
+QPushButton#MetaPanelColorBtn:hover {
+    border-color: #FFFFFF;
+}
+QPushButton#MetaPanelColorBtn[active="true"] {
+    border: 2px solid #FFFFFF;
+}
 QSplitter::handle:horizontal {
     background-color: #1E1E1E;
     width: 5px;
