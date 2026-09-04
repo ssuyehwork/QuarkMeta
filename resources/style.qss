@@ -1735,6 +1735,16 @@ QMenu {
     border-radius: 6px;
     padding: 4px;
 }
+/* TitleBarWidget 视图模式下拉菜单选中项静态属性 */
+QMenu#TitleBarViewModeMenu::item:checked,
+QMenu#TitleBarViewModeMenu::item:checked:selected {
+    color: #ff551c;
+}
+QMenu#TitleBarViewModeMenu::indicator:checked {
+    width: 14px;
+    height: 14px;
+    left: 4px;
+}
 QMenu::item {
     background-color: transparent;
     color: #EEEEEE;
