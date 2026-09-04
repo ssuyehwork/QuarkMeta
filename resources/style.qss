@@ -1333,6 +1333,20 @@ QPushButton#FavPickerIconBtn:hover {
 QWidget#FilterContainerWidget, QWidget#FilterGroupWrapper, QWidget#FilterGroupContent {
     background: transparent;
 }
+QPushButton#FilterHeaderBtn {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+}
+QPushButton#FilterHeaderBtn:hover {
+    background: #3E3E42;
+}
+QPushButton#FilterHeaderBtn:pressed {
+    background: #4E4E52;
+}
+QPushButton#FilterHeaderBtn:checked {
+    background-color: #378ADD;
+}
 QScrollArea#FilterScrollArea {
     border: none;
     background: transparent;
@@ -1352,6 +1366,36 @@ QLineEdit#FilterSearchEdit:focus {
     border-color: #378ADD;
     color: #FFFFFF;
 }
+QLineEdit#FilterSizeEdit {
+    background: #2D2D2D;
+    color: #EEEEEE;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 11px;
+}
+QLineEdit#FilterSizeEdit:focus {
+    border-color: #378ADD;
+}
+QComboBox#FilterUnitCombo {
+    background: #2D2D2D;
+    color: #EEEEEE;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    font-size: 11px;
+    padding-left: 6px;
+}
+QComboBox#FilterUnitCombo::drop-down {
+    border: none;
+    width: 18px;
+}
+QComboBox#FilterUnitCombo QAbstractItemView {
+    background-color: #252526;
+    color: #EEEEEE;
+    selection-background-color: #3E3E42;
+    border: 1px solid #444444;
+    outline: none;
+}
 QPushButton#FilterBtnSort {
     background: transparent;
     border: none;
@@ -1361,7 +1405,8 @@ QPushButton#FilterBtnSort:hover {
     border-radius: 2px;
 }
 QLabel#FilterSepLabel {
-    color: #AAA;
+    color: #AAAAAA;
+    background: transparent;
 }
 QWidget#FilterGroupHdrRow {
     background-color: #252526;

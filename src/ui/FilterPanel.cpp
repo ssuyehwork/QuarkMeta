@@ -128,6 +128,7 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
     topL->addWidget(m_titleLabel);
 
     m_btnClearAll = new QPushButton(topBar);
+    m_btnClearAll->setObjectName("FilterHeaderBtn");
     m_btnClearAll->setFixedSize(24, 24);
     m_btnClearAll->setIcon(UiHelper::getIcon("reset_filter", QColor("#B0B0B0")));
     m_btnClearAll->setIconSize(QSize(16, 16));
@@ -135,13 +136,10 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
     m_btnClearAll->setCursor(Qt::PointingHandCursor);
     m_btnClearAll->setProperty("tooltipText", "重置所有筛选条件");
     m_btnClearAll->installEventFilter(this);
-    m_btnClearAll->setStyleSheet(
-        "QPushButton { background: transparent; border: none; border-radius: 4px; }"
-        "QPushButton:hover { background: #3E3E42; }"
-        "QPushButton:pressed { background: #4E4E52; }");
     connect(m_btnClearAll, &QPushButton::clicked, this, [this]() { clearAllFilters(true); });
 
     m_btnPin = new QPushButton(topBar);
+    m_btnPin->setObjectName("FilterHeaderBtn");
     m_btnPin->setFixedSize(24, 24);
     m_btnPin->setIcon(UiHelper::getIcon("pin_tilted", QColor("#B0B0B0")));
     m_btnPin->setIconSize(QSize(16, 16));
@@ -149,10 +147,6 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
     m_btnPin->setCursor(Qt::PointingHandCursor);
     m_btnPin->setProperty("tooltipText", "锁定当前筛选条件");
     m_btnPin->installEventFilter(this);
-    m_btnPin->setStyleSheet(
-        "QPushButton { background: transparent; border: none; border-radius: 4px; }"
-        "QPushButton:hover { background: #3E3E42; }"
-        "QPushButton:pressed { background: #4E4E52; }");
     connect(m_btnPin, &QPushButton::clicked, this, [this]() {
         m_isFilterPinned = !m_isFilterPinned;
         if (m_isFilterPinned) {
@@ -165,15 +159,12 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
     });
 
     m_btnToggleGroups = new QPushButton(topBar);
+    m_btnToggleGroups->setObjectName("FilterHeaderBtn");
     m_btnToggleGroups->setFixedSize(24, 24);
     m_btnToggleGroups->setIconSize(QSize(16, 16));
     m_btnToggleGroups->setFlat(true);
     m_btnToggleGroups->setCursor(Qt::PointingHandCursor);
     m_btnToggleGroups->installEventFilter(this);
-    m_btnToggleGroups->setStyleSheet(
-        "QPushButton { background: transparent; border: none; border-radius: 4px; }"
-        "QPushButton:hover { background: #3E3E42; }"
-        "QPushButton:pressed { background: #4E4E52; }");
     connect(m_btnToggleGroups, &QPushButton::clicked, this, &FilterPanel::onToggleAllGroupsClicked);
 
     topL->addStretch();
@@ -824,23 +815,16 @@ void FilterPanel::rebuildGroups() {
         unitCombo->addItems({"KB", "MB", "GB"});
         unitCombo->setCurrentIndex(1);
 
-        auto sizeEditStyle = "QLineEdit { background: #2D2D2D; color: #EEE; border: 1px solid #444; border-radius: 4px; padding: 2px 4px; font-size: 11px; }";
-        minEdit->setStyleSheet(sizeEditStyle);
-        maxEdit->setStyleSheet(sizeEditStyle);
+        minEdit->setObjectName("FilterSizeEdit");
+        maxEdit->setObjectName("FilterSizeEdit");
+        unitCombo->setObjectName("FilterUnitCombo");
         minEdit->setPlaceholderText("最小");
         maxEdit->setPlaceholderText("最大");
         minEdit->setFixedHeight(24);
         maxEdit->setFixedHeight(24);
 
-        QString arrowPath = UiHelper::getSvgTempFilePath("menu_triangle", QColor("#AAAAAA"));
         unitCombo->setFixedHeight(24);
         unitCombo->setFixedWidth(52); 
-        unitCombo->setStyleSheet(QString(
-            "QComboBox { background: #2D2D2D; color: #EEEEEE; border: 1px solid #444444; border-radius: 4px; font-size: 11px; padding-left: 6px; }"
-            "QComboBox::drop-down { border: none; width: 18px; }"
-            "QComboBox::down-arrow { image: url(%1); width: 10px; height: 10px; }"
-            "QComboBox QAbstractItemView { background-color: #252526; color: #EEEEEE; selection-background-color: #3E3E42; border: 1px solid #444444; outline: none; }"
-        ).arg(arrowPath));
 
         hs->addWidget(minEdit);
         QLabel* sep = new QLabel("-", g); sep->setObjectName("FilterSepLabel"); hs->addWidget(sep);
