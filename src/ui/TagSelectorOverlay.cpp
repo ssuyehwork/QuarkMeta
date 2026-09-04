@@ -245,7 +245,12 @@ void TagSelectorOverlay::updateSelectionHighlight() {
 
         btn->setText(tag);
 
-        btn->setIcon(UiHelper::getIcon("clock", isSelected ? QColor("#FFFFFF") : QColor("#888888"), 12));
+        // ✅ 选中显示对勾(check)，未选中显示时钟(clock)
+        if (isSelected) {
+            btn->setIcon(UiHelper::getIcon("check", QColor("#FFFFFF"), 12));
+        } else {
+            btn->setIcon(UiHelper::getIcon("clock", QColor("#888888"), 12));
+        }
         btn->setIconSize(QSize(12, 12));
 
         QString style;
