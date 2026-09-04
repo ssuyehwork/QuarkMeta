@@ -851,6 +851,10 @@ QWidget#ColorPickerBottomBox {
     border: 1px solid #378ADD;
     border-radius: 4px;
 }
+/* ColorPicker 色彩预览块静态形状 */
+QWidget#ColorPickerPreviewBlock {
+    border-radius: 4px;
+}
 QLineEdit#ColorPickerHexEdit {
     background: transparent;
     border: none;
