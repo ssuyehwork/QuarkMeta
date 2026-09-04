@@ -28,6 +28,12 @@ QPushButton#MetaPanelColorBtn:hover {
 QPushButton#MetaPanelColorBtn[active="true"] {
     border: 2px solid #FFFFFF;
 }
+
+/* 元数据评级色彩选择小圆点基础静态样式 */
+QPushButton#MetaRatingColorBtn {
+    border-radius: 9px;
+    border: none;
+}
 QSplitter::handle:horizontal {
     background-color: #1E1E1E;
     width: 5px;
