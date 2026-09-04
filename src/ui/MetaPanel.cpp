@@ -370,33 +370,32 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     QWidget* topWidget = this->topLevelWidget();
     m_tagSelectorOverlay = new TagSelectorOverlay(m_currentTagsSet.values(), topWidget);
 
-    // 1. 强制在计算前完成布局与真实尺寸确定
-    m_tagSelectorOverlay->adjustSize();
-    const int overlayW = m_tagSelectorOverlay->width();
-    const int overlayH = m_tagSelectorOverlay->height();
-
     if (topWidget) {
-        // 2. 全部换算为【屏幕全局绝对坐标】
-        QRect topGeom = topWidget->frameGeometry(); // 主窗口在屏幕上的绝对矩形
-        QPoint metaPanelGlobal = this->mapToGlobal(QPoint(0, 0)); // MetaPanel 的屏幕绝对坐标
+        // 1. 忠实尊重窗口自己的真实尺寸，绝对不改动大小！
+        const int overlayW = m_tagSelectorOverlay->width();
+        const int overlayH = m_tagSelectorOverlay->height();
 
-        // 3. 目标 X：紧贴 MetaPanel 屏幕左侧，留 8px 空隙
-        int globalX = metaPanelGlobal.x() - overlayW - 8;
+        // 2. 全部换算为主窗口所在屏幕的【全局绝对坐标】
+        QRect topGeom = topWidget->frameGeometry();
+        QPoint metaPanelGlobal = this->mapToGlobal(QPoint(0, 0));
 
-        // 4. 目标 Y：在主窗口全局区域内严格垂直居中
-        int globalY = topGeom.top() + (topGeom.height() - overlayH) / 2;
+        // 3. 目标 X：紧贴 MetaPanel 屏幕左侧，留 8px 间距
+        int targetX = metaPanelGlobal.x() - overlayW - 8;
 
-        // 5. 【死锁限制】：严禁超出主窗口全局矩形的四壁
-        int minGlobalX = topGeom.left() + 8;
-        int maxGlobalX = topGeom.right() - overlayW - 8;
-        int minGlobalY = topGeom.top() + 8;
-        int maxGlobalY = topGeom.bottom() - overlayH - 8;
+        // 4. 目标 Y：在主窗口物理高度上严格【绝对垂直居中】
+        int targetY = topGeom.top() + (topGeom.height() - overlayH) / 2;
 
-        globalX = qBound(minGlobalX, globalX, qMax(minGlobalX, maxGlobalX));
-        globalY = qBound(minGlobalY, globalY, qMax(minGlobalY, maxGlobalY));
+        // 5. 【边界死锁】：严格限制在主窗口物理四壁之内，绝不溢出主界面
+        int minX = topGeom.left();
+        int maxX = qMax(minX, topGeom.right() - overlayW);
+        int minY = topGeom.top();
+        int maxY = qMax(minY, topGeom.bottom() - overlayH);
 
-        // 6. 移动到正确的全局屏幕位置
-        m_tagSelectorOverlay->move(globalX, globalY);
+        targetX = qBound(minX, targetX, maxX);
+        targetY = qBound(minY, targetY, maxY);
+
+        // 6. 移动到算好的绝对坐标
+        m_tagSelectorOverlay->move(targetX, targetY);
     } else if (targetAnchor) {
         m_tagSelectorOverlay->move(targetAnchor->mapToGlobal(QPoint(0, targetAnchor->height() + 4)));
     }
