@@ -34,6 +34,11 @@ QPushButton#MetaRatingColorBtn {
     border-radius: 9px;
     border: none;
 }
+
+/* 导航树形视图分支宽度静态定义 */
+QTreeView#NavTreeView::branch {
+    width: 20px;
+}
 QSplitter::handle:horizontal {
     background-color: #1E1E1E;
     width: 5px;
