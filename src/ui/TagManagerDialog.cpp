@@ -35,9 +35,10 @@ void TagManagerDialog::initContent() {
     mainL->setSpacing(0);
 
     // 1. 顶部操作栏
-    QWidget* topBar = new QWidget(this);
+    QFrame* topBar = new QFrame(this);
     topBar->setFixedHeight(40);
     topBar->setObjectName("TagManagerTopBar");
+    topBar->setAttribute(Qt::WA_StyledBackground, true);
     QHBoxLayout* topL = new QHBoxLayout(topBar);
     topL->setContentsMargins(15, 0, 15, 0);
     topL->setSpacing(10);
@@ -85,6 +86,7 @@ void TagManagerDialog::initContent() {
     m_sidebar = new QFrame(bodyWidget);
     m_sidebar->setFixedWidth(180);
     m_sidebar->setObjectName("TagManagerSidebar");
+    m_sidebar->setAttribute(Qt::WA_StyledBackground, true);
     m_sidebarLayout = new QVBoxLayout(m_sidebar);
     m_sidebarLayout->setContentsMargins(10, 15, 10, 10);
     m_sidebarLayout->setSpacing(6);

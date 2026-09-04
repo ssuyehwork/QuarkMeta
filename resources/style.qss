@@ -801,13 +801,13 @@ QPushButton#HistoryBtnRemove:hover {
     background-color: #4E4E52;
 }
 
-QWidget#TagManagerTopBar {
+QWidget#TagManagerTopBar, QFrame#TagManagerTopBar {
     background: transparent;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #333333;
 }
 QFrame#TagManagerSidebar {
     background-color: #252526;
-    border-right: 1px solid #333;
+    border-right: 1px solid #333333;
 }
 QLabel#TagManagerSideTitle {
     color: #888;

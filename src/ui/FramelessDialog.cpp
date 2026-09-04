@@ -3,6 +3,8 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QApplication>
+#include <QPainter>
+#include <QStyleOption>
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <dwmapi.h>
@@ -10,6 +12,21 @@
 #endif
 
 namespace QuarkMeta {
+
+namespace {
+class DialogContainerWidget : public QWidget {
+public:
+    explicit DialogContainerWidget(QWidget* parent = nullptr) : QWidget(parent) {}
+protected:
+    void paintEvent(QPaintEvent* event) override {
+        Q_UNUSED(event);
+        QStyleOption opt;
+        opt.initFrom(this);
+        QPainter p(this);
+        style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+    }
+};
+} // namespace
 
 FramelessDialog::FramelessDialog(const QString& title, QWidget* parent) 
     : QDialog(parent, Qt::FramelessWindowHint | Qt::Window) 
@@ -27,9 +44,9 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
     m_outerLayout = new QVBoxLayout(this);
     m_outerLayout->setContentsMargins(0, 0, 0, 0);
 
-    m_container = new QWidget(this);
+    m_container = new DialogContainerWidget(this);
     m_container->setObjectName("DialogContainer");
-    m_container->setAttribute(Qt::WA_StyledBackground);
+    m_container->setAttribute(Qt::WA_StyledBackground, true);
     m_outerLayout->addWidget(m_container);
 
     m_mainLayout = new QVBoxLayout(m_container);
