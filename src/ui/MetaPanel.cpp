@@ -370,31 +370,34 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     QWidget* topWidget = this->topLevelWidget();
     m_tagSelectorOverlay = new TagSelectorOverlay(m_currentTagsSet.values(), topWidget);
 
+    // 1. 强制在计算前完成布局与真实尺寸确定
+    m_tagSelectorOverlay->adjustSize();
+    const int overlayW = m_tagSelectorOverlay->width();
+    const int overlayH = m_tagSelectorOverlay->height();
+
     if (topWidget) {
-        // 1. 将 MetaPanel 在 topWidget 中的坐标原点映射出来
-        QPoint metaPanelTopLeftInTop = this->mapTo(topWidget, QPoint(0, 0));
+        // 2. 全部换算为【屏幕全局绝对坐标】
+        QRect topGeom = topWidget->frameGeometry(); // 主窗口在屏幕上的绝对矩形
+        QPoint metaPanelGlobal = this->mapToGlobal(QPoint(0, 0)); // MetaPanel 的屏幕绝对坐标
 
-        int overlayW = m_tagSelectorOverlay->width();
-        int overlayH = m_tagSelectorOverlay->height();
+        // 3. 目标 X：紧贴 MetaPanel 屏幕左侧，留 8px 空隙
+        int globalX = metaPanelGlobal.x() - overlayW - 8;
 
-        // 2. 目标 X：紧贴 MetaPanel 栏区的左边缘（留出 8px 呼吸间距，悬浮在内容区上方）
-        int targetX = metaPanelTopLeftInTop.x() - overlayW - 8;
+        // 4. 目标 Y：在主窗口全局区域内严格垂直居中
+        int globalY = topGeom.top() + (topGeom.height() - overlayH) / 2;
 
-        // 3. 目标 Y：在主窗口（topWidget）的垂直方向上严格绝对居中
-        int targetY = (topWidget->height() - overlayH) / 2;
+        // 5. 【死锁限制】：严禁超出主窗口全局矩形的四壁
+        int minGlobalX = topGeom.left() + 8;
+        int maxGlobalX = topGeom.right() - overlayW - 8;
+        int minGlobalY = topGeom.top() + 8;
+        int maxGlobalY = topGeom.bottom() - overlayH - 8;
 
-        // 4. 【边界硬约束】：四向死锁，任何情况下绝不允许溢出主窗口可视边界
-        int minX = 8;
-        int maxX = qMax(minX, topWidget->width() - overlayW - 8);
-        int minY = 8;
-        int maxY = qMax(minY, topWidget->height() - overlayH - 8);
+        globalX = qBound(minGlobalX, globalX, qMax(minGlobalX, maxGlobalX));
+        globalY = qBound(minGlobalY, globalY, qMax(minGlobalY, maxGlobalY));
 
-        targetX = qBound(minX, targetX, maxX);
-        targetY = qBound(minY, targetY, maxY);
-
-        m_tagSelectorOverlay->move(targetX, targetY);
+        // 6. 移动到正确的全局屏幕位置
+        m_tagSelectorOverlay->move(globalX, globalY);
     } else if (targetAnchor) {
-        // 备用降级：若获取不到顶层窗口，贴靠在触发按钮下方
         m_tagSelectorOverlay->move(targetAnchor->mapToGlobal(QPoint(0, targetAnchor->height() + 4)));
     }
 
