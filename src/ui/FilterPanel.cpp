@@ -459,7 +459,7 @@ void FilterPanel::rebuildGroups() {
     }
 
     // ── 2. 评级 ──────────────────────────────────────────────
-    if (!m_ratingCounts.isEmpty()) {
+    {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("评级", gl);
         for (int r : {0, 1, 2, 3, 4, 5}) {
@@ -493,49 +493,37 @@ void FilterPanel::rebuildGroups() {
             {"灰色",   "#5F5E5A", QColor("#5F5E5A")}
         };
 
-        bool hasAnyColor = false;
+        QVBoxLayout* gl = nullptr;
+        QHBoxLayout* hdrLayout = nullptr;
+        QWidget* g = buildGroup("颜色标记", gl, &hdrLayout);
+
         for (const auto& item : colorsList) {
             int cnt = m_colorCounts.value(item.hex, m_colorCounts.value(item.name, 0));
             bool isChecked = (currentSt.colors.contains(item.name) || currentSt.colors.contains(item.hex));
-            if (cnt > 0 || isChecked) {
-                hasAnyColor = true;
-                break;
+
+            if (cnt == 0 && !isChecked) {
+                continue;
             }
-        }
 
-        if (hasAnyColor) {
-            QVBoxLayout* gl = nullptr;
-            QHBoxLayout* hdrLayout = nullptr;
-            QWidget* g = buildGroup("颜色标记", gl, &hdrLayout);
-
-            for (const auto& item : colorsList) {
-                int cnt = m_colorCounts.value(item.hex, m_colorCounts.value(item.name, 0));
-                bool isChecked = (currentSt.colors.contains(item.name) || currentSt.colors.contains(item.hex));
-
-                if (cnt == 0 && !isChecked) {
-                    continue;
+            QCheckBox* cb = addFilterRow(gl, item.name, cnt, item.color);
+            cb->setChecked(isChecked);
+            connect(cb, &QCheckBox::checkStateChanged, this, [this, name = item.name, hex = item.hex](Qt::CheckState state) {
+                FilterState st = m_filterModel->state();
+                if (state == Qt::Checked) {
+                    if (!st.colors.contains(name)) st.colors.append(name);
+                } else {
+                    st.colors.removeAll(name);
+                    st.colors.removeAll(hex);
                 }
-
-                QCheckBox* cb = addFilterRow(gl, item.name, cnt, item.color);
-                cb->setChecked(isChecked);
-                connect(cb, &QCheckBox::checkStateChanged, this, [this, name = item.name, hex = item.hex](Qt::CheckState state) {
-                    FilterState st = m_filterModel->state();
-                    if (state == Qt::Checked) {
-                        if (!st.colors.contains(name)) st.colors.append(name);
-                    } else {
-                        st.colors.removeAll(name);
-                        st.colors.removeAll(hex);
-                    }
-                    m_filterModel->setState(st);
-                });
-            }
-
-            m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
+                m_filterModel->setState(st);
+            });
         }
+
+        m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
 
     // ── 4. 文件类型 ──────────────────────────────────────────
-    if (!m_typeCounts.isEmpty() || !currentSt.typeFilterText.isEmpty() || m_emptyFolderCount > 0) {
+    {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("文件类型", gl);
 
@@ -623,7 +611,7 @@ void FilterPanel::rebuildGroups() {
     }
 
     // ── 5. 创建日期 ──────────────────────────
-    if (!m_createDateCounts.isEmpty() || !currentSt.createDateFilterText.isEmpty()) {
+    {
         QVBoxLayout* gl = nullptr;
         QHBoxLayout* hdrLayout = nullptr;
         QWidget* g = buildGroup("创建日期", gl, &hdrLayout);
@@ -676,7 +664,7 @@ void FilterPanel::rebuildGroups() {
     }
 
     // ── 6. 修改日期 ──────────────────────────
-    if (!m_modifyDateCounts.isEmpty() || !currentSt.modifyDateFilterText.isEmpty()) {
+    {
         QVBoxLayout* gl = nullptr;
         QHBoxLayout* hdrLayout = nullptr;
         QWidget* g = buildGroup("修改日期", gl, &hdrLayout);
