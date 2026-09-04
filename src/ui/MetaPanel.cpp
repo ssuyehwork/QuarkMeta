@@ -371,14 +371,33 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     m_tagSelectorOverlay = new TagSelectorOverlay(m_currentTagsSet.values(), topWidget);
 
     if (topWidget) {
+        // 1. 将 MetaPanel 和触发按钮的位置精准映射到 topWidget 的坐标系中
+        QPoint metaPanelTopLeftInTop = this->mapTo(topWidget, QPoint(0, 0));
+        QPoint anchorPosInTop = targetAnchor ? targetAnchor->mapTo(topWidget, QPoint(0, 0))
+                                             : metaPanelTopLeftInTop;
+
         int overlayW = m_tagSelectorOverlay->width();
         int overlayH = m_tagSelectorOverlay->height();
 
-        int leftBoundary = this->x();
-        int centerX = qMax(0, (leftBoundary - overlayW) / 2);
-        int centerY = (topWidget->height() - overlayH) / 2;
-        m_tagSelectorOverlay->move(centerX, centerY);
-    } else {
+        // 2. 目标 X：紧贴 MetaPanel 栏区的左侧（留出 8px 间距，悬浮在内容区上方）
+        int targetX = metaPanelTopLeftInTop.x() - overlayW - 8;
+
+        // 3. 目标 Y：垂直对齐触发的“添加标签”按钮，并居中微调
+        int targetY = anchorPosInTop.y() - (overlayH / 4);
+
+        // 4. 【边界硬约束】：严密限制在 topWidget 内部，任何时候不可越界
+        int minX = 8;
+        int maxX = qMax(minX, topWidget->width() - overlayW - 8);
+        int minY = 8;
+        int maxY = qMax(minY, topWidget->height() - overlayH - 8);
+
+        // 如果 MetaPanel 左侧空间不足以放下 overlayW，自动向左推进，贴牢左边界
+        targetX = qBound(minX, targetX, maxX);
+        targetY = qBound(minY, targetY, maxY);
+
+        m_tagSelectorOverlay->move(targetX, targetY);
+    } else if (targetAnchor) {
+        // 备用降级：没有 topWidget 时紧贴按钮
         m_tagSelectorOverlay->move(targetAnchor->mapToGlobal(QPoint(0, targetAnchor->height() + 4)));
     }
 
