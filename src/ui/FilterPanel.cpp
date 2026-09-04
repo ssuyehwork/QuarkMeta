@@ -559,17 +559,6 @@ void FilterPanel::rebuildGroups() {
         m_editType->setText(currentSt.typeFilterText);
         m_editType->setObjectName("FilterSearchEdit");
         m_editType->setFixedHeight(22);
-        m_editType->setStyleSheet(
-            "QLineEdit#FilterSearchEdit {"
-            "  background: #2D2D2D;"
-            "  color: #CCCCCC;"
-            "  border: 1px solid #444444;"
-            "  border-radius: 4px;"
-            "  padding: 0px 6px;"
-            "  font-size: 11px;"
-            "}"
-            "QLineEdit#FilterSearchEdit:focus { border-color: #378ADD; color: #FFFFFF; }"
-        );
         m_editType->installEventFilter(this);
         connect(m_editType, &QLineEdit::returnPressed, this, [this]() {
             FilterState st = m_filterModel->state();
@@ -674,17 +663,6 @@ void FilterPanel::rebuildGroups() {
         m_editCreateDate->setText(currentSt.createDateFilterText);
         m_editCreateDate->setObjectName("FilterSearchEdit");
         m_editCreateDate->setFixedHeight(22);
-        m_editCreateDate->setStyleSheet(
-            "QLineEdit#FilterSearchEdit {"
-            "  background: #2D2D2D;"
-            "  color: #CCCCCC;"
-            "  border: 1px solid #444444;"
-            "  border-radius: 4px;"
-            "  padding: 0px 6px;"
-            "  font-size: 11px;"
-            "}"
-            "QLineEdit#FilterSearchEdit:focus { border-color: #378ADD; color: #FFFFFF; }"
-        );
         m_editCreateDate->installEventFilter(this);
         connect(m_editCreateDate, &QLineEdit::returnPressed, this, [this]() {
             FilterState st = m_filterModel->state();
@@ -738,17 +716,6 @@ void FilterPanel::rebuildGroups() {
         m_editModifyDate->setText(currentSt.modifyDateFilterText);
         m_editModifyDate->setObjectName("FilterSearchEdit");
         m_editModifyDate->setFixedHeight(22);
-        m_editModifyDate->setStyleSheet(
-            "QLineEdit#FilterSearchEdit {"
-            "  background: #2D2D2D;"
-            "  color: #CCCCCC;"
-            "  border: 1px solid #444444;"
-            "  border-radius: 4px;"
-            "  padding: 0px 6px;"
-            "  font-size: 11px;"
-            "}"
-            "QLineEdit#FilterSearchEdit:focus { border-color: #378ADD; color: #FFFFFF; }"
-        );
         m_editModifyDate->installEventFilter(this);
         connect(m_editModifyDate, &QLineEdit::returnPressed, this, [this]() {
             FilterState st = m_filterModel->state();
