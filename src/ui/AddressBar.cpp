@@ -109,11 +109,9 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
         }
     });
 
-    m_addressContainer->setAttribute(Qt::WA_Hover);
-    m_addressContainer->installEventFilter(this);
-    m_pathStack->installEventFilter(this);
     m_breadcrumbBar->setAttribute(Qt::WA_Hover);
     m_breadcrumbBar->installEventFilter(this);
+    m_pathStack->installEventFilter(this);
     m_pathEdit->installEventFilter(this);
 
     m_historyPanel = new AddressHistoryPanel(this);
@@ -152,7 +150,7 @@ void AddressBar::onBreadcrumbClicked(const QString& path) {
 
 bool AddressBar::eventFilter(QObject* obj, QEvent* event) {
     // 规则三：悬停气泡提示（ToolTipOverlay 显完整路径）
-    if (obj == m_breadcrumbBar || obj == m_addressContainer) {
+    if (obj == m_breadcrumbBar) {
         if (event->type() == QEvent::HoverEnter || event->type() == QEvent::Enter) {
             if (!m_currentPath.isEmpty()) {
                 QString fullPath = (m_currentPath == "computer://") ? tr("此电脑") : QDir::toNativeSeparators(m_currentPath);
