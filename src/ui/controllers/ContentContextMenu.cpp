@@ -21,6 +21,7 @@
 #include "../FramelessFileDialog.h"
 #include "../../core/CoreEngine.h"
 #include "../../meta/MetadataManager.h"
+#include "../../meta/FavoriteDao.h"
 #include "../../crypto/EncryptionManager.h"
 #include "../../core/LastOperationManager.h"
 
