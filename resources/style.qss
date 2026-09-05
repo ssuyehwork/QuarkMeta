@@ -468,7 +468,12 @@ QFrame#AddressHistoryPanel, QFrame#SearchHistoryPanel {
 QWidget#QuickLookMinimap {
     background: transparent;
 }
-QGraphicsView#QLGraphicsView QScrollBar:horizontal, QGraphicsView#QLGraphicsView QScrollBar:vertical {
+QGraphicsView#QLGraphicsView QScrollBar:horizontal {
+    height: 10px;
+    background: transparent;
+}
+QGraphicsView#QLGraphicsView QScrollBar:vertical {
+    width: 10px;
     background: transparent;
 }
 QGraphicsView#QLGraphicsView QScrollBar::handle:horizontal, QGraphicsView#QLGraphicsView QScrollBar::handle:vertical {
