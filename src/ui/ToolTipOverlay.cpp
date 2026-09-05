@@ -58,7 +58,7 @@ void ToolTipOverlay::showText(const QPoint& globalPos, const QString& text, int 
     }
 
     // 若已经处于显示状态，且文本/边框无变化，仅更新位置，不需要重新延迟防抖
-    if (isVisible() && m_text == text && m_currentBorderColor == borderColor && !exactPosition) {
+    if (isVisible() && m_pendingText == text && m_currentBorderColor == borderColor && !exactPosition) {
         m_showDelayTimer.stop();
         QPoint pos = globalPos + QPoint(15, 15);
         QScreen* screen = QGuiApplication::screenAt(globalPos);

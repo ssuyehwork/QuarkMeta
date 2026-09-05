@@ -371,6 +371,7 @@ void PanelMediator::setupConnections() {
             for (const QString& p : paths) {
                 contentPanel->updateItemMetadata(p);
             }
+            contentPanel->recalculateAndEmitStats();
         });
 
         connect(metaPanel, &MetaPanel::colorChanged, contentPanel, [contentPanel](const QStringList& paths, const QString& hexColor) {
@@ -383,6 +384,7 @@ void PanelMediator::setupConnections() {
             for (const QString& p : paths) {
                 contentPanel->updateItemMetadata(p);
             }
+            contentPanel->recalculateAndEmitStats();
         });
 
         connect(metaPanel, &MetaPanel::primaryColorChanged, contentPanel, [contentPanel](const QString& path, const QColor& color) {
@@ -393,6 +395,7 @@ void PanelMediator::setupConnections() {
             cmd.params["color"] = color.name(QColor::HexRgb);
             CoreEngine::instance().executeCommand(cmd);
             contentPanel->updateItemMetadata(path);
+            contentPanel->recalculateAndEmitStats();
         });
 
         connect(metaPanel, &MetaPanel::tagAddRequested, contentPanel, [contentPanel](const QStringList& paths, const QString& newTag) {
@@ -405,6 +408,7 @@ void PanelMediator::setupConnections() {
                 for (const QString& p : paths) {
                     contentPanel->updateItemMetadata(p);
                 }
+                contentPanel->recalculateAndEmitStats();
             }
         });
 
@@ -418,6 +422,7 @@ void PanelMediator::setupConnections() {
                 for (const QString& p : paths) {
                     contentPanel->updateItemMetadata(p);
                 }
+                contentPanel->recalculateAndEmitStats();
             }
         });
 
@@ -477,6 +482,7 @@ void PanelMediator::setupConnections() {
             } else {
                 contentPanel->refreshAll();
             }
+            contentPanel->recalculateAndEmitStats();
         } else if (event.type == QuarkMeta::AppEventType::ItemsDeleted ||
                    event.type == QuarkMeta::AppEventType::ItemsRenamed) {
             contentPanel->refreshAll();
