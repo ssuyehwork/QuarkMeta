@@ -114,6 +114,12 @@ void PanelMediator::setupConnections() {
                 }
                 favoritePanel->saveFavorites();
             });
+            connect(contentPanel, &ContentPanel::requestRemoveFavorite, favoritePanel, [favoritePanel](const QStringList& paths) {
+                for (const QString& p : paths) {
+                    favoritePanel->removeFavoriteItem(p);
+                }
+                favoritePanel->saveFavorites();
+            });
         }
     }
 
@@ -307,9 +313,15 @@ void PanelMediator::setupConnections() {
 
     connect(&QuickLookWindow::instance(), &QuickLookWindow::favoriteRequested, this, [favoritePanel](const QString& path) {
         if (!path.isEmpty() && favoritePanel) {
-            favoritePanel->addFavoriteItem(path);
-            favoritePanel->saveFavorites();
-            ToolTipOverlay::instance()->showText(QCursor::pos(), "已成功添加至收藏夹", 1500, QColor("#2ecc71"));
+            if (favoritePanel->containsPath(path)) {
+                favoritePanel->removeFavoriteItem(path);
+                favoritePanel->saveFavorites();
+                ToolTipOverlay::instance()->showText(QCursor::pos(), "已从收藏夹移除", 1500, QColor("#e74c3c"));
+            } else {
+                favoritePanel->addFavoriteItem(path);
+                favoritePanel->saveFavorites();
+                ToolTipOverlay::instance()->showText(QCursor::pos(), "已成功添加至收藏夹", 1500, QColor("#2ecc71"));
+            }
         }
     });
 
@@ -334,6 +346,17 @@ void PanelMediator::setupConnections() {
         });
 
         connect(addressBar, &AddressBar::refreshRequested, &NavigationService::instance(), &NavigationService::refresh);
+
+        if (favoritePanel) {
+            connect(addressBar, &AddressBar::requestAddFavorite, favoritePanel, [favoritePanel](const QString& path) {
+                favoritePanel->addFavoriteItem(path);
+                favoritePanel->saveFavorites();
+            });
+            connect(addressBar, &AddressBar::requestRemoveFavorite, favoritePanel, [favoritePanel](const QString& path) {
+                favoritePanel->removeFavoriteItem(path);
+                favoritePanel->saveFavorites();
+            });
+        }
     }
 
     // 6. 响应元数据面板解耦信号 -> 驱动 CoreEngine 与 ContentPanel 同步

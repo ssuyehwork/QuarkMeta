@@ -97,10 +97,10 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
         QAction* selected = menu.exec(globalPos);
         if (selected == actFavToggle) {
             if (isFav) {
-                FavoriteDao::removeFavorite(nativePath);
+                emit requestRemoveFavorite(nativePath);
                 ToolTipOverlay::instance()->showText(QCursor::pos(), "已从收藏夹移除", 1500, QColor("#e74c3c"));
             } else {
-                FavoriteDao::addFavorite(nativePath, "folder_filled", "#FDB70A");
+                emit requestAddFavorite(nativePath);
                 ToolTipOverlay::instance()->showText(QCursor::pos(), "已添加至收藏夹", 1500, Style::SuccessGreen);
             }
         } else if (selected == actCopyPath) {
