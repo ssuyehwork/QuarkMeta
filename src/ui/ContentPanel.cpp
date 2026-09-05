@@ -383,7 +383,10 @@ void ContentPanel::refreshAll() {
     else loadDirectory("computer://");
 }
 
-void ContentPanel::updateItemMetadata(const QString& path) { if (m_model) m_model->updateRecordMetadata(path); }
+void ContentPanel::updateItemMetadata(const QString& path) {
+    if (m_model) m_model->updateRecordMetadata(path);
+    recalculateAndEmitStats();
+}
 void ContentPanel::migrateModelCache(const QString& oldPath, const QString& newPath) { if (m_model) m_model->migrateCache(oldPath, newPath); }
 void ContentPanel::clearFolderCache(const QString& folderPath) { if (m_model) m_model->clearCacheForFolder(folderPath); }
 

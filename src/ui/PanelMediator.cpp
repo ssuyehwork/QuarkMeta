@@ -60,6 +60,7 @@ void PanelMediator::setupConnections() {
         }
         if (filterPanel) {
             filterPanel->clearAllFilters();
+            filterPanel->clearStats();
             filterPanel->setMirrorSource(false);
         }
 
