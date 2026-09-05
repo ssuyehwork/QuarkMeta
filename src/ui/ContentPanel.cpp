@@ -385,6 +385,8 @@ void ContentPanel::refreshAll() {
 
 void ContentPanel::updateItemMetadata(const QString& path) {
     if (m_model) m_model->updateRecordMetadata(path);
+    if (m_gridView && m_gridView->viewport()) m_gridView->viewport()->update();
+    if (m_treeView && m_treeView->viewport()) m_treeView->viewport()->update();
     recalculateAndEmitStats();
 }
 void ContentPanel::migrateModelCache(const QString& oldPath, const QString& newPath) { if (m_model) m_model->migrateCache(oldPath, newPath); }
