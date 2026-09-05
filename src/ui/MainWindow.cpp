@@ -60,12 +60,6 @@ MainWindow::MainWindow(QWidget* parent)
 
     m_trayController = new TrayController(this);
     m_trayController->show();
-
-    QTimer::singleShot(200, []() {
-        QString lastPath = AppConfig::instance().getValue("MainWindow/LastPath", "computer://").toString();
-        bool isValid = lastPath.contains("://") || QDir(lastPath).exists();
-        NavigationService::instance().navigateTo(isValid ? lastPath : "computer://");
-    });
 }
 
 void MainWindow::initUi() {
@@ -121,7 +115,7 @@ void MainWindow::initUi() {
 
     m_titleBarWidget->bindContentPanel(m_contentPanel);
 
-    // 3. 控制器停机坪挂载
+    // 3. 控制器停机坪挂载（当场同步初始化布局尺寸）
     m_panelLayoutManager = new PanelLayoutManager(this, m_mainSplitter, m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, this);
     m_panelLayoutManager->initLayout();
     m_titleBarWidget->bindLayoutManager(m_panelLayoutManager);
@@ -189,9 +183,17 @@ void MainWindow::showEvent(QShowEvent* event) {
     QMainWindow::showEvent(event);
     if (!m_panelsInitialized) {
         m_panelsInitialized = true;
-        QTimer::singleShot(0, [this]() {
-            if (m_navPanel) m_navPanel->deferredInit();
-            if (m_contentPanel) m_contentPanel->deferredInit();
+        // 1. 确保左侧导航树完成桌面、此电脑、磁盘的基础节点构建
+        if (m_navPanel) m_navPanel->deferredInit();
+
+        // 2. 严密确定性因果链：navPanel 刚构建完毕，立即精准拉起上次打开的路径
+        QString lastPath = AppConfig::instance().getValue("MainWindow/LastPath", "computer://").toString();
+        bool isValid = lastPath.contains("://") || QDir(lastPath).exists();
+        NavigationService::instance().navigateTo(isValid ? lastPath : "computer://");
+
+        // 3. 空闲期静默预热全局 ToolTip
+        QTimer::singleShot(500, []() {
+            ToolTipOverlay::instance()->silentWarmup();
         });
     }
 }
@@ -220,6 +222,7 @@ void MainWindow::changeEvent(QEvent* event) {
         }
         if (m_titleBarWidget && m_titleBarWidget->btnMax()) {
             QString iconKey = isMaximized() ? "restore_line" : "maximize";
+            // 修正笔误：恢复为正确的 UiHelper::getIcon
             m_titleBarWidget->btnMax()->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
         }
         if (m_bodyLayout) {

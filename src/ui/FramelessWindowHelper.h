@@ -6,13 +6,14 @@
 #include <QObject>
 #include <QWidget>
 #include <QPointer>
+#include <QPoint>
+#include <QRect>
+#include <QEvent>
 
 namespace QuarkMeta {
 
 /**
- * @brief 无边框窗口原生消息助手类
- * 集中接管 Win32 原生 WM_NCCALCSIZE, WM_GETMINMAXINFO, WM_NCHITTEST 与 WM_SETCURSOR 消息，
- * 提供硬件级平滑拖拽、边缘缩放、光标切换及双击最大化响应，可复用于任何 QWidget/QMainWindow 顶层窗口。
+ * @brief 工业级无边框窗口助手类
  */
 class FramelessWindowHelper : public QObject {
     Q_OBJECT
@@ -23,7 +24,6 @@ public:
     static bool isAlwaysOnTop(QWidget* window);
 
     bool handleNativeEvent(void* message, qintptr* result);
-
     static bool isInteractiveWidget(QWidget* child, QWidget* titleBar, QWidget* window);
 
 protected:
@@ -44,7 +44,7 @@ private:
     QPoint m_resizeStartGlobalPos;
     QRect m_resizeStartGeometry;
 
-    static constexpr int kBaseResizeMargin = 6;
+    static constexpr int kBaseResizeMargin = 8;
 };
 
 } // namespace QuarkMeta
