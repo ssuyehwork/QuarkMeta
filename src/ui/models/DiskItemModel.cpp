@@ -193,6 +193,17 @@ void DiskItemModel::clear() {
 void DiskItemModel::updateRecordMetadata(const QString& path) {
     QString nPath = QDir::toNativeSeparators(path);
     auto it = m_pathToIndex.find(nPath);
+    if (it == m_pathToIndex.end()) {
+        QString cleanP = QDir::cleanPath(path);
+        for (auto mapIt = m_pathToIndex.begin(); mapIt != m_pathToIndex.end(); ++mapIt) {
+            if (QString::compare(mapIt->first, nPath, Qt::CaseInsensitive) == 0 ||
+                QString::compare(QDir::cleanPath(mapIt->first), cleanP, Qt::CaseInsensitive) == 0) {
+                it = mapIt;
+                break;
+            }
+        }
+    }
+
     if (it != m_pathToIndex.end()) {
         int i = it->second;
         if (i >= 0 && i < static_cast<int>(m_allRecords.size())) {
@@ -214,6 +225,10 @@ void DiskItemModel::updateRecordMetadata(const QString& path) {
 
             // 🚀【核心根治】：直接从内存缓存真理源 MetadataManager 读取实时最新数据，彻底消灭读脏盘与时序竞态！
             RuntimeMeta meta = MetadataManager::instance().getMeta(nPath.toStdWString());
+            if (meta.rating == 0 && record.path != nPath) {
+                RuntimeMeta fallbackMeta = MetadataManager::instance().getMeta(record.path.toStdWString());
+                if (fallbackMeta.rating > 0) meta = fallbackMeta;
+            }
 
             record.rating = meta.rating;
             record.manualColor = QString::fromStdWString(meta.manualColor);

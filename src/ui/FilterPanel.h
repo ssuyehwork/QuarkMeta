@@ -34,6 +34,7 @@ public:
 
     void populateStats(const QuarkMeta::ScanStats& stats);
     void populate(const QuarkMeta::ScanStats& stats) { populateStats(stats); }
+    void clearStats();
     void populate(
         const QMap<int, int>&        ratingCounts,
         const QMap<QString, int>&    colorCounts,

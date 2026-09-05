@@ -250,6 +250,17 @@ bool FilterPanel::eventFilter(QObject* watched, QEvent* event) {
     return QWidget::eventFilter(watched, event);
 }
 
+void FilterPanel::clearStats() {
+    m_currentStats = QuarkMeta::ScanStats();
+    m_ratingCounts.clear();
+    m_colorCounts.clear();
+    m_typeCounts.clear();
+    m_createDateCounts.clear();
+    m_modifyDateCounts.clear();
+    m_emptyFolderCount = 0;
+    rebuildGroups();
+}
+
 void FilterPanel::populateStats(const QuarkMeta::ScanStats& stats) {
     if (m_statsEngine) {
         m_statsEngine->updateStats(stats);
