@@ -947,6 +947,9 @@ QWidget* FilterPanel::buildGroup(const QString& title, QVBoxLayout*& outContentL
 
     QWidget* hdrRow = new QWidget(wrapper);
     hdrRow->setObjectName("FilterGroupHdrRow");
+    if (m_groupHeaders.isEmpty()) {
+        hdrRow->setProperty("isFirst", true);
+    }
     hdrRow->setFixedHeight(24);
     hdrRow->setAttribute(Qt::WA_StyledBackground, true);
 

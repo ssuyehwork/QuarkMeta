@@ -7,10 +7,6 @@ QWidget#CentralWidget { background-color: #1E1E1E; }
     background-color: #1E1E1E;
     border-bottom: 1px solid #333333;
 }
-#NavBar {
-    background-color: #1E1E1E;
-    border-bottom: 1px solid #333333;
-}
 
 /* 卡片 5px 实体物理切缝 + Dual-mode 深色风格 */
 QSplitter {
@@ -1299,6 +1295,9 @@ QLabel#FilterSepLabel {
 QWidget#FilterGroupHdrRow {
     background-color: #252526;
     border-top: 1px solid #333333;
+}
+QWidget#FilterGroupHdrRow[isFirst="true"] {
+    border-top: none;
 }
 QPushButton#FilterGroupHdrBtn {
     background-color: transparent;
