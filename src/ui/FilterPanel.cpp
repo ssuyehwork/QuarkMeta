@@ -481,7 +481,7 @@ void FilterPanel::rebuildGroups() {
                         QPixmap pix(totalW, starSize);
                         pix.fill(Qt::transparent);
                         QPainter painter(&pix);
-                        QPixmap starPix = UiHelper::getIcon("star_filled", ActiveOrange, starSize).pixmap(starSize, starSize);
+                        QPixmap starPix = UiHelper::getIcon("star_filled", QColor("#CCCCCC"), starSize).pixmap(starSize, starSize);
                         for (int i = 0; i < r; ++i) {
                             painter.drawPixmap(i * (starSize + spacing), 0, starPix);
                         }
