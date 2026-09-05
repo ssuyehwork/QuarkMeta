@@ -123,6 +123,8 @@ void QuickLookWindow::preview(const QString& filePath) {
     QFileInfo fi(filePath);
     m_titleLabel->setText(fi.fileName());
     m_infoLabel->setObjectName("QLInfoLabel");
+    m_infoLabel->style()->unpolish(m_infoLabel);
+    m_infoLabel->style()->polish(m_infoLabel);
     
     QString ext = fi.suffix().toLower();
     
@@ -143,6 +145,9 @@ void QuickLookWindow::preview(const QString& filePath) {
         
         m_infoLabel->setText("该文件类型暂不支持预览");
         m_infoLabel->setObjectName("QLInfoLabelWarn");
+        m_infoLabel->style()->unpolish(m_infoLabel);
+        m_infoLabel->style()->polish(m_infoLabel);
+        m_infoLabel->show();
     } else {
         renderText(filePath);
     }
@@ -172,6 +177,7 @@ void QuickLookWindow::renderImage(const QString& path) {
     m_graphicsView->show();
     m_graphicsView->clear();
     m_infoLabel->setText("正在加载预览...");
+    m_infoLabel->show();
 
     QFileInfo fi(path);
     QString ext = fi.suffix().toLower();
@@ -223,6 +229,7 @@ void QuickLookWindow::renderImage(const QString& path) {
                     weakThis->m_infoLabel->setText(QString("%1x%2 | %3")
                         .arg(img.width()).arg(img.height()).arg(path));
                 }
+                weakThis->m_infoLabel->show();
                 pix.setDevicePixelRatio(weakThis->devicePixelRatioF());
                 weakThis->m_graphicsView->setPixmap(pix);
             } else {
@@ -252,6 +259,7 @@ void QuickLookWindow::renderText(const QString& path) {
         m_lblEmptyPrompt->setText("该项目内容为空");
         m_lblEmptyPrompt->show();
         m_infoLabel->setText(QString("大小: 0 KB | %1").arg(path));
+        m_infoLabel->show();
         return;
     }
 
@@ -267,6 +275,9 @@ void QuickLookWindow::renderText(const QString& path) {
         
         m_infoLabel->setText("二进制文件，无法直接预览文本");
         m_infoLabel->setObjectName("QLInfoLabelWarn");
+        m_infoLabel->style()->unpolish(m_infoLabel);
+        m_infoLabel->style()->polish(m_infoLabel);
+        m_infoLabel->show();
         return;
     }
 
@@ -287,6 +298,7 @@ void QuickLookWindow::renderText(const QString& path) {
     m_textEdit->setPlainText(text);
     m_textEdit->verticalScrollBar()->setValue(0);
     m_infoLabel->setText(QString("编码: %1 | 大小: %2 KB | %3").arg(encodingName).arg(QFileInfo(path).size() / 1024.0, 0, 'f', 1).arg(path));
+    m_infoLabel->show();
 }
 
 
