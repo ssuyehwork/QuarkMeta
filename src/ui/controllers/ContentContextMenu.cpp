@@ -2,6 +2,7 @@
 #include "../ContentPanel.h"
 #include "ContentSortController.h"
 #include "../UiHelper.h"
+#include "../StyleLibrary.h"
 #include "../ToolTipOverlay.h"
 #include "../ColorPicker.h"
 #include "../FavoritePanel.h"
