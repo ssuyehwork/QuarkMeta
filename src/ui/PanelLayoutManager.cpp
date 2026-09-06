@@ -1,7 +1,6 @@
 #include "PanelLayoutManager.h"
 #include "NavPanel.h"
-#include <QDebug>
-#include <QDateTime>
+#include <QTimer>
 #include "FavoritePanel.h"
 #include "ContentPanel.h"
 #include "MetaPanel.h"
@@ -55,10 +54,18 @@ void PanelLayoutManager::initLayout() {
         emit panelVisibilityChanged("filter", false);
     }
 
-    // 同步恢复分栏尺寸，杜绝异步 singleShot(0) 造成的二次排版抽搐
+    m_mainSplitter->setHandleWidth(kSplitterHandleWidth);
+
+    // 推迟到窗口首次真实布局完成之后再还原分栏比例和最小宽度，
+    // 避免此刻 splitter 实际宽度还是未布局的占位值（约100px）导致比例换算错误
+    QTimer::singleShot(0, this, &PanelLayoutManager::applyDeferredLayoutRestore);
+}
+
+void PanelLayoutManager::applyDeferredLayoutRestore() {
+    if (!m_mainSplitter) return;
+
+    bool isImmersive = AppConfig::instance().getValue("MainWindow/IsImmersiveMode", false).toBool();
     QByteArray state = AppConfig::instance().getValue("MainWindow/SplitterState").toByteArray();
-    qDebug() << "[WinGeomDebug] initLayout执行restoreState前 | mainSplitter宽度=" << m_mainSplitter->width()
-             << "mainWindow geometry=" << (m_mainWindow ? m_mainWindow->geometry() : QRect());
     if (!state.isEmpty() && !isImmersive) {
         m_mainSplitter->restoreState(state);
     } else if (!isImmersive) {
@@ -66,7 +73,6 @@ void PanelLayoutManager::initLayout() {
         sizes << kBasePanelWidth << kBasePanelWidth << kContentBaseWidth << kBasePanelWidth << kBasePanelWidth;
         m_mainSplitter->setSizes(sizes);
     }
-    m_mainSplitter->setHandleWidth(kSplitterHandleWidth);
 
     // 🚀 初始化完成当场强制焊死最小宽度保护，防止 5 栏被挤压崩溃
     updateDynamicMinimumSize();
@@ -229,7 +235,6 @@ void PanelLayoutManager::showPanelContextMenu(const QPoint& globalPos) {
 
 void PanelLayoutManager::updateDynamicMinimumSize() {
     if (!m_mainWindow) return;
-    qDebug() << "[WinGeomDebug] updateDynamicMinimumSize 被调用 | 当前时间" << QDateTime::currentDateTime();
 
     int visibleCount = 0;
     if (m_navPanel && !m_navPanel->isHidden()) visibleCount++;

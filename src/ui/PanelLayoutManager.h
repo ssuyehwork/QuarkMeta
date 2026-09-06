@@ -35,6 +35,9 @@ public:
     bool isPanelVisible(const QString& panelId) const;
     bool isImmersiveMode() const;
     void toggleImmersiveMode();
+
+private:
+    void applyDeferredLayoutRestore();
     void populatePanelMenu(QMenu* menu);
     void showPanelContextMenu(const QPoint& globalPos);
     void updateDynamicMinimumSize();
