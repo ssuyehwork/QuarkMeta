@@ -12,7 +12,6 @@
 #include <QAction>
 #include <QApplication>
 #include <QSignalBlocker>
-#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -145,14 +144,8 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
     });
     connect(m_btnMax, &QPushButton::clicked, this, [this]() {
         if (window()) {
-            qDebug() << "[WinGeomDebug] 点击还原/最大化前 | isMaximized=" << window()->isMaximized()
-                     << "normalGeometry=" << window()->normalGeometry()
-                     << "geometry=" << window()->geometry();
-            if (window()->isMaximized()) window()->showNormal();
+            if (window()->isMaximized()) FramelessWindowHelper::restoreFromMaximized(window());
             else window()->showMaximized();
-            qDebug() << "[WinGeomDebug] 点击还原/最大化后 | isMaximized=" << window()->isMaximized()
-                     << "normalGeometry=" << window()->normalGeometry()
-                     << "geometry=" << window()->geometry();
             updateMaxButtonIcon();
         }
     });

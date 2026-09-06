@@ -14,7 +14,6 @@
 #include <QScrollBar>
 #include <QAbstractItemView>
 #include <QMouseEvent>
-#include <QDebug>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -143,16 +142,11 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
     // 3. 原生双击标题栏最大化 / 还原
     if (msg->message == WM_NCLBUTTONDBLCLK) {
         if (msg->wParam == HTCAPTION) {
-            qDebug() << "[WinGeomDebug] 双击标题栏前 | isMaximized=" << m_window->isMaximized()
-                     << "normalGeometry=" << m_window->normalGeometry();
             if (m_window->isMaximized()) {
-                m_window->showNormal();
+                restoreFromMaximized(m_window);
             } else {
                 m_window->showMaximized();
             }
-            qDebug() << "[WinGeomDebug] 双击标题栏后 | isMaximized=" << m_window->isMaximized()
-                     << "normalGeometry=" << m_window->normalGeometry()
-                     << "geometry=" << m_window->geometry();
             *result = 0;
             return true;
         }
@@ -178,6 +172,15 @@ void FramelessWindowHelper::setAlwaysOnTop(QWidget* window, bool onTop) {
     window->setWindowFlags(flags);
     window->show();
 #endif
+}
+
+void FramelessWindowHelper::restoreFromMaximized(QWidget* window) {
+    if (!window) return;
+    QRect savedNormal = window->normalGeometry();
+    window->showNormal();
+    if (savedNormal.isValid() && !savedNormal.isEmpty()) {
+        window->setGeometry(savedNormal);
+    }
 }
 
 bool FramelessWindowHelper::isAlwaysOnTop(QWidget* window) {

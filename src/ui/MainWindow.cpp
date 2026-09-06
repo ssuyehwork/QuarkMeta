@@ -32,7 +32,6 @@
 #include <QDir>
 #include <QTimer>
 #include <QCloseEvent>
-#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -65,14 +64,8 @@ MainWindow::MainWindow(QWidget* parent)
 
 void MainWindow::initUi() {
     QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
-    qDebug() << "[WinGeomDebug] 启动读取 | savedGeom字节长度=" << savedGeom.size()
-             << "isEmpty=" << savedGeom.isEmpty();
     if (!savedGeom.isEmpty()) {
-        bool ok = restoreGeometry(savedGeom);
-        qDebug() << "[WinGeomDebug] restoreGeometry返回=" << ok
-                 << "调用后isMaximized=" << isMaximized()
-                 << "调用后normalGeometry=" << normalGeometry()
-                 << "调用后geometry=" << geometry();
+        restoreGeometry(savedGeom);
     } else {
         resize(1180, 800);
     }
@@ -188,9 +181,6 @@ void MainWindow::initUi() {
 
 void MainWindow::showEvent(QShowEvent* event) {
     QMainWindow::showEvent(event);
-    qDebug() << "[WinGeomDebug] showEvent触发 | isMaximized=" << isMaximized()
-             << "normalGeometry=" << normalGeometry()
-             << "geometry=" << geometry();
     if (!m_panelsInitialized) {
         m_panelsInitialized = true;
         // 1. 确保左侧导航树完成桌面、此电脑、磁盘的基础节点构建
@@ -241,13 +231,8 @@ void MainWindow::changeEvent(QEvent* event) {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
-    QByteArray geom = saveGeometry();
-    qDebug() << "[WinGeomDebug] closeEvent 触发 | isMaximized=" << isMaximized()
-             << "normalGeometry=" << normalGeometry()
-             << "geometry=" << geometry()
-             << "saveGeometry字节长度=" << geom.size();
     AppConfig::instance().setValue("MainWindow/LastPath", NavigationService::instance().currentUrl());
-    AppConfig::instance().setValue("MainWindow/Geometry", geom);
+    AppConfig::instance().setValue("MainWindow/Geometry", saveGeometry());
     if (m_panelLayoutManager) {
         m_panelLayoutManager->saveLayoutState();
     }
