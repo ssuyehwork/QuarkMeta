@@ -297,6 +297,45 @@ void TagSelectorOverlay::resizeEvent(QResizeEvent* event) {
     }
 }
 
+void TagSelectorOverlay::mousePressEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) {
+        m_isDragging = true;
+        m_dragPos = event->globalPosition().toPoint() - frameGeometry().topLeft();
+        event->accept();
+        return;
+    }
+    QFrame::mousePressEvent(event);
+}
+
+void TagSelectorOverlay::mouseMoveEvent(QMouseEvent* event) {
+    if (m_isDragging && (event->buttons() & Qt::LeftButton)) {
+        QPoint newPos = event->globalPosition().toPoint() - m_dragPos;
+        QWidget* p = parentWidget();
+        if (p) {
+            QRect pGeom = p->frameGeometry();
+            int minX = pGeom.left();
+            int maxX = qMax(minX, pGeom.right() - width());
+            int minY = pGeom.top();
+            int maxY = qMax(minY, pGeom.bottom() - height());
+            newPos.setX(qBound(minX, newPos.x(), maxX));
+            newPos.setY(qBound(minY, newPos.y(), maxY));
+        }
+        move(newPos);
+        event->accept();
+        return;
+    }
+    QFrame::mouseMoveEvent(event);
+}
+
+void TagSelectorOverlay::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton) {
+        m_isDragging = false;
+        event->accept();
+        return;
+    }
+    QFrame::mouseReleaseEvent(event);
+}
+
 void TagSelectorOverlay::changeEvent(QEvent* event) {
     if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowDeactivate) {
         if (!isActiveWindow() && !this->isAncestorOf(QApplication::focusWidget())) {
