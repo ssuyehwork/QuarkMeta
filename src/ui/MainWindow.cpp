@@ -223,7 +223,7 @@ void MainWindow::changeEvent(QEvent* event) {
         if (m_titleBarWidget && m_titleBarWidget->btnMax()) {
             QString iconKey = isMaximized() ? "restore_line" : "maximize";
             // 修正笔误：恢复为正确的 UiHelper::getIcon
-            m_titleBarWidget->btnMax()->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
+            m_titleBarWidget->btnMax()->setIcon(UiHelper::getIcon(iconKey, QColor("#FFFFFF")));
         }
         if (m_bodyLayout) {
             m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin);

@@ -63,7 +63,7 @@ void TagManagerDialog::initContent() {
     m_btnToggleSidebar->setFixedSize(20, 20);
     m_btnToggleSidebar->setCheckable(true);
     m_btnToggleSidebar->setChecked(true);
-    m_btnToggleSidebar->setIcon(UiHelper::getIcon("sidebar", QColor("#CCCCCC"), 16));
+    m_btnToggleSidebar->setIcon(UiHelper::getIcon("sidebar", QColor("#FFFFFF"), 16));
     m_btnToggleSidebar->setIconSize(QSize(16, 16));
     m_btnToggleSidebar->setCursor(Qt::PointingHandCursor);
     m_btnToggleSidebar->setProperty("tooltipText", "展开/收起侧边栏");
@@ -105,7 +105,7 @@ void TagManagerDialog::initContent() {
     m_sidebarLayout->addStretch();
 
     // 底部“新建分组”按钮
-    QPushButton* btnAddGroup = new QPushButton(UiHelper::getIcon("add", QColor("#AAAAAA"), 14), " 新建分组...", m_sidebar);
+    QPushButton* btnAddGroup = new QPushButton(UiHelper::getIcon("add", QColor("#FFFFFF"), 14), " 新建分组...", m_sidebar);
     btnAddGroup->setFixedHeight(32);
     btnAddGroup->setCursor(Qt::PointingHandCursor);
     btnAddGroup->setObjectName("TagManagerBtnAddGroup");
@@ -172,7 +172,7 @@ void TagManagerDialog::refreshSidebar() {
     auto createSideBtn = [this](int id, const QString& icon, const QString& name) {
         QPushButton* btn = new QPushButton(m_sidebar);
         btn->setText(" " + name);
-        btn->setIcon(UiHelper::getIcon(icon, QColor("#AAAAAA"), 13));
+        btn->setIcon(UiHelper::getIcon(icon, QColor("#FFFFFF"), 13));
         btn->setIconSize(QSize(13, 13));
         btn->setCheckable(true);
         btn->setFixedSize(160, 28);
@@ -220,8 +220,8 @@ void TagManagerDialog::onAddNewGroup() {
 void TagManagerDialog::showGroupContextMenu(int groupId, const QString& groupName, const QPoint& globalPos) {
     QMenu menu(this);
     UiHelper::applyMenuStyle(&menu);
-    menu.addAction(UiHelper::getIcon("edit", QColor("#EEEEEE"), 18), "重命名分组")->setData(1);
-    menu.addAction(UiHelper::getIcon("trash", QColor("#EEEEEE"), 18), "删除分组")->setData(2);
+    menu.addAction(UiHelper::getIcon("edit", QColor("#FFFFFF"), 18), "重命名分组")->setData(1);
+    menu.addAction(UiHelper::getIcon("trash", QColor("#FFFFFF"), 18), "删除分组")->setData(2);
 
     QAction* act = menu.exec(globalPos);
     if (!act) return;
@@ -288,11 +288,11 @@ void TagManagerDialog::showTagContextMenu(const QString& tagName, const QPoint& 
     UiHelper::applyMenuStyle(&menu);
 
     // 1. 添加到分组子菜单
-    QMenu* groupSubMenu = menu.addMenu(UiHelper::getIcon("folder_filled", QColor("#EEEEEE"), 18), "添加到分组...");
+    QMenu* groupSubMenu = menu.addMenu(UiHelper::getIcon("folder_filled", QColor("#FFFFFF"), 18), "添加到分组...");
     UiHelper::applyMenuStyle(groupSubMenu);
     for (const auto& grp : m_allGroups) {
         if (grp.id <= 0) continue;
-        QAction* actGrp = groupSubMenu->addAction(UiHelper::getIcon("tag", QColor("#EEEEEE"), 16), grp.name);
+        QAction* actGrp = groupSubMenu->addAction(UiHelper::getIcon("tag", QColor("#FFFFFF"), 16), grp.name);
         connect(actGrp, &QAction::triggered, this, [this, tagName, grp]() {
             TagLexiconService::instance().moveTagToGroup(tagName, grp.id);
             refreshSidebar();
@@ -302,11 +302,11 @@ void TagManagerDialog::showTagContextMenu(const QString& tagName, const QPoint& 
 
     // 2. 从当前组移出（仅在具体组视图有效）
     if (m_activeGroupId > 0) {
-        menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE"), 18), "从当前组移出")->setData(1);
+        menu.addAction(UiHelper::getIcon("close", QColor("#FFFFFF"), 18), "从当前组移出")->setData(1);
     }
 
     menu.addSeparator();
-    menu.addAction(UiHelper::getIcon("trash", QColor("#EEEEEE"), 18), "删除此标签")->setData(2);
+    menu.addAction(UiHelper::getIcon("trash", QColor("#FFFFFF"), 18), "删除此标签")->setData(2);
 
     QAction* act = menu.exec(globalPos);
     if (!act) return;
@@ -381,7 +381,7 @@ void TagManagerDialog::refreshTags() {
 
     for (const QString& tag : finalTags) {
         QPushButton* btn = new QPushButton(tag, flowContainer);
-        btn->setIcon(UiHelper::getIcon("tag_pill", QColor("#888888"), 12));
+        btn->setIcon(UiHelper::getIcon("tag_pill", QColor("#FFFFFF"), 12));
         btn->setIconSize(QSize(12, 12));
         btn->setCursor(Qt::PointingHandCursor);
         btn->setContextMenuPolicy(Qt::CustomContextMenu);

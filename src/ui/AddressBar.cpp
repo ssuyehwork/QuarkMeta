@@ -45,7 +45,7 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
 
     m_btnRefresh = new QPushButton(m_addressContainer);
     m_btnRefresh->setFixedSize(30, 30);
-    m_btnRefresh->setIcon(UiHelper::getIcon("sync", QColor("#CCCCCC"), 16));
+    m_btnRefresh->setIcon(UiHelper::getIcon("sync", QColor("#FFFFFF"), 16));
     m_btnRefresh->setProperty("tooltipText", "刷新 (F5)");
     m_btnRefresh->setCursor(Qt::ArrowCursor);
     m_btnRefresh->setObjectName("BtnRefreshAddress");
@@ -84,9 +84,9 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
         UiHelper::applyMenuStyle(&menu);
 
         bool isFav = FavoriteDao::containsPath(nativePath);
-        QIcon favIcon = isFav ? UiHelper::getIcon("close", QColor("#EEEEEE")) : UiHelper::getIcon("star_filled", QColor("#EEEEEE"));
+        QIcon favIcon = isFav ? UiHelper::getIcon("close", QColor("#FFFFFF")) : UiHelper::getIcon("star_filled", QColor("#FFFFFF"));
         QAction* actFavToggle = menu.addAction(favIcon, isFav ? "取消收藏" : "添加至收藏夹");
-        QAction* actCopyPath = menu.addAction(UiHelper::getIcon("copy", QColor("#EEEEEE")), "复制完整路径");
+        QAction* actCopyPath = menu.addAction(UiHelper::getIcon("copy", QColor("#FFFFFF")), "复制完整路径");
 
         QAction* selected = menu.exec(globalPos);
         if (selected == actFavToggle) {
@@ -160,7 +160,7 @@ bool AddressBar::eventFilter(QObject* obj, QEvent* event) {
                 ToolTipOverlay::instance()->showText(QCursor::pos(), text, 0);
             }
         } else if (event->type() == QEvent::HoverLeave || event->type() == QEvent::Leave) {
-            m_btnRefresh->setIcon(UiHelper::getIcon("sync", QColor("#CCCCCC"), 16));
+            m_btnRefresh->setIcon(UiHelper::getIcon("sync", QColor("#FFFFFF"), 16));
             ToolTipOverlay::hideTip();
         }
     }

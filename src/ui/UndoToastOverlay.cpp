@@ -25,7 +25,7 @@ UndoToastOverlay::UndoToastOverlay(QWidget* parent) : QWidget(parent) {
     // 1. 成功绿勾图标
     m_iconLabel = new QLabel(this);
     m_iconLabel->setFixedSize(18, 18);
-    m_iconLabel->setPixmap(UiHelper::getIcon("check_circle_filled", QColor("#2ECC71")).pixmap(18, 18));
+    m_iconLabel->setPixmap(UiHelper::getIcon("check_circle_filled", QColor("#FFFFFF")).pixmap(18, 18));
     layout->addWidget(m_iconLabel);
 
     // 2. 消息文案

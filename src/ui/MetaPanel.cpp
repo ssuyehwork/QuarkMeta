@@ -55,7 +55,7 @@ QWidget* MetaPanel::createCollapsibleSection(const QString& title, QWidget* cont
     btnHeader->setObjectName("CollapsibleHeaderBtn");
 
     auto updateHeaderText = [btnHeader, title](bool expanded) {
-        btnHeader->setIcon(UiHelper::getIcon(expanded ? "chevron_down" : "chevron_right", QColor("#888888"), 12));
+        btnHeader->setIcon(UiHelper::getIcon(expanded ? "chevron_down" : "chevron_right", QColor("#FFFFFF"), 12));
         btnHeader->setIconSize(QSize(12, 12));
         btnHeader->setText(" " + title);
     };
@@ -86,7 +86,7 @@ void MetaPanel::initUi() {
     headerLayout->setSpacing(6);
     
     QLabel* iconLabel = new QLabel(header);
-    iconLabel->setPixmap(UiHelper::getIcon("all_data", QColor("#4a90e2"), 16).pixmap(16, 16));
+    iconLabel->setPixmap(UiHelper::getIcon("all_data", QColor("#FFFFFF"), 16).pixmap(16, 16));
     headerLayout->addWidget(iconLabel);
     
     QLabel* titleLabel = new QLabel("元数据属性", header);
@@ -149,7 +149,7 @@ void MetaPanel::initUi() {
     m_linkEdit->setObjectName("MetaLinkEdit");
     m_linkEdit->installEventFilter(this);
 
-    m_actOpenLink = m_linkEdit->addAction(UiHelper::getIcon("link", QColor("#378ADD"), 14), QLineEdit::TrailingPosition);
+    m_actOpenLink = m_linkEdit->addAction(UiHelper::getIcon("link", QColor("#FFFFFF"), 14), QLineEdit::TrailingPosition);
     m_actOpenLink->setVisible(false);
 
     for (QToolButton* btn : m_linkEdit->findChildren<QToolButton*>()) {
@@ -191,7 +191,7 @@ void MetaPanel::initUi() {
     QPushButton* btnClearStar = new QPushButton(ratingRow);
     btnClearStar->setFixedSize(22, 22);
     btnClearStar->setCursor(Qt::PointingHandCursor);
-    btnClearStar->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 16));
+    btnClearStar->setIcon(UiHelper::getIcon("no_color", QColor("#FFFFFF"), 16));
     btnClearStar->setIconSize(QSize(16, 16));
     btnClearStar->setProperty("tooltipText", "清除评级");
     btnClearStar->installEventFilter(this);
@@ -203,7 +203,7 @@ void MetaPanel::initUi() {
         QPushButton* btnStar = new QPushButton(ratingRow);
         btnStar->setFixedSize(20, 20);
         btnStar->setCursor(Qt::PointingHandCursor);
-        btnStar->setIcon(UiHelper::getIcon("star", QColor("#555555"), 16));
+        btnStar->setIcon(UiHelper::getIcon("star", QColor("#FFFFFF"), 16));
         btnStar->setIconSize(QSize(16, 16));
         btnStar->setObjectName("MetaBtnStar");
         connect(btnStar, &QPushButton::clicked, this, [this, i]() {
@@ -225,7 +225,7 @@ void MetaPanel::initUi() {
     QPushButton* btnNoColor = new QPushButton(colorRow);
     btnNoColor->setFixedSize(22, 22);
     btnNoColor->setCursor(Qt::PointingHandCursor);
-    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#888888"), 16));
+    btnNoColor->setIcon(UiHelper::getIcon("no_color", QColor("#FFFFFF"), 16));
     btnNoColor->setIconSize(QSize(16, 16));
     btnNoColor->setProperty("tooltipText", "无色标");
     btnNoColor->installEventFilter(this);
@@ -269,7 +269,7 @@ void MetaPanel::initUi() {
     tagL->setContentsMargins(0, 0, 0, 0);
     tagL->setSpacing(6);
 
-    m_btnAddTagBig = new QPushButton(UiHelper::getIcon("add", QColor("#AAAAAA"), 14), " 添加标签", m_tagBox);
+    m_btnAddTagBig = new QPushButton(UiHelper::getIcon("add", QColor("#FFFFFF"), 14), " 添加标签", m_tagBox);
     m_btnAddTagBig->setFixedHeight(32);
     m_btnAddTagBig->setCursor(Qt::PointingHandCursor);
     m_btnAddTagBig->setObjectName("BtnAddTagBig");
@@ -282,7 +282,7 @@ void MetaPanel::initUi() {
     m_btnAddTagSmall = new QPushButton(m_tagContainer);
     m_btnAddTagSmall->setFixedSize(22, 22);
     m_btnAddTagSmall->setCursor(Qt::PointingHandCursor);
-    m_btnAddTagSmall->setIcon(UiHelper::getIcon("add", QColor("#CCCCCC"), 12));
+    m_btnAddTagSmall->setIcon(UiHelper::getIcon("add", QColor("#FFFFFF"), 12));
     m_btnAddTagSmall->setIconSize(QSize(12, 12));
     m_btnAddTagSmall->setProperty("tooltipText", "添加标签");
     m_btnAddTagSmall->installEventFilter(this);
@@ -700,7 +700,7 @@ void MetaPanel::setRating(int rating, bool fromUser) {
         bool active = (i < rating);
         m_starBtns[i]->setIcon(UiHelper::getIcon(
             active ? "star_filled" : "star",
-            active ? QColor("#FF551C") : QColor("#555555"),
+            active ? QColor("#FFFFFF") : QColor("#000000"),
             16
         ));
         m_starBtns[i]->setIconSize(QSize(16, 16));

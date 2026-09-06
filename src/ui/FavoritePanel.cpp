@@ -117,7 +117,7 @@ void FavoritePanel::initUi() {
     headerLayout->setSpacing(5);
 
     QLabel* iconLabel = new QLabel(header);
-    iconLabel->setPixmap(UiHelper::getIcon("star_filled", QColor("#FDB70A"), 18).pixmap(18, 18));
+    iconLabel->setPixmap(UiHelper::getIcon("star_filled", QColor("#FFFFFF"), 18).pixmap(18, 18));
     headerLayout->addWidget(iconLabel);
 
     QLabel* titleLabel = new QLabel("收藏夹", header);
@@ -299,7 +299,7 @@ void FavoritePanel::onFavoriteContextMenu(const QPoint& pos) {
         menu.addSeparator();
     }
 
-    QAction* removeAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE")), "取消收藏");
+    QAction* removeAct = menu.addAction(UiHelper::getIcon("close", QColor("#FFFFFF")), "取消收藏");
     connect(removeAct, &QAction::triggered, this, [this, path, &isItemRemoved]() {
         isItemRemoved = true;
         removeFavoriteItem(path);

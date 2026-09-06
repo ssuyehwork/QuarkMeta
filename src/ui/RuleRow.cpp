@@ -16,7 +16,7 @@ void RuleRow::initUi() {
     // 2026-07-xx 按照用户要求：升级下拉框 UI，圆角设计 + 实心三角形箭头
     // 性能优化：使用静态变量快取路径，避免每行构造时重复触发 IO 写入
     // 修正：改用紧凑型 dropdown_triangle 图标，并重算参数确保清晰可见
-    static const QString arrowPath = UiHelper::getSvgTempFilePath("dropdown_triangle", QColor("#AAAAAA"));
+    static const QString arrowPath = UiHelper::getSvgTempFilePath("dropdown_triangle", QColor("#FFFFFF"));
 
     m_typeCombo = new QComboBox(this);
     m_typeCombo->addItem("文本", static_cast<int>(RenameComponentType::Text));

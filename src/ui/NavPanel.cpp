@@ -56,14 +56,14 @@ void NavPanel::deferredInit() {
 
     // 1. 桌面入口 (使用 SVG 语义图标替代原生图标)
     QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-    QIcon desktopIcon = UiHelper::getIcon("home", QColor("#3498db"), 18);
+    QIcon desktopIcon = UiHelper::getIcon("home", QColor("#FFFFFF"), 18);
     QStandardItem* desktopItem = new QStandardItem(desktopIcon, "桌面");
     desktopItem->setData(desktopPath, Qt::UserRole + 1);
     desktopItem->appendRow(new QStandardItem("Loading..."));
     m_model->appendRow(desktopItem);
 
     // 2. 此电脑入口
-    QIcon computerIcon = UiHelper::getIcon("monitor", QColor("#3498db"), 18);
+    QIcon computerIcon = UiHelper::getIcon("monitor", QColor("#FFFFFF"), 18);
     QStandardItem* computerItem = new QStandardItem(computerIcon, "此电脑");
     computerItem->setData("computer://", Qt::UserRole + 1);
     m_model->appendRow(computerItem);
@@ -82,14 +82,14 @@ void NavPanel::deferredInit() {
     QTimer::singleShot(0, [this, drives]() {
         for (int i = 0; i < drives.size(); ++i) {
             if (i + 2 < m_model->rowCount()) {
-                QIcon driveIcon = UiHelper::getIcon("hard_drive", QColor("#95a5a6"), 18);
+                QIcon driveIcon = UiHelper::getIcon("hard_drive", QColor("#FFFFFF"), 18);
                 m_model->item(i + 2)->setIcon(driveIcon);
             }
         }
     });
 
     // 4. 最近访问 (固定主节点，在所有磁盘正下方)
-    QIcon recentIcon = UiHelper::getIcon("clock_history", QColor("#3498db"), 18);
+    QIcon recentIcon = UiHelper::getIcon("clock_history", QColor("#FFFFFF"), 18);
     m_recentRootItem = new QStandardItem(recentIcon, "最近访问");
     m_recentRootItem->setData("recent_root", Qt::UserRole + 1);
     m_model->appendRow(m_recentRootItem);
@@ -101,7 +101,7 @@ void NavPanel::deferredInit() {
     }
 
     // 5. 回收站 (固定主节点)
-    QIcon trashIcon = UiHelper::getIcon("trash", QColor("#e81123"), 18);
+    QIcon trashIcon = UiHelper::getIcon("trash", QColor("#FFFFFF"), 18);
     QStandardItem* trashItem = new QStandardItem(trashIcon, "回收站");
     trashItem->setData("trash_root", Qt::UserRole + 1);
     m_model->appendRow(trashItem);
@@ -121,7 +121,7 @@ void NavPanel::initUi() {
     headerLayout->setSpacing(5);
 
     QLabel* iconLabel = new QLabel(header);
-    iconLabel->setPixmap(UiHelper::getIcon("list_ul", QColor("#2ecc71"), 18).pixmap(18, 18));
+    iconLabel->setPixmap(UiHelper::getIcon("list_ul", QColor("#FFFFFF"), 18).pixmap(18, 18));
     headerLayout->addWidget(iconLabel);
 
     QLabel* titleLabel = new QLabel("目录导航", header);
@@ -211,7 +211,7 @@ void NavPanel::updateRecentVisitedList() {
 
             QIcon icon = ShellIconManager::getFileIcon(path, 18);
             if (icon.isNull()) {
-                icon = UiHelper::getIcon("folder_filled", QColor("#3498db"), 18);
+                icon = UiHelper::getIcon("folder_filled", QColor("#FFFFFF"), 18);
             }
 
             validItems.append({path, displayName, icon});
@@ -258,8 +258,8 @@ void NavPanel::onTreeContextMenu(const QPoint& pos) {
         QMenu menu(this);
         UiHelper::applyMenuStyle(&menu);
 
-        QAction* actRestore = menu.addAction(UiHelper::getIcon("sync", QColor("#EEEEEE"), 18), "还原全部");
-        QAction* actEmpty = menu.addAction(UiHelper::getIcon("trash", QColor("#EEEEEE"), 18), "清空回收站");
+        QAction* actRestore = menu.addAction(UiHelper::getIcon("sync", QColor("#FFFFFF"), 18), "还原全部");
+        QAction* actEmpty = menu.addAction(UiHelper::getIcon("trash", QColor("#FFFFFF"), 18), "清空回收站");
 
         connect(actRestore, &QAction::triggered, this, [this]() {
             TrashService::instance().restoreAll(this);
@@ -285,10 +285,10 @@ void NavPanel::onTreeContextMenu(const QPoint& pos) {
     UiHelper::applyMenuStyle(&menu);
 
     bool isFav = FavoriteDao::containsPath(path);
-    QIcon favIcon = isFav ? UiHelper::getIcon("close", QColor("#EEEEEE"), 18) : UiHelper::getIcon("star_filled", QColor("#EEEEEE"), 18);
+    QIcon favIcon = isFav ? UiHelper::getIcon("close", QColor("#FFFFFF"), 18) : UiHelper::getIcon("star_filled", QColor("#FFFFFF"), 18);
     QAction* actFavorite = menu.addAction(favIcon, isFav ? "从收藏夹移除" : "添加至收藏夹");
 
-    QAction* actCopyPath = menu.addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "复制完整路径");
+    QAction* actCopyPath = menu.addAction(UiHelper::getIcon("copy", QColor("#FFFFFF"), 18), "复制完整路径");
 
     QAction* selected = menu.exec(m_treeView->viewport()->mapToGlobal(pos));
     if (!selected) return;
