@@ -411,6 +411,21 @@ void TagManagerDialog::resizeEvent(QResizeEvent* event) {
     refreshTags();
 }
 
+void TagManagerDialog::keyPressEvent(QKeyEvent* event) {
+    if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+        if (m_searchEdit && m_searchEdit->hasFocus()) {
+            QString kw = m_searchEdit->text().trimmed();
+            if (!kw.isEmpty()) {
+                createTag(kw);
+                m_searchEdit->clear();
+            }
+        }
+        event->accept();
+        return;
+    }
+    FramelessDialog::keyPressEvent(event);
+}
+
 void TagManagerDialog::applyTheme() {
     // Style handled in style.qss
 }
