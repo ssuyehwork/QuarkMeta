@@ -14,6 +14,7 @@
 #include <QScrollBar>
 #include <QAbstractItemView>
 #include <QMouseEvent>
+#include <QTimer>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -179,7 +180,12 @@ void FramelessWindowHelper::restoreFromMaximized(QWidget* window) {
     QRect savedNormal = window->normalGeometry();
     window->showNormal();
     if (savedNormal.isValid() && !savedNormal.isEmpty()) {
-        window->setGeometry(savedNormal);
+        QPointer<QWidget> weakWindow(window);
+        QTimer::singleShot(0, [weakWindow, savedNormal]() {
+            if (weakWindow) {
+                weakWindow->setGeometry(savedNormal);
+            }
+        });
     }
 }
 
