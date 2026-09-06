@@ -218,7 +218,7 @@ void TagSelectorOverlay::populateGrid() {
         });
     }
 
-    m_currentTagIndex = m_displayedTags.isEmpty() ? -1 : 0;
+    m_currentTagIndex = -1;
     updateSelectionHighlight();
 }
 
@@ -264,14 +264,18 @@ void TagSelectorOverlay::updateSelectionHighlight() {
 void TagSelectorOverlay::handleGridNavigation(int key) {
     if (m_displayedTags.isEmpty()) return;
     int rowCount = m_displayedTags.size();
-    if (key == Qt::Key_Left) {
-        m_currentTagIndex = (m_currentTagIndex - 1 + rowCount) % rowCount;
-    } else if (key == Qt::Key_Right) {
-        m_currentTagIndex = (m_currentTagIndex + 1) % rowCount;
-    } else if (key == Qt::Key_Up) {
-        m_currentTagIndex = qMax(0, m_currentTagIndex - 4);
-    } else if (key == Qt::Key_Down) {
-        m_currentTagIndex = qMin(rowCount - 1, m_currentTagIndex + 4);
+    if (m_currentTagIndex < 0) {
+        m_currentTagIndex = 0;
+    } else {
+        if (key == Qt::Key_Left) {
+            m_currentTagIndex = (m_currentTagIndex - 1 + rowCount) % rowCount;
+        } else if (key == Qt::Key_Right) {
+            m_currentTagIndex = (m_currentTagIndex + 1) % rowCount;
+        } else if (key == Qt::Key_Up) {
+            m_currentTagIndex = qMax(0, m_currentTagIndex - 4);
+        } else if (key == Qt::Key_Down) {
+            m_currentTagIndex = qMin(rowCount - 1, m_currentTagIndex + 4);
+        }
     }
     updateSelectionHighlight();
 }
