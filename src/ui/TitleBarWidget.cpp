@@ -54,7 +54,7 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
 
     m_logoLabel = new QLabel(this);
     m_logoLabel->setFixedSize(18, 18);
-    m_logoLabel->setPixmap(UiHelper::getIcon("ferrex", Style::BrandOrange).pixmap(16, 16));
+    m_logoLabel->setPixmap(UiHelper::getIcon("quarkmeta", Style::BrandOrange).pixmap(16, 16));
     m_logoLabel->setAlignment(Qt::AlignCenter);
     m_logoLabel->setObjectName("TitleLogoLabel");
     m_layout->addWidget(m_logoLabel);

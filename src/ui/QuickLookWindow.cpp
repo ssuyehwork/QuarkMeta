@@ -445,8 +445,8 @@ void QuickLookWindow::showContextMenu(const QPoint& globalPos) {
     UiHelper::applyMenuStyle(&menu);
 
     // 14 项选项
-    QAction* actPrev = menu.addAction(UiHelper::getIcon("scroll-007.svg", QColor("#FFFFFF"), 18), "上一个");
-    QAction* actNext = menu.addAction(UiHelper::getIcon("scroll-006.svg", QColor("#FFFFFF"), 18), "下一个");
+    QAction* actPrev = menu.addAction(UiHelper::getIcon("scroll-007", QColor("#FFFFFF"), 18), "上一个");
+    QAction* actNext = menu.addAction(UiHelper::getIcon("scroll-006", QColor("#FFFFFF"), 18), "下一个");
     menu.addSeparator();
 
     QAction* actRotate = menu.addAction(UiHelper::getIcon("sync", QColor("#FFFFFF"), 18), "旋转");
