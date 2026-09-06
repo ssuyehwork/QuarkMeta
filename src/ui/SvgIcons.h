@@ -2512,6 +2512,16 @@ namespace SvgIcons {
 </svg>)svg"},
         {"split_v", R"svg(<svg width="800px" height="800px" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-90 7.5 7.5)"><path d="M3.23713 0.0746751C3.38454 -0.0164282 3.56861 -0.0247102 3.72361 0.0527869L11.7236 4.05279C11.931 4.15649 12.0399 4.38919 11.9866 4.61488C11.9333 4.84056 11.7319 5 11.5 5H3.5C3.22386 5 3 4.77614 3 4.5V0.500001C3 0.326712 3.08973 0.165778 3.23713 0.0746751Z" fill="currentColor"/><path d="M0 8H15V7H0V8Z" fill="currentColor"/><path d="M3.5 10C3.22386 10 3 10.2239 3 10.5V14.5C3 14.6733 3.08973 14.8342 3.23713 14.9253C3.38454 15.0164 3.56861 15.0247 3.72361 14.9472L11.7236 10.9472C11.931 10.8435 12.0399 10.6108 11.9866 10.3851C11.9333 10.1594 11.7319 10 11.5 10H3.5Z" fill="currentColor"/></g></svg>)svg"},
         {"split_vertical", R"svg(<svg width="800px" height="800px" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-90 7.5 7.5)"><path d="M3.23713 0.0746751C3.38454 -0.0164282 3.56861 -0.0247102 3.72361 0.0527869L11.7236 4.05279C11.931 4.15649 12.0399 4.38919 11.9866 4.61488C11.9333 4.84056 11.7319 5 11.5 5H3.5C3.22386 5 3 4.77614 3 4.5V0.500001C3 0.326712 3.08973 0.165778 3.23713 0.0746751Z" fill="currentColor"/><path d="M0 8H15V7H0V8Z" fill="currentColor"/><path d="M3.5 10C3.22386 10 3 10.2239 3 10.5V14.5C3 14.6733 3.08973 14.8342 3.23713 14.9253C3.38454 15.0164 3.56861 15.0247 3.72361 14.9472L11.7236 10.9472C11.931 10.8435 12.0399 10.6108 11.9866 10.3851C11.9333 10.1594 11.7319 10 11.5 10H3.5Z" fill="currentColor"/></g></svg>)svg"},
+        {"scroll-007", R"svg(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="currentColor"><path d="M56.5 46.7H3.6l26.4-30z"/></svg>)svg"},
+        {"scroll_007", R"svg(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="currentColor"><path d="M56.5 46.7H3.6l26.4-30z"/></svg>)svg"},
+        {"scroll-006", R"svg(<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 648 648" fill="currentColor"><polygon points="28,180 619,180 323.5,504 "/></svg>)svg"},
+        {"scroll_006", R"svg(<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 648 648" fill="currentColor"><polygon points="28,180 619,180 323.5,504 "/></svg>)svg"},
+        {"resize2.svg", R"svg(<?xml version="1.0" encoding="utf-8"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg fill="currentColor" width="800px" height="800px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<title>resize2</title>
+<path d="M23.977 28.965v-1.932h3.988v-3.988h2.057v5.92h-6.045zM27.965 5.967h-3.988v-1.932h6.045v5.92h-2.057v-3.988zM3.035 9.955h-2.056v-5.92h6.045v1.932h-3.989v3.988zM4.967 8.023h21.066v16.953h-21.066v-16.953zM7.023 23.045h16.953v-13.090h-16.953v13.090zM9.018 12.012h13.027v8.977h-13.027v-8.977zM3.035 27.033h3.988v1.932h-6.044v-5.92h2.057v3.988z"></path>
+</svg>)svg"},
 };
 }
 
