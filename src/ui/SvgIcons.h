@@ -455,7 +455,7 @@ namespace SvgIcons {
         {"sparkles_filled", R"svg(<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>)svg"},
         {"menu_triangle", R"svg(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M10 17l5-5-5-5v10z"/></svg>)svg"},
         {"dropdown_triangle", R"svg(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path fill="currentColor" d="M2 4.5l4 4l4-4z"/></svg>)svg"},
-        {"invalid_data", R"svg(<svg viewBox="0 0 48 48" version="1" xmlns="http://www.w3.org/2000/svg"><circle fill="#00ACC1" cx="17" cy="17" r="14"/><circle fill="#eee" cx="17" cy="17" r="11"/><rect x="16" y="8" width="2" height="9"/><rect x="18.2" y="16" transform="matrix(-.707 .707 -.707 -.707 46.834 19.399)" width="2.4" height="6.8"/><circle cx="17" cy="17" r="2"/><circle fill="#00ACC1" cx="17" cy="17" r="1"/><path fill="#FFC107" d="M11.9,42l14.4-24.1c0.8-1.3,2.7-1.3,3.4,0L44.1,42c0.8,1.3-0.2,3-1.7,3H13.6C12.1,45,11.1,43.3,11.9,42z"/><path fill="#263238" d="M26.4,39.9c0-0.2,0-0.4,0.1-0.6s0.2-0.3,0.3-0.5s0.3-0.2,0.5-0.3s0.4-0.1,0.6-0.1s0.5,0,0.7,0.1 s0.4,0.2,0.5,0.3s0.2,0.3,0.3,0.5s0.1,0.4,0.1,0.6s0,0.4-0.1,0.6s-0.2,0.3-0.3,0.5s-0.3,0.2-0.5,0.3s-0.4,0.1-0.7,0.1 s-0.5,0-0.6-0.1s-0.4-0.2-0.5-0.3s-0.2-0.3-0.3-0.5S26.4,40.1,26.4,39.9z M29.2,36.8h-2.3L26.5,27h3L29.2,36.8z"/></svg>)svg"},
+        {"invalid_data", R"svg(<svg viewBox="0 0 48 48" version="1" xmlns="http://www.w3.org/2000/svg"><circle fill="currentColor" cx="17" cy="17" r="14"/><circle fill="white" cx="17" cy="17" r="11"/><rect x="16" y="8" width="2" height="9" fill="currentColor"/><rect x="18.2" y="16" transform="matrix(-.707 .707 -.707 -.707 46.834 19.399)" width="2.4" height="6.8" fill="currentColor"/><circle cx="17" cy="17" r="2" fill="currentColor"/><circle fill="currentColor" cx="17" cy="17" r="1"/><path fill="currentColor" d="M11.9,42l14.4-24.1c0.8-1.3,2.7-1.3,3.4,0L44.1,42c0.8,1.3-0.2,3-1.7,3H13.6C12.1,45,11.1,43.3,11.9,42z"/><path fill="white" d="M26.4,39.9c0-0.2,0-0.4,0.1-0.6s0.2-0.3,0.3-0.5s0.3-0.2,0.5-0.3s0.4-0.1,0.6-0.1s0.5,0,0.7,0.1 s0.4,0.2,0.5,0.3s0.2,0.3,0.3,0.5s0.1,0.4,0.1,0.6s0,0.4-0.1,0.6s-0.2,0.3-0.3,0.5s-0.3,0.2-0.5,0.3s-0.4,0.1-0.7,0.1 s-0.5,0-0.6-0.1s-0.4-0.2-0.5-0.3s-0.2-0.3-0.3-0.5S26.4,40.1,26.4,39.9z M29.2,36.8h-2.3L26.5,27h3L29.2,36.8z"/></svg>)svg"},
         {"reset_filter", R"svg(<svg viewBox="0 0 5.82 5.82" fill="currentColor"><g transform="translate(0 -291.18)"><path d="M2.646 293.56v.53l1.058 1.058v1.323l1.058.529v-1.852l1.059-1.058v-.53zm.529.53h2.117l-.794.793v1.588l-.53-.265v-1.323z" fill-rule="evenodd"/><g transform="matrix(.26458 0 0 .26458 -1.058 18.033)"><path d="M15 1035.362v2h-4a5 5 0 0 0 0 10h2v2h-2a7 7 0 0 1-7-7c0-3.866 3.134-7.06 7-7z"/><path d="m17 1036.362-4 4v-8z"/></g></g></svg>)svg"},
         {"filter_funnel_outline", R"svg(<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H19.4C19.9601 3 20.2401 3 20.454 3.10899C20.6422 3.20487 20.7951 3.35785 20.891 3.54601C21 3.75992 21 4.03995 21 4.6V6.33726C21 6.58185 21 6.70414 20.9724 6.81923C20.9479 6.92127 20.9075 7.01881 20.8526 7.10828C20.7908 7.2092 20.7043 7.29568 20.5314 7.46863L14.4686 13.5314C14.2957 13.7043 14.2092 13.7908 14.1474 13.8917C14.0925 13.9812 14.0521 14.0787 14.0276 14.1808C14 14.2959 14 14.4182 14 14.6627V17L10 21V14.6627C10 14.4182 10 14.2959 9.97237 14.1808C9.94787 14.0787 9.90747 13.9812 9.85264 13.8917C9.7908 13.7908 9.70432 13.7043 9.53137 13.5314L3.46863 7.46863C3.29568 7.29568 3.2092 7.2092 3.14736 7.10828C3.09253 7.01881 3.05213 6.92127 3.02763 6.81923C3 6.70414 3 6.58185 3 6.33726V4.6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>)svg"},
         {"prohibit", R"svg(<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none"><path stroke="currentColor" stroke-width="2" d="M5.5 5.5L18.5 18.5M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"/></svg>)svg"},
@@ -465,9 +465,9 @@ namespace SvgIcons {
 
         {"archive-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools --> <svg fill="currentColor" width="800px" height="800px" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg"> <path d="M533.333 560v160H240l.008 453.33 209.066 213.34H1470.93l209.06-213.34L1680 720h-293.33V560h352c55.96 0 101.33 45.368 101.33 101.333v511.997h16c35.35 0 64 28.66 64 64V1856c0 35.35-28.65 64-64 64H64c-35.346 0-64-28.65-64-64v-618.67c0-35.34 28.654-64 64-64h16V661.333C80 605.368 125.369 560 181.333 560h352ZM1040 0v958.86l183.43-183.429 113.14 113.138L960 1265.14 583.431 888.569l113.138-113.138L880 958.86V0h160Z"/> </svg>)svg"},
         {"archive-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools --> <svg fill="currentColor" width="800px" height="800px" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg"> <path d="M533.333 560v160H240l.008 453.33 209.066 213.34H1470.93l209.06-213.34L1680 720h-293.33V560h352c55.96 0 101.33 45.368 101.33 101.333v511.997h16c35.35 0 64 28.66 64 64V1856c0 35.35-28.65 64-64 64H64c-35.346 0-64-28.65-64-64v-618.67c0-35.34 28.654-64 64-64h16V661.333C80 605.368 125.369 560 181.333 560h352ZM1040 0v958.86l183.43-183.429 113.14 113.138L960 1265.14 583.431 888.569l113.138-113.138L880 958.86V0h160Z"/> </svg>)svg"},
-        {"arrow_down.svg", R"svg(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"> <path d="M3 4l3 4 3-4" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>)svg"},
-        {"arrow_right.svg", R"svg(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"> <path d="M4 3l4 3-4 3" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>)svg"},
-        {"arrow_right", R"svg(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"> <path d="M4 3l4 3-4 3" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>)svg"},
+        {"arrow_down.svg", R"svg(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"> <path d="M3 4l3 4 3-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>)svg"},
+        {"arrow_right.svg", R"svg(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"> <path d="M4 3l4 3-4 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>)svg"},
+        {"arrow_right", R"svg(<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"> <path d="M4 3l4 3-4 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> </svg>)svg"},
         {"document-attach-outline.svg", R"svg(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="ionicon"><path d="M208 64h66.75a32 32 0 0 1 22.62 9.37l141.26 141.26a32 32 0 0 1 9.37 22.62V432a48 48 0 0 1-48 48H192a48 48 0 0 1-48-48V304" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32px"/><path d="M288 72v120a32 32 0 0 0 32 32h120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32px"/><path d="M160 80v152a23.69 23.69 0 0 1-24 24c-12 0-24-9.1-24-24V88c0-30.59 16.57-56 48-56s48 24.8 48 55.38v138.75c0 43-27.82 77.87-72 77.87s-72-34.86-72-77.87V144" fill="none" stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32px"/></svg>)svg"},
         {"document-attach-outline", R"svg(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="ionicon"><path d="M208 64h66.75a32 32 0 0 1 22.62 9.37l141.26 141.26a32 32 0 0 1 9.37 22.62V432a48 48 0 0 1-48 48H192a48 48 0 0 1-48-48V304" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32px"/><path d="M288 72v120a32 32 0 0 0 32 32h120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32px"/><path d="M160 80v152a23.69 23.69 0 0 1-24 24c-12 0-24-9.1-24-24V88c0-30.59 16.57-56 48-56s48 24.8 48 55.38v138.75c0 43-27.82 77.87-72 77.87s-72-34.86-72-77.87V144" fill="none" stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32px"/></svg>)svg"},
         {"download-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools --> <svg fill="currentColor" width="800px" height="800px" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg"> <path d="M1764.098 1355.412 1920 1511.314l-363.073 363.073H363.073L0 1511.314l155.902-155.902 298.463 298.463h1011.27l298.463-298.463ZM1070.333 0v949.967l250.502-250.612 155.902 155.902-518.975 518.975-518.976-518.975 155.902-155.902 255.023 255.022V0h220.622Z" fill-rule="evenodd"/> </svg>)svg"},
@@ -656,51 +656,51 @@ namespace SvgIcons {
 </svg>)svg"},
         {"circle-left-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 11L10 15L14 19" stroke="#33363F" stroke-width="2"/>
-<path d="M4.20577 12.75C3.21517 11.8921 2.8184 10.8948 3.077 9.91263C3.3356 8.9305 4.23511 8.01848 5.63604 7.31802C7.03696 6.61756 8.86101 6.1678 10.8253 6.0385C12.7895 5.9092 14.7842 6.10758 16.5 6.60289C18.2158 7.09819 19.5567 7.86273 20.3149 8.77792C21.0731 9.69312 21.2061 10.7078 20.6933 11.6647C20.1806 12.6215 19.0507 13.467 17.4789 14.0701C15.9071 14.6731 13.9812 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M14 11L10 15L14 19" stroke="currentColor" stroke-width="2"/>
+<path d="M4.20577 12.75C3.21517 11.8921 2.8184 10.8948 3.077 9.91263C3.3356 8.9305 4.23511 8.01848 5.63604 7.31802C7.03696 6.61756 8.86101 6.1678 10.8253 6.0385C12.7895 5.9092 14.7842 6.10758 16.5 6.60289C18.2158 7.09819 19.5567 7.86273 20.3149 8.77792C21.0731 9.69312 21.2061 10.7078 20.6933 11.6647C20.1806 12.6215 19.0507 13.467 17.4789 14.0701C15.9071 14.6731 13.9812 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle-left-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 11L10 15L14 19" stroke="#33363F" stroke-width="2"/>
-<path d="M4.20577 12.75C3.21517 11.8921 2.8184 10.8948 3.077 9.91263C3.3356 8.9305 4.23511 8.01848 5.63604 7.31802C7.03696 6.61756 8.86101 6.1678 10.8253 6.0385C12.7895 5.9092 14.7842 6.10758 16.5 6.60289C18.2158 7.09819 19.5567 7.86273 20.3149 8.77792C21.0731 9.69312 21.2061 10.7078 20.6933 11.6647C20.1806 12.6215 19.0507 13.467 17.4789 14.0701C15.9071 14.6731 13.9812 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M14 11L10 15L14 19" stroke="currentColor" stroke-width="2"/>
+<path d="M4.20577 12.75C3.21517 11.8921 2.8184 10.8948 3.077 9.91263C3.3356 8.9305 4.23511 8.01848 5.63604 7.31802C7.03696 6.61756 8.86101 6.1678 10.8253 6.0385C12.7895 5.9092 14.7842 6.10758 16.5 6.60289C18.2158 7.09819 19.5567 7.86273 20.3149 8.77792C21.0731 9.69312 21.2061 10.7078 20.6933 11.6647C20.1806 12.6215 19.0507 13.467 17.4789 14.0701C15.9071 14.6731 13.9812 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle_left", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 11L10 15L14 19" stroke="#33363F" stroke-width="2"/>
-<path d="M4.20577 12.75C3.21517 11.8921 2.8184 10.8948 3.077 9.91263C3.3356 8.9305 4.23511 8.01848 5.63604 7.31802C7.03696 6.61756 8.86101 6.1678 10.8253 6.0385C12.7895 5.9092 14.7842 6.10758 16.5 6.60289C18.2158 7.09819 19.5567 7.86273 20.3149 8.77792C21.0731 9.69312 21.2061 10.7078 20.6933 11.6647C20.1806 12.6215 19.0507 13.467 17.4789 14.0701C15.9071 14.6731 13.9812 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M14 11L10 15L14 19" stroke="currentColor" stroke-width="2"/>
+<path d="M4.20577 12.75C3.21517 11.8921 2.8184 10.8948 3.077 9.91263C3.3356 8.9305 4.23511 8.01848 5.63604 7.31802C7.03696 6.61756 8.86101 6.1678 10.8253 6.0385C12.7895 5.9092 14.7842 6.10758 16.5 6.60289C18.2158 7.09819 19.5567 7.86273 20.3149 8.77792C21.0731 9.69312 21.2061 10.7078 20.6933 11.6647C20.1806 12.6215 19.0507 13.467 17.4789 14.0701C15.9071 14.6731 13.9812 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle-right-alt-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 11L14 15L10 19" stroke="#33363F" stroke-width="2"/>
-<path d="M9.67063 6.15333C7.56156 6.4359 5.72985 7.09219 4.51677 7.99993C3.3037 8.90768 2.792 10.005 3.077 11.0874C3.362 12.1698 4.42426 13.1634 6.06589 13.8833C7.70751 14.6031 9.81652 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
-<path d="M19.7942 12.75C20.3852 12.2382 20.7687 11.6733 20.923 11.0874C21.0773 10.5015 20.9992 9.90613 20.6933 9.33531C20.3874 8.7645 19.8597 8.2294 19.1402 7.76057C18.4207 7.29174 17.5236 6.89836 16.5 6.60289" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M10 11L14 15L10 19" stroke="currentColor" stroke-width="2"/>
+<path d="M9.67063 6.15333C7.56156 6.4359 5.72985 7.09219 4.51677 7.99993C3.3037 8.90768 2.792 10.005 3.077 11.0874C3.362 12.1698 4.42426 13.1634 6.06589 13.8833C7.70751 14.6031 9.81652 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+<path d="M19.7942 12.75C20.3852 12.2382 20.7687 11.6733 20.923 11.0874C21.0773 10.5015 20.9992 9.90613 20.6933 9.33531C20.3874 8.7645 19.8597 8.2294 19.1402 7.76057C18.4207 7.29174 17.5236 6.89836 16.5 6.60289" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle-right-alt-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 11L14 15L10 19" stroke="#33363F" stroke-width="2"/>
-<path d="M9.67063 6.15333C7.56156 6.4359 5.72985 7.09219 4.51677 7.99993C3.3037 8.90768 2.792 10.005 3.077 11.0874C3.362 12.1698 4.42426 13.1634 6.06589 13.8833C7.70751 14.6031 9.81652 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
-<path d="M19.7942 12.75C20.3852 12.2382 20.7687 11.6733 20.923 11.0874C21.0773 10.5015 20.9992 9.90613 20.6933 9.33531C20.3874 8.7645 19.8597 8.2294 19.1402 7.76057C18.4207 7.29174 17.5236 6.89836 16.5 6.60289" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M10 11L14 15L10 19" stroke="currentColor" stroke-width="2"/>
+<path d="M9.67063 6.15333C7.56156 6.4359 5.72985 7.09219 4.51677 7.99993C3.3037 8.90768 2.792 10.005 3.077 11.0874C3.362 12.1698 4.42426 13.1634 6.06589 13.8833C7.70751 14.6031 9.81652 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+<path d="M19.7942 12.75C20.3852 12.2382 20.7687 11.6733 20.923 11.0874C21.0773 10.5015 20.9992 9.90613 20.6933 9.33531C20.3874 8.7645 19.8597 8.2294 19.1402 7.76057C18.4207 7.29174 17.5236 6.89836 16.5 6.60289" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle_right_alt", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 11L14 15L10 19" stroke="#33363F" stroke-width="2"/>
-<path d="M9.67063 6.15333C7.56156 6.4359 5.72985 7.09219 4.51677 7.99993C3.3037 8.90768 2.792 10.005 3.077 11.0874C3.362 12.1698 4.42426 13.1634 6.06589 13.8833C7.70751 14.6031 9.81652 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
-<path d="M19.7942 12.75C20.3852 12.2382 20.7687 11.6733 20.923 11.0874C21.0773 10.5015 20.9992 9.90613 20.6933 9.33531C20.3874 8.7645 19.8597 8.2294 19.1402 7.76057C18.4207 7.29174 17.5236 6.89836 16.5 6.60289" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M10 11L14 15L10 19" stroke="currentColor" stroke-width="2"/>
+<path d="M9.67063 6.15333C7.56156 6.4359 5.72985 7.09219 4.51677 7.99993C3.3037 8.90768 2.792 10.005 3.077 11.0874C3.362 12.1698 4.42426 13.1634 6.06589 13.8833C7.70751 14.6031 9.81652 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+<path d="M19.7942 12.75C20.3852 12.2382 20.7687 11.6733 20.923 11.0874C21.0773 10.5015 20.9992 9.90613 20.6933 9.33531C20.3874 8.7645 19.8597 8.2294 19.1402 7.76057C18.4207 7.29174 17.5236 6.89836 16.5 6.60289" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle-right-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 11L14 15L10 19" stroke="#33363F" stroke-width="2"/>
-<path d="M19.7942 12.75C20.7848 11.8921 21.1816 10.8948 20.923 9.91263C20.6644 8.9305 19.7649 8.01848 18.364 7.31802C16.963 6.61756 15.139 6.1678 13.1747 6.0385C11.2105 5.9092 9.21578 6.10758 7.5 6.60289C5.78422 7.09819 4.44326 7.86273 3.68508 8.77792C2.92691 9.69312 2.79389 10.7078 3.30667 11.6647C3.81944 12.6215 4.94935 13.467 6.52115 14.0701C8.09295 14.6731 10.0188 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M10 11L14 15L10 19" stroke="currentColor" stroke-width="2"/>
+<path d="M19.7942 12.75C20.7848 11.8921 21.1816 10.8948 20.923 9.91263C20.6644 8.9305 19.7649 8.01848 18.364 7.31802C16.963 6.61756 15.139 6.1678 13.1747 6.0385C11.2105 5.9092 9.21578 6.10758 7.5 6.60289C5.78422 7.09819 4.44326 7.86273 3.68508 8.77792C2.92691 9.69312 2.79389 10.7078 3.30667 11.6647C3.81944 12.6215 4.94935 13.467 6.52115 14.0701C8.09295 14.6731 10.0188 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle-right-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 11L14 15L10 19" stroke="#33363F" stroke-width="2"/>
-<path d="M19.7942 12.75C20.7848 11.8921 21.1816 10.8948 20.923 9.91263C20.6644 8.9305 19.7649 8.01848 18.364 7.31802C16.963 6.61756 15.139 6.1678 13.1747 6.0385C11.2105 5.9092 9.21578 6.10758 7.5 6.60289C5.78422 7.09819 4.44326 7.86273 3.68508 8.77792C2.92691 9.69312 2.79389 10.7078 3.30667 11.6647C3.81944 12.6215 4.94935 13.467 6.52115 14.0701C8.09295 14.6731 10.0188 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M10 11L14 15L10 19" stroke="currentColor" stroke-width="2"/>
+<path d="M19.7942 12.75C20.7848 11.8921 21.1816 10.8948 20.923 9.91263C20.6644 8.9305 19.7649 8.01848 18.364 7.31802C16.963 6.61756 15.139 6.1678 13.1747 6.0385C11.2105 5.9092 9.21578 6.10758 7.5 6.60289C5.78422 7.09819 4.44326 7.86273 3.68508 8.77792C2.92691 9.69312 2.79389 10.7078 3.30667 11.6647C3.81944 12.6215 4.94935 13.467 6.52115 14.0701C8.09295 14.6731 10.0188 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"circle_right", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 11L14 15L10 19" stroke="#33363F" stroke-width="2"/>
-<path d="M19.7942 12.75C20.7848 11.8921 21.1816 10.8948 20.923 9.91263C20.6644 8.9305 19.7649 8.01848 18.364 7.31802C16.963 6.61756 15.139 6.1678 13.1747 6.0385C11.2105 5.9092 9.21578 6.10758 7.5 6.60289C5.78422 7.09819 4.44326 7.86273 3.68508 8.77792C2.92691 9.69312 2.79389 10.7078 3.30667 11.6647C3.81944 12.6215 4.94935 13.467 6.52115 14.0701C8.09295 14.6731 10.0188 15 12 15" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M10 11L14 15L10 19" stroke="currentColor" stroke-width="2"/>
+<path d="M19.7942 12.75C20.7848 11.8921 21.1816 10.8948 20.923 9.91263C20.6644 8.9305 19.7649 8.01848 18.364 7.31802C16.963 6.61756 15.139 6.1678 13.1747 6.0385C11.2105 5.9092 9.21578 6.10758 7.5 6.60289C5.78422 7.09819 4.44326 7.86273 3.68508 8.77792C2.92691 9.69312 2.79389 10.7078 3.30667 11.6647C3.81944 12.6215 4.94935 13.467 6.52115 14.0701C8.09295 14.6731 10.0188 15 12 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"close-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.207 6.207a1 1 0 0 0-1.414-1.414L12 10.586 6.207 4.793a1 1 0 0 0-1.414 1.414L10.586 12l-5.793 5.793a1 1 0 1 0 1.414 1.414L12 13.414l5.793 5.793a1 1 0 0 0 1.414-1.414L13.414 12l5.793-5.793z" fill="currentColor"/></svg>)svg"},
@@ -1868,30 +1868,30 @@ namespace SvgIcons {
 </svg>)svg"},
         {"link-alt-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 10L10 14" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M16 13L18 11C19.3807 9.61929 19.3807 7.38071 18 6V6C16.6193 4.61929 14.3807 4.61929 13 6L11 8M8 11L6 13C4.61929 14.3807 4.61929 16.6193 6 18V18C7.38071 19.3807 9.61929 19.3807 11 18L13 16" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M14 10L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 13L18 11C19.3807 9.61929 19.3807 7.38071 18 6V6C16.6193 4.61929 14.3807 4.61929 13 6L11 8M8 11L6 13C4.61929 14.3807 4.61929 16.6193 6 18V18C7.38071 19.3807 9.61929 19.3807 11 18L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"link-alt-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 10L10 14" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M16 13L18 11C19.3807 9.61929 19.3807 7.38071 18 6V6C16.6193 4.61929 14.3807 4.61929 13 6L11 8M8 11L6 13C4.61929 14.3807 4.61929 16.6193 6 18V18C7.38071 19.3807 9.61929 19.3807 11 18L13 16" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M14 10L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 13L18 11C19.3807 9.61929 19.3807 7.38071 18 6V6C16.6193 4.61929 14.3807 4.61929 13 6L11 8M8 11L6 13C4.61929 14.3807 4.61929 16.6193 6 18V18C7.38071 19.3807 9.61929 19.3807 11 18L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"link_alt", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 10L10 14" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M16 13L18 11C19.3807 9.61929 19.3807 7.38071 18 6V6C16.6193 4.61929 14.3807 4.61929 13 6L11 8M8 11L6 13C4.61929 14.3807 4.61929 16.6193 6 18V18C7.38071 19.3807 9.61929 19.3807 11 18L13 16" stroke="#33363F" stroke-width="2" stroke-linecap="round"/>
+<path d="M14 10L10 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 13L18 11C19.3807 9.61929 19.3807 7.38071 18 6V6C16.6193 4.61929 14.3807 4.61929 13 6L11 8M8 11L6 13C4.61929 14.3807 4.61929 16.6193 6 18V18C7.38071 19.3807 9.61929 19.3807 11 18L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>)svg"},
         {"link-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 16H7C4.79086 16 3 14.2091 3 12V12C3 9.79086 4.79086 8 7 8H10" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M16 12H8" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M14 16H17C19.2091 16 21 14.2091 21 12V12C21 9.79086 19.2091 8 17 8H14" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10 16H7C4.79086 16 3 14.2091 3 12V12C3 9.79086 4.79086 8 7 8H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 16H17C19.2091 16 21 14.2091 21 12V12C21 9.79086 19.2091 8 17 8H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>)svg"},
         {"link-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 16H7C4.79086 16 3 14.2091 3 12V12C3 9.79086 4.79086 8 7 8H10" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M16 12H8" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M14 16H17C19.2091 16 21 14.2091 21 12V12C21 9.79086 19.2091 8 17 8H14" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M10 16H7C4.79086 16 3 14.2091 3 12V12C3 9.79086 4.79086 8 7 8H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 12H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 16H17C19.2091 16 21 14.2091 21 12V12C21 9.79086 19.2091 8 17 8H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>)svg"},
         {"mark-1-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?>
 
@@ -2074,9 +2074,9 @@ namespace SvgIcons {
 <svg version="1.0" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
 	 width="800px" height="800px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" xml:space="preserve">
 <g>
-	<path fill="#231F20" d="M60,0H4C1.789,0,0,1.789,0,4v56c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V4C64,1.789,62.211,0,60,0z
+	<path fill="currentColor" d="M60,0H4C1.789,0,0,1.789,0,4v56c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V4C64,1.789,62.211,0,60,0z
 		 M8,8h48v32.688l-9.113-9.113c-1.562-1.559-4.094-1.559-5.656,0L16.805,56H8V8z"/>
-	<circle fill="#231F20" cx="24" cy="24" r="8"/>
+	<circle fill="currentColor" cx="24" cy="24" r="8"/>
 </g>
 </svg>)svg"},
         {"photo-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?>
@@ -2086,9 +2086,9 @@ namespace SvgIcons {
 <svg version="1.0" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
 	 width="800px" height="800px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" xml:space="preserve">
 <g>
-	<path fill="#231F20" d="M60,0H4C1.789,0,0,1.789,0,4v56c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V4C64,1.789,62.211,0,60,0z
+	<path fill="currentColor" d="M60,0H4C1.789,0,0,1.789,0,4v56c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V4C64,1.789,62.211,0,60,0z
 		 M8,8h48v32.688l-9.113-9.113c-1.562-1.559-4.094-1.559-5.656,0L16.805,56H8V8z"/>
-	<circle fill="#231F20" cx="24" cy="24" r="8"/>
+	<circle fill="currentColor" cx="24" cy="24" r="8"/>
 </g>
 </svg>)svg"},
         {"photo", R"svg(<?xml version="1.0" encoding="utf-8"?>
@@ -2098,9 +2098,9 @@ namespace SvgIcons {
 <svg version="1.0" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
 	 width="800px" height="800px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" xml:space="preserve">
 <g>
-	<path fill="#231F20" d="M60,0H4C1.789,0,0,1.789,0,4v56c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V4C64,1.789,62.211,0,60,0z
+	<path fill="currentColor" d="M60,0H4C1.789,0,0,1.789,0,4v56c0,2.211,1.789,4,4,4h56c2.211,0,4-1.789,4-4V4C64,1.789,62.211,0,60,0z
 		 M8,8h48v32.688l-9.113-9.113c-1.562-1.559-4.094-1.559-5.656,0L16.805,56H8V8z"/>
-	<circle fill="#231F20" cx="24" cy="24" r="8"/>
+	<circle fill="currentColor" cx="24" cy="24" r="8"/>
 </g>
 </svg>)svg"},
         {"picture-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?>
@@ -2401,18 +2401,18 @@ namespace SvgIcons {
 </svg>)svg"},
         {"vertical-switch-alt-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M8 20L7.29289 20.7071L8 21.4142L8.70711 20.7071L8 20ZM8 12L7 12L8 12ZM10 11C10.5523 11 11 10.5523 11 10C11 9.44771 10.5523 9 10 9L10 11ZM3.29289 16.7071L7.29289 20.7071L8.70711 19.2929L4.70711 15.2929L3.29289 16.7071ZM8.70711 20.7071L12.7071 16.7071L11.2929 15.2929L7.29289 19.2929L8.70711 20.7071ZM9 20L9 12L7 12L7 20L9 20ZM9 12C9 11.4477 9.44771 11 10 11L10 9C8.34315 9 7 10.3431 7 12L9 12Z" fill="#33363F"/>
-<path d="M16 4L15.2929 3.29289L16 2.58579L16.7071 3.29289L16 4ZM16 12L17 12L16 12ZM14 15C13.4477 15 13 14.5523 13 14C13 13.4477 13.4477 13 14 13L14 15ZM11.2929 7.29289L15.2929 3.29289L16.7071 4.70711L12.7071 8.70711L11.2929 7.29289ZM16.7071 3.29289L20.7071 7.29289L19.2929 8.70711L15.2929 4.70711L16.7071 3.29289ZM17 4L17 12L15 12L15 4L17 4ZM17 12C17 13.6569 15.6569 15 14 15L14 13C14.5523 13 15 12.5523 15 12L17 12Z" fill="#33363F"/>
+<path d="M8 20L7.29289 20.7071L8 21.4142L8.70711 20.7071L8 20ZM8 12L7 12L8 12ZM10 11C10.5523 11 11 10.5523 11 10C11 9.44771 10.5523 9 10 9L10 11ZM3.29289 16.7071L7.29289 20.7071L8.70711 19.2929L4.70711 15.2929L3.29289 16.7071ZM8.70711 20.7071L12.7071 16.7071L11.2929 15.2929L7.29289 19.2929L8.70711 20.7071ZM9 20L9 12L7 12L7 20L9 20ZM9 12C9 11.4477 9.44771 11 10 11L10 9C8.34315 9 7 10.3431 7 12L9 12Z" fill="currentColor"/>
+<path d="M16 4L15.2929 3.29289L16 2.58579L16.7071 3.29289L16 4ZM16 12L17 12L16 12ZM14 15C13.4477 15 13 14.5523 13 14C13 13.4477 13.4477 13 14 13L14 15ZM11.2929 7.29289L15.2929 3.29289L16.7071 4.70711L12.7071 8.70711L11.2929 7.29289ZM16.7071 3.29289L20.7071 7.29289L19.2929 8.70711L15.2929 4.70711L16.7071 3.29289ZM17 4L17 12L15 12L15 4L17 4ZM17 12C17 13.6569 15.6569 15 14 15L14 13C14.5523 13 15 12.5523 15 12L17 12Z" fill="currentColor"/>
 </svg>)svg"},
         {"vertical-switch-alt-svgrepo-com", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M8 20L7.29289 20.7071L8 21.4142L8.70711 20.7071L8 20ZM8 12L7 12L8 12ZM10 11C10.5523 11 11 10.5523 11 10C11 9.44771 10.5523 9 10 9L10 11ZM3.29289 16.7071L7.29289 20.7071L8.70711 19.2929L4.70711 15.2929L3.29289 16.7071ZM8.70711 20.7071L12.7071 16.7071L11.2929 15.2929L7.29289 19.2929L8.70711 20.7071ZM9 20L9 12L7 12L7 20L9 20ZM9 12C9 11.4477 9.44771 11 10 11L10 9C8.34315 9 7 10.3431 7 12L9 12Z" fill="#33363F"/>
-<path d="M16 4L15.2929 3.29289L16 2.58579L16.7071 3.29289L16 4ZM16 12L17 12L16 12ZM14 15C13.4477 15 13 14.5523 13 14C13 13.4477 13.4477 13 14 13L14 15ZM11.2929 7.29289L15.2929 3.29289L16.7071 4.70711L12.7071 8.70711L11.2929 7.29289ZM16.7071 3.29289L20.7071 7.29289L19.2929 8.70711L15.2929 4.70711L16.7071 3.29289ZM17 4L17 12L15 12L15 4L17 4ZM17 12C17 13.6569 15.6569 15 14 15L14 13C14.5523 13 15 12.5523 15 12L17 12Z" fill="#33363F"/>
+<path d="M8 20L7.29289 20.7071L8 21.4142L8.70711 20.7071L8 20ZM8 12L7 12L8 12ZM10 11C10.5523 11 11 10.5523 11 10C11 9.44771 10.5523 9 10 9L10 11ZM3.29289 16.7071L7.29289 20.7071L8.70711 19.2929L4.70711 15.2929L3.29289 16.7071ZM8.70711 20.7071L12.7071 16.7071L11.2929 15.2929L7.29289 19.2929L8.70711 20.7071ZM9 20L9 12L7 12L7 20L9 20ZM9 12C9 11.4477 9.44771 11 10 11L10 9C8.34315 9 7 10.3431 7 12L9 12Z" fill="currentColor"/>
+<path d="M16 4L15.2929 3.29289L16 2.58579L16.7071 3.29289L16 4ZM16 12L17 12L16 12ZM14 15C13.4477 15 13 14.5523 13 14C13 13.4477 13.4477 13 14 13L14 15ZM11.2929 7.29289L15.2929 3.29289L16.7071 4.70711L12.7071 8.70711L11.2929 7.29289ZM16.7071 3.29289L20.7071 7.29289L19.2929 8.70711L15.2929 4.70711L16.7071 3.29289ZM17 4L17 12L15 12L15 4L17 4ZM17 12C17 13.6569 15.6569 15 14 15L14 13C14.5523 13 15 12.5523 15 12L17 12Z" fill="currentColor"/>
 </svg>)svg"},
         {"vertical_switch_alt", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M8 20L7.29289 20.7071L8 21.4142L8.70711 20.7071L8 20ZM8 12L7 12L8 12ZM10 11C10.5523 11 11 10.5523 11 10C11 9.44771 10.5523 9 10 9L10 11ZM3.29289 16.7071L7.29289 20.7071L8.70711 19.2929L4.70711 15.2929L3.29289 16.7071ZM8.70711 20.7071L12.7071 16.7071L11.2929 15.2929L7.29289 19.2929L8.70711 20.7071ZM9 20L9 12L7 12L7 20L9 20ZM9 12C9 11.4477 9.44771 11 10 11L10 9C8.34315 9 7 10.3431 7 12L9 12Z" fill="#33363F"/>
-<path d="M16 4L15.2929 3.29289L16 2.58579L16.7071 3.29289L16 4ZM16 12L17 12L16 12ZM14 15C13.4477 15 13 14.5523 13 14C13 13.4477 13.4477 13 14 13L14 15ZM11.2929 7.29289L15.2929 3.29289L16.7071 4.70711L12.7071 8.70711L11.2929 7.29289ZM16.7071 3.29289L20.7071 7.29289L19.2929 8.70711L15.2929 4.70711L16.7071 3.29289ZM17 4L17 12L15 12L15 4L17 4ZM17 12C17 13.6569 15.6569 15 14 15L14 13C14.5523 13 15 12.5523 15 12L17 12Z" fill="#33363F"/>
+<path d="M8 20L7.29289 20.7071L8 21.4142L8.70711 20.7071L8 20ZM8 12L7 12L8 12ZM10 11C10.5523 11 11 10.5523 11 10C11 9.44771 10.5523 9 10 9L10 11ZM3.29289 16.7071L7.29289 20.7071L8.70711 19.2929L4.70711 15.2929L3.29289 16.7071ZM8.70711 20.7071L12.7071 16.7071L11.2929 15.2929L7.29289 19.2929L8.70711 20.7071ZM9 20L9 12L7 12L7 20L9 20ZM9 12C9 11.4477 9.44771 11 10 11L10 9C8.34315 9 7 10.3431 7 12L9 12Z" fill="currentColor"/>
+<path d="M16 4L15.2929 3.29289L16 2.58579L16.7071 3.29289L16 4ZM16 12L17 12L16 12ZM14 15C13.4477 15 13 14.5523 13 14C13 13.4477 13.4477 13 14 13L14 15ZM11.2929 7.29289L15.2929 3.29289L16.7071 4.70711L12.7071 8.70711L11.2929 7.29289ZM16.7071 3.29289L20.7071 7.29289L19.2929 8.70711L15.2929 4.70711L16.7071 3.29289ZM17 4L17 12L15 12L15 4L17 4ZM17 12C17 13.6569 15.6569 15 14 15L14 13C14.5523 13 15 12.5523 15 12L17 12Z" fill="currentColor"/>
 </svg>)svg"},
         {"website-dashboard-svgrepo-com.svg", R"svg(<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
 <svg fill="currentColor" width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3,20V10H8V21H4A1,1,0,0,1,3,20ZM21,4a1,1,0,0,0-1-1H4A1,1,0,0,0,3,4V8H21ZM20,21a1,1,0,0,0,1-1V10H10V21Z"/></svg>)svg"},
