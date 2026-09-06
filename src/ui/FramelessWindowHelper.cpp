@@ -177,16 +177,38 @@ void FramelessWindowHelper::setAlwaysOnTop(QWidget* window, bool onTop) {
 
 void FramelessWindowHelper::restoreFromMaximized(QWidget* window) {
     if (!window) return;
+
+#ifdef Q_OS_WIN
     QRect savedNormal = window->normalGeometry();
-    window->showNormal();
-    if (savedNormal.isValid() && !savedNormal.isEmpty()) {
-        QPointer<QWidget> weakWindow(window);
-        QTimer::singleShot(0, [weakWindow, savedNormal]() {
-            if (weakWindow) {
-                weakWindow->setGeometry(savedNormal);
-            }
-        });
+    if (!savedNormal.isValid() || savedNormal.isEmpty()) {
+        window->showNormal();
+        return;
     }
+
+    HWND hwnd = reinterpret_cast<HWND>(window->winId());
+    WINDOWPLACEMENT wp = {};
+    wp.length = sizeof(WINDOWPLACEMENT);
+    if (!GetWindowPlacement(hwnd, &wp)) {
+        window->showNormal();
+        return;
+    }
+
+    qreal dpr = window->devicePixelRatioF();
+    int left   = qRound(savedNormal.left() * dpr);
+    int top    = qRound(savedNormal.top() * dpr);
+    int right  = qRound((savedNormal.right() + 1) * dpr);
+    int bottom = qRound((savedNormal.bottom() + 1) * dpr);
+
+    wp.showCmd = SW_SHOWNORMAL;
+    wp.rcNormalPosition.left   = left;
+    wp.rcNormalPosition.top    = top;
+    wp.rcNormalPosition.right  = right;
+    wp.rcNormalPosition.bottom = bottom;
+
+    SetWindowPlacement(hwnd, &wp);
+#else
+    window->showNormal();
+#endif
 }
 
 bool FramelessWindowHelper::isAlwaysOnTop(QWidget* window) {
