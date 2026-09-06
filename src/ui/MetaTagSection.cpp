@@ -7,7 +7,7 @@ MetaTagSection::MetaTagSection(QWidget* parent) : QWidget(parent) {
     m_tagFlowLayout = new FlowLayout(this, 0, 4, 4);
 
     m_btnAddTagBig = new QPushButton(" 添加标签", this);
-    m_btnAddTagBig->setIcon(UiHelper::getIcon("add", QColor("#FFFFFF"), 14));
+    m_btnAddTagBig->setIcon(UiHelper::getIcon("add", QColor("#EEEEEE"), 14));
     m_btnAddTagBig->setCursor(Qt::PointingHandCursor);
     m_btnAddTagBig->setObjectName("BtnAddTagBig");
 

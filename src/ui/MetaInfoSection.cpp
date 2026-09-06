@@ -35,13 +35,13 @@ MetaInfoSection::MetaInfoSection(QWidget* parent) : QWidget(parent) {
 
     m_btnCopyPath = new QPushButton(pathBox);
     m_btnCopyPath->setFixedSize(24, 24);
-    m_btnCopyPath->setIcon(UiHelper::getIcon("copy", QColor("#FFFFFF"), 14));
+    m_btnCopyPath->setIcon(UiHelper::getIcon("copy", QColor("#EEEEEE"), 14));
     m_btnCopyPath->setCursor(Qt::PointingHandCursor);
     m_btnCopyPath->setObjectName("BtnCopyPath");
 
     m_btnOpenLocation = new QPushButton(pathBox);
     m_btnOpenLocation->setFixedSize(24, 24);
-    m_btnOpenLocation->setIcon(UiHelper::getIcon("folder", QColor("#FFFFFF"), 14));
+    m_btnOpenLocation->setIcon(UiHelper::getIcon("folder", QColor("#EEEEEE"), 14));
     m_btnOpenLocation->setCursor(Qt::PointingHandCursor);
     m_btnOpenLocation->setObjectName("BtnOpenLocation");
 

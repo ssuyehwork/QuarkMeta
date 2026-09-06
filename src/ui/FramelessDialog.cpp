@@ -53,7 +53,7 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
         Q_UNUSED(hoverColor);
         QPushButton* btn = new QPushButton();
         btn->setFixedSize(20, 20);
-        btn->setIcon(UiHelper::getIcon(iconName, QColor("#FFFFFF"), 16));
+        btn->setIcon(UiHelper::getIcon(iconName, QColor("#CCCCCC"), 16));
         btn->setIconSize(QSize(16, 16));
         btn->setAutoDefault(false);
         btn->setProperty("tooltipText", tooltip);
@@ -68,7 +68,7 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
     m_pinBtn->setObjectName("FramelessPinBtn");
     connect(m_pinBtn, &QPushButton::toggled, this, [this](bool checked) {
         m_pinBtn->setIcon(UiHelper::getIcon(checked ? "pin_vertical" : "pin_tilted", 
-                                            checked ? QColor("#FFFFFF") : QColor("#000000"), 18));
+                                            checked ? QColor("#FF551C") : QColor("#CCCCCC"), 18));
 #ifdef Q_OS_WIN
         HWND hwnd = reinterpret_cast<HWND>(winId());
         SetWindowPos(hwnd, checked ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0,
@@ -86,10 +86,10 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
     connect(m_maxBtn, &QPushButton::clicked, this, [this]() {
         if (isMaximized()) {
             showNormal();
-            m_maxBtn->setIcon(UiHelper::getIcon("maximize", QColor("#FFFFFF"), 18));
+            m_maxBtn->setIcon(UiHelper::getIcon("maximize", QColor("#CCCCCC"), 18));
         } else {
             showMaximized();
-            m_maxBtn->setIcon(UiHelper::getIcon("restore_line", QColor("#FFFFFF"), 18));
+            m_maxBtn->setIcon(UiHelper::getIcon("restore_line", QColor("#CCCCCC"), 18));
         }
     });
 

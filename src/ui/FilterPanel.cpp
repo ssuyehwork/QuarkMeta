@@ -129,7 +129,7 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
     m_btnClearAll = new QPushButton(topBar);
     m_btnClearAll->setObjectName("FilterHeaderBtn");
     m_btnClearAll->setFixedSize(24, 24);
-    m_btnClearAll->setIcon(UiHelper::getIcon("reset_filter", QColor("#FFFFFF")));
+    m_btnClearAll->setIcon(UiHelper::getIcon("reset_filter", QColor("#B0B0B0")));
     m_btnClearAll->setIconSize(QSize(16, 16));
     m_btnClearAll->setFlat(true);
     m_btnClearAll->setCursor(Qt::PointingHandCursor);
@@ -140,7 +140,7 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
     m_btnPin = new QPushButton(topBar);
     m_btnPin->setObjectName("FilterHeaderBtn");
     m_btnPin->setFixedSize(24, 24);
-    m_btnPin->setIcon(UiHelper::getIcon("pin_tilted", QColor("#FFFFFF")));
+    m_btnPin->setIcon(UiHelper::getIcon("pin_tilted", QColor("#B0B0B0")));
     m_btnPin->setIconSize(QSize(16, 16));
     m_btnPin->setFlat(true);
     m_btnPin->setCursor(Qt::PointingHandCursor);
@@ -152,7 +152,7 @@ FilterPanel::FilterPanel(QWidget* parent) : QFrame(parent) {
             m_btnPin->setIcon(UiHelper::getIcon("pin", Style::ActiveOrange));
             m_btnPin->setProperty("tooltipText", "当前筛选条件已锁定（目录切换不重置）");
         } else {
-            m_btnPin->setIcon(UiHelper::getIcon("pin_tilted", QColor("#FFFFFF")));
+            m_btnPin->setIcon(UiHelper::getIcon("pin_tilted", QColor("#B0B0B0")));
             m_btnPin->setProperty("tooltipText", "锁定当前筛选条件");
         }
     });
@@ -492,7 +492,7 @@ void FilterPanel::rebuildGroups() {
                         QPixmap pix(totalW, starSize);
                         pix.fill(Qt::transparent);
                         QPainter painter(&pix);
-                        QPixmap starPix = UiHelper::getIcon("star_filled", QColor("#FFFFFF"), starSize).pixmap(starSize, starSize);
+                        QPixmap starPix = UiHelper::getIcon("star_filled", QColor("#CCCCCC"), starSize).pixmap(starSize, starSize);
                         for (int i = 0; i < r; ++i) {
                             painter.drawPixmap(i * (starSize + spacing), 0, starPix);
                         }
@@ -654,14 +654,14 @@ void FilterPanel::rebuildGroups() {
         QPushButton* btnSort = new QPushButton(g);
         btnSort->setFixedSize(16, 16);
         btnSort->setIconSize(QSize(12, 12));
-        btnSort->setIcon(UiHelper::getIcon(m_createDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#FFFFFF")));
+        btnSort->setIcon(UiHelper::getIcon(m_createDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
         btnSort->setFlat(true);
         btnSort->setCursor(Qt::PointingHandCursor);
         btnSort->setObjectName("FilterBtnSort");
         hdrLayout->addWidget(btnSort);
         connect(btnSort, &QPushButton::clicked, this, [this, btnSort]() {
             m_createDateDesc = !m_createDateDesc;
-            btnSort->setIcon(UiHelper::getIcon(m_createDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#FFFFFF")));
+            btnSort->setIcon(UiHelper::getIcon(m_createDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
             rebuildDateCheckboxes(true, m_createDateDesc);
         });
 
@@ -707,14 +707,14 @@ void FilterPanel::rebuildGroups() {
         QPushButton* btnSort = new QPushButton(g);
         btnSort->setFixedSize(16, 16);
         btnSort->setIconSize(QSize(12, 12));
-        btnSort->setIcon(UiHelper::getIcon(m_modifyDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#FFFFFF")));
+        btnSort->setIcon(UiHelper::getIcon(m_modifyDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
         btnSort->setFlat(true);
         btnSort->setCursor(Qt::PointingHandCursor);
         btnSort->setObjectName("FilterBtnSort");
         hdrLayout->addWidget(btnSort);
         connect(btnSort, &QPushButton::clicked, this, [this, btnSort]() {
             m_modifyDateDesc = !m_modifyDateDesc;
-            btnSort->setIcon(UiHelper::getIcon(m_modifyDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#FFFFFF")));
+            btnSort->setIcon(UiHelper::getIcon(m_modifyDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
             rebuildDateCheckboxes(false, m_modifyDateDesc);
         });
 
@@ -1076,7 +1076,7 @@ void FilterPanel::clearAllFilters(bool force) {
     if (force && m_isFilterPinned) {
         m_isFilterPinned = false;
         if (m_btnPin) {
-            m_btnPin->setIcon(UiHelper::getIcon("pin_tilted", QColor("#FFFFFF")));
+            m_btnPin->setIcon(UiHelper::getIcon("pin_tilted", QColor("#B0B0B0")));
             m_btnPin->setProperty("tooltipText", "锁定当前筛选条件");
         }
     }
@@ -1104,11 +1104,11 @@ void FilterPanel::updateHeaderStatus() {
     m_titleLabel->style()->polish(m_titleLabel);
     m_titleLabel->update();
 
-    QColor btnColor = active ? brandYellow : QColor("#000000");
+    QColor btnColor = active ? brandYellow : QColor("#B0B0B0");
     m_btnClearAll->setIcon(UiHelper::getIcon("reset_filter", btnColor));
 
     bool allCollapsed = AppConfig::instance().getValue("FilterPanel/AllGroupsCollapsed", false).toBool();
-    m_btnToggleGroups->setIcon(UiHelper::getIcon(allCollapsed ? "chevrons_up" : "chevrons_down", QColor("#FFFFFF"), 16));
+    m_btnToggleGroups->setIcon(UiHelper::getIcon(allCollapsed ? "chevrons_up" : "chevrons_down", QColor("#B0B0B0"), 16));
     m_btnToggleGroups->setProperty("tooltipText", allCollapsed ? "展开所有分组" : "折叠所有分组");
 }
 

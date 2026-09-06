@@ -235,7 +235,7 @@ ColorPicker::ColorPicker(QWidget* parent) : QWidget(parent, Qt::Popup | Qt::Fram
     btnConfirm->setFixedSize(20, 20);
     btnConfirm->setFlat(true);
     btnConfirm->setCursor(Qt::PointingHandCursor);
-    btnConfirm->setIcon(UiHelper::getIcon("color_wheel", QColor("#FFFFFF"), 16));
+    btnConfirm->setIcon(UiHelper::getIcon("color_wheel", QColor("#EEEEEE"), 16));
     btnConfirm->setObjectName("ColorPickerBtnConfirm");
     connect(btnConfirm, &QPushButton::clicked, this, [this]() {
         // 2026-05-17 按照用户要求：携带容差值发射

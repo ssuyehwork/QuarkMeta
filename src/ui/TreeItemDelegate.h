@@ -185,7 +185,7 @@ public:
                                    iconSize, iconSize);
 
                 if (isPinned) {
-                    UiHelper::getIcon("pin_vertical", QColor("#FFFFFF"), 16).paint(painter, centeredRect, Qt::AlignCenter);
+                    UiHelper::getIcon("pin_vertical", QColor("#FF551C"), 16).paint(painter, centeredRect, Qt::AlignCenter);
                 }
             } else if (col == 2) { // 星级列
                 int rating = idx0.data(RatingRole).toInt();

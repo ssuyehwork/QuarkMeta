@@ -83,7 +83,7 @@ void TagSelectorOverlay::initUi() {
     m_btnToggleSidebar->setFixedSize(26, 26);
     m_btnToggleSidebar->setCheckable(true);
     m_btnToggleSidebar->setChecked(true);
-    m_btnToggleSidebar->setIcon(UiHelper::getIcon("sidebar", QColor("#FFFFFF"), 16));
+    m_btnToggleSidebar->setIcon(UiHelper::getIcon("sidebar", QColor("#AAAAAA"), 16));
     m_btnToggleSidebar->setIconSize(QSize(16, 16));
     m_btnToggleSidebar->setCursor(Qt::PointingHandCursor);
     m_btnToggleSidebar->setObjectName("TagSelectorToggleBtn");
@@ -133,7 +133,7 @@ void TagSelectorOverlay::loadTagsAndGroups() {
 
     auto addGroupItem = [this](const QString& name, const QString& iconKey) {
         QListWidgetItem* item = new QListWidgetItem(name, m_groupList);
-        item->setIcon(UiHelper::getIcon(iconKey, QColor("#FFFFFF"), 14));
+        item->setIcon(UiHelper::getIcon(iconKey, QColor("#AAAAAA"), 14));
         return item;
     };
 
@@ -250,7 +250,7 @@ void TagSelectorOverlay::updateSelectionHighlight() {
         if (isSelected) {
             btn->setIcon(UiHelper::getIcon("check", QColor("#FFFFFF"), 12));
         } else {
-            btn->setIcon(UiHelper::getIcon("clock", QColor("#FFFFFF"), 12));
+            btn->setIcon(UiHelper::getIcon("clock", QColor("#888888"), 12));
         }
         btn->setIconSize(QSize(12, 12));
 

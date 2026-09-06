@@ -135,7 +135,7 @@ FramelessFileDialog::FramelessFileDialog(const QString& title, const QString& di
 
 void FramelessFileDialog::setupSidebar() {
     auto addSidebarItem = [this](const QString& text, const QString& iconName, const QString& path) {
-        auto* item = new QListWidgetItem(UiHelper::getIcon(iconName, QColor("#FFFFFF")), text);
+        auto* item = new QListWidgetItem(UiHelper::getIcon(iconName, QColor("#BBB")), text);
         item->setData(Qt::UserRole, path);
         m_sidebar->addItem(item);
     };

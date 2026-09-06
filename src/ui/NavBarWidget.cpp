@@ -35,7 +35,7 @@ void NavBarWidget::initUi(HoverEventFilter* hoverFilter) {
         QPushButton* btn = new QPushButton(this);
         btn->setAttribute(Qt::WA_Hover);
         btn->setFixedSize(32, 28);
-        btn->setIcon(UiHelper::getIcon(iconKey, QColor("#FFFFFF")));
+        btn->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
         btn->setIconSize(QSize(18, 18));
         btn->setProperty("tooltipText", tip);
         btn->setObjectName("NavControlBtn");

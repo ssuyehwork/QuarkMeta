@@ -13,7 +13,7 @@ void CreateRuleRow::initUi() {
     layout->setContentsMargins(0, 2, 0, 2);
     layout->setSpacing(6);
 
-    static const QString arrowPath = UiHelper::getSvgTempFilePath("dropdown_triangle", QColor("#FFFFFF"));
+    static const QString arrowPath = UiHelper::getSvgTempFilePath("dropdown_triangle", QColor("#AAAAAA"));
 
     m_typeCombo = new QComboBox(this);
     m_typeCombo->addItem("文本", static_cast<int>(RenameComponentType::Text));

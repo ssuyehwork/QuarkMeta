@@ -94,7 +94,7 @@ void SearchHistoryPanel::rebuild() {
             rowLayout->setSpacing(8);
 
             QLabel* icon = new QLabel(row);
-            icon->setPixmap(UiHelper::getIcon("search", QColor("#FFFFFF"), 14).pixmap(14, 14));
+            icon->setPixmap(UiHelper::getIcon("search", QColor("#555555"), 14).pixmap(14, 14));
             icon->setFixedSize(14, 14);
 
             QLabel* keywordLabel = new QLabel(keyword, row);
@@ -103,7 +103,7 @@ void SearchHistoryPanel::rebuild() {
             QPushButton* btnRemove = new QPushButton(row);
             btnRemove->setFixedSize(16, 16);
             btnRemove->setFlat(true);
-            btnRemove->setIcon(UiHelper::getIcon("close", QColor("#FFFFFF"), 12));
+            btnRemove->setIcon(UiHelper::getIcon("close", QColor("#555555"), 12));
             btnRemove->setIconSize(QSize(12, 12));
             btnRemove->setObjectName("HistoryBtnRemove");
             connect(btnRemove, &QPushButton::clicked, this, [this, keyword]() {

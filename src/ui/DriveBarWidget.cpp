@@ -18,7 +18,7 @@ void DriveBarWidget::initUi() {
     m_driveBarLayout->setContentsMargins(15, 5, 15, 5);
     m_driveBarLayout->setSpacing(8);
 
-    m_btnTagManager = new QPushButton(UiHelper::getIcon("tag", QColor("#FFFFFF"), 18), " 标签管理", this);
+    m_btnTagManager = new QPushButton(UiHelper::getIcon("tag", QColor("#1abc9c"), 18), " 标签管理", this);
     m_btnTagManager->setFixedHeight(32);
     m_btnTagManager->setCursor(Qt::PointingHandCursor);
     m_btnTagManager->setObjectName("BtnTagManager");

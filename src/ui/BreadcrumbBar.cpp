@@ -72,7 +72,7 @@ void BreadcrumbBar::rebuildBreadcrumbs() {
         for (int i = 0; i < m_nodes.size(); ++i) {
             if (i > 0) {
                 QLabel* sep = new QLabel(this);
-                sep->setPixmap(UiHelper::getIcon("chevron_right", QColor("#FFFFFF"), 12).pixmap(12, 12));
+                sep->setPixmap(UiHelper::getIcon("chevron_right", QColor("#AAAAAA"), 12).pixmap(12, 12));
                 sep->setObjectName("BreadcrumbSep");
                 m_layout->addWidget(sep);
             }
@@ -106,7 +106,7 @@ void BreadcrumbBar::rebuildBreadcrumbs() {
         for (int i = 0; i < headCount; ++i) {
             if (i > 0) {
                 QLabel* sep = new QLabel(this);
-                sep->setPixmap(UiHelper::getIcon("chevron_right", QColor("#FFFFFF"), 12).pixmap(12, 12));
+                sep->setPixmap(UiHelper::getIcon("chevron_right", QColor("#AAAAAA"), 12).pixmap(12, 12));
                 sep->setObjectName("BreadcrumbSep");
                 m_layout->addWidget(sep);
             }
@@ -115,7 +115,7 @@ void BreadcrumbBar::rebuildBreadcrumbs() {
 
         // 渲染 "..." 省略按钮
         QLabel* sepEllipsis = new QLabel(this);
-        sepEllipsis->setPixmap(UiHelper::getIcon("chevron_right", QColor("#FFFFFF"), 12).pixmap(12, 12));
+        sepEllipsis->setPixmap(UiHelper::getIcon("chevron_right", QColor("#AAAAAA"), 12).pixmap(12, 12));
         sepEllipsis->setObjectName("BreadcrumbSep");
         m_layout->addWidget(sepEllipsis);
 
@@ -128,7 +128,7 @@ void BreadcrumbBar::rebuildBreadcrumbs() {
         // 渲染尾部保留节点
         for (int i = visibleTailIndex; i < m_nodes.size(); ++i) {
             QLabel* sep = new QLabel(this);
-            sep->setPixmap(UiHelper::getIcon("chevron_right", QColor("#FFFFFF"), 12).pixmap(12, 12));
+            sep->setPixmap(UiHelper::getIcon("chevron_right", QColor("#AAAAAA"), 12).pixmap(12, 12));
             sep->setObjectName("BreadcrumbSep");
             m_layout->addWidget(sep);
             addLevel(m_nodes[i].name, m_nodes[i].fullPath);

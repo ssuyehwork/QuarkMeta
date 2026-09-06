@@ -68,7 +68,7 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
         QPushButton* btn = new QPushButton(this);
         btn->setAttribute(Qt::WA_Hover);
         btn->setFixedSize(24, 24);
-        btn->setIcon(UiHelper::getIcon(iconKey, QColor("#FFFFFF")));
+        btn->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
         btn->setIconSize(QSize(18, 18));
         btn->setObjectName("TitleControlBtn");
         btn->setProperty("tooltipText", tip);
@@ -91,7 +91,7 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
     m_btnToggleDriveBar->setCheckable(true);
     m_btnToggleDriveBar->setChecked(true);
     connect(m_btnToggleDriveBar, &QPushButton::toggled, this, [this](bool checked) {
-        m_btnToggleDriveBar->setIcon(UiHelper::getIcon(checked ? "chevrons_down" : "chevrons_up", QColor("#FFFFFF")));
+        m_btnToggleDriveBar->setIcon(UiHelper::getIcon(checked ? "chevrons_down" : "chevrons_up", QColor("#EEEEEE")));
         emit driveBarToggleRequested(checked);
     });
 
@@ -160,9 +160,9 @@ void TitleBarWidget::setupViewMenu() {
         menu.setObjectName("TitleBarViewModeMenu");
         UiHelper::applyMenuStyle(&menu);
 
-        QAction* actAdaptive = menu.addAction(UiHelper::getIcon("grid", QColor("#FFFFFF"), 18), "自适应(A)");
-        QAction* actGrid = menu.addAction(UiHelper::getIcon("grid", QColor("#FFFFFF"), 18), "网格(G)");
-        QAction* actList = menu.addAction(UiHelper::getIcon("list_ul", QColor("#FFFFFF"), 18), "列表(L)");
+        QAction* actAdaptive = menu.addAction(UiHelper::getIcon("grid", QColor("#EEEEEE"), 18), "自适应(A)");
+        QAction* actGrid = menu.addAction(UiHelper::getIcon("grid", QColor("#EEEEEE"), 18), "网格(G)");
+        QAction* actList = menu.addAction(UiHelper::getIcon("list_ul", QColor("#EEEEEE"), 18), "列表(L)");
 
         actAdaptive->setCheckable(true);
         actGrid->setCheckable(true);
@@ -196,9 +196,9 @@ void TitleBarWidget::setupCreateMenu() {
     QMenu* createMenu = new QMenu(m_btnCreate);
     UiHelper::applyMenuStyle(createMenu);
 
-    QAction* actNewFolder = createMenu->addAction(UiHelper::getIcon("folder_filled", QColor("#FFFFFF")), "创建文件夹");
-    QAction* actNewMd     = createMenu->addAction(UiHelper::getIcon("text", QColor("#FFFFFF")), "创建 Markdown");
-    QAction* actNewTxt    = createMenu->addAction(UiHelper::getIcon("text", QColor("#FFFFFF")), "创建纯文本文件 (txt)");
+    QAction* actNewFolder = createMenu->addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "创建文件夹");
+    QAction* actNewMd     = createMenu->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建 Markdown");
+    QAction* actNewTxt    = createMenu->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建纯文本文件 (txt)");
 
     connect(m_btnCreate, &QPushButton::clicked, this, [this, createMenu]() {
         createMenu->popup(m_btnCreate->mapToGlobal(QPoint(0, m_btnCreate->height())));
