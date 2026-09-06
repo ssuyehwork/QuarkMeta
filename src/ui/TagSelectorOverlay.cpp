@@ -28,9 +28,6 @@ TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidg
     m_searchEdit->installEventFilter(this);
     m_tagGridWidget->installEventFilter(this);
 
-    // 接入全项目统一的纯 Qt 物理手柄缩放助手，彻底拔除重复造轮子
-    FramelessWindowHelper::apply(this);
-
     qApp->installEventFilter(this);
     connect(qApp, &QApplication::focusChanged, this, [this](QWidget* old, QWidget* now) {
         Q_UNUSED(old);
@@ -310,13 +307,13 @@ void TagSelectorOverlay::mousePressEvent(QMouseEvent* event) {
 void TagSelectorOverlay::mouseMoveEvent(QMouseEvent* event) {
     if (m_isDragging && (event->buttons() & Qt::LeftButton)) {
         QPoint newPos = event->globalPosition().toPoint() - m_dragPos;
-        QWidget* p = parentWidget();
-        if (p) {
-            QRect pGeom = p->frameGeometry();
-            int minX = pGeom.left();
-            int maxX = qMax(minX, pGeom.right() - width());
-            int minY = pGeom.top();
-            int maxY = qMax(minY, pGeom.bottom() - height());
+        QWidget* parentWin = parentWidget() ? parentWidget()->window() : nullptr;
+        if (parentWin) {
+            QRect parentGeom = parentWin->frameGeometry();
+            int minX = parentGeom.left();
+            int maxX = qMax(minX, parentGeom.right() - width());
+            int minY = parentGeom.top();
+            int maxY = qMax(minY, parentGeom.bottom() - height());
             newPos.setX(qBound(minX, newPos.x(), maxX));
             newPos.setY(qBound(minY, newPos.y(), maxY));
         }
