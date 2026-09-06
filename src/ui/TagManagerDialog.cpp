@@ -78,8 +78,8 @@ void TagManagerDialog::initContent() {
     // 2. 主体区
     QWidget* bodyWidget = new QWidget(this);
     QHBoxLayout* bodyL = new QHBoxLayout(bodyWidget);
-    bodyL->setContentsMargins(0, 0, 0, 0);
-    bodyL->setSpacing(0);
+    bodyL->setContentsMargins(10, 10, 10, 10);
+    bodyL->setSpacing(10);
 
     // A. 侧边栏
     m_sidebar = new QFrame(bodyWidget);
