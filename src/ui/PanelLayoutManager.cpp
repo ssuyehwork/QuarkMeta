@@ -1,5 +1,7 @@
 #include "PanelLayoutManager.h"
 #include "NavPanel.h"
+#include <QDebug>
+#include <QDateTime>
 #include "FavoritePanel.h"
 #include "ContentPanel.h"
 #include "MetaPanel.h"
@@ -55,6 +57,8 @@ void PanelLayoutManager::initLayout() {
 
     // 同步恢复分栏尺寸，杜绝异步 singleShot(0) 造成的二次排版抽搐
     QByteArray state = AppConfig::instance().getValue("MainWindow/SplitterState").toByteArray();
+    qDebug() << "[WinGeomDebug] initLayout执行restoreState前 | mainSplitter宽度=" << m_mainSplitter->width()
+             << "mainWindow geometry=" << (m_mainWindow ? m_mainWindow->geometry() : QRect());
     if (!state.isEmpty() && !isImmersive) {
         m_mainSplitter->restoreState(state);
     } else if (!isImmersive) {
@@ -225,6 +229,7 @@ void PanelLayoutManager::showPanelContextMenu(const QPoint& globalPos) {
 
 void PanelLayoutManager::updateDynamicMinimumSize() {
     if (!m_mainWindow) return;
+    qDebug() << "[WinGeomDebug] updateDynamicMinimumSize 被调用 | 当前时间" << QDateTime::currentDateTime();
 
     int visibleCount = 0;
     if (m_navPanel && !m_navPanel->isHidden()) visibleCount++;
