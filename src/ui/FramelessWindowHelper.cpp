@@ -153,14 +153,12 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
             return false; // 顶部 8px 放行给 Qt
         }
 
-        if (m_titleBar && !m_window->isFullScreen()) {
-            QRect titleRect = QRect(m_titleBar->mapTo(m_window, QPoint(0, 0)), m_titleBar->size());
-            if (titleRect.contains(localPos)) {
-                QWidget* childAtPt = m_window->childAt(localPos);
-                if (!isInteractiveWidget(childAtPt, m_titleBar, m_window)) {
-                    *result = HTCAPTION;
-                    return true;
-                }
+        // 允许全窗口任意非交互空白区域响应拖拽与还原
+        if (m_window && !m_window->isFullScreen()) {
+            QWidget* childAtPt = m_window->childAt(localPos);
+            if (!isInteractiveWidget(childAtPt, m_titleBar, m_window)) {
+                *result = HTCAPTION;
+                return true;
             }
         }
 
