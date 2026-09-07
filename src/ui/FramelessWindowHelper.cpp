@@ -4,6 +4,7 @@
 #include "FramelessWindowHelper.h"
 #include "WindowStateController.h"
 #include <QApplication>
+#include <QDebug>
 #include <QCoreApplication>
 #include <QPushButton>
 #include <QLineEdit>
@@ -124,6 +125,7 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
         QPoint localPos = m_window->mapFromGlobal(QPoint(screenPt.x, screenPt.y));
 
         if (!m_window->isMaximized() && !m_window->isFullScreen() && localPos.y() <= kBaseResizeMargin) {
+            qDebug() << "[ResizeConflictDebug] WM_NCHITTEST顶部8px放行 | localPos=" << localPos;
             return false; // 顶部 8px 放行给 Qt
         }
 
@@ -196,6 +198,7 @@ bool FramelessWindowHelper::eventFilter(QObject* obj, QEvent* event) {
             QPoint windowLocalPos = m_window->mapFromGlobal(me->globalPosition().toPoint());
             m_resizeDir = getResizeDirection(windowLocalPos);
             if (m_resizeDir != 0) {
+                qDebug() << "[ResizeConflictDebug] eventFilter接管拖拽 | windowLocalPos=" << windowLocalPos << "resizeDir=" << m_resizeDir;
                 m_isResizing = true;
                 m_resizeStartGlobalPos = me->globalPosition().toPoint();
                 m_resizeStartGeometry = m_window->geometry();
