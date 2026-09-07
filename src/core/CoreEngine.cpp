@@ -244,9 +244,9 @@ void CoreEngine::handleToggleFavorite(const QStringList& paths) {
 
     for (const QString& p : paths) {
         if (allFav) {
-            FavoriteDao::removeFavoritePath(p);
+            FavoriteDao::removeFavorite(p);
         } else {
-            FavoriteDao::addFavoritePath(p);
+            FavoriteDao::addFavorite(p);
         }
     }
 
