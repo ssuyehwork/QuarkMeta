@@ -18,6 +18,9 @@
 #include <QCursor>
 #include <QList>
 #include <QStringList>
+#include <QTimer>
+#include <QPointer>
+#include <QDebug>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -129,6 +132,18 @@ void WindowStateController::requestRestore() {
     wp.rcNormalPosition.bottom = bottom;
 
     SetWindowPlacement(hwnd, &wp);
+
+    qDebug() << "[SplitterDebug] SetWindowPlacement后立即 | mainWindow geometry=" << m_mainWindow->geometry()
+             << "splitter尺寸=" << (m_mainSplitter ? m_mainSplitter->sizes() : QList<int>());
+
+    QPointer<QSplitter> weakSplitter(m_mainSplitter);
+    QPointer<QMainWindow> weakWindow(m_mainWindow);
+    QTimer::singleShot(0, [weakSplitter, weakWindow]() {
+        if (weakWindow && weakSplitter) {
+            qDebug() << "[SplitterDebug] 下一轮事件循环后 | mainWindow geometry=" << weakWindow->geometry()
+                     << "splitter尺寸=" << weakSplitter->sizes();
+        }
+    });
 #else
     m_mainWindow->showNormal();
     m_mainWindow->setGeometry(m_lastNormalGeometry);
