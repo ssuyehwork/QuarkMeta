@@ -116,7 +116,35 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
         return true;
     }
 
-    // 2. 原生标题栏拖动识别：坚决杜绝抢占顶部 8px 缩放热区
+    // 2. 原生标题栏拖动与最大化“还原+移动”处理
+    if (msg->message == WM_NCLBUTTONDOWN && msg->wParam == HTCAPTION) {
+        if (m_window->isMaximized()) {
+            POINT screenPt = { GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam) };
+            QPoint globalPos(screenPt.x, screenPt.y);
+
+            // 计算当前光标在最大化宽度上的比例
+            QRect maxGeom = m_window->geometry();
+            double factorX = static_cast<double>(globalPos.x() - maxGeom.left()) / maxGeom.width();
+
+            // 执行还原
+            m_window->showNormal();
+
+            // 精确计算还原后尺寸下的鼠标 TopLeft 偏移
+            QRect normalGeom = m_window->geometry();
+            int newX = globalPos.x() - static_cast<int>(normalGeom.width() * factorX);
+            int newY = globalPos.y() - 15; // 居中挂载在 34px 标题栏中上部
+
+            m_window->move(newX, newY);
+            m_isDraggingMaximized = true;
+
+            // 触发系统原生拖拽
+            ReleaseCapture();
+            SendMessageW(msg->hwnd, WM_NCLBUTTONDOWN, HTCAPTION, msg->lParam);
+            *result = 0;
+            return true;
+        }
+    }
+
     if (msg->message == WM_NCHITTEST) {
         POINT screenPt = { GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam) };
         QPoint localPos = m_window->mapFromGlobal(QPoint(screenPt.x, screenPt.y));
