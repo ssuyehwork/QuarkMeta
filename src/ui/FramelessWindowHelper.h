@@ -35,6 +35,8 @@ private:
     explicit FramelessWindowHelper(QWidget* window, QWidget* titleBar = nullptr, WindowStateController* windowStateController = nullptr);
     ~FramelessWindowHelper() override;
 
+    int computeHitTestRegion(const QPoint& localPos) const;
+
     QPointer<QWidget> m_window;
     QPointer<QWidget> m_titleBar;
     QPointer<WindowStateController> m_windowStateController;

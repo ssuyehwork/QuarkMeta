@@ -128,23 +128,12 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
 
         POINT screenPt = { GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam) };
         QPoint localPos = m_window->mapFromGlobal(QPoint(screenPt.x, screenPt.y));
-        const int m = kBaseResizeMargin;
-        const int w = m_window->width();
-        const int h = m_window->height();
 
-        bool onLeft   = localPos.x() <= m;
-        bool onRight  = localPos.x() >= w - m;
-        bool onTop    = localPos.y() <= m;
-        bool onBottom = localPos.y() >= h - m;
-
-        if (onTop && onLeft)     { *result = HTTOPLEFT;     return true; }
-        if (onTop && onRight)    { *result = HTTOPRIGHT;    return true; }
-        if (onBottom && onLeft)  { *result = HTBOTTOMLEFT;  return true; }
-        if (onBottom && onRight) { *result = HTBOTTOMRIGHT; return true; }
-        if (onLeft)              { *result = HTLEFT;        return true; }
-        if (onRight)             { *result = HTRIGHT;       return true; }
-        if (onTop)               { *result = HTTOP;         return true; }
-        if (onBottom)            { *result = HTBOTTOM;      return true; }
+        int region = computeHitTestRegion(localPos);
+        if (region != HTCLIENT) {
+            *result = region;
+            return true;
+        }
 
         if (m_titleBar) {
             QRect titleRect = QRect(m_titleBar->mapTo(m_window, QPoint(0, 0)), m_titleBar->size());
@@ -159,6 +148,34 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
 
         *result = HTCLIENT;
         return true;
+    }
+
+    if (msg->message == WM_SETCURSOR) {
+        if (m_window->isMaximized() || m_window->isFullScreen()) {
+            return false;
+        }
+
+        int hitTestCode = LOWORD(msg->lParam);
+        HCURSOR cursor = nullptr;
+        switch (hitTestCode) {
+            case HTLEFT: case HTRIGHT:
+                cursor = LoadCursor(nullptr, IDC_SIZEWE); break;
+            case HTTOP: case HTBOTTOM:
+                cursor = LoadCursor(nullptr, IDC_SIZENS); break;
+            case HTTOPLEFT: case HTBOTTOMRIGHT:
+                cursor = LoadCursor(nullptr, IDC_SIZENWSE); break;
+            case HTTOPRIGHT: case HTBOTTOMLEFT:
+                cursor = LoadCursor(nullptr, IDC_SIZENESW); break;
+            default:
+                return false;
+        }
+
+        if (cursor) {
+            SetCursor(cursor);
+            *result = TRUE;
+            return true;
+        }
+        return false;
     }
 
     // 3. 原生双击标题栏最大化 / 还原
@@ -198,6 +215,35 @@ bool FramelessWindowHelper::isAlwaysOnTop(QWidget* window) {
     if (!window) return false;
     return (window->windowFlags() & Qt::WindowStaysOnTopHint) != 0;
 }
+
+#ifdef Q_OS_WIN
+int FramelessWindowHelper::computeHitTestRegion(const QPoint& localPos) const {
+    if (!m_window) return HTCLIENT;
+    const int m = kBaseResizeMargin;
+    const int w = m_window->width();
+    const int h = m_window->height();
+
+    bool onLeft   = localPos.x() <= m;
+    bool onRight  = localPos.x() >= w - m;
+    bool onTop    = localPos.y() <= m;
+    bool onBottom = localPos.y() >= h - m;
+
+    if (onTop && onLeft)     return HTTOPLEFT;
+    if (onTop && onRight)    return HTTOPRIGHT;
+    if (onBottom && onLeft)  return HTBOTTOMLEFT;
+    if (onBottom && onRight) return HTBOTTOMRIGHT;
+    if (onLeft)              return HTLEFT;
+    if (onRight)             return HTRIGHT;
+    if (onTop)               return HTTOP;
+    if (onBottom)            return HTBOTTOM;
+    return HTCLIENT;
+}
+#else
+int FramelessWindowHelper::computeHitTestRegion(const QPoint& localPos) const {
+    Q_UNUSED(localPos);
+    return 0;
+}
+#endif
 
 bool FramelessWindowHelper::eventFilter(QObject* obj, QEvent* event) {
     return QObject::eventFilter(obj, event);
