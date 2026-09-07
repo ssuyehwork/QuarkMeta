@@ -1,3 +1,6 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include "WindowStateController.h"
 #include "NavPanel.h"
 #include "FavoritePanel.h"
@@ -15,6 +18,10 @@
 #include <QCursor>
 #include <QList>
 #include <QStringList>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 namespace QuarkMeta {
 
@@ -94,10 +101,38 @@ void WindowStateController::requestMaximize() {
 
 void WindowStateController::requestRestore() {
     if (!m_mainWindow) return;
-    m_mainWindow->showNormal();
-    if (m_lastNormalGeometry.isValid() && !m_lastNormalGeometry.isEmpty()) {
-        m_mainWindow->setGeometry(m_lastNormalGeometry);
+
+    if (!m_lastNormalGeometry.isValid() || m_lastNormalGeometry.isEmpty()) {
+        m_mainWindow->showNormal();
+        return;
     }
+
+#ifdef Q_OS_WIN
+    HWND hwnd = reinterpret_cast<HWND>(m_mainWindow->winId());
+    WINDOWPLACEMENT wp = {};
+    wp.length = sizeof(WINDOWPLACEMENT);
+    if (!GetWindowPlacement(hwnd, &wp)) {
+        m_mainWindow->showNormal();
+        return;
+    }
+
+    qreal dpr = m_mainWindow->devicePixelRatioF();
+    int left   = qRound(m_lastNormalGeometry.left() * dpr);
+    int top    = qRound(m_lastNormalGeometry.top() * dpr);
+    int right  = qRound((m_lastNormalGeometry.right() + 1) * dpr);
+    int bottom = qRound((m_lastNormalGeometry.bottom() + 1) * dpr);
+
+    wp.showCmd = SW_SHOWNORMAL;
+    wp.rcNormalPosition.left   = left;
+    wp.rcNormalPosition.top    = top;
+    wp.rcNormalPosition.right  = right;
+    wp.rcNormalPosition.bottom = bottom;
+
+    SetWindowPlacement(hwnd, &wp);
+#else
+    m_mainWindow->showNormal();
+    m_mainWindow->setGeometry(m_lastNormalGeometry);
+#endif
 }
 
 void WindowStateController::toggleMaximizeRestore() {
