@@ -53,6 +53,7 @@ public:
 
     // 供 FramelessWindowHelper 在窗口状态变化时上报，用于自行记账 m_lastNormalGeometry
     void notifyAboutToMaximize();
+    void primeNormalGeometry(const QRect& geometry);
 
     // === 关闭时统一保存所有状态（几何 + 分栏 + 面板可见性）===
     void saveAllState();

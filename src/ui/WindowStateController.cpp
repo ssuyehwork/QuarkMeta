@@ -80,6 +80,12 @@ void WindowStateController::notifyAboutToMaximize() {
     m_lastNormalGeometry = m_mainWindow->geometry();
 }
 
+void WindowStateController::primeNormalGeometry(const QRect& geometry) {
+    if (geometry.isValid() && !geometry.isEmpty()) {
+        m_lastNormalGeometry = geometry;
+    }
+}
+
 void WindowStateController::requestMaximize() {
     if (!m_mainWindow) return;
     notifyAboutToMaximize();
@@ -276,6 +282,9 @@ void WindowStateController::updateDynamicMinimumSize() {
 void WindowStateController::saveAllState() {
     if (!m_mainWindow) return;
     AppConfig::instance().setValue("MainWindow/Geometry", m_mainWindow->saveGeometry());
+    if (m_lastNormalGeometry.isValid() && !m_lastNormalGeometry.isEmpty()) {
+        AppConfig::instance().setValue("MainWindow/LastNormalGeometry", m_lastNormalGeometry);
+    }
     AppConfig::instance().setValue("MainWindow/IsImmersiveMode", isImmersiveMode());
     AppConfig::instance().setValue("MainWindow/NavVisible", isPanelVisible("nav"));
     AppConfig::instance().setValue("MainWindow/FavoriteVisible", isPanelVisible("favorite"));

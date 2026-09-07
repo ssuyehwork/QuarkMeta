@@ -117,6 +117,8 @@ void MainWindow::initUi() {
     } else {
         resize(1180, 800);
     }
+    QRect savedNormalGeom = AppConfig::instance().getValue("MainWindow/LastNormalGeometry").toRect();
+    m_windowStateController->primeNormalGeometry(savedNormalGeom);
     m_titleBarWidget->bindWindowStateController(m_windowStateController);
 
     m_panelMediator = new PanelMediator(m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, m_addressBar, m_searchController, this);
