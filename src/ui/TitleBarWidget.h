@@ -9,7 +9,7 @@
 namespace QuarkMeta {
 
 class ContentPanel;
-class PanelLayoutManager;
+class WindowStateController;
 class HoverEventFilter;
 
 /**
@@ -24,7 +24,7 @@ public:
     ~TitleBarWidget() override = default;
 
     void bindContentPanel(ContentPanel* contentPanel);
-    void bindLayoutManager(PanelLayoutManager* layoutManager);
+    void bindWindowStateController(WindowStateController* windowStateController);
 
     QPushButton* btnPinTop() const { return m_btnPinTop; }
     QPushButton* btnMin() const { return m_btnMin; }
@@ -66,7 +66,7 @@ private:
     QPushButton* m_btnClose = nullptr;
 
     ContentPanel* m_contentPanel = nullptr;
-    PanelLayoutManager* m_layoutManager = nullptr;
+    WindowStateController* m_windowStateController = nullptr;
     bool m_isPinned = false;
 };
 

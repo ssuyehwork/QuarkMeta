@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "FramelessWindowHelper.h"
+#include "WindowStateController.h"
 #include <QApplication>
 #include <QCoreApplication>
 #include <QPushButton>
@@ -23,13 +24,13 @@
 
 namespace QuarkMeta {
 
-FramelessWindowHelper* FramelessWindowHelper::apply(QWidget* window, QWidget* titleBar) {
+FramelessWindowHelper* FramelessWindowHelper::apply(QWidget* window, QWidget* titleBar, WindowStateController* windowStateController) {
     if (!window) return nullptr;
-    return new FramelessWindowHelper(window, titleBar);
+    return new FramelessWindowHelper(window, titleBar, windowStateController);
 }
 
-FramelessWindowHelper::FramelessWindowHelper(QWidget* window, QWidget* titleBar)
-    : QObject(window), m_window(window), m_titleBar(titleBar) {
+FramelessWindowHelper::FramelessWindowHelper(QWidget* window, QWidget* titleBar, WindowStateController* windowStateController)
+    : QObject(window), m_window(window), m_titleBar(titleBar), m_windowStateController(windowStateController) {
     
     Qt::WindowFlags requiredFlags = m_window->windowFlags() | Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint;
     if (m_window->windowFlags() != requiredFlags) {
@@ -143,10 +144,8 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
     // 3. 原生双击标题栏最大化 / 还原
     if (msg->message == WM_NCLBUTTONDBLCLK) {
         if (msg->wParam == HTCAPTION) {
-            if (m_window->isMaximized()) {
-                restoreFromMaximized(m_window);
-            } else {
-                m_window->showMaximized();
+            if (m_windowStateController) {
+                m_windowStateController->toggleMaximizeRestore();
             }
             *result = 0;
             return true;
@@ -172,42 +171,6 @@ void FramelessWindowHelper::setAlwaysOnTop(QWidget* window, bool onTop) {
     else flags &= ~Qt::WindowStaysOnTopHint;
     window->setWindowFlags(flags);
     window->show();
-#endif
-}
-
-void FramelessWindowHelper::restoreFromMaximized(QWidget* window) {
-    if (!window) return;
-
-#ifdef Q_OS_WIN
-    QRect savedNormal = window->normalGeometry();
-    if (!savedNormal.isValid() || savedNormal.isEmpty()) {
-        window->showNormal();
-        return;
-    }
-
-    HWND hwnd = reinterpret_cast<HWND>(window->winId());
-    WINDOWPLACEMENT wp = {};
-    wp.length = sizeof(WINDOWPLACEMENT);
-    if (!GetWindowPlacement(hwnd, &wp)) {
-        window->showNormal();
-        return;
-    }
-
-    qreal dpr = window->devicePixelRatioF();
-    int left   = qRound(savedNormal.left() * dpr);
-    int top    = qRound(savedNormal.top() * dpr);
-    int right  = qRound((savedNormal.right() + 1) * dpr);
-    int bottom = qRound((savedNormal.bottom() + 1) * dpr);
-
-    wp.showCmd = SW_SHOWNORMAL;
-    wp.rcNormalPosition.left   = left;
-    wp.rcNormalPosition.top    = top;
-    wp.rcNormalPosition.right  = right;
-    wp.rcNormalPosition.bottom = bottom;
-
-    SetWindowPlacement(hwnd, &wp);
-#else
-    window->showNormal();
 #endif
 }
 
