@@ -178,7 +178,33 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
         return false;
     }
 
-    // 3. 原生双击标题栏最大化 / 还原
+    // 3. 显式触发 Win32 原生 modal 边缘缩放循环
+    if (msg->message == WM_NCLBUTTONDOWN) {
+        WPARAM wParam = msg->wParam;
+        if (wParam >= HTLEFT && wParam <= HTBOTTOMRIGHT) {
+            WPARAM scDir = 0;
+            switch (wParam) {
+                case HTLEFT:        scDir = 1; break; // WMSZ_LEFT
+                case HTRIGHT:       scDir = 2; break; // WMSZ_RIGHT
+                case HTTOP:         scDir = 3; break; // WMSZ_TOP
+                case HTTOPLEFT:     scDir = 4; break; // WMSZ_TOPLEFT
+                case HTTOPRIGHT:    scDir = 5; break; // WMSZ_TOPRIGHT
+                case HTBOTTOM:      scDir = 6; break; // WMSZ_BOTTOM
+                case HTBOTTOMLEFT:  scDir = 7; break; // WMSZ_BOTTOMLEFT
+                case HTBOTTOMRIGHT: scDir = 8; break; // WMSZ_BOTTOMRIGHT
+                default: break;
+            }
+            if (scDir != 0) {
+                HWND hwnd = reinterpret_cast<HWND>(m_window->winId());
+                ReleaseCapture();
+                SendMessage(hwnd, WM_SYSCOMMAND, SC_SIZE + scDir, msg->lParam);
+                *result = 0;
+                return true;
+            }
+        }
+    }
+
+    // 4. 原生双击标题栏最大化 / 还原
     if (msg->message == WM_NCLBUTTONDBLCLK) {
         if (msg->wParam == HTCAPTION) {
             if (m_windowStateController) {
