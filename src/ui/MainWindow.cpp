@@ -18,7 +18,7 @@
 #include "TrayController.h"
 #include "HoverEventFilter.h"
 #include "FramelessWindowHelper.h"
-#include "PanelLayoutManager.h"
+#include "WindowStateController.h"
 #include "AddressBar.h"
 #include "ToolTipOverlay.h"
 #include "TaskProgressToolBar.h"
@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     initUi();
 
-    m_framelessHelper = FramelessWindowHelper::apply(this, m_titleBarWidget);
+    m_framelessHelper = FramelessWindowHelper::apply(this, m_titleBarWidget, m_windowStateController);
     if (m_isPinned) {
         FramelessWindowHelper::setAlwaysOnTop(this, true);
     }
@@ -63,13 +63,6 @@ MainWindow::MainWindow(QWidget* parent)
 }
 
 void MainWindow::initUi() {
-    QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
-    if (!savedGeom.isEmpty()) {
-        restoreGeometry(savedGeom);
-    } else {
-        resize(1180, 800);
-    }
-
     QWidget* centralC = new QWidget(this);
     centralC->setObjectName("CentralWidget");
     QVBoxLayout* mainL = new QVBoxLayout(centralC);
@@ -115,10 +108,18 @@ void MainWindow::initUi() {
 
     m_titleBarWidget->bindContentPanel(m_contentPanel);
 
-    // 3. 控制器停机坪挂载（当场同步初始化布局尺寸）
-    m_panelLayoutManager = new PanelLayoutManager(this, m_mainSplitter, m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, this);
-    m_panelLayoutManager->initLayout();
-    m_titleBarWidget->bindLayoutManager(m_panelLayoutManager);
+    // 3. 控制器停机坪挂载（初始化阶段一预设置）
+    m_windowStateController = new WindowStateController(this, m_mainSplitter, m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, this);
+    m_windowStateController->applyPreShowState();
+    QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
+    if (!savedGeom.isEmpty()) {
+        restoreGeometry(savedGeom);
+    } else {
+        resize(1180, 800);
+    }
+    QRect savedNormalGeom = AppConfig::instance().getValue("MainWindow/LastNormalGeometry").toRect();
+    m_windowStateController->primeNormalGeometry(savedNormalGeom);
+    m_titleBarWidget->bindWindowStateController(m_windowStateController);
 
     m_panelMediator = new PanelMediator(m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, m_addressBar, m_searchController, this);
     m_panelMediator->setupConnections();
@@ -135,7 +136,7 @@ void MainWindow::initUi() {
         }
     });
     connect(m_shortcutController, &AppShortcutController::toggleImmersiveRequested, this, [this]() {
-        if (m_panelLayoutManager) m_panelLayoutManager->toggleImmersiveMode();
+        if (m_windowStateController) m_windowStateController->toggleImmersiveMode();
     });
 
     // 4. 底部状态栏
@@ -186,6 +187,10 @@ void MainWindow::showEvent(QShowEvent* event) {
         // 1. 确保左侧导航树完成桌面、此电脑、磁盘的基础节点构建
         if (m_navPanel) m_navPanel->deferredInit();
 
+        if (m_windowStateController) {
+            QTimer::singleShot(0, m_windowStateController, &WindowStateController::applyPostLayoutState);
+        }
+
         // 2. 严密确定性因果链：navPanel 刚构建完毕，立即精准拉起上次打开的路径
         QString lastPath = AppConfig::instance().getValue("MainWindow/LastPath", "computer://").toString();
         bool isValid = lastPath.contains("://") || QDir(lastPath).exists();
@@ -232,11 +237,9 @@ void MainWindow::changeEvent(QEvent* event) {
 
 void MainWindow::closeEvent(QCloseEvent* event) {
     AppConfig::instance().setValue("MainWindow/LastPath", NavigationService::instance().currentUrl());
-    AppConfig::instance().setValue("MainWindow/Geometry", saveGeometry());
-    if (m_panelLayoutManager) {
-        m_panelLayoutManager->saveLayoutState();
+    if (m_windowStateController) {
+        m_windowStateController->saveAllState();
     }
-    AppConfig::instance().sync();
     QMainWindow::closeEvent(event);
 }
 

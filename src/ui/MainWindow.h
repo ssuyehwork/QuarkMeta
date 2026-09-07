@@ -36,7 +36,7 @@ class FilterPanel;
 class SearchHistoryPanel;
 class AppShortcutController;
 class PanelMediator;
-class PanelLayoutManager;
+class WindowStateController;
 class FramelessWindowHelper;
 
 /**
@@ -50,7 +50,7 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
-    PanelLayoutManager* layoutManager() const { return m_panelLayoutManager; }
+    WindowStateController* windowStateController() const { return m_windowStateController; }
 
 public slots:
     void onStatusBarStatsUpdated(int fileCount, int folderCount, int totalCount);
@@ -103,7 +103,7 @@ private:
     // 模块化控制器与中介者
     AppShortcutController* m_shortcutController = nullptr;
     PanelMediator* m_panelMediator = nullptr;
-    PanelLayoutManager*       m_panelLayoutManager = nullptr;
+    WindowStateController*    m_windowStateController = nullptr;
     FramelessWindowHelper*    m_framelessHelper = nullptr;
 
 };

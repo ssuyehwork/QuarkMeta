@@ -1,7 +1,7 @@
 #include "TitleBarWidget.h"
 #include "UiHelper.h"
 #include "ContentPanel.h"
-#include "PanelLayoutManager.h"
+#include "WindowStateController.h"
 #include "HoverEventFilter.h"
 #include "SvgIconRenderer.h"
 #include "StyleLibrary.h"
@@ -43,8 +43,8 @@ void TitleBarWidget::bindContentPanel(ContentPanel* contentPanel) {
     m_sizeSlider->setValue(qBound(30, initZoom, 230));
 }
 
-void TitleBarWidget::bindLayoutManager(PanelLayoutManager* layoutManager) {
-    m_layoutManager = layoutManager;
+void TitleBarWidget::bindWindowStateController(WindowStateController* windowStateController) {
+    m_windowStateController = windowStateController;
 }
 
 void TitleBarWidget::updateMaxButtonIcon() {
@@ -108,8 +108,8 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
 
     m_btnLayout = createTitleBtn("layout", "布局管理与重置");
     connect(m_btnLayout, &QPushButton::clicked, this, [this]() {
-        if (m_layoutManager) {
-            m_layoutManager->showPanelContextMenu(m_btnLayout->mapToGlobal(QPoint(0, m_btnLayout->height())));
+        if (m_windowStateController) {
+            m_windowStateController->showPanelContextMenu(m_btnLayout->mapToGlobal(QPoint(0, m_btnLayout->height())));
         }
     });
 
@@ -143,9 +143,8 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
         if (window()) window()->showMinimized();
     });
     connect(m_btnMax, &QPushButton::clicked, this, [this]() {
-        if (window()) {
-            if (window()->isMaximized()) FramelessWindowHelper::restoreFromMaximized(window());
-            else window()->showMaximized();
+        if (m_windowStateController) {
+            m_windowStateController->toggleMaximizeRestore();
             updateMaxButtonIcon();
         }
     });

@@ -1,6 +1,8 @@
-#include "PanelLayoutManager.h"
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include "WindowStateController.h"
 #include "NavPanel.h"
-#include <QTimer>
 #include "FavoritePanel.h"
 #include "ContentPanel.h"
 #include "MetaPanel.h"
@@ -8,21 +10,32 @@
 #include "UiHelper.h"
 #include "ToolTipOverlay.h"
 #include "../core/AppConfig.h"
+
+#include <QMainWindow>
+#include <QSplitter>
+#include <QMenu>
 #include <QAction>
 #include <QCursor>
 #include <QList>
 #include <QStringList>
+#include <QTimer>
+#include <QPointer>
+#include <QDebug>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 namespace QuarkMeta {
 
-PanelLayoutManager::PanelLayoutManager(QMainWindow* mainWindow,
-                                       QSplitter* mainSplitter,
-                                       NavPanel* navPanel,
-                                       FavoritePanel* favoritePanel,
-                                       ContentPanel* contentPanel,
-                                       MetaPanel* metaPanel,
-                                       FilterPanel* filterPanel,
-                                       QObject* parent)
+WindowStateController::WindowStateController(QMainWindow* mainWindow,
+                                               QSplitter* mainSplitter,
+                                               NavPanel* navPanel,
+                                               FavoritePanel* favoritePanel,
+                                               ContentPanel* contentPanel,
+                                               MetaPanel* metaPanel,
+                                               FilterPanel* filterPanel,
+                                               QObject* parent)
     : QObject(parent),
       m_mainWindow(mainWindow),
       m_mainSplitter(mainSplitter),
@@ -33,8 +46,8 @@ PanelLayoutManager::PanelLayoutManager(QMainWindow* mainWindow,
       m_filterPanel(filterPanel) {
 }
 
-void PanelLayoutManager::initLayout() {
-    if (!m_mainSplitter) return;
+void WindowStateController::applyPreShowState() {
+    if (!m_mainWindow || !m_mainSplitter) return;
 
     m_mainSplitter->setStretchFactor(0, 0);
     m_mainSplitter->setStretchFactor(1, 0);
@@ -55,13 +68,9 @@ void PanelLayoutManager::initLayout() {
     }
 
     m_mainSplitter->setHandleWidth(kSplitterHandleWidth);
-
-    // 推迟到窗口首次真实布局完成之后再还原分栏比例和最小宽度，
-    // 避免此刻 splitter 实际宽度还是未布局的占位值（约100px）导致比例换算错误
-    QTimer::singleShot(0, this, &PanelLayoutManager::applyDeferredLayoutRestore);
 }
 
-void PanelLayoutManager::applyDeferredLayoutRestore() {
+void WindowStateController::applyPostLayoutState() {
     if (!m_mainSplitter) return;
 
     bool isImmersive = AppConfig::instance().getValue("MainWindow/IsImmersiveMode", false).toBool();
@@ -73,12 +82,81 @@ void PanelLayoutManager::applyDeferredLayoutRestore() {
         sizes << kBasePanelWidth << kBasePanelWidth << kContentBaseWidth << kBasePanelWidth << kBasePanelWidth;
         m_mainSplitter->setSizes(sizes);
     }
-
-    // 🚀 初始化完成当场强制焊死最小宽度保护，防止 5 栏被挤压崩溃
     updateDynamicMinimumSize();
 }
 
-void PanelLayoutManager::resetSplitterLayout() {
+void WindowStateController::notifyAboutToMaximize() {
+    if (!m_mainWindow || m_mainWindow->isMaximized()) return;
+    m_lastNormalGeometry = m_mainWindow->geometry();
+}
+
+void WindowStateController::primeNormalGeometry(const QRect& geometry) {
+    if (geometry.isValid() && !geometry.isEmpty()) {
+        m_lastNormalGeometry = geometry;
+    }
+}
+
+void WindowStateController::requestMaximize() {
+    if (!m_mainWindow) return;
+    notifyAboutToMaximize();
+    m_mainWindow->showMaximized();
+}
+
+void WindowStateController::requestRestore() {
+    if (!m_mainWindow) return;
+
+    if (!m_lastNormalGeometry.isValid() || m_lastNormalGeometry.isEmpty()) {
+        m_mainWindow->showNormal();
+        return;
+    }
+
+#ifdef Q_OS_WIN
+    HWND hwnd = reinterpret_cast<HWND>(m_mainWindow->winId());
+    WINDOWPLACEMENT wp = {};
+    wp.length = sizeof(WINDOWPLACEMENT);
+    if (!GetWindowPlacement(hwnd, &wp)) {
+        m_mainWindow->showNormal();
+        return;
+    }
+
+    qreal dpr = m_mainWindow->devicePixelRatioF();
+    int left   = qRound(m_lastNormalGeometry.left() * dpr);
+    int top    = qRound(m_lastNormalGeometry.top() * dpr);
+    int right  = qRound((m_lastNormalGeometry.right() + 1) * dpr);
+    int bottom = qRound((m_lastNormalGeometry.bottom() + 1) * dpr);
+
+    wp.showCmd = SW_SHOWNORMAL;
+    wp.rcNormalPosition.left   = left;
+    wp.rcNormalPosition.top    = top;
+    wp.rcNormalPosition.right  = right;
+    wp.rcNormalPosition.bottom = bottom;
+
+    SetWindowPlacement(hwnd, &wp);
+
+    qDebug() << "[SplitterDebug] SetWindowPlacement后立即 | mainWindow geometry=" << m_mainWindow->geometry()
+             << "splitter尺寸=" << (m_mainSplitter ? m_mainSplitter->sizes() : QList<int>());
+
+    QPointer<QSplitter> weakSplitter(m_mainSplitter);
+    QPointer<QMainWindow> weakWindow(m_mainWindow);
+    QTimer::singleShot(0, [weakSplitter, weakWindow]() {
+        if (weakWindow && weakSplitter) {
+            qDebug() << "[SplitterDebug] 下一轮事件循环后 | mainWindow geometry=" << weakWindow->geometry()
+                     << "splitter尺寸=" << weakSplitter->sizes();
+        }
+    });
+#else
+    m_mainWindow->showNormal();
+    m_mainWindow->setGeometry(m_lastNormalGeometry);
+#endif
+}
+
+void WindowStateController::toggleMaximizeRestore() {
+    if (!m_mainWindow) return;
+    if (m_mainWindow->isMaximized()) requestRestore();
+    else requestMaximize();
+}
+
+void WindowStateController::resetSplitterLayout() {
     if (!m_mainSplitter) return;
 
     if (m_navPanel) m_navPanel->show();
@@ -106,7 +184,7 @@ void PanelLayoutManager::resetSplitterLayout() {
     emit layoutResetCompleted();
 }
 
-void PanelLayoutManager::setPanelVisible(const QString& panelId, bool visible) {
+void WindowStateController::setPanelVisible(const QString& panelId, bool visible) {
     if (panelId == "nav" && m_navPanel) m_navPanel->setVisible(visible);
     else if (panelId == "favorite" && m_favoritePanel) m_favoritePanel->setVisible(visible);
     else if (panelId == "content" && m_contentPanel) m_contentPanel->setVisible(true);
@@ -114,11 +192,11 @@ void PanelLayoutManager::setPanelVisible(const QString& panelId, bool visible) {
     else if (panelId == "filter" && m_filterPanel) m_filterPanel->setVisible(visible);
 
     updateDynamicMinimumSize();
-    saveLayoutState();
+    saveAllState();
     emit panelVisibilityChanged(panelId, visible);
 }
 
-bool PanelLayoutManager::isPanelVisible(const QString& panelId) const {
+bool WindowStateController::isPanelVisible(const QString& panelId) const {
     if (panelId == "nav" && m_navPanel) return !m_navPanel->isHidden();
     if (panelId == "favorite" && m_favoritePanel) return !m_favoritePanel->isHidden();
     if (panelId == "content" && m_contentPanel) return !m_contentPanel->isHidden();
@@ -127,14 +205,14 @@ bool PanelLayoutManager::isPanelVisible(const QString& panelId) const {
     return false;
 }
 
-bool PanelLayoutManager::isImmersiveMode() const {
+bool WindowStateController::isImmersiveMode() const {
     return !isPanelVisible("nav") &&
            !isPanelVisible("favorite") &&
            !isPanelVisible("meta") &&
            !isPanelVisible("filter");
 }
 
-void PanelLayoutManager::savePreImmersiveState() {
+void WindowStateController::savePreImmersiveState() {
     AppConfig::instance().setValue("MainWindow/PreImmersiveNavVisible", isPanelVisible("nav"));
     AppConfig::instance().setValue("MainWindow/PreImmersiveFavoriteVisible", isPanelVisible("favorite"));
     AppConfig::instance().setValue("MainWindow/PreImmersiveMetaVisible", isPanelVisible("meta"));
@@ -145,7 +223,7 @@ void PanelLayoutManager::savePreImmersiveState() {
     AppConfig::instance().sync();
 }
 
-void PanelLayoutManager::restorePreImmersiveState() {
+void WindowStateController::restorePreImmersiveState() {
     bool navVis = AppConfig::instance().getValue("MainWindow/PreImmersiveNavVisible", true).toBool();
     bool favVis = AppConfig::instance().getValue("MainWindow/PreImmersiveFavoriteVisible", true).toBool();
     bool metaVis = AppConfig::instance().getValue("MainWindow/PreImmersiveMetaVisible", true).toBool();
@@ -173,7 +251,7 @@ void PanelLayoutManager::restorePreImmersiveState() {
     emit panelVisibilityChanged("filter", filterVis);
 }
 
-void PanelLayoutManager::toggleImmersiveMode() {
+void WindowStateController::toggleImmersiveMode() {
     if (isImmersiveMode()) {
         restorePreImmersiveState();
     } else {
@@ -190,7 +268,7 @@ void PanelLayoutManager::toggleImmersiveMode() {
         emit panelVisibilityChanged("filter", false);
     }
 
-    saveLayoutState();
+    saveAllState();
 
     ToolTipOverlay::instance()->showText(
         QCursor::pos(),
@@ -200,7 +278,7 @@ void PanelLayoutManager::toggleImmersiveMode() {
     );
 }
 
-void PanelLayoutManager::populatePanelMenu(QMenu* menu) {
+void WindowStateController::populatePanelMenu(QMenu* menu) {
     if (!menu) return;
 
     auto addToggleAction = [this, menu](const QString& text, const QString& panelId, QWidget* panel, bool canHide = true) {
@@ -223,17 +301,17 @@ void PanelLayoutManager::populatePanelMenu(QMenu* menu) {
 
     menu->addSeparator();
     QAction* resetAct = menu->addAction(UiHelper::getIcon("sync", QColor("#EEEEEE"), 18), "重置分栏");
-    connect(resetAct, &QAction::triggered, this, &PanelLayoutManager::resetSplitterLayout);
+    connect(resetAct, &QAction::triggered, this, &WindowStateController::resetSplitterLayout);
 }
 
-void PanelLayoutManager::showPanelContextMenu(const QPoint& globalPos) {
+void WindowStateController::showPanelContextMenu(const QPoint& globalPos) {
     QMenu menu;
     UiHelper::applyMenuStyle(&menu);
     populatePanelMenu(&menu);
     menu.exec(globalPos);
 }
 
-void PanelLayoutManager::updateDynamicMinimumSize() {
+void WindowStateController::updateDynamicMinimumSize() {
     if (!m_mainWindow) return;
 
     int visibleCount = 0;
@@ -245,14 +323,18 @@ void PanelLayoutManager::updateDynamicMinimumSize() {
 
     if (visibleCount <= 0) visibleCount = 1;
 
-    // 🚀【绝对不可动摇的刚性物理生命线】：5栏全开时强制锁定 1180px，坚决杜绝再次被挤成肉饼！
     int calculatedMinW = (visibleCount * kBasePanelWidth) + ((visibleCount - 1) * kSplitterHandleWidth) + 10;
     int finalMinW = std::max(kWindowAbsoluteMinWidth, calculatedMinW);
 
     m_mainWindow->setMinimumWidth(finalMinW);
 }
 
-void PanelLayoutManager::saveLayoutState() {
+void WindowStateController::saveAllState() {
+    if (!m_mainWindow) return;
+    AppConfig::instance().setValue("MainWindow/Geometry", m_mainWindow->saveGeometry());
+    if (m_lastNormalGeometry.isValid() && !m_lastNormalGeometry.isEmpty()) {
+        AppConfig::instance().setValue("MainWindow/LastNormalGeometry", m_lastNormalGeometry);
+    }
     AppConfig::instance().setValue("MainWindow/IsImmersiveMode", isImmersiveMode());
     AppConfig::instance().setValue("MainWindow/NavVisible", isPanelVisible("nav"));
     AppConfig::instance().setValue("MainWindow/FavoriteVisible", isPanelVisible("favorite"));
