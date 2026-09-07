@@ -12,6 +12,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QSignalBlocker>
+#include <QTimer>
 
 namespace QuarkMeta {
 
