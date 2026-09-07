@@ -72,6 +72,11 @@ private:
     QVBoxLayout* m_bodyLayout = nullptr;
 
     void initUi();
+    void setupChromeWidgets(QWidget* centralC);
+    void setupPanelsAndSplitter(QWidget* bodyWrapper);
+    void setupControllers();
+    void setupStatusBar(QWidget* centralC);
+    void wireTitleBarSignals(); // 新增：集中连接 TitleBarWidget 的所有信号
     void updateStatusBar();
 
     // 导航与搜索组件句柄

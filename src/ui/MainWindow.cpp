@@ -76,7 +76,25 @@ void MainWindow::initUi() {
     mainL->setContentsMargins(0, 0, 0, 0);
     mainL->setSpacing(0);
 
-    // 1. 顶层子组件实例化 (TitleBar / NavBar / DriveBar)
+    QWidget* bodyWrapper = new QWidget(centralC);
+    bodyWrapper->setObjectName("BodyWrapper");
+
+    setupChromeWidgets(centralC);
+    setupPanelsAndSplitter(bodyWrapper);
+    setupControllers();
+    setupStatusBar(centralC);
+
+    mainL->addWidget(m_titleBarWidget);
+    mainL->addWidget(m_driveBarWidget);
+    mainL->addWidget(m_navBarWidget);
+    mainL->addWidget(bodyWrapper, 1);
+    mainL->addWidget(m_statusBarWidget);
+    mainL->addWidget(m_taskProgressToolBar);
+
+    setCentralWidget(centralC);
+}
+
+void MainWindow::setupChromeWidgets(QWidget* centralC) {
     m_titleBarWidget = new TitleBarWidget(centralC, m_hoverFilter);
     m_navBarWidget   = new NavBarWidget(centralC, m_hoverFilter);
     m_driveBarWidget = new DriveBarWidget(centralC);
@@ -84,13 +102,14 @@ void MainWindow::initUi() {
     m_addressBar       = m_navBarWidget->addressBar();
     m_searchController = m_navBarWidget->searchController();
 
+    m_titleBarWidget->setInitialPinState(m_isPinned);
+
     connect(m_titleBarWidget, &TitleBarWidget::driveBarToggleRequested, this, [this](bool visible) {
         if (m_driveBarWidget) m_driveBarWidget->setVisible(visible);
     });
+}
 
-    // 2. 主 Splitter 与 5 大 Panel 骨架挂载
-    QWidget* bodyWrapper = new QWidget(centralC);
-    bodyWrapper->setObjectName("BodyWrapper");
+void MainWindow::setupPanelsAndSplitter(QWidget* bodyWrapper) {
     m_bodyLayout = new QVBoxLayout(bodyWrapper);
     m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin);
     m_bodyLayout->setSpacing(0);
@@ -112,13 +131,11 @@ void MainWindow::initUi() {
     m_mainSplitter->addWidget(m_filterPanel);
 
     m_bodyLayout->addWidget(m_mainSplitter);
+}
 
-    m_titleBarWidget->bindContentPanel(m_contentPanel);
-
-    // 3. 控制器停机坪挂载（当场同步初始化布局尺寸）
+void MainWindow::setupControllers() {
     m_panelLayoutManager = new PanelLayoutManager(this, m_mainSplitter, m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, this);
     m_panelLayoutManager->initLayout();
-    m_titleBarWidget->bindLayoutManager(m_panelLayoutManager);
 
     m_panelMediator = new PanelMediator(m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, m_addressBar, m_searchController, this);
     m_panelMediator->setupConnections();
@@ -138,7 +155,56 @@ void MainWindow::initUi() {
         if (m_panelLayoutManager) m_panelLayoutManager->toggleImmersiveMode();
     });
 
-    // 4. 底部状态栏
+    wireTitleBarSignals();
+}
+
+void MainWindow::wireTitleBarSignals() {
+    // 置顶：持久化 + 窗口置顶操作，由 MainWindow 负责，TitleBarWidget 只发信号
+    connect(m_titleBarWidget, &TitleBarWidget::pinToggled, this, [this](bool checked) {
+        m_isPinned = checked;
+        AppConfig::instance().setValue("MainWindow/AlwaysOnTop", checked);
+        FramelessWindowHelper::setAlwaysOnTop(this, checked);
+    });
+
+    // 缩放滑杆 <-> ContentPanel 双向同步
+    connect(m_titleBarWidget, &TitleBarWidget::zoomLevelRequested, this, [this](int level) {
+        if (m_contentPanel) m_contentPanel->setZoomLevel(level);
+    });
+    connect(m_contentPanel, &ContentPanel::zoomLevelChanged, m_titleBarWidget, &TitleBarWidget::setZoomLevelDisplay);
+
+    int initZoom = qBound(30, AppConfig::instance().getValue("UI/GridZoomLevel", 96).toInt(), 230);
+    if (m_contentPanel) m_contentPanel->setZoomLevel(initZoom);
+    m_titleBarWidget->setZoomLevelDisplay(initZoom);
+
+    // 视图模式：TitleBarWidget 用 int 语义，这里做映射
+    connect(m_titleBarWidget, &TitleBarWidget::viewModeRequested, this, [this](int mode) {
+        if (!m_contentPanel) return;
+        ContentPanel::ViewMode target = ContentPanel::JustifiedViewMode;
+        if (mode == TitleBarWidget::GridViewOption) target = ContentPanel::GridView;
+        else if (mode == TitleBarWidget::ListViewOption) target = ContentPanel::ListView;
+        m_contentPanel->setViewMode(target);
+        m_titleBarWidget->setCurrentViewMode(mode);
+    });
+    if (m_contentPanel) {
+        ContentPanel::ViewMode cur = m_contentPanel->currentViewMode();
+        int initMode = cur == ContentPanel::GridView ? TitleBarWidget::GridViewOption
+                     : cur == ContentPanel::ListView ? TitleBarWidget::ListViewOption
+                     : TitleBarWidget::AdaptiveView;
+        m_titleBarWidget->setCurrentViewMode(initMode);
+    }
+
+    // 新建菜单
+    connect(m_titleBarWidget, &TitleBarWidget::createItemRequested, this, [this](const QString& type) {
+        if (m_contentPanel) m_contentPanel->createNewItem(type);
+    });
+
+    // 布局管理菜单
+    connect(m_titleBarWidget, &TitleBarWidget::layoutMenuRequested, this, [this](const QPoint& pos) {
+        if (m_panelLayoutManager) m_panelLayoutManager->showPanelContextMenu(pos);
+    });
+}
+
+void MainWindow::setupStatusBar(QWidget* centralC) {
     m_statusBarWidget = new QWidget(centralC);
     m_statusBarWidget->setObjectName("StatusBar");
     m_statusBarWidget->setFixedHeight(32);
@@ -167,31 +233,18 @@ void MainWindow::initUi() {
 
     m_taskProgressToolBar = new TaskProgressToolBar(centralC);
     m_taskProgressToolBar->hide();
-
-    // 5. 将顶级部件拼装至主布局
-    mainL->addWidget(m_titleBarWidget);
-    mainL->addWidget(m_driveBarWidget);
-    mainL->addWidget(m_navBarWidget);
-    mainL->addWidget(bodyWrapper, 1);
-    mainL->addWidget(m_statusBarWidget);
-    mainL->addWidget(m_taskProgressToolBar);
-
-    setCentralWidget(centralC);
 }
 
 void MainWindow::showEvent(QShowEvent* event) {
     QMainWindow::showEvent(event);
     if (!m_panelsInitialized) {
         m_panelsInitialized = true;
-        // 1. 确保左侧导航树完成桌面、此电脑、磁盘的基础节点构建
         if (m_navPanel) m_navPanel->deferredInit();
 
-        // 2. 严密确定性因果链：navPanel 刚构建完毕，立即精准拉起上次打开的路径
         QString lastPath = AppConfig::instance().getValue("MainWindow/LastPath", "computer://").toString();
         bool isValid = lastPath.contains("://") || QDir(lastPath).exists();
         NavigationService::instance().navigateTo(isValid ? lastPath : "computer://");
 
-        // 3. 空闲期静默预热全局 ToolTip
         QTimer::singleShot(500, []() {
             ToolTipOverlay::instance()->silentWarmup();
         });
@@ -222,7 +275,6 @@ void MainWindow::changeEvent(QEvent* event) {
         }
         if (m_titleBarWidget && m_titleBarWidget->btnMax()) {
             QString iconKey = isMaximized() ? "restore_line" : "maximize";
-            // 修正笔误：恢复为正确的 UiHelper::getIcon
             m_titleBarWidget->btnMax()->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
         }
         if (m_bodyLayout) {
