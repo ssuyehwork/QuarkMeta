@@ -39,6 +39,13 @@ void TitleBarWidget::setCurrentViewMode(int mode) {
     m_currentViewMode = mode;
 }
 
+void TitleBarWidget::setWindowMaximized(bool maximized) {
+    if (!m_btnMax) return;
+    QString iconKey = maximized ? "restore_line" : "maximize";
+    m_btnMax->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
+    m_btnMax->setProperty("tooltipText", maximized ? "还原" : "最大化");
+}
+
 void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
     m_layout = new QHBoxLayout(this);
     m_layout->setContentsMargins(5, 0, kLayoutEdgeMargin, 0);

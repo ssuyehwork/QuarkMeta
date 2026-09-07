@@ -63,13 +63,6 @@ MainWindow::MainWindow(QWidget* parent)
 }
 
 void MainWindow::initUi() {
-    QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
-    if (!savedGeom.isEmpty()) {
-        restoreGeometry(savedGeom);
-    } else {
-        resize(1180, 800);
-    }
-
     QWidget* centralC = new QWidget(this);
     centralC->setObjectName("CentralWidget");
     QVBoxLayout* mainL = new QVBoxLayout(centralC);
@@ -79,10 +72,21 @@ void MainWindow::initUi() {
     QWidget* bodyWrapper = new QWidget(centralC);
     bodyWrapper->setObjectName("BodyWrapper");
 
+    // Phase 1: 创建 Chrome 与面板 UI 控件
     setupChromeWidgets(centralC);
     setupPanelsAndSplitter(bodyWrapper);
+
+    // Phase 2: 初始化控制器与信号槽绑定
     setupControllers();
     setupStatusBar(centralC);
+
+    // Phase 3: 恢复几何状态与最大化状态（此时 m_titleBarWidget 等已安全创建并连接信号槽）
+    QByteArray savedGeom = AppConfig::instance().getValue("MainWindow/Geometry").toByteArray();
+    if (!savedGeom.isEmpty()) {
+        restoreGeometry(savedGeom);
+    } else {
+        resize(1180, 800);
+    }
 
     mainL->addWidget(m_titleBarWidget);
     mainL->addWidget(m_driveBarWidget);
@@ -137,8 +141,23 @@ void MainWindow::setupControllers() {
     m_panelLayoutManager = new PanelLayoutManager(this, m_mainSplitter, m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, this);
     m_panelLayoutManager->initLayout();
 
-    m_panelMediator = new PanelMediator(m_navPanel, m_favoritePanel, m_contentPanel, m_metaPanel, m_filterPanel, m_addressBar, m_searchController, this);
+    PanelMediatorComponents components;
+    components.navPanel = m_navPanel;
+    components.favoritePanel = m_favoritePanel;
+    components.contentPanel = m_contentPanel;
+    components.metaPanel = m_metaPanel;
+    components.filterPanel = m_filterPanel;
+    components.addressBar = m_addressBar;
+    components.searchController = m_searchController;
+    components.titleBar = m_titleBarWidget;
+    components.layoutManager = m_panelLayoutManager;
+
+    m_panelMediator = new PanelMediator(components, this);
     m_panelMediator->setupConnections();
+
+    connect(m_panelMediator, &PanelMediator::statusMessageRequested, this, [this](const QString& msg) {
+        if (m_statusLeft) m_statusLeft->setText(msg);
+    });
 
     if (m_searchController) {
         m_searchController->bindContentPanel(m_contentPanel);
@@ -273,9 +292,8 @@ void MainWindow::changeEvent(QEvent* event) {
         if (isMinimized() && m_searchController && m_searchController->historyPanel()) {
             m_searchController->historyPanel()->hide();
         }
-        if (m_titleBarWidget && m_titleBarWidget->btnMax()) {
-            QString iconKey = isMaximized() ? "restore_line" : "maximize";
-            m_titleBarWidget->btnMax()->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
+        if (m_titleBarWidget) {
+            m_titleBarWidget->setWindowMaximized(isMaximized());
         }
         if (m_bodyLayout) {
             m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin);

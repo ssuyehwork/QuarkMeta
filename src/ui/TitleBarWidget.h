@@ -43,6 +43,7 @@ public slots:
     void setInitialPinState(bool pinned);
     void setZoomLevelDisplay(int level); // 外部在 ContentPanel::zoomLevelChanged 时回写，不触发二次请求
     void setCurrentViewMode(int mode);   // 外部同步当前视图模式，供菜单勾选态使用
+    void setWindowMaximized(bool maximized); // 驱动接口：由 MainWindow 在窗口状态（最大化/还原）改变时统一调用
 
 signals:
     void driveBarToggleRequested(bool visible);
