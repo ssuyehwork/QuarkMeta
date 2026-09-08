@@ -247,10 +247,9 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
         btn->setFixedSize(28, 20);
         btn->setCheckable(true);
         btn->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE"), 26));
-        btn->setIconSize(QSize(26, 17));
+        btn->setIconSize(QSize(26, 20));
         btn->setObjectName("StatusBarControlBtn");
         btn->setProperty("tooltipText", tip);
-        btn->setToolTip(tip);
         if (m_hoverFilter) {
             btn->installEventFilter(m_hoverFilter);
         }
@@ -344,13 +343,13 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     });
 
     statusL->setSpacing(4);
-    statusL->addWidget(m_btnToggleFilter);
-    statusL->addWidget(m_btnToggleMeta);
-    statusL->addWidget(m_btnContentPanel);
-    statusL->addWidget(m_btnToggleFavorite);
-    statusL->addWidget(m_btnToggleNav);
-    statusL->addWidget(m_btnPresetLayout);
     statusL->addWidget(m_btnResetLayout);
+    statusL->addWidget(m_btnPresetLayout);
+    statusL->addWidget(m_btnToggleNav);
+    statusL->addWidget(m_btnToggleFavorite);
+    statusL->addWidget(m_btnContentPanel);
+    statusL->addWidget(m_btnToggleMeta);
+    statusL->addWidget(m_btnToggleFilter);
 }
 
 void MainWindow::applyPresetLayout(const QString& leftPanel) {
