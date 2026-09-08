@@ -111,7 +111,6 @@ private:
     QPushButton* m_btnToggleNav = nullptr;
     QPushButton* m_btnPresetLayout = nullptr;
     QPushButton* m_btnResetLayout = nullptr;
-    QPushButton* m_activeStatusBtn = nullptr;
 
     // 系统托盘控制器
     TrayController* m_trayController = nullptr;
