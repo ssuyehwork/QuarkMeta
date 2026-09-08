@@ -75,6 +75,7 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
 
     auto createTitleBtn = [this, hoverFilter](const QString& iconKey, const QString& tip) -> QPushButton* {
         QPushButton* btn = new QPushButton(this);
+        btn->setFocusPolicy(Qt::NoFocus);
         btn->setAttribute(Qt::WA_Hover);
         btn->setFixedSize(24, 24);
         btn->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE")));
