@@ -256,6 +256,26 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
         return btn;
     };
 
+    auto createSquareStatusBtn = [this](const QString& iconKey, const QString& tip) -> QPushButton* {
+        QPushButton* btn = new QPushButton(m_statusBarWidget);
+        btn->setFocusPolicy(Qt::NoFocus);
+        btn->setAttribute(Qt::WA_Hover);
+        btn->setFixedSize(22, 22);
+        btn->setCheckable(true);
+        btn->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE"), 18));
+        btn->setIconSize(QSize(18, 18));
+        btn->setObjectName("StatusBarControlBtn");
+        btn->setProperty("tooltipText", tip);
+        if (m_hoverFilter) {
+            btn->installEventFilter(m_hoverFilter);
+        }
+        return btn;
+    };
+
+    m_btnToggleJustified = createSquareStatusBtn("resize2", "自适应(A)");
+    m_btnToggleGrid      = createSquareStatusBtn("gridgapm", "网格(G)");
+    m_btnToggleList      = createSquareStatusBtn("list_ul", "列表(L)");
+
     m_btnToggleFilter   = createStatusBtn("隐藏筛选器", "切换筛选器面板 (显示/隐藏)");
     m_btnToggleMeta     = createStatusBtn("隐藏元数据面板", "切换元数据面板 (显示/隐藏)");
     m_btnContentPanel   = createStatusBtn("内容面板", "单独内容面板 (Tab 沉浸模式)");
@@ -352,6 +372,33 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
         applyPresetLayout(presetLeft);
     });
 
+    connect(m_btnToggleJustified, &QPushButton::clicked, this, [this]() {
+        if (m_contentPanel) {
+            m_contentPanel->setViewMode(ContentPanel::JustifiedViewMode);
+            updateStatusBarButtonHighlights();
+        }
+    });
+
+    connect(m_btnToggleGrid, &QPushButton::clicked, this, [this]() {
+        if (m_contentPanel) {
+            m_contentPanel->setViewMode(ContentPanel::GridView);
+            updateStatusBarButtonHighlights();
+        }
+    });
+
+    connect(m_btnToggleList, &QPushButton::clicked, this, [this]() {
+        if (m_contentPanel) {
+            m_contentPanel->setViewMode(ContentPanel::ListView);
+            updateStatusBarButtonHighlights();
+        }
+    });
+
+    if (m_contentPanel) {
+        connect(m_contentPanel, &ContentPanel::viewModeChanged, this, [this](ContentPanel::ViewMode) {
+            updateStatusBarButtonHighlights();
+        });
+    }
+
     connect(m_btnResetLayout, &QPushButton::clicked, this, [this]() {
         if (!m_panelLayoutManager) return;
         m_panelLayoutManager->setPanelVisible("nav", true);
@@ -363,7 +410,17 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
         updateStatusBarButtonHighlights();
     });
 
+    QFrame* sepLine = new QFrame(m_statusBarWidget);
+    sepLine->setFrameShape(QFrame::VLine);
+    sepLine->setFixedWidth(1);
+    sepLine->setFixedHeight(14);
+    sepLine->setStyleSheet("background-color: #444444; border: none;");
+
     statusL->setSpacing(4);
+    statusL->addWidget(m_btnToggleJustified);
+    statusL->addWidget(m_btnToggleGrid);
+    statusL->addWidget(m_btnToggleList);
+    statusL->addWidget(sepLine);
     statusL->addWidget(m_btnResetLayout);
     statusL->addWidget(m_btnPresetLayout);
     statusL->addWidget(m_btnToggleNav);
@@ -404,6 +461,16 @@ void MainWindow::updateStatusBarButtonHighlights() {
     QSignalBlocker b5(m_btnToggleNav);
     QSignalBlocker b6(m_btnPresetLayout);
     QSignalBlocker b7(m_btnResetLayout);
+    QSignalBlocker b8(m_btnToggleJustified);
+    QSignalBlocker b9(m_btnToggleGrid);
+    QSignalBlocker b10(m_btnToggleList);
+
+    if (m_contentPanel) {
+        ContentPanel::ViewMode mode = m_contentPanel->currentViewMode();
+        if (m_btnToggleJustified) m_btnToggleJustified->setChecked(mode == ContentPanel::JustifiedViewMode);
+        if (m_btnToggleGrid)      m_btnToggleGrid->setChecked(mode == ContentPanel::GridView);
+        if (m_btnToggleList)      m_btnToggleList->setChecked(mode == ContentPanel::ListView);
+    }
 
     if (m_btnToggleFilter)   m_btnToggleFilter->setChecked(false);
     if (m_btnToggleMeta)     m_btnToggleMeta->setChecked(false);
