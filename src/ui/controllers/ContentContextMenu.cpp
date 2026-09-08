@@ -477,8 +477,8 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                     } else if (type == LastOperationType::SetColor) {
                         QString colorVal = LastOperationManager::instance().color();
                         m_panel->getProxyModel()->setData(idx, colorVal, ColorRole);
-                        QString path = idx.data(PathRole).toString();
-                        QIcon coloredIcon = ShellIconManager::getFileIcon(path, 128);
+                        QString itemPath = idx.data(PathRole).toString();
+                        QIcon coloredIcon = ShellIconManager::getFileIcon(itemPath, 128);
                         m_panel->getProxyModel()->setData(idx, coloredIcon, Qt::DecorationRole);
                     } else if (type == LastOperationType::PasteTags) {
                         m_panel->getProxyModel()->setData(idx, LastOperationManager::instance().tags(), TagsRole);
