@@ -87,7 +87,7 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
         return btn;
     };
 
-    m_btnViewMenu = createTitleBtn("grid", "排列方式");
+    m_btnViewMenu = createTitleBtn("write_1", "排列方式");
     setupViewMenu();
 
     m_sizeSlider = new QSlider(Qt::Horizontal, this);
@@ -179,8 +179,8 @@ void TitleBarWidget::setupViewMenu() {
         menu.setObjectName("TitleBarViewModeMenu");
         UiHelper::applyMenuStyle(&menu);
 
-        QAction* actAdaptive = menu.addAction(UiHelper::getIcon("grid", QColor("#EEEEEE"), 18), "自适应(A)");
-        QAction* actGrid = menu.addAction(UiHelper::getIcon("grid", QColor("#EEEEEE"), 18), "网格(G)");
+        QAction* actAdaptive = menu.addAction(UiHelper::getIcon("resize2", QColor("#EEEEEE"), 18), "自适应(A)");
+        QAction* actGrid = menu.addAction(UiHelper::getIcon("extension", QColor("#EEEEEE"), 18), "网格(G)");
         QAction* actList = menu.addAction(UiHelper::getIcon("list_ul", QColor("#EEEEEE"), 18), "列表(L)");
 
         actAdaptive->setCheckable(true);
