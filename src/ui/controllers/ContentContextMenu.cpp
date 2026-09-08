@@ -25,6 +25,7 @@
 #include "../../meta/FavoriteDao.h"
 #include "../../crypto/EncryptionManager.h"
 #include "../../core/LastOperationManager.h"
+#include "../ShellIconManager.h"
 
 #include <QMenu>
 #include <QWidgetAction>
@@ -474,7 +475,11 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                     if (type == LastOperationType::SetRating) {
                         m_panel->getProxyModel()->setData(idx, LastOperationManager::instance().rating(), RatingRole);
                     } else if (type == LastOperationType::SetColor) {
-                        m_panel->getProxyModel()->setData(idx, LastOperationManager::instance().color(), ColorRole);
+                        QString colorVal = LastOperationManager::instance().color();
+                        m_panel->getProxyModel()->setData(idx, colorVal, ColorRole);
+                        QString path = idx.data(PathRole).toString();
+                        QIcon coloredIcon = ShellIconManager::getFileIcon(path, 128);
+                        m_panel->getProxyModel()->setData(idx, coloredIcon, Qt::DecorationRole);
                     } else if (type == LastOperationType::PasteTags) {
                         m_panel->getProxyModel()->setData(idx, LastOperationManager::instance().tags(), TagsRole);
                     }

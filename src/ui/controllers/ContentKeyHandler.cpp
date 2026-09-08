@@ -313,7 +313,11 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
                 if (type == LastOperationType::SetRating) {
                     m_panel->getProxyModel()->setData(targetIdx, LastOperationManager::instance().rating(), RatingRole);
                 } else if (type == LastOperationType::SetColor) {
-                    m_panel->getProxyModel()->setData(targetIdx, LastOperationManager::instance().color(), ColorRole);
+                    QString colorVal = LastOperationManager::instance().color();
+                    m_panel->getProxyModel()->setData(targetIdx, colorVal, ColorRole);
+                    QString path = targetIdx.data(PathRole).toString();
+                    QIcon coloredIcon = ShellIconManager::getFileIcon(path, 128);
+                    m_panel->getProxyModel()->setData(targetIdx, coloredIcon, Qt::DecorationRole);
                 } else if (type == LastOperationType::PasteTags) {
                     m_panel->getProxyModel()->setData(targetIdx, LastOperationManager::instance().tags(), TagsRole);
                 }
