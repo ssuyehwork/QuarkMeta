@@ -20,6 +20,8 @@
 #include <QStringDecoder>
 #include <algorithm>
 
+class QLineEdit;
+
 #include "SvgIconRenderer.h"
 #include "ThemeManager.h"
 #include "../util/ColorPaletteEngine.h"
