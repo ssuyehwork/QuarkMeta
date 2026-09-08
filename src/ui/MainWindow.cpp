@@ -298,6 +298,7 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     });
 
     connect(m_btnToggleFilter, &QPushButton::clicked, this, [this]() {
+        m_activeStatusBtn = m_btnToggleFilter;
         if (m_panelLayoutManager) {
             bool current = m_panelLayoutManager->isPanelVisible("filter");
             m_panelLayoutManager->setPanelVisible("filter", !current);
@@ -305,6 +306,7 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     });
 
     connect(m_btnToggleMeta, &QPushButton::clicked, this, [this]() {
+        m_activeStatusBtn = m_btnToggleMeta;
         if (m_panelLayoutManager) {
             bool current = m_panelLayoutManager->isPanelVisible("meta");
             m_panelLayoutManager->setPanelVisible("meta", !current);
@@ -312,12 +314,14 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     });
 
     connect(m_btnContentPanel, &QPushButton::clicked, this, [this]() {
+        m_activeStatusBtn = m_btnContentPanel;
         if (m_panelLayoutManager) {
             m_panelLayoutManager->toggleImmersiveMode();
         }
     });
 
     connect(m_btnToggleFavorite, &QPushButton::clicked, this, [this]() {
+        m_activeStatusBtn = m_btnToggleFavorite;
         if (m_panelLayoutManager) {
             bool current = m_panelLayoutManager->isPanelVisible("favorite");
             m_panelLayoutManager->setPanelVisible("favorite", !current);
@@ -325,6 +329,7 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     });
 
     connect(m_btnToggleNav, &QPushButton::clicked, this, [this]() {
+        m_activeStatusBtn = m_btnToggleNav;
         if (m_panelLayoutManager) {
             bool current = m_panelLayoutManager->isPanelVisible("nav");
             m_panelLayoutManager->setPanelVisible("nav", !current);
@@ -332,11 +337,13 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     });
 
     connect(m_btnPresetLayout, &QPushButton::clicked, this, [this]() {
+        m_activeStatusBtn = m_btnPresetLayout;
         QString presetLeft = AppConfig::instance().getValue("MainWindow/PresetLeftPanel", "favorite").toString();
         applyPresetLayout(presetLeft);
     });
 
     connect(m_btnResetLayout, &QPushButton::clicked, this, [this]() {
+        m_activeStatusBtn = m_btnResetLayout;
         if (m_panelLayoutManager) {
             m_panelLayoutManager->resetSplitterLayout();
         }
@@ -384,23 +391,22 @@ void MainWindow::updateStatusBarButtonHighlights() {
     QSignalBlocker b6(m_btnPresetLayout);
     QSignalBlocker b7(m_btnResetLayout);
 
-    if (m_btnToggleFilter) m_btnToggleFilter->setChecked(filterVis);
-    if (m_btnToggleMeta) m_btnToggleMeta->setChecked(metaVis);
-    if (m_btnToggleFavorite) m_btnToggleFavorite->setChecked(favVis);
-    if (m_btnToggleNav) m_btnToggleNav->setChecked(navVis);
+    if (m_btnToggleFilter)   m_btnToggleFilter->setChecked(false);
+    if (m_btnToggleMeta)     m_btnToggleMeta->setChecked(false);
+    if (m_btnContentPanel)   m_btnContentPanel->setChecked(false);
+    if (m_btnToggleFavorite) m_btnToggleFavorite->setChecked(false);
+    if (m_btnToggleNav)      m_btnToggleNav->setChecked(false);
+    if (m_btnPresetLayout)   m_btnPresetLayout->setChecked(false);
+    if (m_btnResetLayout)    m_btnResetLayout->setChecked(false);
 
     if (isImm) {
         if (m_btnContentPanel) m_btnContentPanel->setChecked(true);
-        if (m_btnResetLayout) m_btnResetLayout->setChecked(false);
-        if (m_btnPresetLayout) m_btnPresetLayout->setChecked(false);
-    } else {
-        if (m_btnContentPanel) m_btnContentPanel->setChecked(false);
-
-        bool allDefault = navVis && favVis && metaVis && filterVis;
-        if (m_btnResetLayout) m_btnResetLayout->setChecked(allDefault);
-
-        bool isPreset3 = (favVis || navVis) && !metaVis && filterVis && !(favVis && navVis);
-        if (m_btnPresetLayout) m_btnPresetLayout->setChecked(isPreset3);
+    } else if (navVis && favVis && metaVis && filterVis) {
+        if (m_btnResetLayout) m_btnResetLayout->setChecked(true);
+    } else if ((favVis || navVis) && !metaVis && filterVis && !(favVis && navVis)) {
+        if (m_btnPresetLayout) m_btnPresetLayout->setChecked(true);
+    } else if (m_activeStatusBtn) {
+        m_activeStatusBtn->setChecked(true);
     }
 }
 
