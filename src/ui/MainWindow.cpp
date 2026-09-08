@@ -364,13 +364,13 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     });
 
     statusL->setSpacing(4);
-    statusL->addWidget(m_btnToggleFilter);
-    statusL->addWidget(m_btnToggleMeta);
-    statusL->addWidget(m_btnContentPanel);
-    statusL->addWidget(m_btnToggleFavorite);
-    statusL->addWidget(m_btnToggleNav);
-    statusL->addWidget(m_btnPresetLayout);
     statusL->addWidget(m_btnResetLayout);
+    statusL->addWidget(m_btnPresetLayout);
+    statusL->addWidget(m_btnToggleNav);
+    statusL->addWidget(m_btnToggleFavorite);
+    statusL->addWidget(m_btnContentPanel);
+    statusL->addWidget(m_btnToggleMeta);
+    statusL->addWidget(m_btnToggleFilter);
 }
 
 void MainWindow::applyPresetLayout(const QString& leftPanel) {
