@@ -41,7 +41,6 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
     m_pathEdit->setFixedHeight(30); 
     m_pathEdit->setObjectName("AddressPathEdit");
     UiHelper::setupLineEditContextMenu(m_pathEdit);
-    UiHelper::attachEscClearFilter(m_pathEdit);
     m_pathStack->addWidget(m_pathEdit);
 
     m_btnRefresh = new QPushButton(m_addressContainer);

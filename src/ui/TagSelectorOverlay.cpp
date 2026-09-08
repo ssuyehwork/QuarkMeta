@@ -71,7 +71,6 @@ void TagSelectorOverlay::initUi() {
     m_searchEdit->setFixedHeight(26);
     m_searchEdit->setObjectName("TagSelectorSearchEdit");
     UiHelper::setupLineEditContextMenu(m_searchEdit);
-    UiHelper::attachEscClearFilter(m_searchEdit);
     connect(m_searchEdit, &QLineEdit::textChanged, this, [this]() {
         filterTags();
     });

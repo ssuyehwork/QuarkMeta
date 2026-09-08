@@ -31,7 +31,6 @@ SearchController::SearchController(QWidget* parent)
 
     m_searchEdit->setObjectName("SearchEdit");
     UiHelper::setupLineEditContextMenu(m_searchEdit);
-    UiHelper::attachEscClearFilter(m_searchEdit);
 
     searchLayout->addWidget(m_searchEdit);
 

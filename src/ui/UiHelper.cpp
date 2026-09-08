@@ -61,29 +61,5 @@ void UiHelper::setupLineEditContextMenu(QLineEdit* edit) {
     });
 }
 
-class EscClearEventFilter : public QObject {
-public:
-    explicit EscClearEventFilter(QLineEdit* edit) : QObject(edit), m_edit(edit) {}
-protected:
-    bool eventFilter(QObject* watched, QEvent* event) override {
-        if (event->type() == QEvent::KeyPress) {
-            QKeyEvent* keyEv = static_cast<QKeyEvent*>(event);
-            if (keyEv->key() == Qt::Key_Escape) {
-                if (m_edit && !m_edit->text().isEmpty()) {
-                    m_edit->clear();
-                    return true;
-                }
-            }
-        }
-        return QObject::eventFilter(watched, event);
-    }
-private:
-    QLineEdit* m_edit;
-};
-
-void UiHelper::attachEscClearFilter(QLineEdit* edit) {
-    if (!edit) return;
-    edit->installEventFilter(new EscClearEventFilter(edit));
-}
 
 } // namespace QuarkMeta

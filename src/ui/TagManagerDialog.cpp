@@ -47,7 +47,6 @@ void TagManagerDialog::initContent() {
     m_searchEdit->setFixedHeight(32);
     m_searchEdit->setObjectName("TagManagerSearchEdit");
     UiHelper::setupLineEditContextMenu(m_searchEdit);
-    UiHelper::attachEscClearFilter(m_searchEdit);
     connect(m_searchEdit, &QLineEdit::textChanged, this, &TagManagerDialog::onSearchTextChanged);
     connect(m_searchEdit, &QLineEdit::returnPressed, [this]() {
         QString kw = m_searchEdit->text().trimmed();

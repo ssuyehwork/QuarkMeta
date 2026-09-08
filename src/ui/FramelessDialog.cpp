@@ -187,18 +187,6 @@ void FramelessDialog::keyPressEvent(QKeyEvent* event) {
         return;
     }
     if (event->key() == Qt::Key_Escape) {
-        QWidget* focusW = QApplication::focusWidget();
-        if (focusW) {
-            QLineEdit* edit = qobject_cast<QLineEdit*>(focusW);
-            if (!edit && focusW->parentWidget()) {
-                edit = qobject_cast<QLineEdit*>(focusW->parentWidget());
-            }
-            if (edit && !edit->text().isEmpty()) {
-                edit->clear();
-                event->accept();
-                return;
-            }
-        }
         reject();
     } else {
         QDialog::keyPressEvent(event);

@@ -84,43 +84,7 @@ bool AppShortcutController::eventFilter(QObject* watched, QEvent* event) {
             }
         }
 
-        // 2. 响应式 Esc 输入框文本清空契约 (全局最高优先级挂载)
-        if (keyEv->key() == Qt::Key_Escape) {
-            QWidget* focusW = QApplication::focusWidget();
-            if (focusW) {
-                QLineEdit* edit = qobject_cast<QLineEdit*>(focusW);
-                if (!edit && focusW->parentWidget()) {
-                    edit = qobject_cast<QLineEdit*>(focusW->parentWidget());
-                }
-                if (edit && !edit->text().isEmpty()) {
-                    edit->clear();
-                    event->accept();
-                    return true;
-                }
-
-                QTextEdit* txt = qobject_cast<QTextEdit*>(focusW);
-                if (!txt && focusW->parentWidget()) {
-                    txt = qobject_cast<QTextEdit*>(focusW->parentWidget());
-                }
-                if (txt && !txt->toPlainText().isEmpty()) {
-                    txt->clear();
-                    event->accept();
-                    return true;
-                }
-
-                QPlainTextEdit* ptxt = qobject_cast<QPlainTextEdit*>(focusW);
-                if (!ptxt && focusW->parentWidget()) {
-                    ptxt = qobject_cast<QPlainTextEdit*>(focusW->parentWidget());
-                }
-                if (ptxt && !ptxt->toPlainText().isEmpty()) {
-                    ptxt->clear();
-                    event->accept();
-                    return true;
-                }
-            }
-        }
-
-        // 3. Tab 键沉浸模式切换
+        // 2. Tab 键沉浸模式切换
         if (keyEv->key() == Qt::Key_Tab && keyEv->modifiers() == Qt::NoModifier && m_window) {
             QWidget* watchedW = qobject_cast<QWidget*>(watched);
             if (watchedW && (watchedW == m_window || m_window->isAncestorOf(watchedW))) {
