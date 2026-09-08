@@ -299,6 +299,7 @@ set(SOURCES
     src/ui/ThemeManager.h
     src/ui/ThemeManager.cpp
     src/ui/UiHelper.h
+    src/ui/UiHelper.cpp
     src/ui/IconCacheManager.h
     src/ui/IconCacheManager.cpp
     src/ui/ShellIconManager.h

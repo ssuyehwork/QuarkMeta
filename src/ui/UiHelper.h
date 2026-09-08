@@ -231,6 +231,9 @@ public:
         ThemeManager::instance().applyMenuStyle(menu);
     }
 
+    static void setupLineEditContextMenu(QLineEdit* edit);
+    static void attachEscClearFilter(QLineEdit* edit);
+
     static inline QColor getExtensionColor(const QString& ext) {
         return ColorPaletteEngine::getExtensionColor(ext);
     }

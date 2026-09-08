@@ -175,6 +175,11 @@ void FramelessDialog::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void FramelessDialog::keyPressEvent(QKeyEvent* event) {
+    if ((event->key() == Qt::Key_W && (event->modifiers() & Qt::ControlModifier))) {
+        reject();
+        event->accept();
+        return;
+    }
     if (event->key() == Qt::Key_Escape) {
         QLineEdit* edit = findChild<QLineEdit*>();
         if (edit && edit->isVisible() && !edit->text().isEmpty()) {
