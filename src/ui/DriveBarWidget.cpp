@@ -52,8 +52,8 @@ void DriveBarWidget::initUi() {
     m_driveBarLayout->setContentsMargins(15, 5, 15, 5);
     m_driveBarLayout->setSpacing(8);
 
-    // 1. 最左侧（第一个按钮）：固定放置 gridgapm 图标的扩展与组件管理器按钮
-    m_btnExtensionManager = createIconButton("gridgapm", QColor("#EEEEEE"), "扩展与组件管理");
+    // 1. 最左侧（第一个按钮）：固定放置 extension 图标的扩展与组件管理器按钮
+    m_btnExtensionManager = createIconButton("extension", QColor("#EEEEEE"), "扩展与组件管理");
     setupExtensionMenu();
     m_driveBarLayout->addWidget(m_btnExtensionManager);
 

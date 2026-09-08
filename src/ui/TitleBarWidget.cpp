@@ -180,7 +180,7 @@ void TitleBarWidget::setupViewMenu() {
         UiHelper::applyMenuStyle(&menu);
 
         QAction* actAdaptive = menu.addAction(UiHelper::getIcon("resize2", QColor("#EEEEEE"), 18), "自适应(A)");
-        QAction* actGrid = menu.addAction(UiHelper::getIcon("extension", QColor("#EEEEEE"), 18), "网格(G)");
+        QAction* actGrid = menu.addAction(UiHelper::getIcon("gridgapm", QColor("#EEEEEE"), 18), "网格(G)");
         QAction* actList = menu.addAction(UiHelper::getIcon("list_ul", QColor("#EEEEEE"), 18), "列表(L)");
 
         actAdaptive->setCheckable(true);
