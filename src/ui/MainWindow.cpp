@@ -271,11 +271,11 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
 
         QString currentLeft = AppConfig::instance().getValue("MainWindow/PresetLeftPanel", "favorite").toString();
 
-        QAction* actFav = menu.addAction(UiHelper::getIcon("bookmark", QColor("#EEEEEE")), "显示 收藏栏 + 内容面板 + 筛选器");
+        QAction* actFav = menu.addAction(UiHelper::getIcon("star_filled", QColor("#EEEEEE")), "显示 收藏栏 + 内容面板 + 筛选器");
         actFav->setCheckable(true);
         actFav->setChecked(currentLeft == "favorite");
 
-        QAction* actNav = menu.addAction(UiHelper::getIcon("sidebar", QColor("#EEEEEE")), "显示 目录导航 + 内容面板 + 筛选器");
+        QAction* actNav = menu.addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "显示 目录导航 + 内容面板 + 筛选器");
         actNav->setCheckable(true);
         actNav->setChecked(currentLeft == "nav");
 
