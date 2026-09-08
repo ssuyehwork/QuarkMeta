@@ -574,8 +574,12 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                         QString dest = src;
                         if (dest.endsWith(".amenc", Qt::CaseInsensitive)) {
                             dest.chop(6);
-                        } else {
-                            dest += ".decrypted";
+                        } else if (dest.endsWith(".decrypted", Qt::CaseInsensitive)) {
+                            dest.chop(10);
+                        }
+
+                        if (dest == src) {
+                            dest += ".dec";
                         }
 
                         if (EncryptionManager::instance().decryptFile(src.toStdWString(), dest.toStdWString(), stdPwd)) {
