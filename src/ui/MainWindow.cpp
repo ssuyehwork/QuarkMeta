@@ -247,7 +247,7 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
         btn->setFixedSize(28, 20);
         btn->setCheckable(true);
         btn->setIcon(UiHelper::getIcon(iconKey, QColor("#EEEEEE"), 26));
-        btn->setIconSize(QSize(26, 20));
+        btn->setIconSize(QSize(27, 24));
         btn->setObjectName("StatusBarControlBtn");
         btn->setProperty("tooltipText", tip);
         if (m_hoverFilter) {
