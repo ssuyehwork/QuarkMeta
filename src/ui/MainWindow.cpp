@@ -527,6 +527,11 @@ void MainWindow::showEvent(QShowEvent* event) {
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event) {
+    if (event->key() == Qt::Key_W && (event->modifiers() & Qt::ControlModifier)) {
+        close();
+        event->accept();
+        return;
+    }
     setAttribute(Qt::WA_Hover);
     QMainWindow::keyPressEvent(event);
 }

@@ -71,9 +71,57 @@ bool AppShortcutController::isEditingFocus() {
 }
 
 bool AppShortcutController::eventFilter(QObject* watched, QEvent* event) {
-    if (event->type() == QEvent::KeyPress && m_window) {
+    if (event->type() == QEvent::KeyPress) {
         QKeyEvent* keyEv = static_cast<QKeyEvent*>(event);
-        if (keyEv->key() == Qt::Key_Tab && keyEv->modifiers() == Qt::NoModifier) {
+
+        // 1. 全局 Ctrl + W 关闭激活窗口契约
+        if (keyEv->key() == Qt::Key_W && (keyEv->modifiers() & Qt::ControlModifier)) {
+            QWidget* activeWin = QApplication::activeWindow();
+            if (activeWin) {
+                activeWin->close();
+                event->accept();
+                return true;
+            }
+        }
+
+        // 2. 响应式 Esc 输入框文本清空契约 (全局最高优先级挂载)
+        if (keyEv->key() == Qt::Key_Escape) {
+            QWidget* focusW = QApplication::focusWidget();
+            if (focusW) {
+                QLineEdit* edit = qobject_cast<QLineEdit*>(focusW);
+                if (!edit && focusW->parentWidget()) {
+                    edit = qobject_cast<QLineEdit*>(focusW->parentWidget());
+                }
+                if (edit && !edit->text().isEmpty()) {
+                    edit->clear();
+                    event->accept();
+                    return true;
+                }
+
+                QTextEdit* txt = qobject_cast<QTextEdit*>(focusW);
+                if (!txt && focusW->parentWidget()) {
+                    txt = qobject_cast<QTextEdit*>(focusW->parentWidget());
+                }
+                if (txt && !txt->toPlainText().isEmpty()) {
+                    txt->clear();
+                    event->accept();
+                    return true;
+                }
+
+                QPlainTextEdit* ptxt = qobject_cast<QPlainTextEdit*>(focusW);
+                if (!ptxt && focusW->parentWidget()) {
+                    ptxt = qobject_cast<QPlainTextEdit*>(focusW->parentWidget());
+                }
+                if (ptxt && !ptxt->toPlainText().isEmpty()) {
+                    ptxt->clear();
+                    event->accept();
+                    return true;
+                }
+            }
+        }
+
+        // 3. Tab 键沉浸模式切换
+        if (keyEv->key() == Qt::Key_Tab && keyEv->modifiers() == Qt::NoModifier && m_window) {
             QWidget* watchedW = qobject_cast<QWidget*>(watched);
             if (watchedW && (watchedW == m_window || m_window->isAncestorOf(watchedW))) {
                 if (!isEditingFocus()) {
@@ -123,6 +171,15 @@ void AppShortcutController::initShortcuts() {
         if (m_searchController && m_searchController->searchEdit()) {
             m_searchController->searchEdit()->setFocus(Qt::ShortcutFocusReason);
             m_searchController->searchEdit()->selectAll();
+        }
+    });
+
+    // 6. Ctrl+W: 全局关闭/响应式退出主窗口
+    QShortcut* scClose = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), m_window);
+    scClose->setContext(Qt::WindowShortcut);
+    connect(scClose, &QShortcut::activated, this, [this]() {
+        if (m_window) {
+            m_window->close();
         }
     });
 }

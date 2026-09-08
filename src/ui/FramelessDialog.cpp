@@ -3,6 +3,8 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QApplication>
+#include <QShortcut>
+#include <QKeySequence>
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <dwmapi.h>
@@ -122,6 +124,10 @@ FramelessDialog::FramelessDialog(const QString& title, QWidget* parent)
     m_contentArea = new QWidget();
     m_contentArea->setObjectName("DialogContentArea");
     m_mainLayout->addWidget(m_contentArea, 1);
+
+    QShortcut* scClose = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), this);
+    scClose->setContext(Qt::WindowShortcut);
+    connect(scClose, &QShortcut::activated, this, &QDialog::reject);
 }
 
 void FramelessDialog::setVisibleButtons(int flags) {
@@ -181,11 +187,17 @@ void FramelessDialog::keyPressEvent(QKeyEvent* event) {
         return;
     }
     if (event->key() == Qt::Key_Escape) {
-        QLineEdit* edit = findChild<QLineEdit*>();
-        if (edit && edit->isVisible() && !edit->text().isEmpty()) {
-            edit->clear();
-            event->accept();
-            return;
+        QWidget* focusW = QApplication::focusWidget();
+        if (focusW) {
+            QLineEdit* edit = qobject_cast<QLineEdit*>(focusW);
+            if (!edit && focusW->parentWidget()) {
+                edit = qobject_cast<QLineEdit*>(focusW->parentWidget());
+            }
+            if (edit && !edit->text().isEmpty()) {
+                edit->clear();
+                event->accept();
+                return;
+            }
         }
         reject();
     } else {
