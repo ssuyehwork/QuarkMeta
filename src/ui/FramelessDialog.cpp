@@ -1,5 +1,6 @@
 #include "FramelessDialog.h"
 #include "UiHelper.h"
+#include <QCloseEvent>
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QApplication>
@@ -143,6 +144,19 @@ void FramelessDialog::showEvent(QShowEvent* event) {
     QDialog::showEvent(event);
 }
 
+void FramelessDialog::closeEvent(QCloseEvent* event) {
+    // 强行把当前窗口光标还原，避免 IDC_HAND 残留在 Windows 桌面管理器中
+    unsetCursor();
+    setCursor(Qt::ArrowCursor);
+
+    // 确保父窗口重新启用与激活
+    if (parentWidget()) {
+        parentWidget()->setEnabled(true);
+        parentWidget()->activateWindow();
+    }
+    QDialog::closeEvent(event);
+}
+
 namespace {
 bool isInteractiveWidget(QWidget* widget) {
     while (widget) {
@@ -161,17 +175,16 @@ void FramelessDialog::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         QWidget* child = childAt(event->pos());
         if (!child || !isInteractiveWidget(child)) {
-#ifdef Q_OS_WIN
-            ReleaseCapture();
-            ::SendMessageW(reinterpret_cast<HWND>(winId()), WM_NCLBUTTONDOWN, HTCAPTION, 0);
-            event->accept();
-            return;
-#else
+            // 使用 Qt 现代原生拖拽接口，完全融入 Qt 事件循环，不阻塞 Win32 消息
+            if (windowHandle() && windowHandle()->startSystemMove()) {
+                event->accept();
+                return;
+            }
+            // 降级兜底：纯 Qt 坐标偏移拖动
             m_isDragging = true;
             m_dragPos = event->globalPosition().toPoint() - frameGeometry().topLeft();
             event->accept();
             return;
-#endif
         }
     }
     QDialog::mousePressEvent(event);

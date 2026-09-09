@@ -11,9 +11,15 @@
 namespace QuarkMeta {
 
 void TagManagerDialog::showDialog(QWidget* parent, const QString& currentPath, bool isMirrorSource) {
-    TagManagerDialog* dlg = new TagManagerDialog(currentPath, isMirrorSource, parent);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->exec();
+    QWidget* topLevel = parent ? parent->window() : nullptr;
+
+    TagManagerDialog dlg(currentPath, isMirrorSource, topLevel);
+    dlg.exec();
+
+    if (topLevel) {
+        topLevel->activateWindow();
+        QApplication::restoreOverrideCursor();
+    }
 }
 
 TagManagerDialog::TagManagerDialog(const QString& currentPath, bool isMirrorSource, QWidget* parent)
