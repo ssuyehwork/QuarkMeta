@@ -1,10 +1,21 @@
-# PanelLayoutManager Refactoring Implementation Plan
+# PanelLayoutManager Dynamic Minimum Width Safeguard Refactoring Implementation Plan
 
 ## Overview
-This implementation plan addresses the global context issues in `PanelLayoutManager` and its interaction with `MainWindow`:
-1. **Startup Panel State Restoration & Correct Splitting Sequence**: In `initLayout()`, restore individual panel visibility states (`NavVisible`, `FavoriteVisible`, `MetaVisible`, `FilterVisible`) from `AppConfig` when not in immersive mode BEFORE restoring `SplitterState`, ensuring `QSplitter` correctly aligns panel sizes with active visibilities.
-2. **Atomic Batch Panel Visibility Updates**: Add `setBatchPanelVisibility(const QMap<QString, bool>& visibilities)` to `PanelLayoutManager`. Refactor preset layout buttons and batch layout switches in `MainWindow.cpp` to call `setBatchPanelVisibility()` once instead of triggering cascading single-panel `setPanelVisible()` calls. This prevents disk write storms (`AppConfig::sync()`), intermediate zero-width splitter state corruptions, and multi-pass status bar updates.
-3. **Decouple Minimum Window Width Lock**: Decouple `updateDynamicMinimumSize()` from dynamically setting rigid top-level window minimum width constraints (`m_mainWindow->setMinimumWidth(...)`) up to 1180px, maintaining the absolute floor constraint `kWindowAbsoluteMinWidth` (475px) to prevent layout thrashing and window boundary overflow during window resizing, max/restore transitions, or small-screen operations.
+This implementation plan corrects the window minimum width protection in `PanelLayoutManager` to prevent UI overlap and panel distortion ("squeezed UI bug" as demonstrated in `image.png`).
+
+1. **Dynamic Minimum Size Safeguard (`updateDynamicMinimumSize`)**:
+   - Re-enforces the dynamic minimum width calculation based on the exact count of currently visible panels:
+     `calculatedMinW = (visibleCount * kBasePanelWidth) + ((visibleCount - 1) * kSplitterHandleWidth) + 10`
+   - For 5 visible panels: enforces `1180px` as the strict lower bound for `m_mainWindow->setMinimumWidth(1180)`, preventing `QSplitter` from crushing visible panels below their usable widths.
+   - For 3 visible panels: enforces `710px`.
+   - For 1-2 visible panels (or immersive mode): uses `kWindowAbsoluteMinWidth` (`475px`) to protect top bar controls.
+
+2. **Startup Panel State Restoration & Correct Splitting Sequence**:
+   - In `initLayout()`, restores individual panel visibility states (`NavVisible`, `FavoriteVisible`, `MetaVisible`, `FilterVisible`) from `AppConfig` when not in immersive mode BEFORE restoring `SplitterState`, ensuring `QSplitter` correctly aligns panel sizes with active visibilities.
+
+3. **Atomic Batch Panel Visibility Updates**:
+   - Adds `setBatchPanelVisibility(const QMap<QString, bool>& visibilities)` to `PanelLayoutManager`.
+   - Refactors preset layout buttons and batch layout switches in `MainWindow.cpp` to call `setBatchPanelVisibility()` atomically, eliminating multi-pass splitter recalculations, disk write storms (`AppConfig::sync()`), and UI flickering.
 
 ## Modified Files List
 - `src/ui/PanelLayoutManager.h`
@@ -32,7 +43,7 @@ Add `setBatchPanelVisibility` public method declaration.
 ---
 
 ### 2. `src/ui/PanelLayoutManager.cpp`
-Update `initLayout()`, implement `setBatchPanelVisibility()`, and update `updateDynamicMinimumSize()`.
+Update `initLayout()`, implement `setBatchPanelVisibility()`, and restore strict dynamic minimum size calculation in `updateDynamicMinimumSize()`.
 
 <<<<<<< SEARCH
 void PanelLayoutManager::initLayout() {
@@ -190,8 +201,20 @@ void PanelLayoutManager::updateDynamicMinimumSize() {
 void PanelLayoutManager::updateDynamicMinimumSize() {
     if (!m_mainWindow) return;
 
-    // 顶层主窗口保持绝对物理下限，避免锁死 1180px 产生缩放/最大化布局冲突与溢出
-    m_mainWindow->setMinimumWidth(kWindowAbsoluteMinWidth);
+    int visibleCount = 0;
+    if (m_navPanel && !m_navPanel->isHidden()) visibleCount++;
+    if (m_favoritePanel && !m_favoritePanel->isHidden()) visibleCount++;
+    if (m_contentPanel && !m_contentPanel->isHidden()) visibleCount++;
+    if (m_metaPanel && !m_metaPanel->isHidden()) visibleCount++;
+    if (m_filterPanel && !m_filterPanel->isHidden()) visibleCount++;
+
+    if (visibleCount <= 0) visibleCount = 1;
+
+    // 🚀【绝对不可动摇的刚性物理生命线】：5栏全开时强制锁定 1180px，坚决杜绝面板被挤压错乱！
+    int calculatedMinW = (visibleCount * kBasePanelWidth) + ((visibleCount - 1) * kSplitterHandleWidth) + 10;
+    int finalMinW = std::max(kWindowAbsoluteMinWidth, calculatedMinW);
+
+    m_mainWindow->setMinimumWidth(finalMinW);
 }
 >>>>>>> REPLACE
 
@@ -345,5 +368,5 @@ void MainWindow::applyPresetLayout(const QString& leftPanel) {
 >>>>>>> REPLACE
 
 ## Build & Verification Steps
-1. Verify `PanelLayoutManager-4.md` matches `PanelLayoutManager.h/cpp` and `MainWindow.cpp`.
-2. Inspect Git diff via `git status` to confirm plan creation without unwanted file modifications.
+1. Verify `PanelLayoutManager-5.md` is registered in `QuarkMeta Architecture/Implementation Plan/`.
+2. Ensure dynamic minimum width calculation `updateDynamicMinimumSize()` matches `(visibleCount * 230) + ((visibleCount - 1) * 5) + 10`.
