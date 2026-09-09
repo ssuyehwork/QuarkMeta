@@ -133,6 +133,8 @@ set(SOURCES
     src/ui/BatchProgressDialog.h
     src/ui/DuplicateConflictDialog.h
     src/ui/DuplicateConflictDialog.cpp
+    src/ui/FileCollisionDialog.h
+    src/ui/FileCollisionDialog.cpp
     src/ui/PresetManager.cpp
     src/ui/PresetManager.h
     src/ui/UndoToastOverlay.cpp

@@ -20,6 +20,8 @@ struct DiskIoContext {
     QStringList sources;
     QString destination;
     bool isMove = false;
+    bool overwrite = false;
+    bool autoRename = false;
 };
 
 /**
@@ -34,7 +36,7 @@ public:
 
     void executeAsync(const DiskIoContext& ctx, std::function<void(bool)> callback) {
         (void)QtConcurrent::run([ctx, callback]() {
-            bool success = ShellHelper::copyOrMoveItems(ctx.sources, ctx.destination, ctx.isMove);
+            bool success = ShellHelper::copyOrMoveItems(ctx.sources, ctx.destination, ctx.isMove, ctx.overwrite, ctx.autoRename);
             if (success && ctx.isMove) {
                 UndoManager::instance().pushCommand(std::make_unique<MoveCommand>(
                     ctx.sources, 

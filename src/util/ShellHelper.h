@@ -18,7 +18,7 @@ public:
     /**
      * @brief 执行复制或移动
      */
-    static bool copyOrMoveItems(const QStringList& sourcePaths, const QString& destDir, bool isMove);
+    static bool copyOrMoveItems(const QStringList& sourcePaths, const QString& destDir, bool isMove, bool overwrite = false, bool autoRename = false);
 
     /**
      * @brief 显示文件属性对话框

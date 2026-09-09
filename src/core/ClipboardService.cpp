@@ -2,6 +2,7 @@
 #include "TrashService.h"
 #include "../util/DiskIoService.h"
 #include "../ui/ToolTipOverlay.h"
+#include "../ui/FileCollisionDialog.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
@@ -182,10 +183,50 @@ void ClipboardService::executePaste(const QString& targetDir, QWidget* parentWid
         if (!effect.isEmpty() && (effect.at(0) & 0x02)) isMove = true;
     }
 
+    // 检测目标文件夹中的同名冲突文件
+    QStringList conflictingSources;
+    for (const QString& src : fromPaths) {
+        QString fileName = QFileInfo(src).fileName();
+        QString destPath = QDir(targetDir).filePath(fileName);
+        if (QFile::exists(destPath)) {
+            conflictingSources.append(src);
+        }
+    }
+
     DiskIoContext ioCtx;
     ioCtx.sources = fromPaths;
     ioCtx.destination = targetDir;
     ioCtx.isMove = isMove;
+
+    if (!conflictingSources.isEmpty()) {
+        QString sourceDir = QFileInfo(fromPaths.first()).absolutePath();
+        FileCollisionDialog dialog(sourceDir, targetDir, conflictingSources.size(), parentWidget);
+        if (dialog.exec() == QDialog::Accepted) {
+            CollisionResolveAction action = dialog.selectedAction();
+            if (action == CollisionResolveAction::Cancel) {
+                return;
+            } else if (action == CollisionResolveAction::Skip) {
+                // 剔除所有冲突源文件
+                QStringList filteredSources;
+                for (const QString& src : fromPaths) {
+                    if (!conflictingSources.contains(src)) {
+                        filteredSources.append(src);
+                    }
+                }
+                if (filteredSources.isEmpty()) {
+                    ToolTipOverlay::instance()->showText(QCursor::pos(), "已跳过所有同名文件", 1500, QColor("#378ADD"));
+                    return;
+                }
+                ioCtx.sources = filteredSources;
+            } else if (action == CollisionResolveAction::Replace) {
+                ioCtx.overwrite = true;
+            } else if (action == CollisionResolveAction::KeepBoth) {
+                ioCtx.autoRename = true;
+            }
+        } else {
+            return;
+        }
+    }
 
     QPointer<ClipboardService> weakThis(this);
     DiskIoService::instance().executeAsync(ioCtx, [weakThis, targetDir](bool success) {
