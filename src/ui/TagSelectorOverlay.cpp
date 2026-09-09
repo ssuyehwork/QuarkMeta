@@ -25,8 +25,6 @@ TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidg
     setMouseTracking(true);
     setAttribute(Qt::WA_DeleteOnClose, false);
 
-    m_framelessHelper = FramelessWindowHelper::apply(this, nullptr);
-
     initUi();
     loadTagsAndGroups();
     
@@ -60,13 +58,11 @@ void TagSelectorOverlay::closeOverlay() {
 #ifdef Q_OS_WIN
     ::ReleaseCapture();
 #endif
-    if (QWidget* grabber = QApplication::mouseGrabber()) {
+    if (QWidget* grabber = QWidget::mouseGrabber()) {
         grabber->releaseMouse();
     }
     emit overlayClosed();
     close();
-    QGuiApplication::setOverrideCursor(Qt::ArrowCursor);
-    QGuiApplication::restoreOverrideCursor();
     deleteLater();
 }
 
@@ -420,9 +416,6 @@ bool TagSelectorOverlay::eventFilter(QObject* obj, QEvent* event) {
 }
 
 bool TagSelectorOverlay::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
-    if (m_framelessHelper && m_framelessHelper->handleNativeEvent(message, result)) {
-        return true;
-    }
     return QFrame::nativeEvent(eventType, message, result);
 }
 

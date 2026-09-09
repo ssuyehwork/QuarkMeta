@@ -10,7 +10,6 @@
 #include <QStringList>
 #include "components/FlowLayout.h"
 #include "../core/TagLexiconService.h"
-#include "FramelessWindowHelper.h"
 
 namespace QuarkMeta {
 
@@ -62,8 +61,6 @@ private:
     bool m_isClosing = false;
     bool m_isDragging = false;
     QPoint m_dragPos;
-
-    FramelessWindowHelper* m_framelessHelper = nullptr;
 };
 
 } // namespace QuarkMeta

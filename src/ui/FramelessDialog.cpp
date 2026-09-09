@@ -147,11 +147,9 @@ void FramelessDialog::hideEvent(QHideEvent* event) {
 #ifdef Q_OS_WIN
     ::ReleaseCapture();
 #endif
-    if (QWidget* grabber = QApplication::mouseGrabber()) {
+    if (QWidget* grabber = QWidget::mouseGrabber()) {
         grabber->releaseMouse();
     }
-    QGuiApplication::setOverrideCursor(Qt::ArrowCursor);
-    QGuiApplication::restoreOverrideCursor();
     QDialog::hideEvent(event);
 }
 
