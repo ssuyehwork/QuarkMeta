@@ -76,9 +76,9 @@ void FileCollisionDialog::setupUi(const QString& sourceDir, const QString& targe
         return btn;
     };
 
-    layout->addWidget(createOptionBtn("paste", "替换目标中的文件", CollisionResolveAction::Replace));
-    layout->addWidget(createOptionBtn("close", "跳过这些文件", CollisionResolveAction::Skip));
-    layout->addWidget(createOptionBtn("copy", "保留两者（自动重命名）", CollisionResolveAction::KeepBoth));
+    layout->addWidget(createOptionBtn("copy", "自动解析（同时共存）", CollisionResolveAction::AutoResolve));
+    layout->addWidget(createOptionBtn("paste", "替代", CollisionResolveAction::Replace));
+    layout->addWidget(createOptionBtn("close", "取消", CollisionResolveAction::Cancel));
 
     m_chkApplyToAll = new QCheckBox("为所有冲突执行此操作", area);
     m_chkApplyToAll->setStyleSheet(

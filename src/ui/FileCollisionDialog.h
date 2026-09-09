@@ -7,10 +7,9 @@
 namespace QuarkMeta {
 
 enum class CollisionResolveAction {
-    Replace,  // 替换目标中的文件
-    Skip,     // 跳过这些文件
-    KeepBoth, // 保留两者（自动重命名）
-    Cancel    // 取消操作
+    AutoResolve, // 自动解析（同时共存 / 自动重命名）
+    Replace,     // 替代（直接覆盖）
+    Cancel       // 取消操作
 };
 
 class FileCollisionDialog : public FramelessDialog {

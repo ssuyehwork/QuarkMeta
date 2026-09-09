@@ -207,39 +207,10 @@ void ClipboardService::executePaste(const QString& targetDir, QWidget* parentWid
 
             if (action == CollisionResolveAction::Cancel) {
                 return;
-            } else if (action == CollisionResolveAction::Skip) {
-                if (applyToAll) {
-                    QStringList filteredSources;
-                    for (const QString& src : fromPaths) {
-                        if (!conflictingSources.contains(src)) {
-                            filteredSources.append(src);
-                        }
-                    }
-                    if (filteredSources.isEmpty()) {
-                        ToolTipOverlay::instance()->showText(QCursor::pos(), "已跳过所有同名文件", 1500, QColor("#378ADD"));
-                        return;
-                    }
-                    ioCtx.sources = filteredSources;
-                } else {
-                    // 仅跳过第一个冲突文件
-                    QStringList filteredSources = fromPaths;
-                    filteredSources.removeOne(conflictingSources.first());
-                    if (filteredSources.isEmpty()) return;
-                    ioCtx.sources = filteredSources;
-                }
+            } else if (action == CollisionResolveAction::AutoResolve) {
+                ioCtx.autoRename = true;
             } else if (action == CollisionResolveAction::Replace) {
-                if (applyToAll) {
-                    ioCtx.overwrite = true;
-                } else {
-                    // 仅覆写第一个冲突文件，未勾选“为所有冲突执行此操作”时保持单次策略标记
-                    ioCtx.overwrite = true;
-                }
-            } else if (action == CollisionResolveAction::KeepBoth) {
-                if (applyToAll) {
-                    ioCtx.autoRename = true;
-                } else {
-                    ioCtx.autoRename = true;
-                }
+                ioCtx.overwrite = true;
             }
         } else {
             return;

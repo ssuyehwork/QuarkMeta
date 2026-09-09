@@ -2,7 +2,7 @@
 
 ## 1. Overview
 This implementation plan refactors the file collision handling during clipboard paste and move operations to align with standard Windows File Explorer UX specifications:
-- **Standard Action Terminology**: Replaces obscure terms with clear, user-friendly options: "替换目标中的文件" (Replace), "跳过这些文件" (Skip), and "保留两者（自动重命名）" (Keep both / Auto-rename).
+- **Standard Action Terminology**: Clear, user-friendly options: "自动解析（同时共存）" (AutoResolve / Keep both), "替代" (Replace), and "取消" (Cancel).
 - **Batch Conflict Execution**: Supports "为所有冲突执行此操作" (Apply to all conflicts) state persistence across multi-file operations.
 - **Clean Architecture & Frameless Dialog Standard**: Standardizes `FileCollisionDialog` as a custom subclass of `FramelessDialog` adhering to QuarkMeta dark mode styling (`#252526` background, `#4E4E52` border) with command-link button blocks and path info header stacks.
 
@@ -148,9 +148,9 @@ void FileCollisionDialog::setupUi(const QString& sourceDir, const QString& targe
         return btn;
     };
 
-    layout->addWidget(createOptionBtn("paste", "替换目标中的文件", CollisionResolveAction::Replace));
-    layout->addWidget(createOptionBtn("close", "跳过这些文件", CollisionResolveAction::Skip));
-    layout->addWidget(createOptionBtn("copy", "保留两者（自动重命名）", CollisionResolveAction::KeepBoth));
+    layout->addWidget(createOptionBtn("copy", "自动解析（同时共存）", CollisionResolveAction::AutoResolve));
+    layout->addWidget(createOptionBtn("paste", "替代", CollisionResolveAction::Replace));
+    layout->addWidget(createOptionBtn("close", "取消", CollisionResolveAction::Cancel));
 
     m_chkApplyToAll = new QCheckBox("为所有冲突执行此操作", contentWidget());
     m_chkApplyToAll->setStyleSheet("QCheckBox { color: #CCCCCC; font-size: 13px; }");
