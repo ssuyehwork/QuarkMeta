@@ -8,6 +8,7 @@
 #include <QPoint>
 #include <QColor>
 #include <QShowEvent>
+#include <QHideEvent>
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QEvent>
