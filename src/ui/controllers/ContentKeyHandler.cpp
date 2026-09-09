@@ -301,27 +301,25 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
     // 5. F4: 重复上一次操作 (星级 / 标记颜色 / 粘贴标签)
     if (keyEvent->key() == Qt::Key_F4) {
         if (!LastOperationManager::instance().hasOperation()) {
-            ToolTipOverlay::instance()->showText(QCursor::pos(), "尚未记录任何可重复的操作", 1500, QColor("#e81123"));
             return true;
         }
 
         auto indexes = view->selectionModel()->selectedIndexes();
-        int count = 0;
         LastOperationType type = LastOperationManager::instance().type();
         for (const auto& targetIdx : indexes) {
             if (targetIdx.column() == 0) {
                 if (type == LastOperationType::SetRating) {
                     m_panel->getProxyModel()->setData(targetIdx, LastOperationManager::instance().rating(), RatingRole);
                 } else if (type == LastOperationType::SetColor) {
-                    m_panel->getProxyModel()->setData(targetIdx, LastOperationManager::instance().color(), ColorRole);
+                    QString colorVal = LastOperationManager::instance().color();
+                    m_panel->getProxyModel()->setData(targetIdx, colorVal, ColorRole);
+                    QString path = targetIdx.data(PathRole).toString();
+                    QIcon coloredIcon = ShellIconManager::getFileIcon(path, 128);
+                    m_panel->getProxyModel()->setData(targetIdx, coloredIcon, Qt::DecorationRole);
                 } else if (type == LastOperationType::PasteTags) {
                     m_panel->getProxyModel()->setData(targetIdx, LastOperationManager::instance().tags(), TagsRole);
                 }
-                count++;
             }
-        }
-        if (count > 0) {
-            ToolTipOverlay::instance()->showText(QCursor::pos(), QString("已对 %1 个项目重复执行上一次操作").arg(count), 1500, QColor("#2ecc71"));
         }
         return true;
     }
