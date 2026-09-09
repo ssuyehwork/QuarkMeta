@@ -2,6 +2,7 @@
 #include "UiHelper.h"
 #include <QCloseEvent>
 #include <QMouseEvent>
+#include <QWindow>
 #include <QKeyEvent>
 #include <QApplication>
 #include <QShortcut>
