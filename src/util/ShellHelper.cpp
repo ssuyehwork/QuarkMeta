@@ -25,7 +25,9 @@ bool ShellHelper::moveToTrash(const QStringList& paths) {
     return DiskTrashService::moveToDiskTrash(paths);
 }
 
-bool ShellHelper::copyOrMoveItems(const QStringList& sourcePaths, const QString& destDir, bool isMove, bool overwrite, bool autoRename) {
+bool ShellHelper::copyOrMoveItems(const QStringList& sourcePaths, const QString& destDir, bool isMove,
+                                   bool overwriteAll, bool autoRenameAll,
+                                   const QSet<QString>& overwriteFiles, const QSet<QString>& autoRenameFiles) {
 #ifdef Q_OS_WIN
     if (sourcePaths.isEmpty() || destDir.isEmpty()) return false;
     
@@ -34,8 +36,11 @@ bool ShellHelper::copyOrMoveItems(const QStringList& sourcePaths, const QString&
         QFileInfo info(p);
         QString destPath = QDir(destDir).filePath(info.fileName());
 
+        bool shouldAutoRename = autoRenameAll || autoRenameFiles.contains(p);
+        bool shouldOverwrite = overwriteAll || overwriteFiles.contains(p);
+
         if (QFile::exists(destPath)) {
-            if (autoRename) {
+            if (shouldAutoRename) {
                 QString baseName = info.completeBaseName();
                 QString suffix = info.suffix();
                 int counter = 1;
@@ -45,7 +50,7 @@ bool ShellHelper::copyOrMoveItems(const QStringList& sourcePaths, const QString&
                         : QString("%1 (%2).%3").arg(baseName).arg(counter++).arg(suffix);
                     destPath = QDir(destDir).filePath(newFileName);
                 }
-            } else if (overwrite) {
+            } else if (shouldOverwrite) {
                 QFile::remove(destPath);
             }
         }

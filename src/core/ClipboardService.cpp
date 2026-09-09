@@ -199,41 +199,53 @@ void ClipboardService::executePaste(const QString& targetDir, QWidget* parentWid
     ioCtx.isMove = isMove;
 
     if (!conflictingSources.isEmpty()) {
-        QString firstConflictingFile = conflictingSources.first();
-        FileCollisionDialog dialog(firstConflictingFile, targetDir, conflictingSources.size(), parentWidget);
-        if (dialog.exec() == QDialog::Accepted) {
+        QStringList activeSources = fromPaths;
+        int remainingConflicts = conflictingSources.size();
+
+        for (int i = 0; i < conflictingSources.size(); ++i) {
+            const QString& srcFile = conflictingSources.at(i);
+            FileCollisionDialog dialog(srcFile, targetDir, remainingConflicts--, parentWidget);
+
+            if (dialog.exec() != QDialog::Accepted) {
+                return; // 用户点击关闭或取消
+            }
+
             CollisionResolveAction action = dialog.selectedAction();
             bool applyToAll = dialog.applyToAll();
 
             if (action == CollisionResolveAction::Cancel) {
                 return;
-            } else if (action == CollisionResolveAction::AutoResolve) {
-                ioCtx.autoRename = true;
-            } else if (action == CollisionResolveAction::Replace) {
-                ioCtx.overwrite = true;
-            } else if (action == CollisionResolveAction::Skip) {
-                if (applyToAll) {
-                    QStringList filteredSources;
-                    for (const QString& src : fromPaths) {
-                        if (!conflictingSources.contains(src)) {
-                            filteredSources.append(src);
-                        }
+            }
+
+            if (applyToAll) {
+                // 勾选了“是否应用于全部文件？”，将当前选择应用至剩余所有冲突文件并退出循环
+                if (action == CollisionResolveAction::AutoResolve) {
+                    ioCtx.autoRenameAll = true;
+                } else if (action == CollisionResolveAction::Replace) {
+                    ioCtx.overwriteAll = true;
+                } else if (action == CollisionResolveAction::Skip) {
+                    for (int j = i; j < conflictingSources.size(); ++j) {
+                        activeSources.removeOne(conflictingSources.at(j));
                     }
-                    if (filteredSources.isEmpty()) {
-                        ToolTipOverlay::instance()->showText(QCursor::pos(), "已跳过所有同名文件", 1500, QColor("#378ADD"));
-                        return;
-                    }
-                    ioCtx.sources = filteredSources;
-                } else {
-                    QStringList filteredSources = fromPaths;
-                    filteredSources.removeOne(firstConflictingFile);
-                    if (filteredSources.isEmpty()) return;
-                    ioCtx.sources = filteredSources;
+                }
+                break; // 结束逐项弹窗循环
+            } else {
+                // 未勾选“是否应用于全部文件？”，仅对当前单个文件生效，循环继续处理下一个冲突文件
+                if (action == CollisionResolveAction::AutoResolve) {
+                    ioCtx.autoRenameFiles.insert(srcFile);
+                } else if (action == CollisionResolveAction::Replace) {
+                    ioCtx.overwriteFiles.insert(srcFile);
+                } else if (action == CollisionResolveAction::Skip) {
+                    activeSources.removeOne(srcFile);
                 }
             }
-        } else {
+        }
+
+        if (activeSources.isEmpty()) {
+            ToolTipOverlay::instance()->showText(QCursor::pos(), "已跳过所有同名文件", 1500, QColor("#378ADD"));
             return;
         }
+        ioCtx.sources = activeSources;
     }
 
     QPointer<ClipboardService> weakThis(this);
