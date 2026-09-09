@@ -56,6 +56,8 @@ void TagSelectorOverlay::closeOverlay() {
     m_isClosing = true;
     emit overlayClosed();
     close();
+    QGuiApplication::setOverrideCursor(Qt::ArrowCursor);
+    QGuiApplication::restoreOverrideCursor();
     deleteLater();
 }
 
