@@ -6,6 +6,7 @@
 #include "../../core/AppConfig.h"
 #include "../../core/ClipboardService.h"
 #include "../../core/NavigationHistoryService.h"
+#include "../../core/LastOperationManager.h"
 #include "../../util/DiskIoService.h"
 
 #include <QDir>
@@ -94,17 +95,55 @@ void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QMode
         }
     }
 
-    if (!destDir.isEmpty() && destDir != "computer://") {
+    if (destDir.isEmpty() || destDir == "computer://") return;
+
+    bool isMove = !(QApplication::keyboardModifiers() & Qt::ControlModifier);
+    QString cleanDestDir = QDir::cleanPath(destDir);
+
+    // 区分同目录拖拽与跨目录拖拽
+    QStringList activePaths;
+    DiskIoContext ioCtx;
+    ioCtx.destination = destDir;
+    ioCtx.isMove = isMove;
+
+    bool recordMove = false;
+
+    for (const QString& src : paths) {
+        QString srcDir = QDir::cleanPath(QFileInfo(src).absolutePath());
+        if (srcDir == cleanDestDir) {
+            if (isMove) {
+                // 1. 同目录下普通拖拽移动：自身移入所在目录无意义，直接跳过 (no-op)
+                continue;
+            } else {
+                // 2. 同目录下 Ctrl+拖拽：执行“复制副本”操作，自动生成 (1) 副本
+                activePaths.append(src);
+                ioCtx.autoRenameFiles.insert(src);
+            }
+        } else {
+            // 3. 跨目录拖拽移动 / 复制
+            activePaths.append(src);
+            if (isMove) {
+                recordMove = true;
+            }
+        }
+    }
+
+    if (activePaths.isEmpty()) return;
+
+    ioCtx.sources = activePaths;
+
+    if (recordMove) {
         NavigationHistoryService::recordRecentVisitedFolder(QDir::toNativeSeparators(destDir).toStdWString());
         AppConfig::instance().setValue("RecentVisited/LastDragDropDestination", destDir);
         AppConfig::instance().sync();
+        LastOperationManager::instance().recordMoveToFolder(destDir);
     }
 
-    bool isMove = !(QApplication::keyboardModifiers() & Qt::ControlModifier);
-
-    // 检测目标文件夹中的同名冲突文件
+    // 检测目标文件夹中的同名冲突文件（排除已设为自动复制副本的同目录复制项目）
     QStringList conflictingSources;
-    for (const QString& src : paths) {
+    for (const QString& src : activePaths) {
+        if (ioCtx.autoRenameFiles.contains(src)) continue;
+
         QString fileName = QFileInfo(src).fileName();
         QString destPath = QDir(destDir).filePath(fileName);
         if (QFile::exists(destPath)) {
@@ -112,13 +151,7 @@ void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QMode
         }
     }
 
-    DiskIoContext ioCtx;
-    ioCtx.sources = paths;
-    ioCtx.destination = destDir;
-    ioCtx.isMove = isMove;
-
     if (!conflictingSources.isEmpty()) {
-        QStringList activeSources = paths;
         int remainingConflicts = conflictingSources.size();
 
         for (int i = 0; i < conflictingSources.size(); ++i) {
@@ -143,7 +176,7 @@ void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QMode
                     ioCtx.overwriteAll = true;
                 } else if (action == CollisionResolveAction::Skip) {
                     for (int j = i; j < conflictingSources.size(); ++j) {
-                        activeSources.removeOne(conflictingSources.at(j));
+                        ioCtx.sources.removeOne(conflictingSources.at(j));
                     }
                 }
                 break;
@@ -153,16 +186,15 @@ void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QMode
                 } else if (action == CollisionResolveAction::Replace) {
                     ioCtx.overwriteFiles.insert(srcFile);
                 } else if (action == CollisionResolveAction::Skip) {
-                    activeSources.removeOne(srcFile);
+                    ioCtx.sources.removeOne(srcFile);
                 }
             }
         }
 
-        if (activeSources.isEmpty()) {
+        if (ioCtx.sources.isEmpty()) {
             ToolTipOverlay::instance()->showText(QCursor::pos(), "已跳过所有同名文件", 1500, QColor("#378ADD"));
             return;
         }
-        ioCtx.sources = activeSources;
     }
 
     QPointer<ContentPanel> weakPanel(m_panel);
