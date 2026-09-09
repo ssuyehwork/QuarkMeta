@@ -32,6 +32,7 @@ public:
     void initLayout();
     void resetSplitterLayout();
     void setPanelVisible(const QString& panelId, bool visible);
+    void setBatchPanelVisibility(const QMap<QString, bool>& visibilities);
     bool isPanelVisible(const QString& panelId) const;
     bool isImmersiveMode() const;
     void toggleImmersiveMode();

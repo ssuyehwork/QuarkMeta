@@ -123,6 +123,25 @@ void PanelLayoutManager::setPanelVisible(const QString& panelId, bool visible) {
     emit panelVisibilityChanged(panelId, visible);
 }
 
+void PanelLayoutManager::setBatchPanelVisibility(const QMap<QString, bool>& visibilities) {
+    for (auto it = visibilities.constBegin(); it != visibilities.constEnd(); ++it) {
+        const QString& panelId = it.key();
+        bool visible = it.value();
+        if (panelId == "nav" && m_navPanel) m_navPanel->setVisible(visible);
+        else if (panelId == "favorite" && m_favoritePanel) m_favoritePanel->setVisible(visible);
+        else if (panelId == "content" && m_contentPanel) m_contentPanel->setVisible(true);
+        else if (panelId == "meta" && m_metaPanel) m_metaPanel->setVisible(visible);
+        else if (panelId == "filter" && m_filterPanel) m_filterPanel->setVisible(visible);
+    }
+
+    updateDynamicMinimumSize();
+    saveLayoutState();
+
+    for (auto it = visibilities.constBegin(); it != visibilities.constEnd(); ++it) {
+        emit panelVisibilityChanged(it.key(), it.value());
+    }
+}
+
 bool PanelLayoutManager::isPanelVisible(const QString& panelId) const {
     if (panelId == "nav" && m_navPanel) return !m_navPanel->isHidden();
     if (panelId == "favorite" && m_favoritePanel) return !m_favoritePanel->isHidden();

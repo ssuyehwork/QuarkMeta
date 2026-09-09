@@ -319,51 +319,41 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
 
     connect(m_btnToggleFilter, &QPushButton::clicked, this, [this]() {
         if (!m_panelLayoutManager) return;
-        m_panelLayoutManager->setPanelVisible("nav", true);
-        m_panelLayoutManager->setPanelVisible("favorite", true);
-        m_panelLayoutManager->setPanelVisible("content", true);
-        m_panelLayoutManager->setPanelVisible("meta", true);
-        m_panelLayoutManager->setPanelVisible("filter", false);
+        m_panelLayoutManager->setBatchPanelVisibility({
+            {"nav", true}, {"favorite", true}, {"content", true}, {"meta", true}, {"filter", false}
+        });
         updateStatusBarButtonHighlights();
     });
 
     connect(m_btnToggleMeta, &QPushButton::clicked, this, [this]() {
         if (!m_panelLayoutManager) return;
-        m_panelLayoutManager->setPanelVisible("nav", true);
-        m_panelLayoutManager->setPanelVisible("favorite", true);
-        m_panelLayoutManager->setPanelVisible("content", true);
-        m_panelLayoutManager->setPanelVisible("meta", false);
-        m_panelLayoutManager->setPanelVisible("filter", true);
+        m_panelLayoutManager->setBatchPanelVisibility({
+            {"nav", true}, {"favorite", true}, {"content", true}, {"meta", false}, {"filter", true}
+        });
         updateStatusBarButtonHighlights();
     });
 
     connect(m_btnContentPanel, &QPushButton::clicked, this, [this]() {
         if (!m_panelLayoutManager) return;
-        m_panelLayoutManager->setPanelVisible("nav", false);
-        m_panelLayoutManager->setPanelVisible("favorite", false);
-        m_panelLayoutManager->setPanelVisible("content", true);
-        m_panelLayoutManager->setPanelVisible("meta", false);
-        m_panelLayoutManager->setPanelVisible("filter", false);
+        m_panelLayoutManager->setBatchPanelVisibility({
+            {"nav", false}, {"favorite", false}, {"content", true}, {"meta", false}, {"filter", false}
+        });
         updateStatusBarButtonHighlights();
     });
 
     connect(m_btnToggleFavorite, &QPushButton::clicked, this, [this]() {
         if (!m_panelLayoutManager) return;
-        m_panelLayoutManager->setPanelVisible("nav", true);
-        m_panelLayoutManager->setPanelVisible("favorite", false);
-        m_panelLayoutManager->setPanelVisible("content", true);
-        m_panelLayoutManager->setPanelVisible("meta", true);
-        m_panelLayoutManager->setPanelVisible("filter", true);
+        m_panelLayoutManager->setBatchPanelVisibility({
+            {"nav", true}, {"favorite", false}, {"content", true}, {"meta", true}, {"filter", true}
+        });
         updateStatusBarButtonHighlights();
     });
 
     connect(m_btnToggleNav, &QPushButton::clicked, this, [this]() {
         if (!m_panelLayoutManager) return;
-        m_panelLayoutManager->setPanelVisible("nav", false);
-        m_panelLayoutManager->setPanelVisible("favorite", true);
-        m_panelLayoutManager->setPanelVisible("content", true);
-        m_panelLayoutManager->setPanelVisible("meta", true);
-        m_panelLayoutManager->setPanelVisible("filter", true);
+        m_panelLayoutManager->setBatchPanelVisibility({
+            {"nav", false}, {"favorite", true}, {"content", true}, {"meta", true}, {"filter", true}
+        });
         updateStatusBarButtonHighlights();
     });
 
@@ -401,11 +391,9 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
 
     connect(m_btnResetLayout, &QPushButton::clicked, this, [this]() {
         if (!m_panelLayoutManager) return;
-        m_panelLayoutManager->setPanelVisible("nav", true);
-        m_panelLayoutManager->setPanelVisible("favorite", true);
-        m_panelLayoutManager->setPanelVisible("content", true);
-        m_panelLayoutManager->setPanelVisible("meta", true);
-        m_panelLayoutManager->setPanelVisible("filter", true);
+        m_panelLayoutManager->setBatchPanelVisibility({
+            {"nav", true}, {"favorite", true}, {"content", true}, {"meta", true}, {"filter", true}
+        });
         m_panelLayoutManager->resetSplitterLayout();
         updateStatusBarButtonHighlights();
     });
@@ -432,16 +420,14 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
 
 void MainWindow::applyPresetLayout(const QString& leftPanel) {
     if (!m_panelLayoutManager) return;
-    if (leftPanel == "nav") {
-        m_panelLayoutManager->setPanelVisible("nav", true);
-        m_panelLayoutManager->setPanelVisible("favorite", false);
-    } else {
-        m_panelLayoutManager->setPanelVisible("favorite", true);
-        m_panelLayoutManager->setPanelVisible("nav", false);
-    }
-    m_panelLayoutManager->setPanelVisible("content", true);
-    m_panelLayoutManager->setPanelVisible("meta", false);
-    m_panelLayoutManager->setPanelVisible("filter", true);
+    bool showNav = (leftPanel == "nav");
+    m_panelLayoutManager->setBatchPanelVisibility({
+        {"nav", showNav},
+        {"favorite", !showNav},
+        {"content", true},
+        {"meta", false},
+        {"filter", true}
+    });
     updateStatusBarButtonHighlights();
 }
 
