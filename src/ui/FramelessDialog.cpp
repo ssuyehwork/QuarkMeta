@@ -141,26 +141,35 @@ void FramelessDialog::showEvent(QShowEvent* event) {
     QDialog::showEvent(event);
 }
 
+namespace {
+bool isInteractiveWidget(QWidget* widget) {
+    while (widget) {
+        if (qobject_cast<QAbstractButton*>(widget) ||
+            qobject_cast<QLineEdit*>(widget) ||
+            qobject_cast<QCheckBox*>(widget)) {
+            return true;
+        }
+        widget = widget->parentWidget();
+    }
+    return false;
+}
+} // namespace
+
 void FramelessDialog::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         QWidget* child = childAt(event->pos());
-        if (child) {
-            bool inTitleBar = false;
-            QWidget* p = child;
-            while (p && p != m_container) {
-                if (p->objectName() == "TitleBar") {
-                    inTitleBar = true;
-                    break;
-                }
-                p = p->parentWidget();
-            }
-            
-            if (inTitleBar && !qobject_cast<QPushButton*>(child)) {
-                m_isDragging = true;
-                m_dragPos = event->globalPosition().toPoint() - frameGeometry().topLeft();
-                event->accept();
-                return;
-            }
+        if (!child || !isInteractiveWidget(child)) {
+#ifdef Q_OS_WIN
+            ReleaseCapture();
+            ::SendMessageW(reinterpret_cast<HWND>(winId()), WM_NCLBUTTONDOWN, HTCAPTION, 0);
+            event->accept();
+            return;
+#else
+            m_isDragging = true;
+            m_dragPos = event->globalPosition().toPoint() - frameGeometry().topLeft();
+            event->accept();
+            return;
+#endif
         }
     }
     QDialog::mousePressEvent(event);
