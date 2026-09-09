@@ -164,8 +164,7 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
             }
         }
 
-        *result = HTCLIENT;
-        return true;
+        return false;
     }
 
     // 4. 原生光标设置
