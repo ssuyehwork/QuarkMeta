@@ -104,24 +104,25 @@ bool FileCollisionDialog::applyToAll() const {
 }
 
 void FileCollisionDialog::setupUi(const QString& sourceDir, const QString& targetDir, int conflictCount) {
-    QVBoxLayout* layout = new QVBoxLayout(contentWidget());
-    layout->setContentsMargins(24, 20, 24, 20);
-    layout->setSpacing(16);
+    QWidget* area = getContentArea();
+    QVBoxLayout* layout = new QVBoxLayout(area);
+    layout->setContentsMargins(24, 10, 24, 20);
+    layout->setSpacing(14);
 
     QLabel* lblHeader = new QLabel(QString("正在将 %1 个项目从 %2 粘贴到 %3")
                                       .arg(conflictCount)
                                       .arg(sourceDir)
-                                      .arg(targetDir), contentWidget());
+                                      .arg(targetDir), area);
     lblHeader->setWordWrap(true);
     lblHeader->setStyleSheet("color: #CCCCCC; font-size: 13px;");
     layout->addWidget(lblHeader);
 
-    QLabel* lblSub = new QLabel(QString("目标包含 %1 个同名文件").arg(conflictCount), contentWidget());
+    QLabel* lblSub = new QLabel(QString("目标包含 %1 个同名文件").arg(conflictCount), area);
     lblSub->setStyleSheet("color: #FFFFFF; font-size: 16px; font-weight: bold;");
     layout->addWidget(lblSub);
 
-    auto createOptionBtn = [this](const QString& iconName, const QString& text, CollisionResolveAction action) {
-        QPushButton* btn = new QPushButton(contentWidget());
+    auto createOptionBtn = [this, area](const QString& iconName, const QString& text, CollisionResolveAction action) {
+        QPushButton* btn = new QPushButton(area);
         btn->setIcon(UiHelper::getIcon(iconName, QColor("#EEEEEE"), 18));
         btn->setText("  " + text);
         btn->setFixedHeight(42);
