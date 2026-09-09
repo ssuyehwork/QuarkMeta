@@ -9,6 +9,9 @@
 #include <QApplication>
 #include <QScreen>
 #include <QScrollBar>
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 namespace QuarkMeta {
 
@@ -54,8 +57,16 @@ TagSelectorOverlay::~TagSelectorOverlay() {
 void TagSelectorOverlay::closeOverlay() {
     if (m_isClosing) return;
     m_isClosing = true;
+#ifdef Q_OS_WIN
+    ::ReleaseCapture();
+#endif
+    if (QWidget* grabber = QApplication::mouseGrabber()) {
+        grabber->releaseMouse();
+    }
     emit overlayClosed();
     close();
+    QGuiApplication::setOverrideCursor(Qt::ArrowCursor);
+    QGuiApplication::restoreOverrideCursor();
     deleteLater();
 }
 

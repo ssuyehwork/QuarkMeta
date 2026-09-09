@@ -143,6 +143,18 @@ void FramelessDialog::showEvent(QShowEvent* event) {
     QDialog::showEvent(event);
 }
 
+void FramelessDialog::hideEvent(QHideEvent* event) {
+#ifdef Q_OS_WIN
+    ::ReleaseCapture();
+#endif
+    if (QWidget* grabber = QApplication::mouseGrabber()) {
+        grabber->releaseMouse();
+    }
+    QGuiApplication::setOverrideCursor(Qt::ArrowCursor);
+    QGuiApplication::restoreOverrideCursor();
+    QDialog::hideEvent(event);
+}
+
 namespace {
 bool isInteractiveWidget(QWidget* widget) {
     while (widget) {
