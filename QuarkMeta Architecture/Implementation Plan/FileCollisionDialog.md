@@ -2,7 +2,7 @@
 
 ## 1. Overview
 This implementation plan refactors the file collision handling during clipboard paste and move operations to align with standard Windows File Explorer UX specifications:
-- **Standard Action Terminology**: Clear, user-friendly options: "自动解析（同时共存）" (AutoResolve / Keep both), "替代" (Replace), and "取消" (Cancel).
+- **Standard Action Terminology**: Adobe Bridge style dialog with "是否应用于全部文件？" checkbox and four capsule buttons: "自动解析" (AutoResolve), "替换" (Replace), "跳过" (Skip), and "取消" (Cancel).
 - **Batch Conflict Execution**: Supports "为所有冲突执行此操作" (Apply to all conflicts) state persistence across multi-file operations.
 - **Clean Architecture & Frameless Dialog Standard**: Standardizes `FileCollisionDialog` as a custom subclass of `FramelessDialog` adhering to QuarkMeta dark mode styling (`#252526` background, `#4E4E52` border) with command-link button blocks and path info header stacks.
 

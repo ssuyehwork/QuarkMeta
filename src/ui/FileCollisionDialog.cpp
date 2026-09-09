@@ -8,13 +8,13 @@
 
 namespace QuarkMeta {
 
-FileCollisionDialog::FileCollisionDialog(const QString& sourceDir,
-                                           const QString& targetDir,
-                                           int conflictCount,
+FileCollisionDialog::FileCollisionDialog(const QString& firstFileName,
+                                           const QString& targetDirName,
+                                           int totalCount,
                                            QWidget* parent)
-    : FramelessDialog("替换或跳过文件", parent) {
-    setFixedSize(460, 310);
-    setupUi(sourceDir, targetDir, conflictCount);
+    : FramelessDialog("QuarkMeta", parent) {
+    setFixedSize(520, 180);
+    setupUi(firstFileName, targetDirName, totalCount);
 }
 
 CollisionResolveAction FileCollisionDialog::selectedAction() const {
@@ -25,48 +25,71 @@ bool FileCollisionDialog::applyToAll() const {
     return m_chkApplyToAll ? m_chkApplyToAll->isChecked() : false;
 }
 
-void FileCollisionDialog::setupUi(const QString& sourceDir, const QString& targetDir, int conflictCount) {
+void FileCollisionDialog::setupUi(const QString& firstFileName, const QString& targetDirName, int totalCount) {
+    Q_UNUSED(totalCount);
     QWidget* area = getContentArea();
-    QVBoxLayout* layout = new QVBoxLayout(area);
-    layout->setContentsMargins(24, 10, 24, 20);
-    layout->setSpacing(14);
+    QVBoxLayout* mainLayout = new QVBoxLayout(area);
+    mainLayout->setContentsMargins(20, 15, 20, 15);
+    mainLayout->setSpacing(15);
 
-    QString srcName = QFileInfo(sourceDir).fileName();
-    if (srcName.isEmpty()) srcName = sourceDir;
-    QString tgtName = QFileInfo(targetDir).fileName();
-    if (tgtName.isEmpty()) tgtName = targetDir;
+    // 顶部消息区域：左侧蓝圈问号 Icon，右侧说明文字
+    QHBoxLayout* msgLayout = new QHBoxLayout();
+    msgLayout->setSpacing(15);
 
-    QLabel* lblHeader = new QLabel(QString("正在将 %1 个项目从 <font color='#378ADD'>%2</font> 复制到 <font color='#378ADD'>%3</font>")
-                                      .arg(conflictCount)
-                                      .arg(srcName.toHtmlEscaped())
-                                      .arg(tgtName.toHtmlEscaped()), area);
-    lblHeader->setWordWrap(true);
-    lblHeader->setStyleSheet("color: #CCCCCC; font-size: 13px;");
-    layout->addWidget(lblHeader);
+    QLabel* iconLabel = new QLabel(area);
+    iconLabel->setFixedSize(40, 40);
+    iconLabel->setPixmap(UiHelper::getIcon("info", QColor("#378ADD"), 36).pixmap(36, 36));
+    msgLayout->addWidget(iconLabel, 0, Qt::AlignTop);
 
-    QLabel* lblSub = new QLabel(QString("目标包含 %1 个同名文件").arg(conflictCount), area);
-    lblSub->setStyleSheet("color: #FFFFFF; font-size: 16px; font-weight: bold;");
-    layout->addWidget(lblSub);
+    QString cleanFileName = QFileInfo(firstFileName).fileName();
+    if (cleanFileName.isEmpty()) cleanFileName = firstFileName;
+    QString cleanDirName = QFileInfo(targetDirName).fileName();
+    if (cleanDirName.isEmpty()) cleanDirName = targetDirName;
 
-    auto createOptionBtn = [this, area](const QString& iconName, const QString& text, CollisionResolveAction action) {
-        QPushButton* btn = new QPushButton(area);
-        btn->setIcon(UiHelper::getIcon(iconName, QColor("#EEEEEE"), 18));
-        btn->setText("  " + text);
-        btn->setFixedHeight(40);
+    QLabel* textLabel = new QLabel(QString("一个名为“%1”的项目已在“%2”中存在。")
+                                      .arg(cleanFileName.toHtmlEscaped())
+                                      .arg(cleanDirName.toHtmlEscaped()), area);
+    textLabel->setWordWrap(true);
+    textLabel->setStyleSheet("color: #EEEEEE; font-size: 13px;");
+    msgLayout->addWidget(textLabel, 1, Qt::AlignVCenter);
+
+    mainLayout->addLayout(msgLayout, 1);
+
+    // 底部控制区域：左侧复选框，右侧 4 个椭圆胶囊按钮（自动解析、替换、跳过、取消）
+    QHBoxLayout* btmLayout = new QHBoxLayout();
+    btmLayout->setSpacing(10);
+
+    m_chkApplyToAll = new QCheckBox("是否应用于全部文件？", area);
+    m_chkApplyToAll->setStyleSheet(
+        "QCheckBox { color: #CCCCCC; font-size: 13px; }"
+        "QCheckBox::indicator { width: 14px; height: 14px; border: 1px solid #666666; border-radius: 2px; background: #2D2D30; }"
+        "QCheckBox::indicator:checked { background: #378ADD; border-color: #378ADD; }"
+    );
+    btmLayout->addWidget(m_chkApplyToAll, 0, Qt::AlignVCenter);
+
+    btmLayout->addStretch(1);
+
+    auto createCapsuleBtn = [this, area](const QString& text, CollisionResolveAction action) {
+        QPushButton* btn = new QPushButton(text, area);
+        btn->setFixedHeight(28);
+        btn->setMinimumWidth(72);
         btn->setCursor(Qt::PointingHandCursor);
         btn->setStyleSheet(
             "QPushButton {"
-            "  background-color: #2D2D30;"
-            "  color: #FFFFFF;"
-            "  border: 1px solid #3E3E42;"
-            "  border-radius: 4px;"
-            "  text-align: left;"
-            "  padding-left: 16px;"
-            "  font-size: 14px;"
+            "  background-color: transparent;"
+            "  color: #EEEEEE;"
+            "  border: 1px solid #666666;"
+            "  border-radius: 14px;"
+            "  padding-left: 12px;"
+            "  padding-right: 12px;"
+            "  font-size: 13px;"
             "}"
             "QPushButton:hover {"
             "  background-color: #3E3E42;"
-            "  border-color: #378ADD;"
+            "  border-color: #888888;"
+            "}"
+            "QPushButton:pressed {"
+            "  background-color: #505054;"
             "}"
         );
         connect(btn, &QPushButton::clicked, this, [this, action]() {
@@ -76,17 +99,12 @@ void FileCollisionDialog::setupUi(const QString& sourceDir, const QString& targe
         return btn;
     };
 
-    layout->addWidget(createOptionBtn("copy", "自动解析（同时共存）", CollisionResolveAction::AutoResolve));
-    layout->addWidget(createOptionBtn("paste", "替代", CollisionResolveAction::Replace));
-    layout->addWidget(createOptionBtn("close", "取消", CollisionResolveAction::Cancel));
+    btmLayout->addWidget(createCapsuleBtn("自动解析", CollisionResolveAction::AutoResolve));
+    btmLayout->addWidget(createCapsuleBtn("替换", CollisionResolveAction::Replace));
+    btmLayout->addWidget(createCapsuleBtn("跳过", CollisionResolveAction::Skip));
+    btmLayout->addWidget(createCapsuleBtn("取消", CollisionResolveAction::Cancel));
 
-    m_chkApplyToAll = new QCheckBox("为所有冲突执行此操作", area);
-    m_chkApplyToAll->setStyleSheet(
-        "QCheckBox { color: #CCCCCC; font-size: 13px; }"
-        "QCheckBox::indicator { width: 14px; height: 14px; border: 1px solid #555555; border-radius: 2px; background: #2D2D30; }"
-        "QCheckBox::indicator:checked { background: #378ADD; border-color: #378ADD; }"
-    );
-    layout->addWidget(m_chkApplyToAll);
+    mainLayout->addLayout(btmLayout);
 }
 
 } // namespace QuarkMeta

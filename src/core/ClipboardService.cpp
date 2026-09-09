@@ -199,8 +199,8 @@ void ClipboardService::executePaste(const QString& targetDir, QWidget* parentWid
     ioCtx.isMove = isMove;
 
     if (!conflictingSources.isEmpty()) {
-        QString sourceDir = QFileInfo(fromPaths.first()).absolutePath();
-        FileCollisionDialog dialog(sourceDir, targetDir, conflictingSources.size(), parentWidget);
+        QString firstConflictingFile = conflictingSources.first();
+        FileCollisionDialog dialog(firstConflictingFile, targetDir, conflictingSources.size(), parentWidget);
         if (dialog.exec() == QDialog::Accepted) {
             CollisionResolveAction action = dialog.selectedAction();
             bool applyToAll = dialog.applyToAll();
@@ -211,6 +211,25 @@ void ClipboardService::executePaste(const QString& targetDir, QWidget* parentWid
                 ioCtx.autoRename = true;
             } else if (action == CollisionResolveAction::Replace) {
                 ioCtx.overwrite = true;
+            } else if (action == CollisionResolveAction::Skip) {
+                if (applyToAll) {
+                    QStringList filteredSources;
+                    for (const QString& src : fromPaths) {
+                        if (!conflictingSources.contains(src)) {
+                            filteredSources.append(src);
+                        }
+                    }
+                    if (filteredSources.isEmpty()) {
+                        ToolTipOverlay::instance()->showText(QCursor::pos(), "已跳过所有同名文件", 1500, QColor("#378ADD"));
+                        return;
+                    }
+                    ioCtx.sources = filteredSources;
+                } else {
+                    QStringList filteredSources = fromPaths;
+                    filteredSources.removeOne(firstConflictingFile);
+                    if (filteredSources.isEmpty()) return;
+                    ioCtx.sources = filteredSources;
+                }
             }
         } else {
             return;
