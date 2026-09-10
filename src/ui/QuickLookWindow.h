@@ -9,6 +9,8 @@
 #include <QSlider>
 #include <QHBoxLayout>
 #include <QContextMenuEvent>
+#include <QHideEvent>
+#include <QCloseEvent>
 #include <QThreadPool>
 #include <atomic>
 #include "QuickLookGraphicsView.h"
@@ -35,6 +37,8 @@ signals:
 protected:
     void keyPressEvent(QKeyEvent* event) override;
     void showEvent(QShowEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
 

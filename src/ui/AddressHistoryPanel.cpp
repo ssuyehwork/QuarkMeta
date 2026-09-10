@@ -24,6 +24,20 @@ AddressHistoryPanel::AddressHistoryPanel(QWidget* parent)
     hide();
 }
 
+AddressHistoryPanel::~AddressHistoryPanel() {
+    UiHelper::cleanupWidgetCursorState(this);
+}
+
+void AddressHistoryPanel::hideEvent(QHideEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QFrame::hideEvent(event);
+}
+
+void AddressHistoryPanel::closeEvent(QCloseEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QFrame::closeEvent(event);
+}
+
 void AddressHistoryPanel::setHistory(const QStringList& history) {
     m_history = history;
     rebuild();

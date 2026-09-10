@@ -8,6 +8,8 @@
 #include <QList>
 #include <QString>
 #include <QEnterEvent>
+#include <QHideEvent>
+#include <QCloseEvent>
 
 namespace QuarkMeta {
 
@@ -53,6 +55,7 @@ class ColorPicker : public QWidget {
     Q_OBJECT
 public:
     explicit ColorPicker(QWidget* parent = nullptr);
+    ~ColorPicker() override;
     QColor currentColor() const { return m_color; }
     // 2026-05-17 按照用户要求：新增 currentTolerance() 以暴露准确度滑条当前值
     int    currentTolerance() const;
@@ -66,6 +69,7 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     bool eventFilter(QObject* watched, QEvent* event) override;
     void hideEvent(QHideEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     void updatePreview();
@@ -87,6 +91,7 @@ class ColorStripPicker : public QWidget {
     Q_OBJECT
 public:
     explicit ColorStripPicker(const QString& currentColorHex, QWidget* parent = nullptr);
+    ~ColorStripPicker() override;
 signals:
     void colorSelected(const QString& hexColor);
 protected:
@@ -95,6 +100,8 @@ protected:
     void enterEvent(QEnterEvent* event) override;
     void leaveEvent(QEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 private:
     struct ColorItem {
         QString hex;

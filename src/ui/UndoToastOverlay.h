@@ -6,6 +6,8 @@
 #include <QHBoxLayout>
 #include <QTimer>
 #include <QPropertyAnimation>
+#include <QHideEvent>
+#include <QCloseEvent>
 #include <functional>
 
 namespace QuarkMeta {
@@ -17,6 +19,7 @@ class UndoToastOverlay : public QWidget {
     Q_OBJECT
 public:
     static UndoToastOverlay* instance();
+    ~UndoToastOverlay() override;
 
     /**
      * @brief 弹出操作成功与撤销提示
@@ -35,6 +38,8 @@ public:
 protected:
     explicit UndoToastOverlay(QWidget* parent = nullptr);
     void paintEvent(QPaintEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     QLabel* m_iconLabel = nullptr;

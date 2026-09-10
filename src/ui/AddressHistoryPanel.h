@@ -6,6 +6,8 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QStringList>
+#include <QHideEvent>
+#include <QCloseEvent>
 
 namespace QuarkMeta {
 
@@ -17,6 +19,7 @@ class AddressHistoryPanel : public QFrame {
 
 public:
     explicit AddressHistoryPanel(QWidget* parent = nullptr);
+    ~AddressHistoryPanel() override;
 
     void setHistory(const QStringList& history);
     void showBelow(QWidget* anchor);
@@ -29,6 +32,8 @@ private slots:
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     void rebuild();

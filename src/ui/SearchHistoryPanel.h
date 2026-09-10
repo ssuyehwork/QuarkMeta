@@ -6,6 +6,8 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QStringList>
+#include <QHideEvent>
+#include <QCloseEvent>
 
 namespace QuarkMeta {
 
@@ -17,6 +19,7 @@ class SearchHistoryPanel : public QFrame {
 
 public:
     explicit SearchHistoryPanel(QWidget* parent = nullptr);
+    ~SearchHistoryPanel() override;
 
     void setCategory(const QString& category) { m_category = category; }
     QString category() const { return m_category; }
@@ -32,6 +35,8 @@ private slots:
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     void rebuild();

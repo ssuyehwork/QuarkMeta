@@ -140,6 +140,10 @@ void HueSlider::mouseMoveEvent(QMouseEvent* event) {
 }
 
 // --- ColorPicker ---
+ColorPicker::~ColorPicker() {
+    UiHelper::cleanupWidgetCursorState(this);
+}
+
 ColorPicker::ColorPicker(QWidget* parent) : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint) {
     setAttribute(Qt::WA_DeleteOnClose);
     setFixedSize(220, 320); // 2026-05-17 按照用户要求：高度由 280 扩大到 320，容纳准确度滑条行
@@ -290,8 +294,14 @@ bool ColorPicker::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void ColorPicker::hideEvent(QHideEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
     QWidget::hideEvent(event);
     deleteLater();
+}
+
+void ColorPicker::closeEvent(QCloseEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QWidget::closeEvent(event);
 }
 
 void ColorPicker::updateColorFromHsv() {
@@ -326,6 +336,10 @@ int ColorPicker::currentTolerance() const {
 
 
 // --- ColorStripPicker 实现 ---
+ColorStripPicker::~ColorStripPicker() {
+    UiHelper::cleanupWidgetCursorState(this);
+}
+
 ColorStripPicker::ColorStripPicker(const QString& currentColorHex, QWidget* parent)
     : QWidget(parent), m_selectedColor(currentColorHex) {
     // 9个直径为14像素的圆，间距为5像素。
@@ -416,6 +430,16 @@ void ColorStripPicker::mousePressEvent(QMouseEvent* event) {
         emit colorSelected(m_items[m_hoveredIndex].hex);
     }
     QWidget::mousePressEvent(event);
+}
+
+void ColorStripPicker::hideEvent(QHideEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QWidget::hideEvent(event);
+}
+
+void ColorStripPicker::closeEvent(QCloseEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QWidget::closeEvent(event);
 }
 
 } // namespace QuarkMeta

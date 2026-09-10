@@ -68,7 +68,19 @@ QuickLookWindow::QuickLookWindow() : QWidget(nullptr) {
     installEventFilter(this);
 }
 
-QuickLookWindow::~QuickLookWindow() {}
+QuickLookWindow::~QuickLookWindow() {
+    UiHelper::cleanupWidgetCursorState(this);
+}
+
+void QuickLookWindow::hideEvent(QHideEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QWidget::hideEvent(event);
+}
+
+void QuickLookWindow::closeEvent(QCloseEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QWidget::closeEvent(event);
+}
 
 void QuickLookWindow::setupUi() {
     auto* rootLayout = new QVBoxLayout(this);
@@ -164,6 +176,7 @@ void QuickLookWindow::closePreview() {
     if (m_graphicsView) {
         m_graphicsView->clear();
     }
+    UiHelper::cleanupWidgetCursorState(this);
     hide();
 }
 

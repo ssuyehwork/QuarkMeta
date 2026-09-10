@@ -27,6 +27,20 @@ SearchHistoryPanel::SearchHistoryPanel(QWidget* parent)
     hide();
 }
 
+SearchHistoryPanel::~SearchHistoryPanel() {
+    UiHelper::cleanupWidgetCursorState(this);
+}
+
+void SearchHistoryPanel::hideEvent(QHideEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QFrame::hideEvent(event);
+}
+
+void SearchHistoryPanel::closeEvent(QCloseEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QFrame::closeEvent(event);
+}
+
 void SearchHistoryPanel::setHistory(const QStringList& history, const QString& title) {
     m_history = history;
     m_currentTitle = title;

@@ -13,6 +13,20 @@ UndoToastOverlay* UndoToastOverlay::instance() {
     return inst;
 }
 
+UndoToastOverlay::~UndoToastOverlay() {
+    UiHelper::cleanupWidgetCursorState(this);
+}
+
+void UndoToastOverlay::hideEvent(QHideEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QWidget::hideEvent(event);
+}
+
+void UndoToastOverlay::closeEvent(QCloseEvent* event) {
+    UiHelper::cleanupWidgetCursorState(this);
+    QWidget::closeEvent(event);
+}
+
 UndoToastOverlay::UndoToastOverlay(QWidget* parent) : QWidget(parent) {
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus);
     setAttribute(Qt::WA_TranslucentBackground);
