@@ -1390,7 +1390,7 @@ QLabel#FilterItemCountLabel {
     background: transparent;
 }
 
-/* 列视图 ColumnView 专属 QSS 选择器 */
+/* 列视图 ColumnView 专属外联 QSS 选择器 */
 QScrollArea#ColumnViewScrollArea {
     background: #181818;
     border: none;
