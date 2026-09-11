@@ -25,6 +25,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_proxyModel->setSourceModel(m_model);
 
     m_listView = new QListView(this);
+    m_listView->setObjectName("ColumnViewPaneListView");
     m_listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_listView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -32,8 +33,6 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
 
     auto* delegate = new TreeItemDelegate(this, false, false);
     m_listView->setItemDelegate(delegate);
-    m_listView->setStyleSheet("QListView { background: #1E1E1E; border: none; border-right: 1px solid #2D2D2D; color: #CCCCCC; outline: none; }"
-                              "QListView::item:selected { background: #3E3E42; color: #FFFFFF; outline: none; }");
     layout->addWidget(m_listView);
 
     if (m_contentPanel) {
@@ -120,8 +119,8 @@ void ColumnViewPane::loadDirectory() {
 ColumnViewWidget::ColumnViewWidget(ContentPanel* contentPanel, QWidget* parent)
     : QScrollArea(parent), m_contentPanel(contentPanel) 
 {
+    setObjectName("ColumnViewScrollArea");
     setWidgetResizable(true);
-    setStyleSheet("QScrollArea { background: #181818; border: none; }");
 
     m_container = new QWidget(this);
     m_layout = new QHBoxLayout(m_container);
@@ -221,9 +220,11 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     connect(pane, &ColumnViewPane::folderSelected, this, [this](const QString& folderPath, int paneIdx) {
         m_activePaneIndex = paneIdx;
         dismissSubColumns(paneIdx);
-        clearOtherSelections(paneIdx);
+        // 保持父列高亮：仅清空 paneIdx 右侧深层列的选区，保留 paneIdx 及其左侧父列的高亮
+        for (int i = paneIdx + 1; i < m_panes.size(); ++i) {
+            m_panes[i]->clearSelection();
+        }
         appendColumn(folderPath);
-        emit pathNavigated(folderPath);
     });
 
     connect(pane, &ColumnViewPane::fileSelected, this, [this](const QString& filePath, int paneIdx) {
