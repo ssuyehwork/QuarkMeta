@@ -150,6 +150,28 @@ ColumnViewWidget::ColumnViewWidget(ContentPanel* contentPanel, QWidget* parent)
     m_layout->setAlignment(Qt::AlignLeft);
 
     setWidget(m_container);
+
+    if (horizontalScrollBar()) {
+        connect(horizontalScrollBar(), &QScrollBar::rangeChanged, this, [this](int min, int max) {
+            Q_UNUSED(min);
+            if (m_autoScrollToRight) {
+                horizontalScrollBar()->setValue(max);
+                m_autoScrollToRight = false;
+            }
+        });
+    }
+}
+
+void ColumnViewWidget::scrollToRightmostPane() {
+    m_autoScrollToRight = true;
+    QMetaObject::invokeMethod(this, [this]() {
+        if (horizontalScrollBar()) {
+            horizontalScrollBar()->setValue(horizontalScrollBar()->maximum());
+        }
+        if (!m_panes.isEmpty() && m_panes.last()) {
+            ensureWidgetVisible(m_panes.last(), 0, 0);
+        }
+    }, Qt::QueuedConnection);
 }
 
 ColumnViewPane* ColumnViewWidget::activePane() const {
@@ -157,6 +179,20 @@ ColumnViewPane* ColumnViewWidget::activePane() const {
         return m_panes[m_activePaneIndex];
     }
     return m_panes.isEmpty() ? nullptr : m_panes.last();
+}
+
+bool ColumnViewWidget::containsPath(const QString& path) const {
+    if (path.isEmpty()) return false;
+    QString cleanTarget = QDir::toNativeSeparators(QDir::cleanPath(path));
+    for (auto* pane : m_panes) {
+        if (pane) {
+            QString panePath = QDir::toNativeSeparators(QDir::cleanPath(pane->currentPath()));
+            if (QString::compare(panePath, cleanTarget, Qt::CaseInsensitive) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 QStringList ColumnViewWidget::getSelectedPaths() const {
@@ -268,7 +304,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     m_panes.append(pane);
     m_layout->addWidget(pane);
     updatePaneWidths();
-    ensureWidgetVisible(pane);
+    scrollToRightmostPane();
     return pane;
 }
 
