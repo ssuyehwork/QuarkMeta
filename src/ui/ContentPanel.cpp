@@ -152,6 +152,11 @@ void ContentPanel::initUi() {
             emit fileActivated(path);
         }
     });
+    connect(m_columnView, &ColumnViewWidget::activeColumnRecordsChanged, this, [this](const std::vector<ItemRecord>& records) {
+        if (m_statsWorker && m_currentViewMode == ViewModeColumn) {
+            m_statsWorker->processAsync(records, m_currentFilter.showHidden);
+        }
+    });
     m_viewStack->addWidget(m_gridView);
     m_viewStack->addWidget(m_treeView);
     m_viewStack->addWidget(m_columnView);
@@ -277,7 +282,7 @@ void ContentPanel::loadDirectory(const QString& path, bool recursive) {
     if (m_currentViewMode == ViewModeColumn && m_columnView) {
         bool pathInPanes = false;
         ColumnViewPane* active = m_columnView->activePane();
-        if (active && active->currentPath() == path) {
+        if (active && active->path() == path) {
             pathInPanes = true;
         }
         m_currentPath = path;
