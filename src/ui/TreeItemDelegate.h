@@ -85,11 +85,23 @@ public:
         // 2026-06-16 按照 8 列架构重构：第 1, 2, 3 列由代理独立绘制；第 0 列作为名称列，具有微型圆角卡片预览（最左侧看片）
         int col = index.column();
 
-        // 🚨【列视图支持】：如果是单列 QListView (col == 0 且 !m_drawMiniCards)，在右侧绘制 trailing 箭头指示器 (>)
+        // 🚨【列视图支持】：如果是单列 QListView (col == 0 且 !m_drawMiniCards)，在右侧绘制 trailing 箭头指示器 (>)，并补齐空文件夹判断
         bool isFolder = (index.data(TypeRole).toString() == "folder");
+        bool isEmpty = index.data(IsEmptyRole).toBool();
+
         if (col == 0 && !m_drawMiniCards && isFolder) {
             painter->save();
             painter->setRenderHint(QPainter::Antialiasing);
+
+            // 1. 绘制空文件夹青蓝色虚线指示框 (#41F2F2 Qt::DashLine)，对齐网格与列表视图视觉标准
+            if (isEmpty) {
+                QRect iconBounds = option.rect.adjusted(6, 4, -option.rect.width() + 24, -4);
+                painter->setPen(QPen(QColor("#41F2F2"), 1, Qt::DashLine));
+                painter->setBrush(Qt::NoBrush);
+                painter->drawRoundedRect(iconBounds, 3, 3);
+            }
+
+            // 2. 在右侧绘制 trailing 级联箭头指示器 (>)
             QRect arrowRect(option.rect.right() - 16, option.rect.top(), 12, option.rect.height());
             painter->setPen(selected ? QColor("#FFFFFF") : QColor("#888888"));
             painter->drawText(arrowRect, Qt::AlignCenter, ">");
