@@ -263,4 +263,11 @@ void ColumnViewWidget::resizeEvent(QResizeEvent* event) {
     updatePaneWidths();
 }
 
+void ColumnViewWidget::refreshActiveColumn() {
+    ColumnViewPane* pane = activePane();
+    if (pane) {
+        pane->loadDirectory();
+    }
+}
+
 } // namespace QuarkMeta

@@ -52,6 +52,7 @@ public:
     void clearAllColumns();
 
     ColumnViewPane* activePane() const;
+    void refreshActiveColumn();
     QStringList getSelectedPaths() const;
     QModelIndexList getSelectedIndexes() const;
     void applyFilterState(const FilterState& state);
