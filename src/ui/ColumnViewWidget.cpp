@@ -10,6 +10,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QResizeEvent>
+#include <QScrollBar>
 
 namespace QuarkMeta {
 
