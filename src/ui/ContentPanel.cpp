@@ -366,10 +366,10 @@ void ContentPanel::setViewMode(ViewMode mode) {
         m_viewStack->setCurrentWidget(m_gridView);
     }
 
-    // 🚀【自愈数据同步机制】：若从分栏视图切回网格/列表/瀑布流视图，且主模型处于滞后或空装载状态，自动自愈驱动 loadDirectory
+    // 🚀【自愈数据同步机制】：若从分栏视图切回网格/列表/瀑布流视图，且主模型处于空装载状态，自动自愈驱动 loadDirectory
     if (oldMode == ViewModeColumn && mode != ViewModeColumn) {
         if (!m_currentPath.isEmpty() && m_currentPath != "computer://") {
-            if (!m_diskModel || m_diskModel->currentPath() != m_currentPath || m_diskModel->rowCount() == 0) {
+            if (!m_diskModel || m_diskModel->rowCount() == 0) {
                 loadDirectory(m_currentPath, m_isRecursive);
             }
         }
