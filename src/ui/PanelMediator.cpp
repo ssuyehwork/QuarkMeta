@@ -24,6 +24,7 @@
 #include <QFileInfo>
 #include <QFile>
 #include <QDesktopServices>
+#include <QDebug>
 #include <QCursor>
 
 namespace QuarkMeta {
@@ -282,6 +283,9 @@ void PanelMediator::setupConnections() {
                     name, type, sizeStr, "-", mtimeStr, "-",
                     path, idx.data(EncryptedRole).toBool(), 0, 0
                 );
+                qDebug() << "[PanelMediator] MetaPanel updated for path:" << path
+                         << "rating:" << rating << "color:" << color
+                         << "tags:" << tags << "note:" << note << "url:" << url;
                 metaPanel->setRating(rating, false);
                 metaPanel->setColor(color, false);
                 metaPanel->setTags(tags);

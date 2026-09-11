@@ -32,6 +32,7 @@
 #include <QScrollBar>
 #include <QFileInfo>
 #include <QDir>
+#include <QDebug>
 #include <QApplication>
 #include <QListView>
 
@@ -467,6 +468,7 @@ void ContentPanel::emitSelectionChangedSignal() {
         if (idx.isValid()) paths.append(idx.data(PathRole).toString());
         if (paths.size() >= 50) break;
     }
+    qDebug() << "[ContentPanel] emitSelectionChangedSignal viewMode:" << m_currentViewMode << "selected paths count:" << paths.size() << "paths:" << paths;
     emit selectionChanged(paths);
     updateStatusBarStats();
 }
