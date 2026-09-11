@@ -148,7 +148,9 @@ void ContentPanel::initUi() {
     m_columnView = new ColumnViewWidget(this, this);
     connect(m_columnView, &ColumnViewWidget::selectionChanged, this, &ContentPanel::onSelectionChanged);
     connect(m_columnView, &ColumnViewWidget::pathNavigated, this, [this](const QString& path) {
-        if (!QFileInfo(path).isDir()) {
+        if (QFileInfo(path).isDir()) {
+            emit directorySelected(path);
+        } else {
             emit fileActivated(path);
         }
     });
