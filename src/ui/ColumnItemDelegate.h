@@ -128,19 +128,49 @@ public:
             }
         }
 
-        // 3. 绘制文字 (预留右侧 22px 保证 chevron_right 箭头画廊排他)
+        // 3. 读取元数据 (色标与星级)
+        bool isDir = index.data(TypeRole).toString() == "folder" || index.data(Qt::UserRole + 2).toBool();
+        bool isEmpty = index.data(IsEmptyRole).toBool();
+        int rating = index.data(RatingRole).toInt();
+        QString colorName = index.data(ColorRole).toString();
+
+        // 绘制色标圆点 (在左侧 2px 处)
+        if (!colorName.isEmpty()) {
+            static const QMap<QString, QString> s_colorHexMap = {
+                {"红色", "#E24B4A"}, {"橙色", "#EF9F27"}, {"黄色", "#FECF0E"},
+                {"绿色", "#639922"}, {"青色", "#1D9E75"}, {"蓝色", "#378ADD"},
+                {"紫色", "#7F77DD"}, {"灰色", "#5F5E5A"}
+            };
+            QString hexColor = s_colorHexMap.value(colorName, colorName);
+            if (hexColor.startsWith("#")) {
+                painter->setBrush(QColor(hexColor));
+                painter->setPen(Qt::NoPen);
+                painter->drawEllipse(option.rect.left() + 2, option.rect.top() + (option.rect.height() - 6) / 2, 6, 6);
+            }
+        }
+
+        // 4. 绘制文字与右侧元数据 (动态调整星级与箭头宽度)
+        int rightMargin = isDir ? 22 : 6;
+        if (rating > 0) rightMargin += 32;
+
         QString name = index.data(Qt::DisplayRole).toString();
-        QRect textRect = option.rect.adjusted(32, 0, -22, 0);
+        QRect textRect = option.rect.adjusted(32, 0, -rightMargin, 0);
         QColor textColor = selected ? QColor("#FFFFFF") : QColor("#EEEEEE");
         painter->setPen(textColor);
         painter->setFont(option.font);
         QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideRight, textRect.width());
         painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
 
-        // 4. 如果是文件夹，最右侧绘制向右箭头 chevron_right；若是空文件夹可辅助描边
-        bool isDir = index.data(TypeRole).toString() == "folder" || index.data(Qt::UserRole + 2).toBool();
-        bool isEmpty = index.data(IsEmptyRole).toBool();
+        // 5. 绘制星级标示 (若 rating > 0)
+        if (rating > 0) {
+            int starRight = option.rect.right() - (isDir ? 22 : 6);
+            QRect starRect(starRight - 30, option.rect.top() + (option.rect.height() - 12) / 2, 30, 12);
+            painter->setPen(QColor("#FFC107"));
+            painter->setFont(QFont("Segoe UI", 9, QFont::Bold));
+            painter->drawText(starRect, Qt::AlignRight | Qt::AlignVCenter, QString("★%1").arg(rating));
+        }
 
+        // 6. 如果是文件夹，最右侧绘制向右箭头 chevron_right
         if (isDir) {
             QRect arrowRect(option.rect.right() - 20, option.rect.top() + (option.rect.height() - 14) / 2, 14, 14);
             QColor arrowColor = selected ? QColor("#FFFFFF") : (isEmpty ? QColor("#41F2F2") : QColor("#888888"));
