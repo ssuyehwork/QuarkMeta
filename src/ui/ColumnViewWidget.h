@@ -19,6 +19,7 @@ public:
     ~ColumnViewPane() override = default;
 
     QString currentPath() const { return m_path; }
+    QString path() const { return m_path; }
     void loadDirectory();
 
     void selectItemByPath(const QString& targetPath);

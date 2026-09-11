@@ -282,7 +282,7 @@ void ContentPanel::loadDirectory(const QString& path, bool recursive) {
     if (m_currentViewMode == ViewModeColumn && m_columnView) {
         bool pathInPanes = false;
         ColumnViewPane* active = m_columnView->activePane();
-        if (active && active->path() == path) {
+        if (active && active->currentPath() == path) {
             pathInPanes = true;
         }
         m_currentPath = path;
