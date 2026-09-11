@@ -338,15 +338,4 @@ void ColumnViewWidget::refreshActiveColumn() {
     }
 }
 
-void ColumnViewWidget::updateMetadataForPath(const QString& path) {
-    for (auto* pane : m_panes) {
-        if (pane && pane->model()) {
-            pane->model()->updateRecordMetadata(path);
-            if (pane->listView() && pane->listView()->viewport()) {
-                pane->listView()->viewport()->update();
-            }
-        }
-    }
-}
-
 } // namespace QuarkMeta

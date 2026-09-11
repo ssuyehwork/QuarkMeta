@@ -38,6 +38,8 @@ ItemRecord ItemRecord::create(const QString& path, const RuntimeMeta* providedMe
     RuntimeMeta meta;
     if (providedMeta) {
         meta = *providedMeta;
+    } else {
+        meta = MetadataManager::instance().getMeta(wPath);
     }
 
     long long size = 0, ctime = 0, mtime = 0, atime = 0;
@@ -58,6 +60,8 @@ ItemRecord ItemRecord::create(const QString& path, const RuntimeMeta* providedMe
     } else {
         r.suffix = info.suffix();
     }
+
+    fromMetadata(r, meta);
 
     return r;
 }
