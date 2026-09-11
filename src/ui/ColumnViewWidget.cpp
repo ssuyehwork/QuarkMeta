@@ -1,6 +1,7 @@
 #include "ColumnViewWidget.h"
 #include "ContentPanel.h"
 #include "../core/DiskScanService.h"
+#include "DropListView.h"
 #include "TreeItemDelegate.h"
 #include "UiHelper.h"
 #include <QFileInfo>
@@ -24,10 +25,13 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_proxyModel = new FilterProxyModel(this);
     m_proxyModel->setSourceModel(m_model);
 
-    m_listView = new QListView(this);
+    m_listView = new DropListView(this);
     m_listView->setObjectName("ColumnViewPaneListView");
     m_listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_listView->setDragEnabled(true);
+    m_listView->setAcceptDrops(true);
+    m_listView->setDropIndicatorShown(true);
     m_listView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_listView->setModel(m_proxyModel);
 
