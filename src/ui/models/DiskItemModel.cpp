@@ -515,15 +515,24 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
     } else if (role == TypeRole) {
         return record.isDir ? "folder" : "file";
     } else if (role == RatingRole) {
+        if (record.rating <= 0) {
+            std::wstring wpath = path.toStdWString();
+            RuntimeMeta meta = MetadataManager::instance().getMeta(wpath);
+            if (meta.rating > 0) return meta.rating;
+        }
         return record.rating;
     } else if (role == ColorRole) {
+        if (record.manualColor.isEmpty()) {
+            std::wstring wpath = path.toStdWString();
+            RuntimeMeta meta = MetadataManager::instance().getMeta(wpath);
+            if (!meta.manualColor.empty()) return QString::fromStdWString(meta.manualColor);
+        }
         return record.manualColor;
     } else if (role == IsLockedRole || role == PinnedRole) {
         return record.pinned;
     } else if (role == EncryptedRole) {
         return record.encrypted;
     } else if (role == TagsRole) {
-        // 如果 record.tags 为空，尝试从 MetadataManager 读取最新数据
         if (record.tags.isEmpty()) {
             std::wstring wpath = path.toStdWString();
             RuntimeMeta meta = MetadataManager::instance().getMeta(wpath);
@@ -533,8 +542,18 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
         }
         return record.tags;
     } else if (role == NoteRole) {
+        if (record.note.isEmpty()) {
+            std::wstring wpath = path.toStdWString();
+            RuntimeMeta meta = MetadataManager::instance().getMeta(wpath);
+            if (!meta.note.empty()) return QString::fromStdWString(meta.note);
+        }
         return record.note;
     } else if (role == UrlRole) {
+        if (record.url.isEmpty()) {
+            std::wstring wpath = path.toStdWString();
+            RuntimeMeta meta = MetadataManager::instance().getMeta(wpath);
+            if (!meta.url.empty()) return QString::fromStdWString(meta.url);
+        }
         return record.url;
     } else if (role == IsEmptyRole) {
         return record.isDir && record.isEmpty;

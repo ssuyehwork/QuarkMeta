@@ -268,15 +268,24 @@ void PanelMediator::setupConnections() {
                 QString sizeStr = idx.isValid() ? idx.sibling(idx.row(), 5).data(Qt::DisplayRole).toString() : "-";
                 QString mtimeStr = idx.isValid() ? idx.sibling(idx.row(), 6).data(Qt::DisplayRole).toString() : "-";
 
+                std::wstring wpath = path.toStdWString();
+                RuntimeMeta meta = MetadataManager::instance().getMeta(wpath);
+
+                int rating = meta.rating > 0 ? meta.rating : idx.data(RatingRole).toInt();
+                QString color = !meta.manualColor.empty() ? QString::fromStdWString(meta.manualColor) : idx.data(ColorRole).toString();
+                QStringList tags = !meta.tags.isEmpty() ? meta.tags : idx.data(TagsRole).toStringList();
+                QString note = !meta.note.empty() ? QString::fromStdWString(meta.note) : idx.data(NoteRole).toString();
+                QString url = !meta.url.empty() ? QString::fromStdWString(meta.url) : idx.data(UrlRole).toString();
+
                 metaPanel->updateInfo(
                     name, type, sizeStr, "-", mtimeStr, "-",
                     path, idx.data(EncryptedRole).toBool(), 0, 0
                 );
-                metaPanel->setRating(idx.data(RatingRole).toInt(), false);
-                metaPanel->setColor(idx.data(ColorRole).toString(), false);
-                metaPanel->setTags(idx.data(TagsRole).toStringList());
-                metaPanel->setNote(idx.data(NoteRole).toString());
-                metaPanel->setURL(idx.data(UrlRole).toString());
+                metaPanel->setRating(rating, false);
+                metaPanel->setColor(color, false);
+                metaPanel->setTags(tags);
+                metaPanel->setNote(note);
+                metaPanel->setURL(url);
 
                 QVariant decData = idx.data(Qt::DecorationRole);
                 QPixmap previewPixmap;
