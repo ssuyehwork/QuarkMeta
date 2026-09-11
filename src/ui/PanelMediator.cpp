@@ -18,6 +18,7 @@
 #include "../core/VolumeOnlineManager.h"
 #include "../core/ModelContract.h"
 #include "../core/AppConfig.h"
+#include "../meta/MetadataManager.h"
 #include "../util/ShellHelper.h"
 #include "UiHelper.h"
 #include <QFileInfo>
