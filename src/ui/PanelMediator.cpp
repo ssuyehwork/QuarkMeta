@@ -212,8 +212,8 @@ void PanelMediator::setupConnections() {
 
     // 2. 内容面板选中项改变 -> 元数据面板 0 毫秒极速同步
     if (contentPanel && metaPanel) {
-        // 监听卡片/列表上的就地修改，0 毫秒同步右侧 MetaPanel
-        connect(contentPanel->model(), &QAbstractItemModel::dataChanged, metaPanel, 
+        // 监听卡片/列表/分栏视图上的就地修改，0 毫秒同步右侧 MetaPanel
+        connect(contentPanel, &ContentPanel::itemDataChanged, metaPanel,
                 [contentPanel, metaPanel](const QModelIndex& topLeft, const QModelIndex&, const QVector<int>& roles) {
             if (!roles.isEmpty() && !roles.contains(RatingRole) && !roles.contains(ColorRole) && !roles.contains(TagsRole) && !roles.contains(NoteRole) && !roles.contains(UrlRole)) {
                 return;

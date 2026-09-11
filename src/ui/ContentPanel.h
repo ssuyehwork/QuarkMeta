@@ -135,6 +135,7 @@ public:
     QModelIndexList getSelectedIndexes() const;
 
 signals:
+    void itemDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     void zoomLevelChanged(int level);
     void viewModeChanged(ViewMode mode);
     void requestQuickLook(const QString& path);
