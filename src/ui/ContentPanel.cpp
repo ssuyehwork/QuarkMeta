@@ -11,6 +11,7 @@
 #include "workers/ContentStatsWorker.h"
 #include "DropJustifiedView.h"
 #include "DropTreeView.h"
+#include "MillerColumnsView.h"
 #include "ThumbnailDelegate.h"
 #include "TreeItemDelegate.h"
 #include "UiHelper.h"

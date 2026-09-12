@@ -1,7 +1,6 @@
 #include "MillerColumnsView.h"
 #include "models/DiskItemModel.h"
 #include "models/FilterProxyModel.h"
-#include "ColumnItemDelegate.h"
 #include "UiHelper.h"
 
 #include <QScrollBar>
@@ -43,9 +42,6 @@ void MillerColumnPane::initPane() {
     m_proxyModel = new FilterProxyModel(this);
     m_proxyModel->setSourceModel(m_diskModel);
     m_listView->setModel(m_proxyModel);
-
-    ColumnItemDelegate* delegate = new ColumnItemDelegate(m_listView);
-    m_listView->setItemDelegate(delegate);
 
     m_diskModel->loadDirectory(m_path);
 
@@ -170,6 +166,6 @@ int MillerColumnsView::horizontalOffset() const { return 0; }
 int MillerColumnsView::verticalOffset() const { return 0; }
 bool MillerColumnsView::isIndexHidden(const QModelIndex&) const { return false; }
 void MillerColumnsView::setSelection(const QRect&, QItemSelectionModel::SelectionFlags) {}
-QRegion MillerColumnsView::visualRegionForSelection(const QItemSelection) const { return QRegion(); }
+QRegion MillerColumnsView::visualRegionForSelection(const QItemSelection&) const { return QRegion(); }
 
 } // namespace QuarkMeta

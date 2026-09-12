@@ -56,7 +56,7 @@ public:
     int verticalOffset() const override;
     bool isIndexHidden(const QModelIndex& index) const override;
     void setSelection(const QRect& rect, QItemSelectionModel::SelectionFlags command) override;
-    QRegion visualRegionForSelection(const QItemSelection) const override;
+    QRegion visualRegionForSelection(const QItemSelection& selection) const override;
 
 signals:
     void fileActivated(const QString& path);
