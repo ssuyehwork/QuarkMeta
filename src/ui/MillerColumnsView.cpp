@@ -1,6 +1,9 @@
 #include "MillerColumnsView.h"
 #include "models/DiskItemModel.h"
 #include "models/FilterProxyModel.h"
+#include "../core/ModelContract.h"
+#include "../core/DiskScanService.h"
+#include "../meta/MetaCacheDecorator.h"
 #include "UiHelper.h"
 
 #include <QScrollBar>
@@ -43,7 +46,9 @@ void MillerColumnPane::initPane() {
     m_proxyModel->setSourceModel(m_diskModel);
     m_listView->setModel(m_proxyModel);
 
-    m_diskModel->loadDirectory(m_path);
+    std::vector<ItemRecord> records = DiskScanService::scanDirectory(m_path, false, nullptr);
+    MetaCacheDecorator::decorate(records);
+    m_diskModel->setRecords(records);
 
     connect(m_listView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this]() {
         QModelIndexList selected = m_listView->selectionModel()->selectedIndexes();
@@ -51,8 +56,8 @@ void MillerColumnPane::initPane() {
 
         QModelIndex proxyIdx = selected.first();
         QModelIndex srcIdx = m_proxyModel->mapToSource(proxyIdx);
-        QString itemPath = srcIdx.data(DiskItemModel::PathRole).toString();
-        bool isDir = srcIdx.data(DiskItemModel::TypeRole).toString() == "folder" || QFileInfo(itemPath).isDir();
+        QString itemPath = srcIdx.data(PathRole).toString();
+        bool isDir = srcIdx.data(TypeRole).toString() == "folder" || QFileInfo(itemPath).isDir();
 
         if (isDir) {
             emit folderSelected(itemPath);
@@ -63,7 +68,7 @@ void MillerColumnPane::initPane() {
 
     connect(m_listView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
         QModelIndex srcIdx = m_proxyModel->mapToSource(index);
-        QString itemPath = srcIdx.data(DiskItemModel::PathRole).toString();
+        QString itemPath = srcIdx.data(PathRole).toString();
         if (!QFileInfo(itemPath).isDir()) {
             emit fileDoubleClicked(itemPath);
         }
