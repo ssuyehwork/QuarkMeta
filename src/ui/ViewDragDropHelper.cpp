@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QUrl>
+#include <QItemSelectionModel>
 
 namespace QuarkMeta {
 
@@ -47,7 +48,8 @@ bool ViewDragDropHelper::handleDrop(QAbstractItemView* view, QDropEvent* event, 
 }
 
 void ViewDragDropHelper::executeStartDrag(QAbstractItemView* view, Qt::DropActions supportedActions) {
-    QModelIndexList indexes = view->selectedIndexes();
+    if (!view || !view->selectionModel()) return;
+    QModelIndexList indexes = view->selectionModel()->selectedIndexes();
     if (indexes.isEmpty()) return;
 
     QList<QUrl> urls;
