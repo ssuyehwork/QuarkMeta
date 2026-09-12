@@ -46,7 +46,8 @@ void MillerColumnPane::initPane() {
     m_proxyModel->setSourceModel(m_diskModel);
     m_listView->setModel(m_proxyModel);
 
-    std::vector<ItemRecord> records = DiskScanService::scanDirectory(m_path, false, nullptr);
+    std::function<bool()> cancelCheck = nullptr;
+    std::vector<ItemRecord> records = DiskScanService::scanDirectory(m_path, false, cancelCheck);
     MetaCacheDecorator::decorate(records);
     m_diskModel->setRecords(records);
 
@@ -56,8 +57,8 @@ void MillerColumnPane::initPane() {
 
         QModelIndex proxyIdx = selected.first();
         QModelIndex srcIdx = m_proxyModel->mapToSource(proxyIdx);
-        QString itemPath = srcIdx.data(PathRole).toString();
-        bool isDir = srcIdx.data(TypeRole).toString() == "folder" || QFileInfo(itemPath).isDir();
+        QString itemPath = srcIdx.data(QuarkMeta::PathRole).toString();
+        bool isDir = srcIdx.data(QuarkMeta::TypeRole).toString() == "folder" || QFileInfo(itemPath).isDir();
 
         if (isDir) {
             emit folderSelected(itemPath);
@@ -68,7 +69,7 @@ void MillerColumnPane::initPane() {
 
     connect(m_listView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
         QModelIndex srcIdx = m_proxyModel->mapToSource(index);
-        QString itemPath = srcIdx.data(PathRole).toString();
+        QString itemPath = srcIdx.data(QuarkMeta::PathRole).toString();
         if (!QFileInfo(itemPath).isDir()) {
             emit fileDoubleClicked(itemPath);
         }

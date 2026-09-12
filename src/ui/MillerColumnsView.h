@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QAbstractItemView>
+#include <QItemSelectionModel>
 #include <QScrollArea>
 #include <QHBoxLayout>
 #include <QListView>
