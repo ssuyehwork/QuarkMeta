@@ -266,7 +266,7 @@ void PanelMediator::setupConnections() {
                 QString name = fi.fileName();
                 bool isDir = fi.isDir();
                 QString type = isDir ? "文件夹" : (fi.suffix().isEmpty() ? "文件" : fi.suffix().toUpper() + " 文件");
-                QString sizeStr = isDir ? "-" : UiHelper::formatFileSize(fi.size());
+                QString sizeStr = isDir ? "-" : ShellHelper::formatSize(fi.size());
                 QString ctimeStr = fi.birthTime().isValid() ? fi.birthTime().toString("yyyy-MM-dd HH:mm:ss") : "-";
                 QString mtimeStr = fi.lastModified().isValid() ? fi.lastModified().toString("yyyy-MM-dd HH:mm:ss") : "-";
                 QString atimeStr = fi.lastRead().isValid() ? fi.lastRead().toString("yyyy-MM-dd HH:mm:ss") : "-";
