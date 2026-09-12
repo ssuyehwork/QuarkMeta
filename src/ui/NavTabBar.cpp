@@ -8,7 +8,6 @@
 #include <QPushButton>
 #include <QFileInfo>
 #include <QDir>
-#include <QEvent>
 #include <QMouseEvent>
 
 namespace QuarkMeta {
@@ -39,18 +38,18 @@ NavTabBar::NavTabBar(QWidget* parent) : QWidget(parent) {
 
     m_tabsLayout = new QHBoxLayout();
     m_tabsLayout->setContentsMargins(0, 0, 0, 0);
-    m_tabsLayout->setSpacing(2);
+    m_tabsLayout->setSpacing(3);
 
     m_btnAddTab = new QPushButton(this);
     m_btnAddTab->setFocusPolicy(Qt::NoFocus);
     m_btnAddTab->setAttribute(Qt::WA_Hover);
     m_btnAddTab->setFixedSize(22, 22);
-    m_btnAddTab->setIcon(UiHelper::getIcon("add", QColor("#CCCCCC"), 16));
-    m_btnAddTab->setIconSize(QSize(16, 16));
+    m_btnAddTab->setIcon(UiHelper::getIcon("add", QColor("#CCCCCC"), 14));
+    m_btnAddTab->setIconSize(QSize(14, 14));
     m_btnAddTab->setObjectName("AddTabBtn");
     m_btnAddTab->setToolTip("新建标签页");
     m_btnAddTab->setStyleSheet(
-        "QPushButton#AddTabBtn { border: none; background: transparent; border-radius: 3px; }"
+        "QPushButton#AddTabBtn { border: none; background: transparent; border-radius: 4px; }"
         "QPushButton#AddTabBtn:hover { background-color: #383838; }"
     );
 
@@ -60,6 +59,7 @@ NavTabBar::NavTabBar(QWidget* parent) : QWidget(parent) {
 
     m_mainLayout->addLayout(m_tabsLayout);
     m_mainLayout->addWidget(m_btnAddTab, 0, Qt::AlignVCenter);
+    m_mainLayout->addStretch(1);
 
     connect(&NavigationService::instance(), &NavigationService::tabsUpdated, this, &NavTabBar::rebuildTabs);
 
@@ -67,7 +67,36 @@ NavTabBar::NavTabBar(QWidget* parent) : QWidget(parent) {
 }
 
 void NavTabBar::rebuildTabs() {
-    // 清理旧标签页部件
+    const auto& tabs = NavigationService::instance().tabs();
+    int activeIdx = NavigationService::instance().activeTabIndex();
+
+    // 🚀【智能增量对比】：若 Tab 数量未改变，则原地平滑更新现有控件，杜绝闪烁
+    if (m_tabsLayout->count() == tabs.size()) {
+        for (int i = 0; i < tabs.size(); ++i) {
+            QLayoutItem* item = m_tabsLayout->itemAt(i);
+            if (item && item->widget()) {
+                QWidget* tabW = item->widget();
+                bool isActive = (i == activeIdx);
+                tabW->setObjectName(isActive ? "NavTabActive" : "NavTabInactive");
+                tabW->setProperty("tabIndex", i);
+
+                QLabel* titleLabel = tabW->findChild<QLabel*>("TabTitleLabel");
+                if (titleLabel) {
+                    titleLabel->setText(tabs[i].title);
+                    titleLabel->setStyleSheet(isActive ? "color: #FFFFFF; font-weight: bold; font-size: 12px;" : "color: #AAAAAA; font-size: 12px;");
+                }
+
+                if (isActive) {
+                    tabW->setStyleSheet("QWidget#NavTabActive { background-color: #2D2D2D; border-top: 2px solid #FF551C; border-top-left-radius: 4px; border-top-right-radius: 4px; }");
+                } else {
+                    tabW->setStyleSheet("QWidget#NavTabInactive { background-color: transparent; border-top: 2px solid transparent; border-top-left-radius: 4px; border-top-right-radius: 4px; } QWidget#NavTabInactive:hover { background-color: #252526; }");
+                }
+            }
+        }
+        return;
+    }
+
+    // 数量变动时执行重排
     QLayoutItem* item;
     while ((item = m_tabsLayout->takeAt(0)) != nullptr) {
         if (item->widget()) {
@@ -75,9 +104,6 @@ void NavTabBar::rebuildTabs() {
         }
         delete item;
     }
-
-    const auto& tabs = NavigationService::instance().tabs();
-    int activeIdx = NavigationService::instance().activeTabIndex();
 
     for (int i = 0; i < tabs.size(); ++i) {
         bool isActive = (i == activeIdx);
@@ -89,14 +115,13 @@ void NavTabBar::rebuildTabs() {
 QWidget* NavTabBar::createTabWidget(int index, const QString& title, const QString& url, bool isActive) {
     QWidget* tab = new QWidget(this);
     tab->setObjectName(isActive ? "NavTabActive" : "NavTabInactive");
-    tab->setFixedHeight(28);
+    tab->setFixedSize(150, 28);
     tab->setCursor(Qt::PointingHandCursor);
 
     QHBoxLayout* layout = new QHBoxLayout(tab);
     layout->setContentsMargins(8, 0, 6, 0);
     layout->setSpacing(6);
 
-    // 目录图标
     QLabel* iconLabel = new QLabel(tab);
     iconLabel->setFixedSize(16, 16);
     if (url == "computer://") {
@@ -107,17 +132,16 @@ QWidget* NavTabBar::createTabWidget(int index, const QString& title, const QStri
         iconLabel->setPixmap(UiHelper::getIcon("folder_filled", Style::BrandOrange).pixmap(14, 14));
     }
 
-    // 标题文本
     QLabel* titleLabel = new QLabel(title, tab);
-    titleLabel->setMaximumWidth(120);
+    titleLabel->setObjectName("TabTitleLabel");
+    titleLabel->setMaximumWidth(130);
     titleLabel->setStyleSheet(isActive ? "color: #FFFFFF; font-weight: bold; font-size: 12px;" : "color: #AAAAAA; font-size: 12px;");
 
-    // 关闭按钮
     QPushButton* closeBtn = new QPushButton(tab);
     closeBtn->setFocusPolicy(Qt::NoFocus);
     closeBtn->setFixedSize(16, 16);
-    closeBtn->setIcon(UiHelper::getIcon("close", QColor("#AAAAAA"), 12));
-    closeBtn->setIconSize(QSize(12, 12));
+    closeBtn->setIcon(UiHelper::getIcon("close", QColor("#888888"), 10));
+    closeBtn->setIconSize(QSize(10, 10));
     closeBtn->setCursor(Qt::PointingHandCursor);
     closeBtn->setObjectName("TabCloseBtn");
     closeBtn->setStyleSheet(
@@ -140,12 +164,10 @@ QWidget* NavTabBar::createTabWidget(int index, const QString& title, const QStri
         );
     }
 
-    // 事件绑定
     connect(closeBtn, &QPushButton::clicked, this, [index]() {
         NavigationService::instance().closeTab(index);
     });
 
-    // 点击 Tab 切换
     tab->installEventFilter(this);
     tab->setProperty("tabIndex", index);
 
