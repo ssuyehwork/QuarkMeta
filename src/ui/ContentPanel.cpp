@@ -151,6 +151,7 @@ void ContentPanel::initUi() {
     });
     connect(m_columnView, &MillerColumnsView::fileSelected, this, [this](const QString& path) {
         emit selectionChanged(QStringList{path});
+        updateStatusBarStats();
     });
     connect(m_columnView, &MillerColumnsView::directoryNavigated, this, [this](const QString& path) {
         emit directorySelected(path);
@@ -454,7 +455,7 @@ void ContentPanel::updateStatusBarStats() {
     int visibleCount = m_proxyModel->rowCount();
     int fullCount = m_model ? m_model->rowCount() : visibleCount;
     int hiddenCount = fullCount - visibleCount;
-    int selectedCount = getSelectedIndexes().size();
+    int selectedCount = getSelectedPaths().size();
 
     QString statusText = (hiddenCount > 0)
         ? QString("%1个项目，%2个已隐藏，选中了%3个").arg(visibleCount).arg(hiddenCount).arg(selectedCount)
@@ -521,6 +522,12 @@ QString ContentPanel::getAdjacentFilePath(const QString& currentPath, int delta)
 }
 
 QStringList ContentPanel::getSelectedPaths() const {
+    if (m_currentViewMode == ColumnView && m_columnView) {
+        QString p = m_columnView->currentSelectedPath();
+        if (!p.isEmpty()) return { p };
+        return {};
+    }
+
     QStringList paths;
     for (const auto& idx : getSelectedIndexes()) {
         if (idx.column() == 0) {

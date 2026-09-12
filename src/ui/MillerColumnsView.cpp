@@ -255,6 +255,13 @@ QModelIndexList MillerColumnsView::selectedIndexes() const {
     return {};
 }
 
+QString MillerColumnsView::currentSelectedPath() const {
+    if (m_currentActiveIndex.isValid()) {
+        return m_currentActiveIndex.data(PathRole).toString();
+    }
+    return {};
+}
+
 // 契约虚函数实现
 QRect MillerColumnsView::visualRect(const QModelIndex&) const { return QRect(); }
 void MillerColumnsView::scrollTo(const QModelIndex&, ScrollHint) {}

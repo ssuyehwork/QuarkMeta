@@ -66,6 +66,7 @@ public:
 
     // 真实的选区与模型穿透接口
     QModelIndexList selectedIndexes() const override;
+    QString currentSelectedPath() const;
 
     // QAbstractItemView 契约实现
     QRect visualRect(const QModelIndex& index) const override;
