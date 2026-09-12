@@ -208,11 +208,11 @@ void MillerColumnsView::appendColumn(const QString& folderPath, int parentPaneIn
 
     m_containerLayout->insertWidget(m_containerLayout->count() - 1, pane);
 
-    connect(pane, &MillerColumnPane::itemSelected, this, [this, currentPaneIndex, pane](const QModelIndex& proxyIdx, const QString& itemPath, bool isDir) {
+    connect(pane, &MillerColumnPane::itemSelected, this, [this, currentPaneIndex](const QModelIndex& proxyIdx, const QString& itemPath, bool isDir) {
         // 🚀【绝对打通】：将当前点击项的索引设为活跃索引，驱动 getSelectedIndexes()
         m_currentActiveIndex = proxyIdx;
 
-        // 🚀【绝对打通】：无论点文件夹还是文件，必须发射 selectionChanged，驱动右侧 MetaPanel 全量刷新！
+        // 🚀 无论点的是文件夹还是文件，第一时间发射给外层，驱动 MetaPanel 刷新！
         emit fileSelected(itemPath);
 
         if (isDir) {

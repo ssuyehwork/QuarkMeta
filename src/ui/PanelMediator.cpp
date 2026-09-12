@@ -21,6 +21,7 @@
 #include "../util/ShellHelper.h"
 #include "../meta/MetadataManager.h"
 #include "UiHelper.h"
+#include "ShellIconManager.h"
 #include <QFileInfo>
 #include <QFile>
 #include <QDesktopServices>
@@ -246,7 +247,7 @@ void PanelMediator::setupConnections() {
             }
         });
 
-        connect(contentPanel, &ContentPanel::selectionChanged, metaPanel, [contentPanel, metaPanel](const QStringList& paths) {
+        connect(contentPanel, &ContentPanel::selectionChanged, metaPanel, [metaPanel](const QStringList& paths) {
             metaPanel->setSelectedPaths(paths);
             if (paths.isEmpty()) {
                 metaPanel->setImagePreview(QPixmap());
@@ -258,48 +259,34 @@ void PanelMediator::setupConnections() {
                 metaPanel->setURL(QString(""));
                 metaPanel->setPalettes({});
             } else if (paths.size() == 1) {
-                QModelIndexList selectedIndices = contentPanel->getSelectedIndexes();
-                QModelIndex idx = selectedIndices.isEmpty() ? QModelIndex() : selectedIndices.first();
-
                 QString path = paths.first();
                 QFileInfo fi(path);
 
-                QString name = idx.isValid() ? idx.sibling(idx.row(), 0).data(Qt::DisplayRole).toString() : fi.fileName();
-                QString type = idx.isValid() ? ((idx.data(TypeRole).toString() == "folder") ? "文件夹" : idx.sibling(idx.row(), 4).data(Qt::DisplayRole).toString() + " 文件") : (fi.isDir() ? "文件夹" : fi.suffix().toUpper() + " 文件");
-                QString sizeStr = idx.isValid() ? idx.sibling(idx.row(), 5).data(Qt::DisplayRole).toString() : "-";
-                QString mtimeStr = idx.isValid() ? idx.sibling(idx.row(), 6).data(Qt::DisplayRole).toString() : "-";
-                bool encrypted = idx.isValid() ? idx.data(EncryptedRole).toBool() : false;
+                // 🚀【绝对真实提取】：基础信息直接从文件系统物理读取，永不再写死 "-"！
+                QString name = fi.fileName();
+                bool isDir = fi.isDir();
+                QString type = isDir ? "文件夹" : (fi.suffix().isEmpty() ? "文件" : fi.suffix().toUpper() + " 文件");
+                QString sizeStr = isDir ? "-" : ShellHelper::formatSize(fi.size());
+                QString ctimeStr = fi.birthTime().isValid() ? fi.birthTime().toString("yyyy-MM-dd HH:mm:ss") : "-";
+                QString mtimeStr = fi.lastModified().isValid() ? fi.lastModified().toString("yyyy-MM-dd HH:mm:ss") : "-";
+                QString atimeStr = fi.lastRead().isValid() ? fi.lastRead().toString("yyyy-MM-dd HH:mm:ss") : "-";
 
                 metaPanel->updateInfo(
-                    name, type, sizeStr, "-", mtimeStr, "-",
-                    path, encrypted, 0, 0
+                    name, type, sizeStr, ctimeStr, mtimeStr, atimeStr,
+                    path, false, 0, 0
                 );
 
-                // 🚀【双保险装载】：idx 有效走 Model，idx 无效通过 MetadataManager 兜底，绝不丢弃高级元数据
-                if (idx.isValid()) {
-                    metaPanel->setRating(idx.data(RatingRole).toInt(), false);
-                    metaPanel->setColor(idx.data(ColorRole).toString(), false);
-                    metaPanel->setTags(idx.data(TagsRole).toStringList());
-                    metaPanel->setNote(idx.data(NoteRole).toString());
-                    metaPanel->setURL(idx.data(UrlRole).toString());
+                // 🚀【绝对数据库读取】：星级、颜色、标签、备注、链接全部从底层元数据管理器提取
+                auto meta = MetadataManager::instance().getMeta(path.toStdWString());
+                metaPanel->setRating(meta.rating, false);
+                metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);
+                metaPanel->setTags(meta.tags);
+                metaPanel->setNote(QString::fromStdWString(meta.note));
+                metaPanel->setURL(QString::fromStdWString(meta.url));
 
-                    QVariant decData = idx.data(Qt::DecorationRole);
-                    QPixmap previewPixmap;
-                    if (decData.canConvert<QIcon>()) {
-                        previewPixmap = decData.value<QIcon>().pixmap(128, 128);
-                    } else if (decData.canConvert<QPixmap>()) {
-                        previewPixmap = decData.value<QPixmap>();
-                    }
-                    metaPanel->setImagePreview(previewPixmap);
-                } else {
-                    auto meta = MetadataManager::instance().getMeta(path.toStdWString());
-                    metaPanel->setRating(meta.rating, false);
-                    metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);
-                    metaPanel->setTags(meta.tags);
-                    metaPanel->setNote(QString::fromStdWString(meta.note));
-                    metaPanel->setURL(QString::fromStdWString(meta.url));
-                    metaPanel->setImagePreview(QPixmap());
-                }
+                // 🚀【缩略图提取】：哪怕是新视窗，也直接通过图标管理器拿高清图标或缩略图！
+                QIcon fileIcon = ShellIconManager::getFileIcon(path, 128);
+                metaPanel->setImagePreview(fileIcon.pixmap(128, 128));
             }
         });
     }
