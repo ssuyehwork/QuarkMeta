@@ -127,10 +127,6 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             menu.addAction(UiHelper::getIcon("open", QColor("#EEEEEE"), 18), "打开")->setData(ContentPanel::ActionOpen);
             menu.addAction(UiHelper::getIcon("folder_search", QColor("#EEEEEE"), 18), "在“资源管理器”中显示")->setData(ContentPanel::ActionShowInExplorer);
 
-            if (m_panel && m_panel->isRecursive()) {
-                menu.addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE"), 18), "在 QuarkMeta 中显示")->setData(ContentPanel::ActionShowInQuarkMeta);
-            }
-
             QString currentColorStr = currentIndex.data(ColorRole).toString();
             QWidgetAction* pickerAction = new QWidgetAction(&menu);
             ColorStripPicker* pickerWidget = new ColorStripPicker(currentColorStr, &menu);
@@ -214,6 +210,10 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                 menu.addAction(UiHelper::getIcon("launch", QColor("#EEEEEE"), 18), "用系统默认程序打开")->setData(ContentPanel::ActionOpenDefault);
             }
             menu.addAction(UiHelper::getIcon("folder_search", QColor("#EEEEEE"), 18), "在“资源管理器”中显示")->setData(ContentPanel::ActionShowInExplorer);
+
+            if (m_panel && m_panel->isRecursive()) {
+                menu.addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE"), 18), "在 QuarkMeta 中显示")->setData(ContentPanel::ActionShowInQuarkMeta);
+            }
 
             QString currentColorStr = currentIndex.data(ColorRole).toString();
             QWidgetAction* pickerAction = new QWidgetAction(&menu);
