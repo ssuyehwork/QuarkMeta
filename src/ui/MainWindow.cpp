@@ -278,6 +278,7 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     };
 
     m_btnToggleSortOrder = createSquareStatusBtn("arrow_down_long", "排序方向 (降序)");
+    m_btnToggleSortOrder->setCheckable(false);
     m_btnToggleJustified = createSquareStatusBtn("resize2", "自适应(A)");
     m_btnToggleGrid      = createSquareStatusBtn("gridgapm", "网格(G)");
     m_btnToggleList      = createSquareStatusBtn("list_ul", "列表(L)");
@@ -500,7 +501,6 @@ void MainWindow::updateStatusBarButtonHighlights() {
             bool isAsc = (sortOrd == Qt::AscendingOrder);
             m_btnToggleSortOrder->setIcon(UiHelper::getIcon(isAsc ? "arrow_up_long" : "arrow_down_long", QColor("#EEEEEE"), 18));
             m_btnToggleSortOrder->setProperty("tooltipText", isAsc ? "升序 (点击切换降序)" : "降序 (点击切换升序)");
-            m_btnToggleSortOrder->setChecked(isAsc);
         }
     }
 
