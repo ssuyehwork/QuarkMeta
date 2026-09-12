@@ -293,15 +293,11 @@ void PanelMediator::setupConnections() {
                     metaPanel->setImagePreview(previewPixmap);
                 } else {
                     auto meta = MetadataManager::instance().getMeta(path.toStdWString());
-                    metaPanel->setRating(meta.itemMeta.rating, false);
-                    metaPanel->setColor(QString::fromStdWString(meta.itemMeta.color), false);
-                    QStringList tagsList;
-                    for (const auto& t : meta.itemMeta.tags) {
-                        tagsList.append(QString::fromStdWString(t));
-                    }
-                    metaPanel->setTags(tagsList);
-                    metaPanel->setNote(QString::fromStdWString(meta.itemMeta.note));
-                    metaPanel->setURL(QString::fromStdWString(meta.itemMeta.url));
+                    metaPanel->setRating(meta.rating, false);
+                    metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);
+                    metaPanel->setTags(meta.tags);
+                    metaPanel->setNote(QString::fromStdWString(meta.note));
+                    metaPanel->setURL(QString::fromStdWString(meta.url));
                     metaPanel->setImagePreview(QPixmap());
                 }
             }
