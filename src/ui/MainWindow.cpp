@@ -500,7 +500,7 @@ void MainWindow::updateStatusBarButtonHighlights() {
         if (m_btnToggleSortOrder) {
             bool isAsc = (sortOrd == Qt::AscendingOrder);
             m_btnToggleSortOrder->setIcon(UiHelper::getIcon(isAsc ? "arrow_up_long" : "arrow_down_long", QColor("#EEEEEE"), 18));
-            m_btnToggleSortOrder->setProperty("tooltipText", isAsc ? "升序 (点击切换降序)" : "降序 (点击切换升序)");
+            m_btnToggleSortOrder->setProperty("tooltipText", isAsc ? "升序 状态中" : "降序 状态中");
         }
     }
 
