@@ -33,6 +33,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
 
     m_listView = new DropListView(this);
     m_listView->setObjectName("ColumnViewPaneListView");
+    m_listView->setFocusPolicy(Qt::NoFocus);
     m_listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_listView->setDragEnabled(true);
@@ -49,9 +50,14 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_listView->setItemDelegate(delegate);
     layout->addWidget(m_listView);
 
+    connect(m_listView, &DropListView::blankSpaceDoubleClicked, this, [this]() {
+        int paneIdx = property("paneIndex").toInt();
+        emit blankSpaceDoubleClicked(paneIdx);
+    });
+
     if (m_contentPanel) {
+        // 保留 installEventFilter 用于捕获按键快捷键 (m_keyHandler)
         m_listView->installEventFilter(m_contentPanel);
-        m_listView->viewport()->installEventFilter(m_contentPanel);
         connect(m_listView, &QListView::customContextMenuRequested, m_contentPanel, &ContentPanel::onCustomContextMenuRequested);
     }
 
@@ -252,7 +258,9 @@ void ColumnViewWidget::applyFilterState(const FilterState& state) {
 
 void ColumnViewWidget::applySort(int sortType, Qt::SortOrder sortOrder) {
     for (auto* pane : m_panes) {
-        if (pane) pane->applySort(sortType, sortOrder);
+        if (pane) {
+            pane->applySort(sortType, sortOrder);
+        }
     }
 }
 
@@ -326,10 +334,11 @@ void ColumnViewWidget::dismissSubColumns(int fromIndex) {
 ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     int newIdx = m_panes.size();
     ColumnViewPane* pane = new ColumnViewPane(path, m_contentPanel, m_container);
-    if (m_contentPanel) {
-        pane->installEventFilter(m_contentPanel);
-    }
     pane->setProperty("paneIndex", newIdx);
+
+    connect(pane, &ColumnViewPane::blankSpaceDoubleClicked, this, [this](int paneIdx) {
+        goUpColumnFromIndex(paneIdx);
+    });
     if (m_contentPanel) {
         pane->applySort(static_cast<int>(m_contentPanel->currentSortType()), m_contentPanel->currentSortOrder());
     }
@@ -420,6 +429,14 @@ void ColumnViewWidget::refreshActiveColumn() {
     }
 }
 
+void ColumnViewWidget::refreshAllColumns() {
+    for (auto* pane : m_panes) {
+        if (pane) {
+            pane->loadDirectory();
+        }
+    }
+}
+
 void ColumnViewWidget::updateMetadataForPath(const QString& path) {
     for (auto* pane : m_panes) {
         if (pane && pane->model()) {
@@ -432,8 +449,16 @@ void ColumnViewWidget::updateMetadataForPath(const QString& path) {
 }
 
 void ColumnViewWidget::goUpColumn() {
-    if (m_panes.size() > 1) {
-        dismissSubColumns(m_panes.size() - 2);
+    goUpColumnFromIndex(m_panes.size() - 1);
+}
+
+void ColumnViewWidget::goUpColumnFromIndex(int paneIndex) {
+    if (paneIndex >= 0 && paneIndex < m_panes.size()) {
+        if (paneIndex == 0 && m_panes.size() == 1) {
+            NavigationService::instance().goUp();
+            return;
+        }
+        dismissSubColumns(paneIndex);
         ColumnViewPane* newActive = rightmostPane();
         if (newActive) {
             m_activePaneIndex = m_panes.size() - 1;
