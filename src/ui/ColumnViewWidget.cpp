@@ -2,6 +2,7 @@
 #include "ContentPanel.h"
 #include "../core/DiskScanService.h"
 #include "../core/NavigationService.h"
+#include "../meta/MetaCacheDecorator.h"
 #include "DropListView.h"
 #include "ColumnItemDelegate.h"
 #include "UiHelper.h"
@@ -128,6 +129,7 @@ void ColumnViewPane::loadDirectory() {
     (void)QtConcurrent::run([weakSelf, path]() {
         if (!weakSelf) return;
         std::vector<ItemRecord> items = DiskScanService::scanDirectory(path, false, std::function<bool()>());
+        MetaCacheDecorator::decorate(items);
         QMetaObject::invokeMethod(QCoreApplication::instance(), [weakSelf, items]() {
             if (weakSelf && weakSelf->m_model) {
                 weakSelf->m_model->setRecords(items);
