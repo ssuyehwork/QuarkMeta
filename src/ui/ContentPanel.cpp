@@ -490,12 +490,16 @@ void ContentPanel::updateStatusBarStats() {
 
 void ContentPanel::recalculateAndEmitStats() {
     std::vector<ItemRecord> records;
-    if (m_currentViewMode == ColumnView && m_columnView && m_columnView->activePane() && m_columnView->activePane()->model()) {
-        records = m_columnView->activePane()->model()->allRecords();
-        qDebug() << "[ContentPanelDebug] recalculateAndEmitStats (ColumnView mode) activePaneIndex:"
-                 << (m_columnView->activePane() ? m_columnView->activePane()->property("paneIndex").toInt() : -1)
-                 << "activePanePath:" << (m_columnView->activePane() ? m_columnView->activePane()->currentPath() : "")
-                 << "recordsSize:" << records.size();
+    if (m_currentViewMode == ColumnView && m_columnView) {
+        ColumnViewPane* pane = m_columnView->rightmostPane();
+        if (!pane) pane = m_columnView->activePane();
+        if (pane && pane->model()) {
+            records = pane->model()->allRecords();
+            qDebug() << "[ContentPanelDebug] recalculateAndEmitStats (ColumnView mode) paneIndex:"
+                     << pane->property("paneIndex").toInt()
+                     << "panePath:" << pane->currentPath()
+                     << "recordsSize:" << records.size();
+        }
     } else if (m_model) {
         records = m_model->allRecords();
         qDebug() << "[ContentPanelDebug] recalculateAndEmitStats (Standard mode) recordsSize:" << records.size();
