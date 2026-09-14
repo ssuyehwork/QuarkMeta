@@ -335,6 +335,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     int newIdx = m_panes.size();
     ColumnViewPane* pane = new ColumnViewPane(path, m_contentPanel, m_container);
     pane->setProperty("paneIndex", newIdx);
+    m_activePaneIndex = newIdx;
 
     connect(pane, &ColumnViewPane::blankSpaceDoubleClicked, this, [this](int paneIdx) {
         goUpColumnFromIndex(paneIdx);
@@ -351,7 +352,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     });
 
     connect(pane, &ColumnViewPane::recordsLoaded, this, [this, pane](const std::vector<ItemRecord>&) {
-        if (pane == activePane() && m_contentPanel) {
+        if ((pane == rightmostPane() || pane == activePane()) && m_contentPanel) {
             m_contentPanel->recalculateAndEmitStats();
         }
     });
@@ -365,7 +366,6 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     });
 
     connect(pane, &ColumnViewPane::folderSelected, this, [this](const QString& folderPath, int paneIdx) {
-        m_activePaneIndex = paneIdx;
         dismissSubColumns(paneIdx);
         // 保持父列高亮：仅清空 paneIdx 右侧深层列的选区，保留 paneIdx 及其左侧父列的高亮
         for (int i = paneIdx + 1; i < m_panes.size(); ++i) {
@@ -449,7 +449,11 @@ void ColumnViewWidget::updateMetadataForPath(const QString& path) {
 }
 
 void ColumnViewWidget::goUpColumn() {
-    goUpColumnFromIndex(m_panes.size() - 1);
+    if (m_panes.size() > 1) {
+        goUpColumnFromIndex(m_panes.size() - 2);
+    } else {
+        NavigationService::instance().goUp();
+    }
 }
 
 void ColumnViewWidget::goUpColumnFromIndex(int paneIndex) {
