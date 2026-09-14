@@ -276,9 +276,8 @@ void ColumnViewWidget::applySort(int sortType, Qt::SortOrder sortOrder) {
 
 void ColumnViewWidget::setRootPath(const QString& path) {
     clearAllColumns();
-    if (path.isEmpty()) return;
-
-    if (path == "computer://") {
+    QString targetPath = path;
+    if (targetPath.isEmpty() || targetPath == "computer://") {
         appendColumn("computer://");
         m_activePaneIndex = 0;
         updatePaneWidths();

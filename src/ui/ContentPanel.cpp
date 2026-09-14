@@ -299,17 +299,18 @@ void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
 }
 
 void ContentPanel::loadDirectory(const QString& path, bool recursive) {
+    QString targetPath = (path.isEmpty() || path == "computer://") ? "computer://" : path;
     if (m_currentViewMode == ColumnView) {
-        m_currentPath = path;
+        m_currentPath = targetPath;
         m_isRecursive = recursive;
         if (m_columnView) {
-            m_columnView->setRootPath(path);
+            m_columnView->setRootPath(targetPath);
             restoreSelections();
         }
         updateStatusBarStats();
         return;
     }
-    if (m_dataLoader) m_dataLoader->loadDirectory(path, recursive);
+    if (m_dataLoader) m_dataLoader->loadDirectory(targetPath, recursive);
 }
 
 void ContentPanel::loadCategory(const QString& categoryType) {
