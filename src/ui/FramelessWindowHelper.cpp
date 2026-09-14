@@ -76,6 +76,12 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
     // 关键修正 2：必须以 Win32 原生权威状态为唯一准绳，严禁使用状态滞后的 m_window->isMaximized()
     const bool isMax = ::IsZoomed(hwnd);
 
+    // -1. 拦截 WM_ERASEBKGND：彻底消除无边框窗口首次 show() 显示时的“秒闪白”默认背景填充
+    if (msg->message == WM_ERASEBKGND) {
+        *result = 1;
+        return true;
+    }
+
     // 0. 尺寸与位置变动原生分发：第一时间校准标题栏最大化/还原图标
     if (msg->message == WM_SIZE || msg->message == WM_WINDOWPOSCHANGED) {
         if (m_titleBar) {
