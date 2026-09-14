@@ -27,7 +27,7 @@ public:
     void setFilterState(const FilterState& state);
     void applySort(int sortType, Qt::SortOrder sortOrder);
 
-    QListView* listView() const { return m_listView; }
+    DropListView* listView() const { return m_listView; }
     FilterProxyModel* proxyModel() const { return m_proxyModel; }
     DiskItemModel* model() const { return m_model; }
 
@@ -47,7 +47,7 @@ private:
     ContentPanel* m_contentPanel = nullptr;
     DiskItemModel* m_model = nullptr;
     FilterProxyModel* m_proxyModel = nullptr;
-    QListView* m_listView = nullptr;
+    DropListView* m_listView = nullptr;
 };
 
 class ColumnViewWidget : public QScrollArea {
