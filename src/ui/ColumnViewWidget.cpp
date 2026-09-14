@@ -462,19 +462,31 @@ void ColumnViewWidget::updateMetadataForPath(const QString& path) {
 }
 
 void ColumnViewWidget::goUpColumn() {
-    if (m_panes.size() > 1) {
-        goUpColumnFromIndex(m_panes.size() - 2);
-    } else {
-        NavigationService::instance().goUp();
-    }
+    goUpColumnFromIndex(m_panes.size() - 1);
 }
 
 void ColumnViewWidget::goUpColumnFromIndex(int paneIndex) {
-    if (paneIndex >= 0 && paneIndex < m_panes.size()) {
-        if (paneIndex == 0 && m_panes.size() == 1) {
+    if (m_panes.isEmpty()) {
+        NavigationService::instance().goUp();
+        return;
+    }
+
+    if (paneIndex >= m_panes.size() - 1) {
+        // 双击发生在最右侧列或背景留白处：逐级关闭最右侧列
+        if (m_panes.size() > 1) {
+            dismissSubColumns(m_panes.size() - 2);
+            ColumnViewPane* newActive = rightmostPane();
+            if (newActive) {
+                m_activePaneIndex = m_panes.size() - 1;
+                emit pathNavigated(newActive->currentPath());
+                emit selectionChanged();
+            }
+        } else {
+            // 仅剩最后一列（如盘符根目录 G:/）时，降级退回“此电脑”(computer://)
             NavigationService::instance().goUp();
-            return;
         }
+    } else if (paneIndex >= 0) {
+        // 双击发生在中间父列的空白处：裁撤该列右侧的所有子列并保持当前父列高亮
         dismissSubColumns(paneIndex);
         ColumnViewPane* newActive = rightmostPane();
         if (newActive) {
@@ -482,8 +494,6 @@ void ColumnViewWidget::goUpColumnFromIndex(int paneIndex) {
             emit pathNavigated(newActive->currentPath());
             emit selectionChanged();
         }
-    } else {
-        NavigationService::instance().goUp();
     }
 }
 
