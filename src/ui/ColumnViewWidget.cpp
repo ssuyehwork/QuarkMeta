@@ -13,6 +13,7 @@
 #include <QDir>
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -131,14 +132,17 @@ void ColumnViewPane::clearSelection() {
 
 void ColumnViewPane::loadDirectory() {
     QString path = m_path;
+    int paneIdx = property("paneIndex").toInt();
+    qDebug() << "[ColumnViewPaneDebug] loadDirectory requested for paneIndex:" << paneIdx << "path:" << path;
     QPointer<ColumnViewPane> weakSelf(this);
-    (void)QtConcurrent::run([weakSelf, path]() {
+    (void)QtConcurrent::run([weakSelf, path, paneIdx]() {
         if (!weakSelf) return;
         std::vector<ItemRecord> items = DiskScanService::scanDirectory(path, false, std::function<bool()>());
         MetaCacheDecorator::decorate(items);
-        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakSelf, items]() {
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakSelf, items, paneIdx, path]() {
             if (weakSelf && weakSelf->m_model) {
                 weakSelf->m_model->setRecords(items);
+                qDebug() << "[ColumnViewPaneDebug] loadDirectory finished for paneIndex:" << paneIdx << "path:" << path << "recordCount:" << items.size();
                 if (!weakSelf->m_pendingSelectPath.isEmpty()) {
                     weakSelf->selectItemByPath(weakSelf->m_pendingSelectPath);
                 }
@@ -346,6 +350,10 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     pane->loadDirectory();
 
     connect(pane, &ColumnViewPane::recordsLoaded, this, [this, pane](const std::vector<ItemRecord>& records) {
+        qDebug() << "[ColumnViewWidgetDebug] recordsLoaded from paneIndex:" << pane->property("paneIndex").toInt()
+                 << "isRightmost:" << (pane == rightmostPane())
+                 << "isActive:" << (pane == activePane())
+                 << "recordCount:" << records.size();
         if (pane == rightmostPane()) {
             emit activeColumnRecordsChanged(records);
         }
@@ -353,6 +361,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
 
     connect(pane, &ColumnViewPane::recordsLoaded, this, [this, pane](const std::vector<ItemRecord>&) {
         if ((pane == rightmostPane() || pane == activePane()) && m_contentPanel) {
+            qDebug() << "[ColumnViewWidgetDebug] Triggering recalculateAndEmitStats from paneIndex:" << pane->property("paneIndex").toInt();
             m_contentPanel->recalculateAndEmitStats();
         }
     });
