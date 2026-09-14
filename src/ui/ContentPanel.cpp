@@ -36,7 +36,6 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QApplication>
-#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -495,23 +494,14 @@ void ContentPanel::recalculateAndEmitStats() {
         if (!pane) pane = m_columnView->activePane();
         if (pane && pane->model()) {
             records = pane->model()->allRecords();
-            qDebug() << "[ContentPanelDebug] recalculateAndEmitStats (ColumnView mode) paneIndex:"
-                     << pane->property("paneIndex").toInt()
-                     << "panePath:" << pane->currentPath()
-                     << "recordsSize:" << records.size();
         }
     } else if (m_model) {
         records = m_model->allRecords();
-        qDebug() << "[ContentPanelDebug] recalculateAndEmitStats (Standard mode) recordsSize:" << records.size();
     }
 
-    if (records.empty()) {
-        qDebug() << "[ContentPanelDebug] recalculateAndEmitStats records empty, returning.";
-        return;
-    }
+    if (records.empty()) return;
 
     if (m_statsWorker) {
-        qDebug() << "[ContentPanelDebug] Dispatching records to ContentStatsWorker...";
         m_statsWorker->processAsync(records, m_currentFilter.showHidden);
     }
 }
