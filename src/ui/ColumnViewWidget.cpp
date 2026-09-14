@@ -170,6 +170,9 @@ ColumnViewWidget::ColumnViewWidget(ContentPanel* contentPanel, QWidget* parent)
 
     setWidget(m_container);
 
+    // 监听背景留白区域的双击事件，用于触发右侧空白区域双击回退
+    viewport()->installEventFilter(this);
+    m_container->installEventFilter(this);
     if (m_contentPanel) {
         installEventFilter(m_contentPanel);
         viewport()->installEventFilter(m_contentPanel);
@@ -419,6 +422,17 @@ void ColumnViewWidget::updatePaneWidths() {
 void ColumnViewWidget::resizeEvent(QResizeEvent* event) {
     QScrollArea::resizeEvent(event);
     updatePaneWidths();
+}
+
+bool ColumnViewWidget::eventFilter(QObject* obj, QEvent* event) {
+    if ((obj == viewport() || obj == m_container) && event && event->type() == QEvent::MouseButtonDblClick) {
+        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent && mouseEvent->button() == Qt::LeftButton) {
+            goUpColumnFromIndex(m_panes.size() - 1);
+            return true;
+        }
+    }
+    return QScrollArea::eventFilter(obj, event);
 }
 
 void ColumnViewWidget::refreshActiveColumn() {
