@@ -51,7 +51,6 @@ MainWindow::~MainWindow() = default;
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent) {
     setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint);
-    setAttribute(Qt::WA_TranslucentBackground);
     setMinimumHeight(700); // 宽度由 PanelLayoutManager::updateDynamicMinimumSize() 动态管理
     setWindowTitle("QuarkMeta");
 
