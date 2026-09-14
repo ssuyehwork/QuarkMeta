@@ -6,6 +6,7 @@ This implementation plan eliminates the first-frame "white flash" when `MainWind
 The root causes resolved:
 1. `FramelessWindowHelper::handleNativeEvent` now intercepts `WM_ERASEBKGND` Win32 native messages, returning `1` to prevent Windows OS from erasing/filling the window background with default opaque white brush prior to Qt dark UI rendering.
 2. `MainWindow` sets `setAttribute(Qt::WA_TranslucentBackground)` in its constructor to instruct Qt's compositor to handle per-pixel alpha surfaces instead of filling default opaque OS background.
+3. `MainWindow::initUi()` explicitly sets `centralC->setAttribute(Qt::WA_StyledBackground, true)` so that the central container widget properly paints its opaque QSS background, working in tandem with `WA_TranslucentBackground` to eliminate both white flash and full window transparency issues.
 
 ---
 
@@ -38,7 +39,7 @@ Interception of `WM_ERASEBKGND` in `FramelessWindowHelper::handleNativeEvent`:
 ```
 
 ### 3.2 `src/ui/MainWindow.cpp`
-Set `Qt::WA_TranslucentBackground` attribute in constructor:
+Set `Qt::WA_TranslucentBackground` attribute in constructor and `Qt::WA_StyledBackground` on `centralC`:
 
 ```cpp
 <<<<<<< SEARCH
@@ -57,9 +58,24 @@ MainWindow::MainWindow(QWidget* parent)
 >>>>>>> REPLACE
 ```
 
+```cpp
+<<<<<<< SEARCH
+void MainWindow::initUi() {
+    QWidget* centralC = new QWidget(this);
+    centralC->setObjectName("CentralWidget");
+    QVBoxLayout* mainL = new QVBoxLayout(centralC);
+=======
+void MainWindow::initUi() {
+    QWidget* centralC = new QWidget(this);
+    centralC->setObjectName("CentralWidget");
+    centralC->setAttribute(Qt::WA_StyledBackground, true);
+    QVBoxLayout* mainL = new QVBoxLayout(centralC);
+>>>>>>> REPLACE
+```
+
 ---
 
 ## 4. Build & Verification Steps
 1. Recompile QuarkMeta.
 2. Launch QuarkMeta app on Windows.
-3. Verify that the main window shows up directly with dark theme UI without any white frame or background flash on initial startup.
+3. Verify that the main window shows up directly with dark theme UI without any white frame, background flash, or content transparency on initial startup.

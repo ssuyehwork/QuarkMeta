@@ -92,4 +92,4 @@
 
 # 13. 无边框窗口首帧合成与闪白消除规范
 - **原生 WM_ERASEBKGND 拦截**: 针对无边框窗口（`FramelessWindowHelper`），`handleNativeEvent()` 中必须显式拦截 `WM_ERASEBKGND` 消息，设置 `*result = 1` 并返回 `true`，阻止 Windows 原生系统在绘制前使用默认不透明白底擦除填充背景。
-- **半透明合成表面强锁**: 所有主窗口及顶级无边框窗口在构造阶段必须调用 `setAttribute(Qt::WA_TranslucentBackground)`，告知 Qt 合成引擎按每像素透明表面处理，彻底杜绝首次 `show()` 展示时的“秒闪白”视觉缺陷。
+- **半透明合成表面强锁与中央控件绘制双锁**: 所有主窗口及顶级无边框窗口在构造阶段必须调用 `setAttribute(Qt::WA_TranslucentBackground)`，同时中央容器控件（如 `CentralWidget`）必须配套调用 `setAttribute(Qt::WA_StyledBackground, true)`，确保 QSS 定义的深色底色被正常绘制出来，彻底杜绝首次 `show()` 展示时的“秒闪白”与整窗透明不可见缺陷。

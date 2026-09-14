@@ -91,6 +91,7 @@ MainWindow::MainWindow(QWidget* parent)
 void MainWindow::initUi() {
     QWidget* centralC = new QWidget(this);
     centralC->setObjectName("CentralWidget");
+    centralC->setAttribute(Qt::WA_StyledBackground, true);
     QVBoxLayout* mainL = new QVBoxLayout(centralC);
     mainL->setContentsMargins(0, 0, 0, 0);
     mainL->setSpacing(0);
