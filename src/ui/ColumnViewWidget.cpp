@@ -134,7 +134,14 @@ void ColumnViewPane::loadDirectory() {
     QPointer<ColumnViewPane> weakSelf(this);
     (void)QtConcurrent::run([weakSelf, path]() {
         if (!weakSelf) return;
-        std::vector<ItemRecord> items = DiskScanService::scanDirectory(path, false, std::function<bool()>());
+        std::vector<ItemRecord> items;
+        if (path.isEmpty() || path == "computer://") {
+            for (const QFileInfo& drive : QDir::drives()) {
+                items.push_back(ItemRecord::create(drive.absolutePath()));
+            }
+        } else {
+            items = DiskScanService::scanDirectory(path, false, std::function<bool()>());
+        }
         MetaCacheDecorator::decorate(items);
         QMetaObject::invokeMethod(QCoreApplication::instance(), [weakSelf, items]() {
             if (weakSelf && weakSelf->m_model) {
@@ -270,6 +277,13 @@ void ColumnViewWidget::applySort(int sortType, Qt::SortOrder sortOrder) {
 void ColumnViewWidget::setRootPath(const QString& path) {
     clearAllColumns();
     if (path.isEmpty()) return;
+
+    if (path == "computer://") {
+        appendColumn("computer://");
+        m_activePaneIndex = 0;
+        updatePaneWidths();
+        return;
+    }
 
     QString targetFilePath;
     QString dirPath = path;
