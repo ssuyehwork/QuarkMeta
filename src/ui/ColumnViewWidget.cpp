@@ -326,6 +326,12 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
         }
     });
 
+    connect(pane, &ColumnViewPane::recordsLoaded, this, [this, pane](const std::vector<ItemRecord>&) {
+        if (pane == activePane() && m_contentPanel) {
+            m_contentPanel->recalculateAndEmitStats();
+        }
+    });
+
     connect(pane, &ColumnViewPane::selectionChanged, this, [this, pane]() {
         m_activePaneIndex = pane->property("paneIndex").toInt();
         emit selectionChanged();
@@ -343,6 +349,9 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
         }
         appendColumn(folderPath);
         emit pathNavigated(folderPath);
+        if (m_contentPanel) {
+            m_contentPanel->recalculateAndEmitStats();
+        }
     });
 
     connect(pane, &ColumnViewPane::fileSelected, this, [this](const QString& filePath, int paneIdx) {
