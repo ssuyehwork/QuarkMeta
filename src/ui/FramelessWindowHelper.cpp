@@ -76,6 +76,12 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
     // 关键修正 2：必须以 Win32 原生权威状态为唯一准绳，严禁使用状态滞后的 m_window->isMaximized()
     const bool isMax = ::IsZoomed(hwnd);
 
+    // -1. 拦截 WM_ERASEBKGND：彻底消除无边框窗口首次 show() 显示时的“秒闪白”默认背景填充
+    if (msg->message == WM_ERASEBKGND) {
+        *result = 1;
+        return true;
+    }
+
     // 0. 尺寸与位置变动原生分发：第一时间校准标题栏最大化/还原图标
     if (msg->message == WM_SIZE || msg->message == WM_WINDOWPOSCHANGED) {
         if (m_titleBar) {
@@ -209,6 +215,23 @@ bool FramelessWindowHelper::handleNativeEvent(void* message, qintptr* result) {
             *result = 0;
             return true;
         }
+    }
+
+    // 6. 最大化状态下拖拽标题栏：自动还原并跟随鼠标移动 (Restore + Move)
+    if (msg->message == WM_NCLBUTTONDOWN && msg->wParam == HTCAPTION && isMax) {
+        ::SendMessage(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+        POINT pt;
+        GetCursorPos(&pt);
+        RECT rc;
+        GetWindowRect(hwnd, &rc);
+        int winWidth = rc.right - rc.left;
+        int newX = pt.x - winWidth / 2;
+        int newY = pt.y - 10;
+        SetWindowPos(hwnd, nullptr, newX, newY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        ReleaseCapture();
+        ::SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, msg->lParam);
+        *result = 0;
+        return true;
     }
 #else
     Q_UNUSED(message);
