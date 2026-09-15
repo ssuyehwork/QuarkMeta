@@ -12,6 +12,7 @@
 namespace QuarkMeta {
 
 class ContentPanel;
+class QLabel;
 
 class ColumnViewPane : public QWidget {
     Q_OBJECT
@@ -48,6 +49,7 @@ private:
     DiskItemModel* m_model = nullptr;
     FilterProxyModel* m_proxyModel = nullptr;
     DropListView* m_listView = nullptr;
+    QLabel* m_emptyFilterHintLabel = nullptr;
 };
 
 class ColumnViewWidget : public QScrollArea {
