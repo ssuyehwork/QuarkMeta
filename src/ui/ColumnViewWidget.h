@@ -4,7 +4,6 @@
 #include <QListView>
 #include <QHBoxLayout>
 #include <QScrollArea>
-#include <QLabel>
 #include <QList>
 #include "models/DiskItemModel.h"
 #include "models/FilterProxyModel.h"
@@ -49,7 +48,6 @@ private:
     DiskItemModel* m_model = nullptr;
     FilterProxyModel* m_proxyModel = nullptr;
     DropListView* m_listView = nullptr;
-    QLabel* m_emptyFilterHintLabel = nullptr;
 };
 
 class ColumnViewWidget : public QScrollArea {
