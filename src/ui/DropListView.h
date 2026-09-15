@@ -42,7 +42,6 @@ private:
     QRect m_folderHeaderRect;
     int m_folderCount = 0;
 
-    bool m_filesCollapsed = false;
     QRect m_fileHeaderRect;
     int m_fileCount = 0;
 };

@@ -28,20 +28,107 @@ namespace QuarkMeta {
  */
 class TreeItemDelegate : public RenameCapableDelegate {
 public:
-    explicit TreeItemDelegate(QObject* parent = nullptr, bool showStatus = true, bool drawMiniCards = false)
-        : RenameCapableDelegate(parent), m_drawMiniCards(drawMiniCards) { Q_UNUSED(showStatus); }
+    explicit TreeItemDelegate(QObject* parent = nullptr, bool showStatus = true, bool drawMiniCards = false, bool enableSectionHeaders = false)
+        : RenameCapableDelegate(parent), m_drawMiniCards(drawMiniCards), m_enableSectionHeaders(enableSectionHeaders) { Q_UNUSED(showStatus); }
 
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         QSize sz = QStyledItemDelegate::sizeHint(option, index);
         const QAbstractItemView* view = qobject_cast<const QAbstractItemView*>(option.widget);
         int zoom = view ? view->iconSize().height() + 8 : 30;
-        sz.setHeight(RowLayoutEngine::calculateRowHeight(zoom));
+        int rowH = RowLayoutEngine::calculateRowHeight(zoom);
+
+        if (m_enableSectionHeaders) {
+            const QAbstractItemModel* m = index.model();
+            bool isFolder = (index.data(TypeRole).toString() == "folder");
+            bool hasHeaderAbove = false;
+            if (isFolder && index.row() == 0) {
+                hasHeaderAbove = true;
+            } else if (!isFolder && m) {
+                bool prevIsFolder = (index.row() > 0)
+                    ? (m->index(index.row() - 1, 0).data(TypeRole).toString() == "folder")
+                    : true;
+                if (prevIsFolder) {
+                    hasHeaderAbove = true;
+                }
+            }
+            if (hasHeaderAbove) {
+                rowH += 26;
+            }
+        }
+
+        sz.setHeight(rowH);
         return sz;
+    }
+
+    void countSections(const QAbstractItemModel* m, int& folderCount, int& fileFirstRow) const {
+        folderCount = 0;
+        fileFirstRow = -1;
+        if (!m) return;
+        int total = m->rowCount();
+        for (int i = 0; i < total; ++i) {
+            if (m->index(i, 0).data(TypeRole).toString() == "folder") {
+                folderCount++;
+            } else {
+                if (fileFirstRow == -1) fileFirstRow = i;
+            }
+        }
     }
 
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         if (!index.isValid()) return;
 
+        QStyleOptionViewItem opt = option;
+
+        // ── Section Header 内嵌绘制与多列统一向下偏移 ──────────────────────────────
+        if (m_enableSectionHeaders) {
+            const QAbstractItemModel* m = index.model();
+            bool isFolder = (index.data(TypeRole).toString() == "folder");
+            bool hasHeaderAbove = false;
+            QString sectionText;
+
+            if (isFolder && index.row() == 0) {
+                hasHeaderAbove = true;
+                if (index.column() == 0) {
+                    int folderCount = 0, fileFirstRow = -1;
+                    countSections(m, folderCount, fileFirstRow);
+                    sectionText = QString("文件夹 (%1)").arg(folderCount);
+                }
+            } else if (!isFolder && m) {
+                bool prevIsFolder = (index.row() > 0)
+                    ? (m->index(index.row() - 1, 0).data(TypeRole).toString() == "folder")
+                    : true;
+                if (prevIsFolder) {
+                    hasHeaderAbove = true;
+                    if (index.column() == 0) {
+                        int total = m->rowCount();
+                        int fileCount = 0;
+                        for (int i = index.row(); i < total; ++i) {
+                            if (m->index(i, 0).data(TypeRole).toString() != "folder") fileCount++;
+                        }
+                        sectionText = QString("文件 (%1)").arg(fileCount);
+                    }
+                }
+            }
+
+            if (hasHeaderAbove) {
+                QRect headerArea(option.rect.left(), option.rect.top(), option.rect.width(), 26);
+                opt.rect = QRect(option.rect.left(), option.rect.top() + 26,
+                                 option.rect.width(), option.rect.height() - 26);
+
+                if (index.column() == 0 && !sectionText.isEmpty()) {
+                    painter->save();
+                    QFont headerFont("Microsoft YaHei", 9, QFont::Bold);
+                    painter->setFont(headerFont);
+                    painter->setPen(QColor("#A0A0A0"));
+                    QFontMetrics fm(headerFont);
+                    int textW = fm.horizontalAdvance(sectionText) + 8;
+                    QRect textRect(headerArea.left() + 8, headerArea.top(), textW, headerArea.height());
+                    painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, sectionText);
+                    painter->restore();
+                }
+            }
+        }
+        // ── End Section Header ───────────────────────────────────────────────────
 
         bool selected = option.state & QStyle::State_Selected;
         bool hover = option.state & QStyle::State_MouseOver;
@@ -71,10 +158,9 @@ public:
         }
         painter->setBrush(bg);
         painter->setPen(Qt::NoPen);
-        painter->drawRect(option.rect);
+        painter->drawRect(opt.rect);
         painter->restore();
 
-        QStyleOptionViewItem opt = option;
         if (index.column() >= 1) {
             opt.displayAlignment = Qt::AlignCenter;
         }
@@ -96,7 +182,7 @@ public:
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setRenderHint(QPainter::SmoothPixmapTransform);
 
-            RowLayout layout = RowLayoutEngine::calculate(option.rect, option.rect.height());
+            RowLayout layout = RowLayoutEngine::calculate(opt.rect, opt.rect.height());
             QRect squareRect = layout.cardRect;
             QRect textRect   = layout.textRect;
 
@@ -172,7 +258,7 @@ public:
             painter->setPen(textColor);
             painter->setFont(option.font);
 
-            QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideMiddle, textRect.width() - 10);
+            QString elidedText = opt.fontMetrics.elidedText(name, Qt::ElideMiddle, textRect.width() - 10);
             painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
 
             painter->restore();
@@ -187,8 +273,8 @@ public:
 
                 int iconSize = 16;
                 // 计算单元格物理中心坐标
-                QRect centeredRect(option.rect.left() + (option.rect.width() - iconSize) / 2,
-                                   option.rect.top() + (option.rect.height() - iconSize) / 2,
+                QRect centeredRect(opt.rect.left() + (opt.rect.width() - iconSize) / 2,
+                                   opt.rect.top() + (opt.rect.height() - iconSize) / 2,
                                    iconSize, iconSize);
 
                 if (isPinned) {
@@ -201,10 +287,10 @@ public:
 
                 if (rating > 0 || isSelected || !colorName.isEmpty()) {
                     // 🚀【统一调用 RatingBarLayout】：彻底消灭绘制时的 18 / -4 / 12 硬编码！
-                    RatingBarMetrics rm = RatingBarLayout::calculate(option.rect, RatingBarMode::TreeRow);
+                    RatingBarMetrics rm = RatingBarLayout::calculate(opt.rect, RatingBarMode::TreeRow);
 
-                    CardPainterHelper::drawRatingStars(painter, rm.banRect, option.rect, rm.starSize, rm.starSpacing, 
-                                                      option.rect.top(), option.rect.height(), rm.starsStartX,
+                    CardPainterHelper::drawRatingStars(painter, rm.banRect, opt.rect, rm.starSize, rm.starSpacing,
+                                                      opt.rect.top(), opt.rect.height(), rm.starsStartX,
                                                       rating, colorName, isSelected);
                 }
             }
@@ -227,6 +313,7 @@ public:
 
 private:
     bool m_drawMiniCards;
+    bool m_enableSectionHeaders = false;
 };
 
 } // namespace QuarkMeta
