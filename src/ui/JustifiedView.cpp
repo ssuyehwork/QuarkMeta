@@ -3,6 +3,7 @@
 #endif
 #include "JustifiedView.h"
 #include "CardLayoutEngine.h"
+#include "UiHelper.h"
 #include "../core/ModelContract.h"
 #include <QPainter>
 #include <QScrollBar>
@@ -235,13 +236,6 @@ void JustifiedView::mousePressEvent(QMouseEvent* event) {
             return;
         }
 
-        if (m_fileCount > 0 && m_fileHeaderRect.contains(contentPos)) {
-            m_filesCollapsed = !m_filesCollapsed;
-            doLayout();
-            viewport()->update();
-            event->accept();
-            return;
-        }
 
         QModelIndex idx = indexAt(event->pos());
         if (!idx.isValid()) {
@@ -334,16 +328,17 @@ void JustifiedView::paintEvent(QPaintEvent*) {
         painter.save();
         painter.translate(0, -scrollY);
 
-        QRect headerRect = m_folderHeaderRect;
-        painter.fillRect(headerRect, QColor("#222222"));
-
         painter.setPen(QColor("#A0A0A0"));
         QFont headerFont("Microsoft YaHei", 9, QFont::Bold);
         painter.setFont(headerFont);
 
-        QString arrow = m_foldersCollapsed ? "▶" : "▼";
-        QString headerText = QString("  %1  文件夹 (%2)").arg(arrow).arg(m_folderCount);
-        painter.drawText(headerRect, Qt::AlignLeft | Qt::AlignVCenter, headerText);
+        QString iconKey = m_foldersCollapsed ? "chevron_right" : "chevron_down";
+        QRect iconRect(m_folderHeaderRect.left() + 8, m_folderHeaderRect.top() + (m_folderHeaderRect.height() - 12) / 2, 12, 12);
+        UiHelper::getIcon(iconKey, QColor("#A0A0A0"), 12).paint(&painter, iconRect, Qt::AlignCenter);
+
+        QString headerText = QString("文件夹 (%1)").arg(m_folderCount);
+        QRect textRect(m_folderHeaderRect.left() + 8 + 12 + 6, m_folderHeaderRect.top(), m_folderHeaderRect.width() - 26, m_folderHeaderRect.height());
+        painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, headerText);
 
         painter.restore();
     }
@@ -352,16 +347,13 @@ void JustifiedView::paintEvent(QPaintEvent*) {
         painter.save();
         painter.translate(0, -scrollY);
 
-        QRect headerRect = m_fileHeaderRect;
-        painter.fillRect(headerRect, QColor("#222222"));
-
         painter.setPen(QColor("#A0A0A0"));
         QFont headerFont("Microsoft YaHei", 9, QFont::Bold);
         painter.setFont(headerFont);
 
-        QString arrow = m_filesCollapsed ? "▶" : "▼";
-        QString headerText = QString("  %1  文件 (%2)").arg(arrow).arg(m_fileCount);
-        painter.drawText(headerRect, Qt::AlignLeft | Qt::AlignVCenter, headerText);
+        QString headerText = QString("文件 (%1)").arg(m_fileCount);
+        QRect textRect(m_fileHeaderRect.left() + 8, m_fileHeaderRect.top(), m_fileHeaderRect.width() - 8, m_fileHeaderRect.height());
+        painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, headerText);
 
         painter.restore();
     }
@@ -575,7 +567,7 @@ void JustifiedView::doLayout() {
         m_fileHeaderRect = QRect(margin, currentY, containerWidth, 32);
         currentY += 36;
 
-        if (!m_filesCollapsed) {
+        if (true) {
             if (m_layoutMode == GridMode) {
                 int itemWidth = m_targetRowHeight + cardPadding;
                 int itemHeight = m_targetRowHeight + extraHeight;
