@@ -4,6 +4,7 @@
 #include <QListView>
 #include <QHBoxLayout>
 #include <QScrollArea>
+#include <QLabel>
 #include <QList>
 #include "models/DiskItemModel.h"
 #include "models/FilterProxyModel.h"
@@ -12,7 +13,6 @@
 namespace QuarkMeta {
 
 class ContentPanel;
-class QLabel;
 
 class ColumnViewPane : public QWidget {
     Q_OBJECT
