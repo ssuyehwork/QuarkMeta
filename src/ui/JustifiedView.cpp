@@ -3,6 +3,7 @@
 #endif
 #include "JustifiedView.h"
 #include "CardLayoutEngine.h"
+#include "UiHelper.h"
 #include "../core/ModelContract.h"
 #include <QPainter>
 #include <QScrollBar>
