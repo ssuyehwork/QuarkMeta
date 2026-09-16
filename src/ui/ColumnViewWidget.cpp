@@ -137,22 +137,27 @@ void ColumnViewPane::tryPendingSelection() {
     if (!m_proxyModel || !m_listView) return;
 
     if (!m_pendingSelectPaths.isEmpty() && m_proxyModel->rowCount() > 0) {
+        QSet<QString> normalizedPending;
+        normalizedPending.reserve(m_pendingSelectPaths.size());
+        for (const QString& p : m_pendingSelectPaths) {
+            normalizedPending.insert(QDir::toNativeSeparators(QDir::cleanPath(p)).toLower());
+        }
+
         QItemSelection sel;
         QModelIndex lastIdx;
         for (int r = 0; r < m_proxyModel->rowCount(); ++r) {
             QModelIndex idx = m_proxyModel->index(r, 0);
-            QString itemPath = QDir::toNativeSeparators(QDir::cleanPath(idx.data(PathRole).toString()));
-            for (const QString& p : m_pendingSelectPaths) {
-                QString cleanP = QDir::toNativeSeparators(QDir::cleanPath(p));
-                if (QString::compare(itemPath, cleanP, Qt::CaseInsensitive) == 0) {
-                    sel.select(idx, idx);
-                    lastIdx = idx;
-                    break;
-                }
+            QString itemPath = QDir::toNativeSeparators(QDir::cleanPath(idx.data(PathRole).toString())).toLower();
+            if (normalizedPending.contains(itemPath)) {
+                sel.select(idx, idx);
+                lastIdx = idx;
             }
         }
         if (!sel.isEmpty() && m_listView->selectionModel()) {
-            m_listView->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            {
+                QSignalBlocker blocker(m_listView->selectionModel());
+                m_listView->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            }
             if (lastIdx.isValid()) {
                 m_listView->setCurrentIndex(lastIdx);
                 m_listView->scrollTo(lastIdx, QAbstractItemView::PositionAtCenter);
@@ -176,6 +181,7 @@ void ColumnViewPane::tryPendingSelection() {
                 (!targetName.isEmpty() && QString::compare(itemName, targetName, Qt::CaseInsensitive) == 0)) {
                 m_listView->setCurrentIndex(idx);
                 if (m_listView->selectionModel()) {
+                    QSignalBlocker blocker(m_listView->selectionModel());
                     m_listView->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
                 }
                 m_listView->scrollTo(idx, QAbstractItemView::PositionAtCenter);
