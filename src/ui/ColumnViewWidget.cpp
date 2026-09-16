@@ -844,7 +844,9 @@ void ColumnViewWidget::updatePaneWidths() {
     if (m_panes.isEmpty()) return;
     int defaultWidth = 230;
     for (auto* pane : m_panes) {
+        pane->setFixedWidth(defaultWidth);
         pane->setMinimumWidth(defaultWidth);
+        pane->setMaximumWidth(defaultWidth);
     }
 }
 
