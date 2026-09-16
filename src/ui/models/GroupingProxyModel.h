@@ -6,7 +6,7 @@
 #include <QVector>
 #include <QSet>
 #include <functional>
-#include "../core/ModelContract.h"
+#include "../../core/ItemRecord.h"
 
 namespace QuarkMeta {
 
@@ -25,7 +25,7 @@ struct GroupDefinition {
     QString id;
     QString titleTemplate; // e.g., "文件夹 (%1)" or "文件 (%1)"
     bool isCollapsible = true;
-    std::function<bool(const QModelIndex&)> matchPredicate;
+    std::function<bool(const ItemRecord&)> matchPredicate;
 };
 
 class GroupingProxyModel : public QAbstractProxyModel {
@@ -58,10 +58,9 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
     bool isGroupHeader(const QModelIndex& index) const;
+    bool toggleGroupCollapsed(const QString& groupId);
     bool setGroupCollapsed(const QString& groupId, bool collapsed);
     bool isGroupCollapsed(const QString& groupId) const;
-
-    QModelIndex groupHeaderIndex(const QString& groupId) const;
 
 public slots:
     void rebuildMapping();
@@ -71,13 +70,14 @@ private slots:
     void onSourceReset();
 
 private:
-    struct GroupNode {
-        GroupDefinition definition;
-        QVector<int> sourceRows;
+    struct MappingItem {
+        bool isHeader = false;
+        QString groupId;
+        int sourceRow = -1;
     };
 
-    QVector<GroupDefinition> m_groupDefs;
-    QVector<GroupNode> m_activeGroups;
+    QVector<GroupDefinition> m_groups;
+    QVector<MappingItem> m_mapping;
     QSet<QString> m_collapsedGroupIds;
 
     void setupDefaultGroups();
