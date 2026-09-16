@@ -167,7 +167,7 @@ void ContentPanel::initUi() {
         restoreSelections();
     });
     m_viewStack->addWidget(m_gridView);
-    m_viewStack->addWidget(m_treeView);
+    m_viewStack->addWidget(m_listContainerWidget ? m_listContainerWidget : static_cast<QWidget*>(m_treeView));
     m_viewStack->addWidget(m_columnView);
     m_viewStack->setCurrentWidget(m_gridView);
 
@@ -205,7 +205,71 @@ void ContentPanel::initGridView() {
 }
 
 void ContentPanel::initListView() {
-    m_treeView = new DropTreeView(this);
+    m_listContainerWidget = new QWidget(this);
+    auto* layout = new QVBoxLayout(m_listContainerWidget);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    // 1. 文件夹专用代理模型
+    m_folderProxyModel = new FilterProxyModel(this);
+    m_folderProxyModel->setSourceModel(m_model);
+    m_folderProxyModel->setFilterKeyColumn(0);
+    m_folderProxyModel->setDynamicSortFilter(true);
+    FilterState folderOnlyFilter = m_currentFilter;
+    folderOnlyFilter.showFolders = true;
+    folderOnlyFilter.showFiles = false;
+    m_folderProxyModel->currentFilter = folderOnlyFilter;
+
+    // 2. 文件专用代理模型
+    m_fileProxyModel = new FilterProxyModel(this);
+    m_fileProxyModel->setSourceModel(m_model);
+    m_fileProxyModel->setFilterKeyColumn(0);
+    m_fileProxyModel->setDynamicSortFilter(true);
+    FilterState fileOnlyFilter = m_currentFilter;
+    fileOnlyFilter.showFolders = false;
+    fileOnlyFilter.showFiles = true;
+    m_fileProxyModel->currentFilter = fileOnlyFilter;
+
+    // 3. 文件夹折叠标题栏
+    m_listFolderHeader = new FolderSectionHeaderBar(m_listContainerWidget);
+    m_listFolderHeader->hide();
+    layout->addWidget(m_listFolderHeader);
+
+    // 4. 文件夹列表视图
+    m_folderTreeView = new DropTreeView(m_listContainerWidget);
+    m_folderTreeView->setFrameShape(QFrame::NoFrame);
+    m_folderTreeView->setAlternatingRowColors(true);
+    m_folderTreeView->setSortingEnabled(true);
+    m_folderTreeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_folderTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_folderTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_folderTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_folderTreeView->setRootIsDecorated(false);
+    m_folderTreeView->setItemDelegate(new TreeItemDelegate(this, true, true));
+    m_folderTreeView->setModel(m_folderProxyModel);
+    m_folderTreeView->installEventFilter(this);
+    m_folderTreeView->viewport()->installEventFilter(this);
+    m_folderTreeView->hide();
+    layout->addWidget(m_folderTreeView);
+
+    auto* fHeader = m_folderTreeView->header();
+    fHeader->setFixedHeight(32);
+    fHeader->setMinimumSectionSize(0);
+    m_folderTreeView->applyColumnPolicies();
+
+    connect(m_listFolderHeader, &FolderSectionHeaderBar::collapseToggled, this, [this](bool collapsed) {
+        if (m_folderTreeView && m_listFolderHeader->count() > 0) {
+            m_folderTreeView->setVisible(!collapsed);
+        }
+    });
+
+    // 5. 文件分界标题栏
+    m_listFileHeader = new FileSectionHeaderBar(m_listContainerWidget);
+    m_listFileHeader->hide();
+    layout->addWidget(m_listFileHeader);
+
+    // 6. 文件列表视图
+    m_treeView = new DropTreeView(m_listContainerWidget);
     m_treeView->setFrameShape(QFrame::NoFrame);
     m_treeView->setAlternatingRowColors(true);
     m_treeView->setSortingEnabled(true);
@@ -215,19 +279,55 @@ void ContentPanel::initListView() {
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_treeView->setRootIsDecorated(false);
     m_treeView->setItemDelegate(new TreeItemDelegate(this, true, true));
-    m_treeView->setModel(m_proxyModel);
+    m_treeView->setModel(m_fileProxyModel);
     m_treeView->installEventFilter(this);
     m_treeView->viewport()->installEventFilter(this);
+    layout->addWidget(m_treeView, 1);
 
     auto* header = m_treeView->header();
     header->setFixedHeight(32);
     header->setMinimumSectionSize(0);
     m_treeView->applyColumnPolicies();
 
+    connect(m_folderTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &ContentPanel::onSelectionChanged);
+    connect(m_folderTreeView, &QTreeView::customContextMenuRequested, this, &ContentPanel::onCustomContextMenuRequested);
+    connect(m_folderTreeView, &QTreeView::doubleClicked, this, &ContentPanel::onDoubleClicked);
+    connect(m_folderTreeView, SIGNAL(pathsDropped(QStringList,QModelIndex)), this, SLOT(onPathsDropped(QStringList,QModelIndex)));
+
     connect(m_treeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &ContentPanel::onSelectionChanged);
     connect(m_treeView, &QTreeView::customContextMenuRequested, this, &ContentPanel::onCustomContextMenuRequested);
     connect(m_treeView, &QTreeView::doubleClicked, this, &ContentPanel::onDoubleClicked);
     connect(m_treeView, SIGNAL(pathsDropped(QStringList,QModelIndex)), this, SLOT(onPathsDropped(QStringList,QModelIndex)));
+
+    auto updateListSectionCounts = [this]() {
+        if (!m_folderProxyModel || !m_fileProxyModel) return;
+        int folderCount = m_folderProxyModel->rowCount();
+        int fileCount = m_fileProxyModel->rowCount();
+
+        if (m_listFolderHeader) {
+            m_listFolderHeader->setCount(folderCount);
+            m_listFolderHeader->setVisible(folderCount > 0);
+        }
+        if (m_folderTreeView) {
+            if (folderCount == 0) {
+                m_folderTreeView->hide();
+            } else {
+                bool collapsed = m_listFolderHeader ? m_listFolderHeader->isCollapsed() : false;
+                m_folderTreeView->setVisible(!collapsed);
+                int folderH = qMin(200, qMax(32, folderCount * 30 + 32));
+                m_folderTreeView->setMaximumHeight(folderH);
+            }
+        }
+        if (m_listFileHeader) {
+            m_listFileHeader->setCount(fileCount);
+            m_listFileHeader->setVisible(fileCount > 0 && folderCount > 0);
+        }
+    };
+
+    connect(m_folderProxyModel, &QAbstractItemModel::modelReset, this, updateListSectionCounts);
+    connect(m_folderProxyModel, &QAbstractItemModel::layoutChanged, this, updateListSectionCounts);
+    connect(m_fileProxyModel, &QAbstractItemModel::modelReset, this, updateListSectionCounts);
+    connect(m_fileProxyModel, &QAbstractItemModel::layoutChanged, this, updateListSectionCounts);
 
     if (m_treeView->verticalScrollBar()) {
         connect(m_treeView->verticalScrollBar(), &QScrollBar::valueChanged, this, [this]() {
@@ -684,7 +784,7 @@ void ContentPanel::restoreActiveView() {
     if (m_currentViewMode == ColumnView) {
         m_viewStack->setCurrentWidget(m_columnView);
     } else {
-        m_viewStack->setCurrentWidget(m_currentViewMode == ListView ? static_cast<QWidget*>(m_treeView) : static_cast<QWidget*>(m_gridView));
+        m_viewStack->setCurrentWidget(m_currentViewMode == ListView ? (m_listContainerWidget ? m_listContainerWidget : static_cast<QWidget*>(m_treeView)) : static_cast<QWidget*>(m_gridView));
     }
 }
 
@@ -701,23 +801,34 @@ void ContentPanel::restoreSelections() {
         return;
     }
 
-    QAbstractItemView* view = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
-    DiskItemModel* diskModel = m_diskModel;
-    QSortFilterProxyModel* proxy = m_proxyModel;
+    QList<QAbstractItemView*> views;
+    if (m_currentViewMode == ListView) {
+        if (m_folderTreeView) views << m_folderTreeView;
+        if (m_treeView) views << m_treeView;
+    } else {
+        if (auto* v = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget())) views << v;
+    }
 
-    if (view && view->selectionModel() && diskModel && proxy) {
-        QSignalBlocker blocker(view->selectionModel());
-        QItemSelection sel;
-        QModelIndex lastIdx;
-        const auto& recs = diskModel->allRecords();
-        for (size_t i = 0; i < recs.size(); ++i) {
-            if (m_selectionState.selectedPaths.contains(recs[i].path)) {
-                QModelIndex pIdx = proxy->mapFromSource(diskModel->index(static_cast<int>(i), 0));
-                if (pIdx.isValid()) { sel.select(pIdx, pIdx); lastIdx = pIdx; }
+    for (auto* view : views) {
+        if (!view || !view->selectionModel()) continue;
+        QSortFilterProxyModel* proxy = qobject_cast<QSortFilterProxyModel*>(view->model());
+        if (!proxy) proxy = m_proxyModel;
+        DiskItemModel* diskModel = m_diskModel;
+
+        if (diskModel && proxy) {
+            QSignalBlocker blocker(view->selectionModel());
+            QItemSelection sel;
+            QModelIndex lastIdx;
+            const auto& recs = diskModel->allRecords();
+            for (size_t i = 0; i < recs.size(); ++i) {
+                if (m_selectionState.selectedPaths.contains(recs[i].path)) {
+                    QModelIndex pIdx = proxy->mapFromSource(diskModel->index(static_cast<int>(i), 0));
+                    if (pIdx.isValid()) { sel.select(pIdx, pIdx); lastIdx = pIdx; }
+                }
             }
+            view->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            if (lastIdx.isValid()) { view->scrollTo(lastIdx); if (m_isPendingEdit) view->edit(lastIdx); }
         }
-        view->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-        if (lastIdx.isValid()) { view->scrollTo(lastIdx); if (m_isPendingEdit) view->edit(lastIdx); }
     }
 
     m_isRestoringSelections = false;
