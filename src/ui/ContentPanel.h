@@ -219,6 +219,11 @@ private:
     FilterProxyModel* m_folderProxyModel = nullptr;
     FilterProxyModel* m_fileProxyModel = nullptr;
 
+    QWidget* m_gridContainerWidget = nullptr;
+    FolderSectionHeaderBar* m_gridFolderHeader = nullptr;
+    DropJustifiedView* m_folderGridView = nullptr;
+    FileSectionHeaderBar* m_gridFileHeader = nullptr;
+
     QStackedWidget* m_viewStack = nullptr;
     QAbstractItemView* m_gridView = nullptr;
     DropTreeView* m_treeView = nullptr;
