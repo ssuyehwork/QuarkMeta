@@ -13,8 +13,93 @@
 #include <QDir>
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QPainter>
 
 namespace QuarkMeta {
+
+class ColumnBlankCanvasWidget : public QWidget {
+public:
+    explicit ColumnBlankCanvasWidget(ColumnViewWidget* columnView, ContentPanel* contentPanel, QWidget* parent = nullptr)
+        : QWidget(parent), m_columnView(columnView), m_contentPanel(contentPanel) {
+        setObjectName("ColumnBlankCanvasWidget");
+        setFixedWidth(230);
+        setAcceptDrops(true);
+        setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(this, &QWidget::customContextMenuRequested, this, &ColumnBlankCanvasWidget::onContextMenuRequested);
+    }
+
+protected:
+    void mousePressEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::LeftButton && m_columnView) {
+            m_columnView->clearAllSelections();
+        }
+        QWidget::mousePressEvent(event);
+    }
+
+    void mouseDoubleClickEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::LeftButton && m_columnView) {
+            m_columnView->goUpColumn();
+        }
+        QWidget::mouseDoubleClickEvent(event);
+    }
+
+    void dragEnterEvent(QDragEnterEvent* event) override {
+        if (event->mimeData() && event->mimeData()->hasUrls()) {
+            event->acceptProposedAction();
+            m_isDragHover = true;
+            update();
+        }
+    }
+
+    void dragLeaveEvent(QDragLeaveEvent* event) override {
+        m_isDragHover = false;
+        update();
+        QWidget::dragLeaveEvent(event);
+    }
+
+    void dropEvent(QDropEvent* event) override {
+        m_isDragHover = false;
+        update();
+        if (m_contentPanel && m_columnView && m_columnView->rightmostPane()) {
+            QString targetDir = m_columnView->rightmostPane()->currentPath();
+            QStringList paths;
+            for (const QUrl& url : event->mimeData()->urls()) {
+                paths << url.toLocalFile();
+            }
+            if (!paths.isEmpty()) {
+                m_contentPanel->onPathsDropped(paths, QModelIndex(), targetDir);
+                event->acceptProposedAction();
+            }
+        }
+    }
+
+    void paintEvent(QPaintEvent* event) override {
+        Q_UNUSED(event);
+        if (m_isDragHover) {
+            QPainter painter(this);
+            painter.setRenderHint(QPainter::Antialiasing);
+            QColor highlightColor("#3498db");
+            highlightColor.setAlphaF(0.35f);
+            painter.fillRect(rect(), highlightColor);
+            painter.setPen(QPen(QColor("#3498db"), 2, Qt::DashLine));
+            painter.drawRect(rect().adjusted(1, 1, -1, -1));
+        }
+    }
+
+private:
+    void onContextMenuRequested(const QPoint& pos) {
+        if (m_contentPanel) {
+            m_contentPanel->onCustomContextMenuRequested(mapToGlobal(pos));
+        }
+    }
+
+    ColumnViewWidget* m_columnView = nullptr;
+    ContentPanel* m_contentPanel = nullptr;
+    bool m_isDragHover = false;
+};
 
 ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, QWidget* parent)
     : QWidget(parent), m_path(path), m_contentPanel(contentPanel) 
@@ -443,6 +528,9 @@ ColumnViewWidget::ColumnViewWidget(ContentPanel* contentPanel, QWidget* parent)
     m_layout->setSpacing(0);
     m_layout->setAlignment(Qt::AlignLeft);
 
+    m_blankCanvasWidget = new ColumnBlankCanvasWidget(this, m_contentPanel, m_container);
+    m_layout->addWidget(m_blankCanvasWidget);
+
     setWidget(m_container);
 
     // 监听背景留白区域的双击事件，用于触发右侧空白区域双击回退
@@ -697,7 +785,13 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     });
 
     m_panes.append(pane);
+    if (m_blankCanvasWidget) {
+        m_layout->removeWidget(m_blankCanvasWidget);
+    }
     m_layout->addWidget(pane);
+    if (m_blankCanvasWidget) {
+        m_layout->addWidget(m_blankCanvasWidget);
+    }
     updatePaneWidths();
     updateParentHighlights();
     for (int i = 0; i < m_panes.size(); ++i) {
@@ -711,6 +805,15 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     }
     scrollToRightmostPane();
     return pane;
+}
+
+void ColumnViewWidget::clearAllSelections() {
+    for (auto* pane : m_panes) {
+        if (pane) {
+            pane->clearSelection();
+        }
+    }
+    emit selectionChanged();
 }
 
 void ColumnViewWidget::clearOtherSelections(int activePaneIdx) {
@@ -741,9 +844,7 @@ void ColumnViewWidget::updatePaneWidths() {
     if (m_panes.isEmpty()) return;
     int defaultWidth = 230;
     for (auto* pane : m_panes) {
-        pane->setFixedWidth(defaultWidth);
         pane->setMinimumWidth(defaultWidth);
-        pane->setMaximumWidth(defaultWidth);
     }
 }
 

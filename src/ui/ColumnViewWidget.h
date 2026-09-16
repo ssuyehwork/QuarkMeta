@@ -102,6 +102,8 @@ private:
     void updatePaneWidths();
     void updateParentHighlights();
 
+    void clearAllSelections();
+
     ContentPanel* m_contentPanel = nullptr;
     FilterState m_currentFilter;
     int m_activePaneIndex = -1;
@@ -109,6 +111,7 @@ private:
     QWidget* m_container = nullptr;
     QHBoxLayout* m_layout = nullptr;
     QList<ColumnViewPane*> m_panes;
+    QWidget* m_blankCanvasWidget = nullptr;
 };
 
 } // namespace QuarkMeta
