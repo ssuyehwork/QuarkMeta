@@ -138,6 +138,7 @@ public:
     ItemModelBase* model() const { return m_model; }
     QSortFilterProxyModel* getProxyModel() const { return m_proxyModel; }
     QSortFilterProxyModel* getActiveProxyModel() const;
+    QModelIndex mapToActiveViewModelIndex(const QModelIndex& sourceOrFilterIndex) const;
     QStringList getSelectedPaths() const;
     QList<int> getSelectedTrashIds() const;
     QModelIndexList getSelectedIndexes() const;

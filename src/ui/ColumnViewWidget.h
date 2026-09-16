@@ -48,6 +48,7 @@ private:
     ContentPanel* m_contentPanel = nullptr;
     DiskItemModel* m_model = nullptr;
     FilterProxyModel* m_proxyModel = nullptr;
+    GroupingProxyModel* m_groupingModel = nullptr;
     DropListView* m_listView = nullptr;
     QLabel* m_emptyFilterHintLabel = nullptr;
 };

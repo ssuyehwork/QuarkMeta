@@ -49,15 +49,10 @@ public:
             painter->fillRect(option.rect, QColor("#1E1E1E"));
             if (index.column() == 0) {
                 QString title = index.data(GroupingProxyModel::GroupTitleRole).toString();
-                bool isCollapsible = index.data(GroupingProxyModel::GroupIsCollapsibleRole).toBool();
-                bool isCollapsed = index.data(GroupingProxyModel::GroupIsCollapsedRole).toBool();
-
                 painter->setPen(QColor("#A0A0A0"));
                 painter->setFont(option.font);
-                QRect textRect = option.rect.adjusted(12, 0, -12, 0);
-
-                QString arrow = isCollapsible ? (isCollapsed ? QString::fromUtf8("▶ ") : QString::fromUtf8("▼ ")) : QString();
-                painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, arrow + title);
+                QRect textRect = option.rect.adjusted(6, 0, -6, 0);
+                painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, title);
             }
             return;
         }

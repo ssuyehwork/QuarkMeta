@@ -1,7 +1,8 @@
 #ifndef DROPLISTVIEW_H
 #define DROPLISTVIEW_H
 
-#include <QListView>
+#include <QTreeView>
+#include <QHeaderView>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
@@ -10,10 +11,11 @@
 
 namespace QuarkMeta {
 
-class DropListView : public QListView {
+class DropListView : public QTreeView {
     Q_OBJECT
 public:
     explicit DropListView(QWidget* parent = nullptr);
+    void setModel(QAbstractItemModel* model) override;
 
 protected:
     void dragEnterEvent(QDragEnterEvent* event) override;

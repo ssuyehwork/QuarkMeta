@@ -7,14 +7,58 @@
 
 namespace QuarkMeta {
 
-DropListView::DropListView(QWidget* parent) : QListView(parent) {
+DropListView::DropListView(QWidget* parent) : QTreeView(parent) {
+    setHeaderHidden(true);
+    setIndentation(0);
+    setRootIsDecorated(true);
     setDragEnabled(true);
     setAcceptDrops(true);
+
+    connect(this, &QTreeView::collapsed, this, [this](const QModelIndex& index) {
+        if (index.data(GroupingProxyModel::IsGroupHeaderRole).toBool()) {
+            QString groupId = index.data(GroupingProxyModel::GroupIdRole).toString();
+            bool isCollapsible = index.data(GroupingProxyModel::GroupIsCollapsibleRole).toBool();
+            if (!isCollapsible) {
+                setExpanded(index, true);
+            } else if (auto* groupModel = qobject_cast<GroupingProxyModel*>(model())) {
+                groupModel->setGroupCollapsed(groupId, true);
+            }
+        }
+    });
+
+    connect(this, &QTreeView::expanded, this, [this](const QModelIndex& index) {
+        if (index.data(GroupingProxyModel::IsGroupHeaderRole).toBool()) {
+            QString groupId = index.data(GroupingProxyModel::GroupIdRole).toString();
+            if (auto* groupModel = qobject_cast<GroupingProxyModel*>(model())) {
+                groupModel->setGroupCollapsed(groupId, false);
+            }
+        }
+    });
+}
+
+void DropListView::setModel(QAbstractItemModel* model) {
+    QTreeView::setModel(model);
+    if (auto* groupModel = qobject_cast<GroupingProxyModel*>(model)) {
+        connect(groupModel, &QAbstractItemModel::modelReset, this, [this, groupModel]() {
+            for (int r = 0; r < groupModel->rowCount(); ++r) {
+                QModelIndex groupIdx = groupModel->index(r, 0);
+                QString groupId = groupIdx.data(GroupingProxyModel::GroupIdRole).toString();
+                bool isCollapsed = groupModel->isGroupCollapsed(groupId);
+                bool isCollapsible = groupIdx.data(GroupingProxyModel::GroupIsCollapsibleRole).toBool();
+
+                if (!isCollapsible || !isCollapsed) {
+                    setExpanded(groupIdx, true);
+                } else {
+                    setExpanded(groupIdx, false);
+                }
+            }
+        });
+    }
 }
 
 void DropListView::dragEnterEvent(QDragEnterEvent* event) {
     if (!ViewDragDropHelper::handleDragEnter(this, event)) {
-        QListView::dragEnterEvent(event);
+        QTreeView::dragEnterEvent(event);
     }
 }
 
@@ -35,14 +79,14 @@ void DropListView::dragMoveEvent(QDragMoveEvent* event) {
     }
 
     if (!ViewDragDropHelper::handleDragMove(this, event)) {
-        QListView::dragMoveEvent(event);
+        QTreeView::dragMoveEvent(event);
     }
 }
 
 void DropListView::dragLeaveEvent(QDragLeaveEvent* event) {
     clearDropHighlight();
     ViewDragDropHelper::clearHover(this);
-    QListView::dragLeaveEvent(event);
+    QTreeView::dragLeaveEvent(event);
 }
 
 void DropListView::clearDropHighlight() {
@@ -60,7 +104,7 @@ void DropListView::dropEvent(QDropEvent* event) {
     if (ViewDragDropHelper::handleDrop(this, event, paths, targetIdx)) {
         emit pathsDropped(paths, targetIdx);
     } else {
-        QListView::dropEvent(event);
+        QTreeView::dropEvent(event);
     }
 }
 
@@ -69,19 +113,7 @@ void DropListView::startDrag(Qt::DropActions supportedActions) {
 }
 
 void DropListView::mousePressEvent(QMouseEvent* event) {
-    QModelIndex idx = indexAt(event->pos());
-    if (idx.isValid()) {
-        auto* groupModel = qobject_cast<GroupingProxyModel*>(model());
-        if (groupModel && groupModel->isGroupHeader(idx)) {
-            QString groupId = idx.data(GroupingProxyModel::GroupIdRole).toString();
-            bool isCollapsible = idx.data(GroupingProxyModel::GroupIsCollapsibleRole).toBool();
-            if (isCollapsible) {
-                groupModel->toggleGroupCollapsed(groupId);
-                return;
-            }
-        }
-    }
-    QListView::mousePressEvent(event);
+    QTreeView::mousePressEvent(event);
 }
 
 void DropListView::mouseDoubleClickEvent(QMouseEvent* event) {
@@ -93,7 +125,7 @@ void DropListView::mouseDoubleClickEvent(QMouseEvent* event) {
             return;
         }
     }
-    QListView::mouseDoubleClickEvent(event);
+    QTreeView::mouseDoubleClickEvent(event);
 }
 
 } // namespace QuarkMeta

@@ -76,6 +76,7 @@ public:
     int rowHeight(const QModelIndex& index) const { return QTreeView::rowHeight(index); }
     void setEmptyHint(const QString& hint) { m_emptyHint = hint; }
 
+    void setModel(QAbstractItemModel* model) override;
     void applyColumnPolicies();
 
 signals:

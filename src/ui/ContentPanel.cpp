@@ -590,11 +590,12 @@ void ContentPanel::selectAndScrollToItem(const QString& path) {
     for (int i = 0; i < m_proxyModel->rowCount(); ++i) {
         QModelIndex proxyIdx = m_proxyModel->index(i, 0);
         if (proxyIdx.data(PathRole).toString() == path) {
+            QModelIndex viewIdx = mapToActiveViewModelIndex(proxyIdx);
             QAbstractItemView* view = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
-            if (view && view->selectionModel()) {
-                view->scrollTo(proxyIdx);
-                view->setCurrentIndex(proxyIdx);
-                view->selectionModel()->select(proxyIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            if (view && view->selectionModel() && viewIdx.isValid()) {
+                view->scrollTo(viewIdx);
+                view->setCurrentIndex(viewIdx);
+                view->selectionModel()->select(viewIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
             }
             break;
         }
@@ -626,6 +627,25 @@ QSortFilterProxyModel* ContentPanel::getActiveProxyModel() const {
         }
     }
     return m_proxyModel;
+}
+
+QModelIndex ContentPanel::mapToActiveViewModelIndex(const QModelIndex& srcIdx) const {
+    if (!srcIdx.isValid()) return QModelIndex();
+    QAbstractItemView* activeView = nullptr;
+    if (m_currentViewMode == ColumnView) {
+        if (m_columnView && m_columnView->activePane()) {
+            activeView = m_columnView->activePane()->listView();
+        }
+    } else {
+        activeView = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
+    }
+
+    if (!activeView || !activeView->model()) return srcIdx;
+
+    if (auto* groupModel = qobject_cast<GroupingProxyModel*>(activeView->model())) {
+        return groupModel->mapFromSource(srcIdx);
+    }
+    return srcIdx;
 }
 
 QStringList ContentPanel::getSelectedPaths() const {

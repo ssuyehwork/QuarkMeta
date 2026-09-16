@@ -32,6 +32,9 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_proxyModel = new FilterProxyModel(this);
     m_proxyModel->setSourceModel(m_model);
 
+    m_groupingModel = new GroupingProxyModel(this);
+    m_groupingModel->setSourceModel(m_proxyModel);
+
     m_listView = new DropListView(this);
     m_listView->setObjectName("ColumnViewPaneListView");
     m_listView->setFocusPolicy(Qt::StrongFocus);
@@ -42,7 +45,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_listView->setDropIndicatorShown(true);
     m_listView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_listView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_listView->setModel(m_proxyModel);
+    m_listView->setModel(m_groupingModel);
 
     auto checkEmptyHint = [this]() {
         tryPendingSelection();

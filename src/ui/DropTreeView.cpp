@@ -31,6 +31,28 @@ DropTreeView::DropTreeView(QWidget* parent) : QTreeView(parent) {
     setDragEnabled(true);
     setAcceptDrops(true);
     setDropIndicatorShown(true);
+    setRootIsDecorated(true);
+
+    connect(this, &QTreeView::collapsed, this, [this](const QModelIndex& index) {
+        if (index.data(GroupingProxyModel::IsGroupHeaderRole).toBool()) {
+            QString groupId = index.data(GroupingProxyModel::GroupIdRole).toString();
+            bool isCollapsible = index.data(GroupingProxyModel::GroupIsCollapsibleRole).toBool();
+            if (!isCollapsible) {
+                setExpanded(index, true);
+            } else if (auto* groupModel = qobject_cast<GroupingProxyModel*>(model())) {
+                groupModel->setGroupCollapsed(groupId, true);
+            }
+        }
+    });
+
+    connect(this, &QTreeView::expanded, this, [this](const QModelIndex& index) {
+        if (index.data(GroupingProxyModel::IsGroupHeaderRole).toBool()) {
+            QString groupId = index.data(GroupingProxyModel::GroupIdRole).toString();
+            if (auto* groupModel = qobject_cast<GroupingProxyModel*>(model())) {
+                groupModel->setGroupCollapsed(groupId, false);
+            }
+        }
+    });
 
     // 🚀【强力锁定 QPalette】：强制设定暗色 Base 与 AlternateBase，防止原生 Windows 调色板在交替行露白
     QPalette pal = palette();
@@ -98,19 +120,27 @@ void DropTreeView::resizeEvent(QResizeEvent* event) {
     applyColumnPolicies();
 }
 
-void DropTreeView::mousePressEvent(QMouseEvent* event) {
-    QModelIndex idx = indexAt(event->pos());
-    if (idx.isValid()) {
-        auto* groupModel = qobject_cast<GroupingProxyModel*>(model());
-        if (groupModel && groupModel->isGroupHeader(idx)) {
-            QString groupId = idx.data(GroupingProxyModel::GroupIdRole).toString();
-            bool isCollapsible = idx.data(GroupingProxyModel::GroupIsCollapsibleRole).toBool();
-            if (isCollapsible) {
-                groupModel->toggleGroupCollapsed(groupId);
-                return;
+void DropTreeView::setModel(QAbstractItemModel* model) {
+    QTreeView::setModel(model);
+    if (auto* groupModel = qobject_cast<GroupingProxyModel*>(model)) {
+        connect(groupModel, &QAbstractItemModel::modelReset, this, [this, groupModel]() {
+            for (int r = 0; r < groupModel->rowCount(); ++r) {
+                QModelIndex groupIdx = groupModel->index(r, 0);
+                QString groupId = groupIdx.data(GroupingProxyModel::GroupIdRole).toString();
+                bool isCollapsed = groupModel->isGroupCollapsed(groupId);
+                bool isCollapsible = groupIdx.data(GroupingProxyModel::GroupIsCollapsibleRole).toBool();
+
+                if (!isCollapsible || !isCollapsed) {
+                    setExpanded(groupIdx, true);
+                } else {
+                    setExpanded(groupIdx, false);
+                }
             }
-        }
+        });
     }
+}
+
+void DropTreeView::mousePressEvent(QMouseEvent* event) {
     QTreeView::mousePressEvent(event);
 }
 
