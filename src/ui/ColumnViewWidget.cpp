@@ -196,8 +196,8 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
             } else {
                 bool collapsed = m_folderHeader ? m_folderHeader->isCollapsed() : false;
                 m_folderListView->setVisible(!collapsed);
-                int folderH = qMin(180, qMax(28, folderCount * 28 + 4));
-                m_folderListView->setMaximumHeight(folderH);
+                int folderH = qMax(28, folderCount * 28 + 4);
+                m_folderListView->setFixedHeight(folderH);
             }
         }
         if (m_fileHeader) {
