@@ -121,9 +121,8 @@ void ColumnViewPane::selectItemByPath(const QString& targetPath) {
     tryPendingSelection();
 }
 
-void ColumnViewPane::setPendingSelectNames(const QSet<QString>& names) {
-    qDebug() << "[ColumnViewPane::setPendingSelectNames] 收到待选文件名数量:" << names.size() << "当前路径:" << m_path;
-    m_pendingSelectNames = names;
+void ColumnViewPane::setPendingSelectPaths(const QSet<QString>& paths) {
+    m_pendingSelectPaths = paths;
     tryPendingSelection();
 }
 
@@ -137,32 +136,30 @@ void ColumnViewPane::applySort(int sortType, Qt::SortOrder sortOrder) {
 void ColumnViewPane::tryPendingSelection() {
     if (!m_proxyModel || !m_listView) return;
 
-    qDebug() << "[ColumnViewPane::tryPendingSelection] 开始尝试选区恢复，m_pendingSelectNames 数量:" << m_pendingSelectNames.size()
-             << "m_pendingSelectPath:" << m_pendingSelectPath << "当前代理模型行数:" << m_proxyModel->rowCount();
-
-    if (!m_pendingSelectNames.isEmpty() && m_proxyModel->rowCount() > 0) {
+    if (!m_pendingSelectPaths.isEmpty() && m_proxyModel->rowCount() > 0) {
         QItemSelection sel;
         QModelIndex lastIdx;
         for (int r = 0; r < m_proxyModel->rowCount(); ++r) {
             QModelIndex idx = m_proxyModel->index(r, 0);
-            QString itemName = QFileInfo(idx.data(PathRole).toString()).fileName();
-            if (m_pendingSelectNames.contains(itemName)) {
-                sel.select(idx, idx);
-                lastIdx = idx;
+            QString itemPath = QDir::toNativeSeparators(QDir::cleanPath(idx.data(PathRole).toString()));
+            for (const QString& p : m_pendingSelectPaths) {
+                QString cleanP = QDir::toNativeSeparators(QDir::cleanPath(p));
+                if (QString::compare(itemPath, cleanP, Qt::CaseInsensitive) == 0) {
+                    sel.select(idx, idx);
+                    lastIdx = idx;
+                    break;
+                }
             }
         }
-        qDebug() << "[ColumnViewPane::tryPendingSelection] 批量匹配找到索引数量:" << sel.indexes().size();
         if (!sel.isEmpty() && m_listView->selectionModel()) {
             m_listView->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
             if (lastIdx.isValid()) {
                 m_listView->setCurrentIndex(lastIdx);
                 m_listView->scrollTo(lastIdx, QAbstractItemView::PositionAtCenter);
             }
-            m_pendingSelectNames.clear();
+            m_pendingSelectPaths.clear();
             emit selectionChanged();
             return;
-        } else {
-            qDebug() << "[ColumnViewPane::tryPendingSelection] 批量索引为空，保留 m_pendingSelectNames";
         }
     }
 
@@ -227,8 +224,7 @@ void ColumnViewPane::loadDirectory() {
                 if (!weakSelf->m_pendingSelectPath.isEmpty()) {
                     weakSelf->selectItemByPath(weakSelf->m_pendingSelectPath);
                 }
-                if (!weakSelf->m_pendingSelectNames.isEmpty()) {
-                    qDebug() << "[ColumnViewPane::loadDirectory] 异步装载完成，准备执行 tryPendingSelection，挂起文件名数量:" << weakSelf->m_pendingSelectNames.size();
+                if (!weakSelf->m_pendingSelectPaths.isEmpty()) {
                     weakSelf->tryPendingSelection();
                 }
                 // 触发图标与缩略图提取管线
