@@ -411,10 +411,30 @@ void ContentPanel::setViewMode(ViewMode mode) {
         }
     }
 
-    // 🚀【视图切换选区无损同步】：在新激活的视图中同步恢复之前的选中高亮与聚焦位置
+    // 🚀【视图切换选区无损同步】：在新激活的视图中批量恢复全部多选高亮，绝不逐个清空冲刷
     if (!savedSelectedPaths.isEmpty()) {
-        for (const QString& selPath : savedSelectedPaths) {
-            selectAndScrollToPath(selPath);
+        QAbstractItemView* curView = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
+        if (curView && curView->selectionModel() && m_proxyModel) {
+            QSet<QString> targetSet(savedSelectedPaths.begin(), savedSelectedPaths.end());
+            QItemSelection batchSelection;
+            QModelIndex firstSelectedIdx;
+
+            for (int r = 0; r < m_proxyModel->rowCount(); ++r) {
+                QModelIndex idx = m_proxyModel->index(r, 0);
+                if (targetSet.contains(idx.data(PathRole).toString())) {
+                    batchSelection.select(idx, idx);
+                    if (!firstSelectedIdx.isValid()) {
+                        firstSelectedIdx = idx;
+                    }
+                }
+            }
+
+            // 一次性原子注入全部多选，并保留高亮行
+            curView->selectionModel()->select(batchSelection, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            if (firstSelectedIdx.isValid()) {
+                curView->setCurrentIndex(firstSelectedIdx);
+                curView->scrollTo(firstSelectedIdx, QAbstractItemView::EnsureVisible);
+            }
         }
     }
 
