@@ -417,6 +417,7 @@ void ContentPanel::setViewMode(ViewMode mode) {
         for (const QString& selPath : savedSelectedPaths) {
             m_pendingSelectNames.insert(QFileInfo(selPath).fileName());
         }
+        qDebug() << "[ContentPanel::setViewMode] 保存选区数量:" << savedSelectedPaths.size() << "挂起文件名数量:" << m_pendingSelectNames.size();
         restoreSelections();
     }
 
@@ -687,11 +688,15 @@ void ContentPanel::restoreActiveView() {
 }
 
 void ContentPanel::restoreSelections() {
+    qDebug() << "[ContentPanel::restoreSelections] 触发选区恢复，当前模式:" << m_currentViewMode << "待选文件名数量:" << m_pendingSelectNames.size();
     if (m_pendingSelectNames.isEmpty()) return;
 
     if (m_currentViewMode == ColumnView) {
         if (m_columnView && m_columnView->rightmostPane()) {
+            qDebug() << "[ContentPanel::restoreSelections] 转发待选文件名给 ColumnView rightmostPane";
             m_columnView->rightmostPane()->setPendingSelectNames(m_pendingSelectNames);
+        } else {
+            qDebug() << "[ContentPanel::restoreSelections] ColumnView 或 rightmostPane 为空，恢复中断";
         }
         m_pendingSelectNames.clear();
         return;
@@ -700,6 +705,11 @@ void ContentPanel::restoreSelections() {
     QAbstractItemView* view = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
     DiskItemModel* diskModel = m_diskModel;
     QSortFilterProxyModel* proxy = m_proxyModel;
+
+    if (diskModel && diskModel->rowCount() == 0) {
+        qDebug() << "[ContentPanel::restoreSelections] diskModel 为空，保留 m_pendingSelectNames 等待装载完成";
+        return;
+    }
 
     if (view && view->selectionModel() && diskModel && proxy) {
         QItemSelection sel;
@@ -711,10 +721,15 @@ void ContentPanel::restoreSelections() {
                 if (pIdx.isValid()) { sel.select(pIdx, pIdx); lastIdx = pIdx; }
             }
         }
-        view->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-        if (lastIdx.isValid()) { view->scrollTo(lastIdx); if (m_isPendingEdit) view->edit(lastIdx); }
+        qDebug() << "[ContentPanel::restoreSelections] 标准视图查找到匹配索引数量:" << sel.indexes().size();
+        if (!sel.isEmpty()) {
+            view->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            if (lastIdx.isValid()) { view->scrollTo(lastIdx); if (m_isPendingEdit) view->edit(lastIdx); }
+            m_pendingSelectNames.clear();
+        } else {
+            qDebug() << "[ContentPanel::restoreSelections] 选区匹配为空，保留 m_pendingSelectNames";
+        }
     }
-    m_pendingSelectNames.clear();
 }
 
 void ContentPanel::setPendingSelectName(const QString& name, bool edit) {

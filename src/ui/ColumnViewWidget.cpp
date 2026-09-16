@@ -122,6 +122,7 @@ void ColumnViewPane::selectItemByPath(const QString& targetPath) {
 }
 
 void ColumnViewPane::setPendingSelectNames(const QSet<QString>& names) {
+    qDebug() << "[ColumnViewPane::setPendingSelectNames] 收到待选文件名数量:" << names.size() << "当前路径:" << m_path;
     m_pendingSelectNames = names;
     tryPendingSelection();
 }
@@ -136,6 +137,9 @@ void ColumnViewPane::applySort(int sortType, Qt::SortOrder sortOrder) {
 void ColumnViewPane::tryPendingSelection() {
     if (!m_proxyModel || !m_listView) return;
 
+    qDebug() << "[ColumnViewPane::tryPendingSelection] 开始尝试选区恢复，m_pendingSelectNames 数量:" << m_pendingSelectNames.size()
+             << "m_pendingSelectPath:" << m_pendingSelectPath << "当前代理模型行数:" << m_proxyModel->rowCount();
+
     if (!m_pendingSelectNames.isEmpty() && m_proxyModel->rowCount() > 0) {
         QItemSelection sel;
         QModelIndex lastIdx;
@@ -147,6 +151,7 @@ void ColumnViewPane::tryPendingSelection() {
                 lastIdx = idx;
             }
         }
+        qDebug() << "[ColumnViewPane::tryPendingSelection] 批量匹配找到索引数量:" << sel.indexes().size();
         if (!sel.isEmpty() && m_listView->selectionModel()) {
             m_listView->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
             if (lastIdx.isValid()) {
@@ -156,6 +161,8 @@ void ColumnViewPane::tryPendingSelection() {
             m_pendingSelectNames.clear();
             emit selectionChanged();
             return;
+        } else {
+            qDebug() << "[ColumnViewPane::tryPendingSelection] 批量索引为空，保留 m_pendingSelectNames";
         }
     }
 
@@ -221,6 +228,7 @@ void ColumnViewPane::loadDirectory() {
                     weakSelf->selectItemByPath(weakSelf->m_pendingSelectPath);
                 }
                 if (!weakSelf->m_pendingSelectNames.isEmpty()) {
+                    qDebug() << "[ColumnViewPane::loadDirectory] 异步装载完成，准备执行 tryPendingSelection，挂起文件名数量:" << weakSelf->m_pendingSelectNames.size();
                     weakSelf->tryPendingSelection();
                 }
                 // 触发图标与缩略图提取管线
