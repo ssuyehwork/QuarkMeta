@@ -510,13 +510,7 @@ void ContentPanel::onSelectionChanged() {
 }
 
 void ContentPanel::emitSelectionChangedSignal() {
-    QList<QModelIndex> indexes = getSelectedIndexes();
-    QStringList paths;
-    paths.reserve(qMin(indexes.size(), 50));
-    for (const auto& idx : indexes) {
-        if (idx.isValid()) paths.append(idx.data(PathRole).toString());
-        if (paths.size() >= 50) break;
-    }
+    QStringList paths = getSelectedPaths();
     emit selectionChanged(paths);
     updateStatusBarStats();
 }
