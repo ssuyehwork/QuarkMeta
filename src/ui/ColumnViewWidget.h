@@ -85,6 +85,7 @@ public:
     void applyFilterState(const FilterState& state);
     void goUpColumn();
     void goUpColumnFromIndex(int paneIndex);
+    void clearAllSelections();
 
 signals:
     void pathNavigated(const QString& path);
@@ -101,8 +102,6 @@ private:
     void clearOtherSelections(int activePaneIdx);
     void updatePaneWidths();
     void updateParentHighlights();
-
-    void clearAllSelections();
 
     ContentPanel* m_contentPanel = nullptr;
     FilterState m_currentFilter;
