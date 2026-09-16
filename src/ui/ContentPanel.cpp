@@ -587,15 +587,17 @@ void ContentPanel::selectAndScrollToItem(const QString& path) {
         return;
     }
     if (!m_proxyModel || path.isEmpty()) return;
-    for (int i = 0; i < m_proxyModel->rowCount(); ++i) {
-        QModelIndex proxyIdx = m_proxyModel->index(i, 0);
-        if (proxyIdx.data(PathRole).toString() == path) {
-            QModelIndex viewIdx = mapToActiveViewModelIndex(proxyIdx);
-            QAbstractItemView* view = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
-            if (view && view->selectionModel() && viewIdx.isValid()) {
-                view->scrollTo(viewIdx);
-                view->setCurrentIndex(viewIdx);
-                view->selectionModel()->select(viewIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    QAbstractItemView* view = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
+    QAbstractItemModel* viewModel = view ? view->model() : m_proxyModel;
+    if (!viewModel) return;
+
+    for (int i = 0; i < viewModel->rowCount(); ++i) {
+        QModelIndex vIdx = viewModel->index(i, 0);
+        if (vIdx.data(PathRole).toString() == path) {
+            if (view && view->selectionModel()) {
+                view->scrollTo(vIdx);
+                view->setCurrentIndex(vIdx);
+                view->selectionModel()->select(vIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
             }
             break;
         }
@@ -629,24 +631,6 @@ QSortFilterProxyModel* ContentPanel::getActiveProxyModel() const {
     return m_proxyModel;
 }
 
-QModelIndex ContentPanel::mapToActiveViewModelIndex(const QModelIndex& srcIdx) const {
-    if (!srcIdx.isValid()) return QModelIndex();
-    QAbstractItemView* activeView = nullptr;
-    if (m_currentViewMode == ColumnView) {
-        if (m_columnView && m_columnView->activePane()) {
-            activeView = m_columnView->activePane()->listView();
-        }
-    } else {
-        activeView = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
-    }
-
-    if (!activeView || !activeView->model()) return srcIdx;
-
-    if (auto* groupModel = qobject_cast<GroupingProxyModel*>(activeView->model())) {
-        return groupModel->mapFromSource(srcIdx);
-    }
-    return srcIdx;
-}
 
 QStringList ContentPanel::getSelectedPaths() const {
     QStringList paths;
