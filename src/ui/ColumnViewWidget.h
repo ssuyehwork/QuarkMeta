@@ -8,6 +8,7 @@
 #include <QLabel>
 #include "models/DiskItemModel.h"
 #include "models/FilterProxyModel.h"
+#include "models/GroupingProxyModel.h"
 #include "DropListView.h"
 
 namespace QuarkMeta {
