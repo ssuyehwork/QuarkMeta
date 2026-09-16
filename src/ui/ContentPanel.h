@@ -18,6 +18,7 @@
 namespace QuarkMeta {
 
 class DropTreeView;
+class DropJustifiedView;
 class ContentKeyHandler;
 class ContentDataLoader;
 class ContentFileOpsHandler;

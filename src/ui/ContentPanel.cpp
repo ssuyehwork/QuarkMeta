@@ -15,6 +15,7 @@
 #include "ColumnViewWidget.h"
 #include "ThumbnailDelegate.h"
 #include "TreeItemDelegate.h"
+#include "CardLayoutEngine.h"
 #include "UiHelper.h"
 #include "ToolTipOverlay.h"
 
@@ -272,7 +273,7 @@ void ContentPanel::initGridView() {
             } else {
                 bool collapsed = m_gridFolderHeader ? m_gridFolderHeader->isCollapsed() : false;
                 m_folderGridView->setVisible(!collapsed);
-                int cardH = m_zoomLevel + ThumbnailDelegate::extraHeight() + 20;
+                int cardH = m_zoomLevel + CardLayoutEngine::extraHeight() + 20;
                 m_folderGridView->setMaximumHeight(cardH);
             }
         }
