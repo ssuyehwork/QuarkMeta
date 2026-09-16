@@ -123,6 +123,7 @@ void ColumnViewPane::selectItemByPath(const QString& targetPath) {
 
 void ColumnViewPane::setPendingSelectPaths(const QSet<QString>& paths) {
     m_pendingSelectPaths = paths;
+    m_pendingSelectPath.clear();
     tryPendingSelection();
 }
 
@@ -157,12 +158,15 @@ void ColumnViewPane::tryPendingSelection() {
             {
                 QSignalBlocker blocker(m_listView->selectionModel());
                 m_listView->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                if (lastIdx.isValid()) {
+                    m_listView->selectionModel()->setCurrentIndex(lastIdx, QItemSelectionModel::NoUpdate);
+                }
             }
             if (lastIdx.isValid()) {
-                m_listView->setCurrentIndex(lastIdx);
                 m_listView->scrollTo(lastIdx, QAbstractItemView::PositionAtCenter);
             }
             m_pendingSelectPaths.clear();
+            m_pendingSelectPath.clear();
             emit selectionChanged();
             return;
         }
@@ -227,11 +231,10 @@ void ColumnViewPane::loadDirectory() {
                     weakSelf->m_proxyModel->setSortType(static_cast<int>(weakSelf->m_contentPanel->currentSortType()));
                     weakSelf->m_proxyModel->sort(0, weakSelf->m_contentPanel->currentSortOrder());
                 }
-                if (!weakSelf->m_pendingSelectPath.isEmpty()) {
-                    weakSelf->selectItemByPath(weakSelf->m_pendingSelectPath);
-                }
                 if (!weakSelf->m_pendingSelectPaths.isEmpty()) {
                     weakSelf->tryPendingSelection();
+                } else if (!weakSelf->m_pendingSelectPath.isEmpty()) {
+                    weakSelf->selectItemByPath(weakSelf->m_pendingSelectPath);
                 }
                 // 触发图标与缩略图提取管线
                 int count = weakSelf->m_model->rowCount();
