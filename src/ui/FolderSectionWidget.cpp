@@ -8,6 +8,7 @@ FolderSectionHeaderBar::FolderSectionHeaderBar(QWidget* parent)
     : QFrame(parent)
 {
     setObjectName("FolderSectionHeaderBar");
+    setFrameShape(QFrame::NoFrame);
     setFixedHeight(28);
     setCursor(Qt::PointingHandCursor);
 
@@ -65,6 +66,7 @@ FileSectionHeaderBar::FileSectionHeaderBar(QWidget* parent)
     : QFrame(parent)
 {
     setObjectName("FileSectionHeaderBar");
+    setFrameShape(QFrame::NoFrame);
     setFixedHeight(28);
 
     auto* layout = new QHBoxLayout(this);
