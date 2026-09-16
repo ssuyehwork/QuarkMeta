@@ -383,6 +383,7 @@ void ContentPanel::setViewMode(ViewMode mode) {
     if (m_currentViewMode == mode) {
         return;
     }
+    QStringList savedSelectedPaths = getSelectedPaths();
     ViewMode oldMode = m_currentViewMode;
     m_currentViewMode = mode;
     int minZoom = (mode == ListView) ? 30 : 93;
@@ -407,6 +408,13 @@ void ContentPanel::setViewMode(ViewMode mode) {
             if (!m_diskModel || m_diskModel->rowCount() == 0) {
                 loadDirectory(m_currentPath, m_isRecursive);
             }
+        }
+    }
+
+    // 🚀【视图切换选区无损同步】：在新激活的视图中同步恢复之前的选中高亮与聚焦位置
+    if (!savedSelectedPaths.isEmpty()) {
+        for (const QString& selPath : savedSelectedPaths) {
+            selectAndScrollToPath(selPath);
         }
     }
 
