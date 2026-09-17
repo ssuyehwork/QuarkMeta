@@ -115,8 +115,6 @@ public:
     // 4. 视图与控制器引用
     QStackedWidget* viewStack() const { return m_viewStack; }
     QAbstractItemView* gridView() const { return m_gridView; }
-    DropJustifiedView* folderGridView() const { return m_folderGridView; }
-    DropTreeView* folderTreeView() const { return m_folderTreeView; }
     QTreeView* treeView() const;
     class ColumnViewWidget* columnView() const { return m_columnView; }
     DropTreeView* dropTreeView() const { return m_treeView; }
@@ -215,6 +213,7 @@ private:
     // UI 组件指针
     QVBoxLayout* m_mainLayout = nullptr;
     class ContentHeaderWidget* m_headerWidget = nullptr;
+    QScrollArea* m_listScrollArea = nullptr;
     QWidget* m_listContainerWidget = nullptr;
     FolderSectionHeaderBar* m_listFolderHeader = nullptr;
     DropTreeView* m_folderTreeView = nullptr;
@@ -222,6 +221,7 @@ private:
     FilterProxyModel* m_folderProxyModel = nullptr;
     FilterProxyModel* m_fileProxyModel = nullptr;
 
+    QScrollArea* m_gridScrollArea = nullptr;
     QWidget* m_gridContainerWidget = nullptr;
     FolderSectionHeaderBar* m_gridFolderHeader = nullptr;
     DropJustifiedView* m_folderGridView = nullptr;

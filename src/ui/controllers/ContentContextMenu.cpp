@@ -598,18 +598,17 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             auto indexes = view->selectionModel()->selectedIndexes();
             int count = 0;
             for (const auto& idx : indexes) {
-                if (idx.column() == 0 && idx.model()) {
-                    auto* model = const_cast<QAbstractItemModel*>(idx.model());
+                if (idx.column() == 0) {
                     if (type == LastOperationType::SetRating) {
-                        model->setData(idx, LastOperationManager::instance().rating(), RatingRole);
+                        m_panel->getProxyModel()->setData(idx, LastOperationManager::instance().rating(), RatingRole);
                     } else if (type == LastOperationType::SetColor) {
                         QString colorVal = LastOperationManager::instance().color();
-                        model->setData(idx, colorVal, ColorRole);
+                        m_panel->getProxyModel()->setData(idx, colorVal, ColorRole);
                         QString itemPath = idx.data(PathRole).toString();
                         QIcon coloredIcon = ShellIconManager::getFileIcon(itemPath, 128);
-                        model->setData(idx, coloredIcon, Qt::DecorationRole);
+                        m_panel->getProxyModel()->setData(idx, coloredIcon, Qt::DecorationRole);
                     } else if (type == LastOperationType::PasteTags) {
-                        model->setData(idx, LastOperationManager::instance().tags(), TagsRole);
+                        m_panel->getProxyModel()->setData(idx, LastOperationManager::instance().tags(), TagsRole);
                     }
                     count++;
                 }
@@ -833,8 +832,8 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             auto indexes = view->selectionModel()->selectedIndexes();
             int count = 0;
             for (const auto& idx : indexes) {
-                if (idx.column() == 0 && idx.model()) {
-                    const_cast<QAbstractItemModel*>(idx.model())->setData(idx, copiedTags, TagsRole);
+                if (idx.column() == 0) {
+                    m_panel->getProxyModel()->setData(idx, copiedTags, TagsRole);
                     count++;
                 }
             }
