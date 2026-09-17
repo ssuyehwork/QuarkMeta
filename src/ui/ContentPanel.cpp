@@ -508,7 +508,7 @@ void ContentPanel::startVisibleTimer() {
 
 void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
     QAbstractItemView* view = qobject_cast<QAbstractItemView*>(sender());
-    if (!view) view = (m_viewStack && m_viewStack->currentWidget() == m_gridView) ? m_gridView : m_treeView;
+    if (!view) view = activeItemView();
     if (!view) return;
     ContentContextMenu menuHandler(this);
     menuHandler.showMenu(view, pos);
@@ -806,7 +806,7 @@ void ContentPanel::selectAndScrollToItem(const QString& path) {
     for (int i = 0; i < m_proxyModel->rowCount(); ++i) {
         QModelIndex proxyIdx = m_proxyModel->index(i, 0);
         if (proxyIdx.data(PathRole).toString() == path) {
-            QAbstractItemView* view = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
+                QAbstractItemView* view = activeItemView();
             if (view && view->selectionModel()) {
                 view->scrollTo(proxyIdx);
                 view->setCurrentIndex(proxyIdx);
@@ -866,24 +866,60 @@ QList<int> ContentPanel::getSelectedTrashIds() const {
     return ids;
 }
 
-QModelIndexList ContentPanel::getSelectedIndexes() const {
-    if (!m_viewStack) return {};
-    QAbstractItemView* curView = nullptr;
+QAbstractItemView* ContentPanel::activeItemView() const {
     if (m_currentViewMode == ColumnView) {
         if (m_columnView && m_columnView->activePane()) {
-            curView = m_columnView->activePane()->listView();
+            DropListView* folderV = m_columnView->activePane()->folderListView();
+            if (folderV && (folderV->hasFocus() || (folderV->selectionModel() && folderV->selectionModel()->hasSelection()))) {
+                return folderV;
+            }
+            return m_columnView->activePane()->listView();
         }
-    } else {
-        curView = qobject_cast<QAbstractItemView*>(m_viewStack->currentWidget());
+        return nullptr;
     }
-    if (!curView || !curView->selectionModel()) return {};
 
+    if (m_currentViewMode == ListView) {
+        if (m_folderTreeView && (m_folderTreeView->hasFocus() ||
+            (m_folderTreeView->selectionModel() && m_folderTreeView->selectionModel()->hasSelection()))) {
+            return m_folderTreeView;
+        }
+        return m_treeView;
+    }
+
+    // GridView / JustifiedViewMode
+    if (m_folderGridView && (m_folderGridView->hasFocus() ||
+        (m_folderGridView->selectionModel() && m_folderGridView->selectionModel()->hasSelection()))) {
+        return m_folderGridView;
+    }
+    return m_gridView;
+}
+
+QModelIndexList ContentPanel::getSelectedIndexes() const {
+    if (!m_viewStack) return {};
     QModelIndexList res;
-    const auto& selected = curView->selectionModel()->selectedIndexes();
-    res.reserve(selected.size());
-    for (const auto& idx : selected) {
-        if (idx.column() == 0) {
-            res.append(idx);
+
+    // 🚀【真理源多视图巡检】：直接巡检真实子视图，不再依赖外层容器类型
+    QList<QAbstractItemView*> views;
+    if (m_currentViewMode == ColumnView) {
+        if (m_columnView && m_columnView->activePane()) {
+            if (m_columnView->activePane()->folderListView()) views << m_columnView->activePane()->folderListView();
+            if (m_columnView->activePane()->listView()) views << m_columnView->activePane()->listView();
+        }
+    } else if (m_currentViewMode == ListView) {
+        if (m_folderTreeView) views << m_folderTreeView;
+        if (m_treeView) views << m_treeView;
+    } else { // GridView / JustifiedViewMode
+        if (m_folderGridView) views << m_folderGridView;
+        if (m_gridView) views << m_gridView;
+    }
+
+    for (auto* view : views) {
+        if (view && view->selectionModel() && view->selectionModel()->hasSelection()) {
+            for (const auto& idx : view->selectionModel()->selectedIndexes()) {
+                if (idx.column() == 0) {
+                    res.append(idx);
+                }
+            }
         }
     }
     return res;
