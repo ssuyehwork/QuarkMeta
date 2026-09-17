@@ -283,9 +283,17 @@ void ContentPanel::initGridView() {
             } else {
                 bool collapsed = m_gridFolderHeader ? m_gridFolderHeader->isCollapsed() : false;
                 m_folderGridView->setVisible(!collapsed);
-                int rowH = m_zoomLevel + CardLayoutEngine::extraHeight() + 20;
-                int rows = qMax(1, (folderCount + 3) / 4);
-                m_folderGridView->setFixedHeight(rows * rowH);
+                // 1. 计算单张卡片占位宽与单行高度
+                int cardW = m_zoomLevel + CardLayoutEngine::totalPaddingHorizontal() + 10;
+                int rowH = m_zoomLevel + CardLayoutEngine::extraHeight() + 10;
+
+                // 2. 根据当前视口可用宽度，动态计算一行实际放几张卡
+                int availableW = m_folderGridView->width() > 100 ? m_folderGridView->width() : width();
+                int cardsPerRow = qMax(1, availableW / cardW);
+
+                // 3. 向上取整计算真实行数：6 个项目 / 8 列 = 1 行，绝不多算
+                int rows = qMax(1, (folderCount + cardsPerRow - 1) / cardsPerRow);
+                m_folderGridView->setFixedHeight(rows * rowH + 8);
             }
         }
         if (m_gridFileHeader) {
