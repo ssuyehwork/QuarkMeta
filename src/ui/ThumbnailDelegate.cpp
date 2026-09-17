@@ -182,7 +182,7 @@ bool ThumbnailDelegate::editorEvent(QEvent* event, QAbstractItemModel* model,
                 }
 
                 // ② 命中第 1 ~ 5 颗五角星 -> 点击释放时设定对应 1~5 星
-                for (int i = 0; i < 5 && i < static_cast<int>(l.starRects.size()); ++i) {
+                for (int i = 0; i < 5; ++i) {
                     if (l.starRects[i].contains(pos)) {
                         if (event->type() == QEvent::MouseButtonRelease) {
                             int newRating = i + 1;
