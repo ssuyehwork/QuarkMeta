@@ -216,6 +216,16 @@ void ContentPanel::initGridView() {
         fDelegate->setIsEmptyRole(IsEmptyRole);
         fDelegate->setColorRole(ColorRole);
         m_folderGridView->setItemDelegate(fDelegate);
+
+        connect(fJustifiedView, &JustifiedView::contentHeightChanged, this, [this](int newHeight) {
+            if (m_folderGridView && m_folderProxyModel && m_folderProxyModel->rowCount() > 0) {
+                bool collapsed = m_gridFolderHeader ? m_gridFolderHeader->isCollapsed() : false;
+                if (!collapsed && newHeight > 0) {
+                    m_folderGridView->setFixedHeight(newHeight);
+                    if (m_gridContainerWidget) m_gridContainerWidget->adjustSize();
+                }
+            }
+        });
     }
     m_folderGridView->installEventFilter(this);
     m_folderGridView->viewport()->installEventFilter(this);
@@ -255,6 +265,15 @@ void ContentPanel::initGridView() {
         delegate->setIsEmptyRole(IsEmptyRole);
         delegate->setColorRole(ColorRole);
         m_gridView->setItemDelegate(delegate);
+
+        connect(justifiedView, &JustifiedView::contentHeightChanged, this, [this](int newHeight) {
+            if (m_gridView && m_fileProxyModel && m_fileProxyModel->rowCount() > 0) {
+                if (newHeight > 0) {
+                    m_gridView->setFixedHeight(newHeight);
+                    if (m_gridContainerWidget) m_gridContainerWidget->adjustSize();
+                }
+            }
+        });
     }
 
     m_gridView->installEventFilter(this);
@@ -288,10 +307,10 @@ void ContentPanel::initGridView() {
             } else {
                 bool collapsed = m_gridFolderHeader ? m_gridFolderHeader->isCollapsed() : false;
                 m_folderGridView->setVisible(!collapsed);
-                // 自适应撑开网格高度，彻底消灭局部滚动条
                 auto* fjv = qobject_cast<JustifiedView*>(m_folderGridView);
-                int desiredH = fjv ? fjv->sizeHint().height() : (folderCount * (m_zoomLevel + CardLayoutEngine::extraHeight() + 10));
-                m_folderGridView->setFixedHeight(qMax(60, desiredH));
+                if (fjv && fjv->totalHeight() > 0) {
+                    m_folderGridView->setFixedHeight(fjv->totalHeight());
+                }
             }
         }
         if (m_gridFileHeader) {
@@ -300,8 +319,9 @@ void ContentPanel::initGridView() {
         }
         if (m_gridView) {
             auto* jv = qobject_cast<JustifiedView*>(m_gridView);
-            int fileH = jv ? jv->sizeHint().height() : (fileCount * (m_zoomLevel + CardLayoutEngine::extraHeight() + 10));
-            m_gridView->setFixedHeight(qMax(100, fileH));
+            if (jv && jv->totalHeight() > 0) {
+                m_gridView->setFixedHeight(jv->totalHeight());
+            }
         }
         if (m_gridContainerWidget) {
             m_gridContainerWidget->adjustSize();
