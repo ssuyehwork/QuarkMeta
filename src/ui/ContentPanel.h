@@ -202,8 +202,6 @@ private:
     };
     SelectionState m_selectionState;
     bool m_isRestoringSelections = false;
-    bool m_isRestoringSelections = false;
-    bool m_isRestoringSelections = false;
     bool m_isPendingEdit = false;
     QString m_currentCategoryType;
     bool m_isRecursive = false;
