@@ -115,6 +115,8 @@ public:
     // 4. 视图与控制器引用
     QStackedWidget* viewStack() const { return m_viewStack; }
     QAbstractItemView* gridView() const { return m_gridView; }
+    DropJustifiedView* folderGridView() const { return m_folderGridView; }
+    DropTreeView* folderTreeView() const { return m_folderTreeView; }
     QTreeView* treeView() const;
     class ColumnViewWidget* columnView() const { return m_columnView; }
     DropTreeView* dropTreeView() const { return m_treeView; }

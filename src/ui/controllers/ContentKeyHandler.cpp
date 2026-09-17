@@ -198,12 +198,17 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
 
         if (hitVal != -1) {
             bool isSelected = view->selectionModel() && view->selectionModel()->isSelected(index);
-            if (!isSelected) return false;
+            if (!isSelected) {
+                if (view->selectionModel()) {
+                    view->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                    view->setCurrentIndex(index);
+                }
+            }
 
-            auto selectedIndexes = view->selectionModel()->selectedIndexes();
+            auto selectedIndexes = view->selectionModel() ? view->selectionModel()->selectedIndexes() : QModelIndexList{index};
             for (const auto& selIdx : selectedIndexes) {
-                if (selIdx.column() == 0) {
-                    m_panel->getActiveProxyModel()->setData(selIdx, hitVal, RatingRole);
+                if (selIdx.column() == 0 && selIdx.model()) {
+                    const_cast<QAbstractItemModel*>(selIdx.model())->setData(selIdx, hitVal, RatingRole);
                 }
             }
 
@@ -233,12 +238,19 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
 
         if (hitStar != -1) {
             bool isRowSelected = treeView->selectionModel() && treeView->selectionModel()->isRowSelected(index.row(), index.parent());
-            if (!isRowSelected) return false;
+            if (!isRowSelected) {
+                if (treeView->selectionModel()) {
+                    treeView->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                    treeView->setCurrentIndex(index);
+                }
+            }
 
-            auto selectedRows = treeView->selectionModel()->selectedRows();
+            auto selectedRows = treeView->selectionModel() ? treeView->selectionModel()->selectedRows() : QModelIndexList{index};
             for (const auto& selRow : selectedRows) {
                 QModelIndex targetIdx = treeView->model()->index(selRow.row(), 0, selRow.parent());
-                m_panel->getActiveProxyModel()->setData(targetIdx, hitStar, RatingRole);
+                if (targetIdx.isValid() && targetIdx.model()) {
+                    const_cast<QAbstractItemModel*>(targetIdx.model())->setData(targetIdx, hitStar, RatingRole);
+                }
             }
 
             QAbstractItemView::EditTriggers currentTriggers = treeView->editTriggers();
@@ -266,7 +278,9 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         int rating = keyEvent->key() - Qt::Key_0;
         auto indexes = view->selectionModel()->selectedIndexes();
         for (const auto& idx : indexes) {
-            if (idx.column() == 0) m_panel->getActiveProxyModel()->setData(idx, rating, RatingRole);
+            if (idx.column() == 0 && idx.model()) {
+                const_cast<QAbstractItemModel*>(idx.model())->setData(idx, rating, RatingRole);
+            }
         }
         return true;
     }
@@ -275,9 +289,9 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
     if (((keyEvent->modifiers() & Qt::AltModifier) || (keyEvent->modifiers() & (Qt::AltModifier | Qt::WindowShortcut))) && (keyEvent->key() == Qt::Key_D)) {
         auto indexes = view->selectionModel()->selectedIndexes();
         for (const QModelIndex& idx : indexes) {
-            if (idx.column() == 0) {
+            if (idx.column() == 0 && idx.model()) {
                 bool current = idx.data(IsLockedRole).toBool();
-                m_panel->getActiveProxyModel()->setData(idx, !current, IsLockedRole);
+                const_cast<QAbstractItemModel*>(idx.model())->setData(idx, !current, IsLockedRole);
             }
         }
         return true;
@@ -293,11 +307,11 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
 
         auto indexes = view->selectionModel()->selectedIndexes();
         for (const auto& idx : indexes) {
-            if (idx.column() == 0) {
-                m_panel->getActiveProxyModel()->setData(idx, colorValue, ColorRole);
+            if (idx.column() == 0 && idx.model()) {
+                const_cast<QAbstractItemModel*>(idx.model())->setData(idx, colorValue, ColorRole);
                 QString path = idx.data(PathRole).toString();
                 QIcon coloredIcon = ShellIconManager::getFileIcon(path, 128);
-                m_panel->getActiveProxyModel()->setData(idx, coloredIcon, Qt::DecorationRole);
+                const_cast<QAbstractItemModel*>(idx.model())->setData(idx, coloredIcon, Qt::DecorationRole);
             }
         }
         return true;
@@ -372,17 +386,18 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
 
         auto indexes = view->selectionModel()->selectedIndexes();
         for (const auto& targetIdx : indexes) {
-            if (targetIdx.column() == 0) {
+            if (targetIdx.column() == 0 && targetIdx.model()) {
+                auto* model = const_cast<QAbstractItemModel*>(targetIdx.model());
                 if (type == LastOperationType::SetRating) {
-                    m_panel->getActiveProxyModel()->setData(targetIdx, LastOperationManager::instance().rating(), RatingRole);
+                    model->setData(targetIdx, LastOperationManager::instance().rating(), RatingRole);
                 } else if (type == LastOperationType::SetColor) {
                     QString colorVal = LastOperationManager::instance().color();
-                    m_panel->getActiveProxyModel()->setData(targetIdx, colorVal, ColorRole);
+                    model->setData(targetIdx, colorVal, ColorRole);
                     QString path = targetIdx.data(PathRole).toString();
                     QIcon coloredIcon = ShellIconManager::getFileIcon(path, 128);
-                    m_panel->getActiveProxyModel()->setData(targetIdx, coloredIcon, Qt::DecorationRole);
+                    model->setData(targetIdx, coloredIcon, Qt::DecorationRole);
                 } else if (type == LastOperationType::PasteTags) {
-                    m_panel->getActiveProxyModel()->setData(targetIdx, LastOperationManager::instance().tags(), TagsRole);
+                    model->setData(targetIdx, LastOperationManager::instance().tags(), TagsRole);
                 }
             }
         }
