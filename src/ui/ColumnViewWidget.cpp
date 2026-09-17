@@ -14,9 +14,12 @@
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QDragEnterEvent>
+#include <QDragLeaveEvent>
 #include <QDropEvent>
+#include <QMouseEvent>
 #include <QMimeData>
 #include <QPainter>
+#include <QUrl>
 
 namespace QuarkMeta {
 
