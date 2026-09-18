@@ -196,6 +196,7 @@ void ContentPanel::initGridView() {
     m_folderGridView->setSelectionMode(QAbstractItemView::SingleSelection);
     m_folderGridView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_folderGridView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_folderGridView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_folderGridView->setModel(m_folderProxyModel);
     auto* fJustifiedView = qobject_cast<JustifiedView*>(m_folderGridView);
     if (fJustifiedView) {
@@ -232,6 +233,7 @@ void ContentPanel::initGridView() {
     m_gridView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_gridView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_gridView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_gridView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_gridView->setModel(m_fileProxyModel);
 
     auto* justifiedView = qobject_cast<JustifiedView*>(m_gridView);
@@ -253,9 +255,16 @@ void ContentPanel::initGridView() {
     layout->addWidget(m_gridView, 1);
 
     if (auto* fjv = qobject_cast<JustifiedView*>(m_folderGridView)) {
-        connect(fjv, &JustifiedView::totalHeightChanged, this, [this](int height) {
+        connect(fjv, &JustifiedView::totalHeightChanged, this, [this](int h) {
             if (m_folderGridView && m_folderProxyModel && m_folderProxyModel->rowCount() > 0) {
-                m_folderGridView->setFixedHeight(height);
+                m_folderGridView->setFixedHeight(h);
+            }
+        });
+    }
+    if (auto* jv = qobject_cast<JustifiedView*>(m_gridView)) {
+        connect(jv, &JustifiedView::totalHeightChanged, this, [this](int h) {
+            if (m_gridView && m_fileProxyModel && m_fileProxyModel->rowCount() > 0) {
+                m_gridView->setFixedHeight(h);
             }
         });
     }
@@ -299,6 +308,16 @@ void ContentPanel::initGridView() {
         if (m_gridFileHeader) {
             m_gridFileHeader->setCount(fileCount);
             m_gridFileHeader->setVisible(fileCount > 0 && folderCount > 0);
+        }
+        if (m_gridView) {
+            if (fileCount == 0) {
+                m_gridView->hide();
+            } else {
+                m_gridView->show();
+                if (auto* jv = qobject_cast<JustifiedView*>(m_gridView)) {
+                    m_gridView->setFixedHeight(jv->totalHeight());
+                }
+            }
         }
     };
 
@@ -345,6 +364,7 @@ void ContentPanel::initListView() {
     m_folderTreeView->setAlternatingRowColors(true);
     m_folderTreeView->setSortingEnabled(true);
     m_folderTreeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_folderTreeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_folderTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_folderTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
     m_folderTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -378,6 +398,7 @@ void ContentPanel::initListView() {
     m_treeView->setAlternatingRowColors(true);
     m_treeView->setSortingEnabled(true);
     m_treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_treeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -432,6 +453,18 @@ void ContentPanel::initListView() {
         if (m_listFileHeader) {
             m_listFileHeader->setCount(fileCount);
             m_listFileHeader->setVisible(fileCount > 0 && folderCount > 0);
+        }
+        if (m_treeView) {
+            if (fileCount == 0) {
+                m_treeView->hide();
+            } else {
+                m_treeView->show();
+                int rowH = m_treeView->sizeHintForRow(0);
+                if (rowH <= 0) rowH = 30;
+                int hdrH = (m_treeView->header() && m_treeView->header()->isVisible()) ? m_treeView->header()->height() : 0;
+                int fileH = fileCount * rowH + hdrH + 2;
+                m_treeView->setFixedHeight(fileH);
+            }
         }
     };
 
