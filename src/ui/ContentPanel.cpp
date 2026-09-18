@@ -225,12 +225,14 @@ void ContentPanel::initGridView() {
     m_gridFileHeader->hide();
     layout->addWidget(m_gridFileHeader);
 
-    // 4. 普通文件网格视图
+    // 4. 普通文件网格视图（关闭私有垂直滚动条）
     m_gridView = new DropJustifiedView(m_gridContainerWidget);
     m_gridView->setFrameShape(QFrame::NoFrame);
     m_gridView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_gridView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_gridView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_gridView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_gridView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_gridView->setModel(m_fileProxyModel);
 
     auto* justifiedView = qobject_cast<JustifiedView*>(m_gridView);
@@ -249,7 +251,7 @@ void ContentPanel::initGridView() {
 
     m_gridView->installEventFilter(this);
     m_gridView->viewport()->installEventFilter(this);
-    layout->addWidget(m_gridView, 1);
+    layout->addWidget(m_gridView);
 
     connect(m_folderGridView, &QAbstractItemView::doubleClicked, this, &ContentPanel::onDoubleClicked);
     connect(m_folderGridView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &ContentPanel::onSelectionChanged);
@@ -276,28 +278,42 @@ void ContentPanel::initGridView() {
             m_gridFolderHeader->setCount(folderCount);
             m_gridFolderHeader->setVisible(folderCount > 0);
         }
+
+        // 1. 统一计算单张卡片占位宽、单行高度与每行卡片数
+        int cardW = m_zoomLevel + CardLayoutEngine::totalPaddingHorizontal() + 10;
+        int rowH = m_zoomLevel + CardLayoutEngine::extraHeight() + 10;
+        int availableW = m_gridScrollArea && m_gridScrollArea->viewport() ? m_gridScrollArea->viewport()->width() : width();
+        int cardsPerRow = qMax(1, availableW / cardW);
+
+        // 2. 文件夹网格动态撑开
         if (m_folderGridView) {
             if (folderCount == 0) {
                 m_folderGridView->hide();
             } else {
                 bool collapsed = m_gridFolderHeader ? m_gridFolderHeader->isCollapsed() : false;
                 m_folderGridView->setVisible(!collapsed);
-                // 1. 计算单张卡片占位宽与单行高度
-                int cardW = m_zoomLevel + CardLayoutEngine::totalPaddingHorizontal() + 10;
-                int rowH = m_zoomLevel + CardLayoutEngine::extraHeight() + 10;
-
-                // 2. 根据当前视口可用宽度，动态计算一行实际放几张卡
-                int availableW = m_folderGridView->width() > 100 ? m_folderGridView->width() : width();
-                int cardsPerRow = qMax(1, availableW / cardW);
-
-                // 3. 向上取整计算真实行数：6 个项目 / 8 列 = 1 行，绝不多算
-                int rows = qMax(1, (folderCount + cardsPerRow - 1) / cardsPerRow);
-                m_folderGridView->setFixedHeight(rows * rowH + 8);
+                int folderRows = qMax(1, (folderCount + cardsPerRow - 1) / cardsPerRow);
+                m_folderGridView->setFixedHeight(folderRows * rowH + 8);
             }
         }
         if (m_gridFileHeader) {
             m_gridFileHeader->setCount(fileCount);
             m_gridFileHeader->setVisible(fileCount > 0 && folderCount > 0);
+        }
+
+        // 3. 文件网格同步物理撑开
+        if (m_gridView) {
+            if (fileCount == 0) {
+                m_gridView->hide();
+            } else {
+                m_gridView->show();
+                int fileRows = qMax(1, (fileCount + cardsPerRow - 1) / cardsPerRow);
+                m_gridView->setFixedHeight(fileRows * rowH + 8);
+            }
+        }
+
+        if (m_gridContainerWidget) {
+            m_gridContainerWidget->adjustSize();
         }
     };
 
@@ -371,12 +387,13 @@ void ContentPanel::initListView() {
     m_listFileHeader->hide();
     layout->addWidget(m_listFileHeader);
 
-    // 6. 文件列表视图
+    // 6. 文件列表视图（关闭内部垂直滚动条）
     m_treeView = new DropTreeView(m_listContainerWidget);
     m_treeView->setFrameShape(QFrame::NoFrame);
     m_treeView->setAlternatingRowColors(true);
     m_treeView->setSortingEnabled(true);
-    m_treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_treeView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_treeView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -385,7 +402,7 @@ void ContentPanel::initListView() {
     m_treeView->setModel(m_fileProxyModel);
     m_treeView->installEventFilter(this);
     m_treeView->viewport()->installEventFilter(this);
-    layout->addWidget(m_treeView, 1);
+    layout->addWidget(m_treeView);
 
     auto* header = m_treeView->header();
     header->setFixedHeight(32);
@@ -428,6 +445,19 @@ void ContentPanel::initListView() {
         if (m_listFileHeader) {
             m_listFileHeader->setCount(fileCount);
             m_listFileHeader->setVisible(fileCount > 0 && folderCount > 0);
+        }
+        if (m_treeView) {
+            if (fileCount == 0) {
+                m_treeView->hide();
+            } else {
+                m_treeView->show();
+                int fileH = qMax(64, fileCount * 30 + 32);
+                m_treeView->setFixedHeight(fileH);
+            }
+        }
+
+        if (m_listContainerWidget) {
+            m_listContainerWidget->adjustSize();
         }
     };
 
