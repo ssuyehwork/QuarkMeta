@@ -422,7 +422,10 @@ void ContentPanel::initListView() {
             } else {
                 bool collapsed = m_listFolderHeader ? m_listFolderHeader->isCollapsed() : false;
                 m_folderTreeView->setVisible(!collapsed);
-                int folderH = qMax(32, folderCount * 30 + 32);
+                int rowH = m_folderTreeView->sizeHintForRow(0);
+                if (rowH <= 0) rowH = 30;
+                int hdrH = (m_folderTreeView->header() && m_folderTreeView->header()->isVisible()) ? m_folderTreeView->header()->height() : 0;
+                int folderH = folderCount * rowH + hdrH + 2;
                 m_folderTreeView->setFixedHeight(folderH);
             }
         }
