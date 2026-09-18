@@ -22,6 +22,7 @@ public:
     QSize minimumSizeHint() const override { return QSize(50, 50); }
     QSize sizeHint() const override { return QSize(230, 200); }
 
+    int contentHeight() const { return m_totalHeight; }
     QRect visualRect(const QModelIndex& index) const override;
     void scrollTo(const QModelIndex& index, ScrollHint hint = EnsureVisible) override;
     QModelIndex indexAt(const QPoint& point) const override;
@@ -29,6 +30,9 @@ public:
     void reset() override;
     void doItemsLayout() override;
     void setModel(QAbstractItemModel* model) override;
+
+signals:
+    void contentHeightChanged(int height);
 
 protected slots:
     void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QList<int>& roles = QList<int>()) override;

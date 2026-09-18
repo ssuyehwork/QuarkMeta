@@ -516,9 +516,14 @@ void JustifiedView::doLayout() {
         }
     }
 
-    m_totalHeight = currentY + 10;
+    int newTotalHeight = currentY + 10;
+    bool heightChanged = (newTotalHeight != m_totalHeight);
+    m_totalHeight = newTotalHeight;
     updateGeometries();
     viewport()->update();
+    if (heightChanged) {
+        emit contentHeightChanged(m_totalHeight);
+    }
 }
 
 } // namespace QuarkMeta
