@@ -17,6 +17,8 @@
 #include <QDropEvent>
 #include <QMimeData>
 #include <QPainter>
+#include <QElapsedTimer>
+#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -527,8 +529,13 @@ void ColumnViewPane::loadDirectory() {
             recursive = true;
         }
     }
+
+    auto timer = std::make_shared<QElapsedTimer>();
+    timer->start();
+    qDebug() << QString("[PERF] [ColumnViewPane] 开始打开/加载目录: %1").arg(path);
+
     QPointer<ColumnViewPane> weakSelf(this);
-    (void)QtConcurrent::run([weakSelf, path, recursive]() {
+    (void)QtConcurrent::run([weakSelf, path, recursive, timer]() {
         if (!weakSelf) return;
         std::vector<ItemRecord> items;
         if (path.isEmpty() || path == "computer://") {
@@ -539,8 +546,16 @@ void ColumnViewPane::loadDirectory() {
             items = DiskScanService::scanDirectory(path, recursive, std::function<bool()>());
         }
         MetaCacheDecorator::decorate(items);
-        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakSelf, items]() {
+        qint64 scanElapsed = timer->elapsed();
+        qDebug() << QString("[PERF] [ColumnViewPane] 磁盘扫描完成: %1 | 耗时: %2 秒 (%3 ms) | 项目数量: %4")
+                    .arg(path)
+                    .arg(scanElapsed / 1000.0, 0, 'f', 3)
+                    .arg(scanElapsed)
+                    .arg(items.size());
+
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakSelf, items, path, timer, scanElapsed]() {
             if (weakSelf && weakSelf->m_model) {
+                qint64 uiStart = timer->elapsed();
                 weakSelf->m_model->setRecords(items);
                 if (weakSelf->m_contentPanel) {
                     weakSelf->applySort(static_cast<int>(weakSelf->m_contentPanel->currentSortType()),
@@ -560,6 +575,15 @@ void ColumnViewPane::loadDirectory() {
                     weakSelf->m_model->loadThumbnailsForRows(visibleRows);
                 }
                 emit weakSelf->recordsLoaded(weakSelf->m_model->allRecords());
+
+                qint64 totalElapsed = timer->elapsed();
+                qint64 uiElapsed = totalElapsed - uiStart;
+                qDebug() << QString("[PERF] [ColumnViewPane] 界面渲染显示完成: %1 | 总耗时: %2 秒 (%3 ms) [磁盘扫描: %4 ms, 主线程渲染: %5 ms]")
+                            .arg(path)
+                            .arg(totalElapsed / 1000.0, 0, 'f', 3)
+                            .arg(totalElapsed)
+                            .arg(scanElapsed)
+                            .arg(uiElapsed);
             }
         });
     });
