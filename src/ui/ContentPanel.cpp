@@ -252,7 +252,8 @@ void ContentPanel::initGridView() {
 
     m_gridView->installEventFilter(this);
     m_gridView->viewport()->installEventFilter(this);
-    layout->addWidget(m_gridView, 1);
+    layout->addWidget(m_gridView, 0);
+    layout->addStretch(1);
 
     if (auto* fjv = qobject_cast<JustifiedView*>(m_folderGridView)) {
         connect(fjv, &JustifiedView::totalHeightChanged, this, [this](int h) {
