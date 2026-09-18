@@ -318,18 +318,25 @@ void JustifiedView::paintEvent(QPaintEvent*) {
     }
     
     painter.save();
-    int scrollY = verticalScrollBar()->value();
-    int vHeight = viewport()->height();
-    painter.translate(0, -scrollY);
-    
-    auto startIt = std::lower_bound(m_geometries.begin(), m_geometries.end(), scrollY,
+    // 🚀【真实可视区动态裁剪】：获取被外层视口裁剪后的真实屏幕暴露区域
+    QRect visibleRect = visibleRegion().boundingRect();
+    if (visibleRect.isEmpty() || !visibleRect.isValid()) {
+        visibleRect = viewport()->rect();
+    }
+
+    int viewTop = visibleRect.top();
+    int viewBottom = visibleRect.bottom();
+
+    // 1. 二分查找：瞬间跳过视口上方成百上千个看不见的卡片
+    auto startIt = std::lower_bound(m_geometries.begin(), m_geometries.end(), viewTop,
         [](const ItemGeometry& geo, int targetY) {
             return geo.rect.bottom() < targetY;
         });
 
+    // 2. 局部绘制：仅绘制当前视口范围内的 15~25 张卡片，超出视口底部立即 break
     for (auto it = startIt; it != m_geometries.end(); ++it) {
         const auto& geo = *it;
-        if (geo.rect.top() > scrollY + vHeight) break;
+        if (geo.rect.top() > viewBottom) break;
 
         QModelIndex idx = model()->index(geo.index, 0);
         QStyleOptionViewItem option;
