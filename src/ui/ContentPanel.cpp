@@ -197,6 +197,7 @@ void ContentPanel::initGridView() {
     m_folderGridView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_folderGridView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_folderGridView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_folderGridView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     m_folderGridView->setModel(m_folderProxyModel);
     auto* fJustifiedView = qobject_cast<JustifiedView*>(m_folderGridView);
     if (fJustifiedView) {
@@ -234,6 +235,7 @@ void ContentPanel::initGridView() {
     m_gridView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_gridView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_gridView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_gridView->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     m_gridView->setModel(m_fileProxyModel);
 
     auto* justifiedView = qobject_cast<JustifiedView*>(m_gridView);
