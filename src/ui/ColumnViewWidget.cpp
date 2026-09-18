@@ -164,6 +164,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_folderListView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_folderListView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_folderListView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_folderListView->setUniformItemSizes(true);
     m_folderListView->setModel(m_folderProxyModel);
     m_folderListView->setItemDelegate(new ColumnItemDelegate(this));
     m_folderListView->hide();
@@ -193,6 +194,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_listView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_listView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_listView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_listView->setUniformItemSizes(true);
     m_listView->setModel(m_fileProxyModel);
     m_listView->setItemDelegate(new ColumnItemDelegate(this));
     canvasLayout->addWidget(m_listView);
