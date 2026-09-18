@@ -27,6 +27,7 @@ public:
 signals:
     void totalHeightChanged(int height);
 
+public:
     QRect visualRect(const QModelIndex& index) const override;
     void scrollTo(const QModelIndex& index, ScrollHint hint = EnsureVisible) override;
     QModelIndex indexAt(const QPoint& point) const override;
