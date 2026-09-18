@@ -261,9 +261,11 @@ void ContentPanel::initGridView() {
     connect(m_gridView, &QAbstractItemView::doubleClicked, this, &ContentPanel::onDoubleClicked);
     connect(m_gridView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &ContentPanel::onSelectionChanged);
     connect(m_gridView, &QAbstractItemView::customContextMenuRequested, this, &ContentPanel::onCustomContextMenuRequested);
-    connect(m_gridView, &DropJustifiedView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
-        onPathsDropped(paths, targetIndex, currentPath(), m_fileProxyModel);
-    });
+    if (auto* dropJv = qobject_cast<DropJustifiedView*>(m_gridView)) {
+        connect(dropJv, &DropJustifiedView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
+            onPathsDropped(paths, targetIndex, currentPath(), m_fileProxyModel);
+        });
+    }
 
     auto updateGridSectionCounts = [this]() {
         if (!m_folderProxyModel || !m_fileProxyModel) return;
