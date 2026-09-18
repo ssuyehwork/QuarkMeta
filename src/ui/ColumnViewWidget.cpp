@@ -108,9 +108,22 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     setAttribute(Qt::WA_StyledBackground, true);
     setMinimumWidth(220);
 
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
+
+    m_scrollArea = new QScrollArea(this);
+    m_scrollArea->setFrameShape(QFrame::NoFrame);
+    m_scrollArea->setWidgetResizable(true);
+    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    m_containerWidget = new QWidget(m_scrollArea);
+    QVBoxLayout* layout = new QVBoxLayout(m_containerWidget);
     layout->setContentsMargins(0, 0, 1, 0);
     layout->setSpacing(0);
+
+    m_scrollArea->setWidget(m_containerWidget);
+    mainLayout->addWidget(m_scrollArea);
 
     m_model = new DiskItemModel(this);
     m_model->setCurrentPath(path);
@@ -150,6 +163,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_folderListView->setDropIndicatorShown(true);
     m_folderListView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_folderListView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_folderListView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_folderListView->setModel(m_folderProxyModel);
     m_folderListView->setItemDelegate(new ColumnItemDelegate(this));
     m_folderListView->hide();
@@ -178,9 +192,10 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_listView->setDropIndicatorShown(true);
     m_listView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_listView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_listView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_listView->setModel(m_fileProxyModel);
     m_listView->setItemDelegate(new ColumnItemDelegate(this));
-    layout->addWidget(m_listView, 1);
+    layout->addWidget(m_listView);
 
     auto updateSectionCountsAndHints = [this]() {
         tryPendingSelection();
@@ -204,6 +219,15 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
             m_fileHeader->setCount(fileCount);
             m_fileHeader->setVisible(fileCount > 0 && folderCount > 0);
         }
+        if (m_listView) {
+            if (fileCount == 0) {
+                m_listView->hide();
+            } else {
+                m_listView->show();
+                int fileH = qMax(28, fileCount * 28 + 4);
+                m_listView->setFixedHeight(fileH);
+            }
+        }
 
         if (!m_model || !m_emptyFilterHintLabel) return;
         int fullCount = m_model->rowCount();
@@ -216,7 +240,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
             if (m_listView) m_listView->hide();
         } else {
             m_emptyFilterHintLabel->hide();
-            if (m_listView) m_listView->show();
+            if (m_listView && fileCount > 0) m_listView->show();
         }
         update();
     };

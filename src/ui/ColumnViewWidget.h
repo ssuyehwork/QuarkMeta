@@ -65,6 +65,8 @@ private:
     FileSectionHeaderBar* m_fileHeader = nullptr;
     DropListView* m_listView = nullptr;
     QLabel* m_emptyFilterHintLabel = nullptr;
+    QScrollArea* m_scrollArea = nullptr;
+    QWidget* m_containerWidget = nullptr;
 };
 
 class ColumnViewWidget : public QScrollArea {
