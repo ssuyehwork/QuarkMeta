@@ -7,6 +7,8 @@
 #include "SectionedScrollCanvas.h"
 #include "controllers/ContentContextMenu.h"
 #include "controllers/ContentKeyHandler.h"
+#include "controllers/ContentSortController.h"
+#include "controllers/ContentDataLoader.h"
 #include "controllers/ContentFileOpsHandler.h"
 #include "controllers/ContentViewCoordinator.h"
 #include "workers/ContentStatsWorker.h"
