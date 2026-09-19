@@ -9,6 +9,7 @@
 #include "../DropListView.h"
 #include "../ColumnViewWidget.h"
 #include "../JustifiedView.h"
+#include "../SectionedScrollCanvas.h"
 #include "../models/DiskItemModel.h"
 #include "../models/FilterProxyModel.h"
 #include "../../core/CoreController.h"
@@ -77,8 +78,47 @@ QAbstractItemView* ContentViewCoordinator::activeItemView() const {
     return m_panel->m_gridView;
 }
 
+QSortFilterProxyModel* ContentViewCoordinator::getActiveProxyModel() const {
+    if (!m_panel) return nullptr;
+
+    auto mode = m_panel->currentViewMode();
+    if (mode == ContentPanel::ColumnView && m_panel->columnView() && m_panel->columnView()->activePane()) {
+        if (m_panel->columnView()->activePane()->proxyModel()) {
+            return m_panel->columnView()->activePane()->proxyModel();
+        }
+    }
+
+    QAbstractItemView* view = activeItemView();
+    if (view && view->model()) {
+        return qobject_cast<QSortFilterProxyModel*>(view->model());
+    }
+
+    if (mode == ContentPanel::ListView && m_panel->listCanvas()) {
+        return m_panel->listCanvas()->fileProxyModel();
+    }
+    if (m_panel->gridCanvas()) {
+        return m_panel->gridCanvas()->fileProxyModel();
+    }
+    return nullptr;
+}
+
 QModelIndexList ContentViewCoordinator::getSelectedIndexes() const {
     QModelIndexList res;
+    if (!m_panel) return res;
+
+    if (m_panel->currentViewMode() == ContentPanel::ColumnView) {
+        if (m_panel->columnView() && m_panel->columnView()->activePane()) {
+            for (auto* view : {m_panel->columnView()->activePane()->folderListView(), m_panel->columnView()->activePane()->listView()}) {
+                if (view && view->selectionModel() && view->selectionModel()->hasSelection()) {
+                    for (const auto& idx : view->selectionModel()->selectedIndexes()) {
+                        if (idx.column() == 0) res.append(idx);
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
     QList<QAbstractItemView*> views = currentActiveViews();
     for (auto* view : views) {
         if (view && view->selectionModel() && view->selectionModel()->hasSelection()) {
@@ -90,6 +130,25 @@ QModelIndexList ContentViewCoordinator::getSelectedIndexes() const {
         }
     }
     return res;
+}
+
+QStringList ContentViewCoordinator::getSelectedPaths() const {
+    QStringList paths;
+    for (const auto& idx : getSelectedIndexes()) {
+        if (idx.column() == 0) {
+            QString p = idx.data(PathRole).toString();
+            if (!p.isEmpty()) paths << p;
+        }
+    }
+    return paths;
+}
+
+void ContentViewCoordinator::applyFilterStateToAllViews(const FilterState& state) {
+    if (!m_panel) return;
+
+    if (m_panel->listCanvas()) m_panel->listCanvas()->applyFilter(state);
+    if (m_panel->gridCanvas()) m_panel->gridCanvas()->applyFilter(state);
+    if (m_panel->columnView()) m_panel->columnView()->applyFilterState(state);
 }
 
 void ContentViewCoordinator::restoreSelections(const QSet<QString>& selectedPaths, bool isPendingEdit) {
