@@ -112,15 +112,19 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     layout->setContentsMargins(0, 0, 1, 0);
     layout->setSpacing(0);
 
+    setContextMenuPolicy(Qt::CustomContextMenu);
+
     m_paneScrollArea = new QScrollArea(this);
     m_paneScrollArea->setObjectName("ColumnPaneScrollArea");
     m_paneScrollArea->setWidgetResizable(true);
     m_paneScrollArea->setFrameShape(QFrame::NoFrame);
     m_paneScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_paneScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_paneScrollArea->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_canvasWidget = new QWidget(m_paneScrollArea);
     m_canvasWidget->setObjectName("ColumnPaneCanvasWidget");
+    m_canvasWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     QVBoxLayout* canvasLayout = new QVBoxLayout(m_canvasWidget);
     canvasLayout->setContentsMargins(0, 0, 0, 0);
     canvasLayout->setSpacing(0);
@@ -280,6 +284,15 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         m_listView->installEventFilter(m_contentPanel);
         connect(m_folderListView, &QListView::customContextMenuRequested, m_contentPanel, &ContentPanel::onCustomContextMenuRequested);
         connect(m_listView, &QListView::customContextMenuRequested, m_contentPanel, &ContentPanel::onCustomContextMenuRequested);
+
+        auto onPaneContextMenu = [this](const QPoint& pos) {
+            QWidget* senderWidget = qobject_cast<QWidget*>(sender());
+            QPoint globalPos = senderWidget ? senderWidget->mapToGlobal(pos) : QCursor::pos();
+            m_contentPanel->onCustomContextMenuRequested(globalPos);
+        };
+        connect(this, &QWidget::customContextMenuRequested, this, onPaneContextMenu);
+        connect(m_paneScrollArea, &QWidget::customContextMenuRequested, this, onPaneContextMenu);
+        connect(m_canvasWidget, &QWidget::customContextMenuRequested, this, onPaneContextMenu);
         connect(m_folderListView, &DropListView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
             if (m_contentPanel) {
                 m_contentPanel->onPathsDropped(paths, targetIndex, m_path, m_folderProxyModel);
