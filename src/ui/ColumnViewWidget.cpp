@@ -25,7 +25,8 @@ public:
     explicit ColumnBlankCanvasWidget(ColumnViewWidget* columnView, ContentPanel* contentPanel, QWidget* parent = nullptr)
         : QWidget(parent), m_columnView(columnView), m_contentPanel(contentPanel) {
         setObjectName("ColumnBlankCanvasWidget");
-        setFixedWidth(230);
+        setMinimumWidth(0);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         setAcceptDrops(true);
         setContextMenuPolicy(Qt::CustomContextMenu);
         connect(this, &QWidget::customContextMenuRequested, this, &ColumnBlankCanvasWidget::onContextMenuRequested);
@@ -112,19 +113,15 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     layout->setContentsMargins(0, 0, 1, 0);
     layout->setSpacing(0);
 
-    setContextMenuPolicy(Qt::CustomContextMenu);
-
     m_paneScrollArea = new QScrollArea(this);
     m_paneScrollArea->setObjectName("ColumnPaneScrollArea");
     m_paneScrollArea->setWidgetResizable(true);
     m_paneScrollArea->setFrameShape(QFrame::NoFrame);
     m_paneScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_paneScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_paneScrollArea->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_canvasWidget = new QWidget(m_paneScrollArea);
     m_canvasWidget->setObjectName("ColumnPaneCanvasWidget");
-    m_canvasWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     QVBoxLayout* canvasLayout = new QVBoxLayout(m_canvasWidget);
     canvasLayout->setContentsMargins(0, 0, 0, 0);
     canvasLayout->setSpacing(0);
@@ -284,15 +281,6 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         m_listView->installEventFilter(m_contentPanel);
         connect(m_folderListView, &QListView::customContextMenuRequested, m_contentPanel, &ContentPanel::onCustomContextMenuRequested);
         connect(m_listView, &QListView::customContextMenuRequested, m_contentPanel, &ContentPanel::onCustomContextMenuRequested);
-
-        auto onPaneContextMenu = [this](const QPoint& pos) {
-            QWidget* senderWidget = qobject_cast<QWidget*>(sender());
-            QPoint globalPos = senderWidget ? senderWidget->mapToGlobal(pos) : QCursor::pos();
-            m_contentPanel->onCustomContextMenuRequested(globalPos);
-        };
-        connect(this, &QWidget::customContextMenuRequested, this, onPaneContextMenu);
-        connect(m_paneScrollArea, &QWidget::customContextMenuRequested, this, onPaneContextMenu);
-        connect(m_canvasWidget, &QWidget::customContextMenuRequested, this, onPaneContextMenu);
         connect(m_folderListView, &DropListView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
             if (m_contentPanel) {
                 m_contentPanel->onPathsDropped(paths, targetIndex, m_path, m_folderProxyModel);
@@ -589,6 +577,7 @@ ColumnViewWidget::ColumnViewWidget(ContentPanel* contentPanel, QWidget* parent)
     setWidgetResizable(true);
 
     m_container = new QWidget(this);
+    m_container->setMinimumWidth(230);
     m_layout = new QHBoxLayout(m_container);
     m_layout->setContentsMargins(0, 0, 0, 0);
     m_layout->setSpacing(0);
