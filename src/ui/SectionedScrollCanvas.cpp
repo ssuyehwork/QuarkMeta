@@ -237,7 +237,10 @@ void SectionedScrollCanvas::updateSectionCounts() {
             m_folderView->setVisible(!collapsed);
             if (m_type == CanvasType::Grid) {
                 if (auto* fjv = qobject_cast<JustifiedView*>(m_folderView)) {
+                    Logger::log(QString("[Debug] folderCount=%1 fjv->totalHeight()=%2 m_folderView->height()(before)=%3")
+                        .arg(folderCount).arg(fjv->totalHeight()).arg(m_folderView->height()));
                     m_folderView->setFixedHeight(fjv->totalHeight());
+                    Logger::log(QString("[Debug] m_folderView->height()(after)=%1").arg(m_folderView->height()));
                 }
             } else {
                 // 绝对照抄原数值：默认行高 30，边距 2
