@@ -127,6 +127,7 @@ public:
     ContentDataLoader* dataLoader() const { return m_dataLoader; }
     ContentFileOpsHandler* fileOpsHandler() const { return m_fileOpsHandler; }
     ContentStatsWorker* statsWorker() const { return m_statsWorker; }
+    class ContentViewCoordinator* viewCoordinator() const { return m_viewCoordinator; }
     SectionedScrollCanvas* gridCanvas() const { return m_gridCanvas; }
     SectionedScrollCanvas* listCanvas() const { return m_listCanvas; }
 
@@ -244,6 +245,7 @@ private:
     ContentDataLoader* m_dataLoader = nullptr;
     ContentFileOpsHandler* m_fileOpsHandler = nullptr;
     ContentStatsWorker* m_statsWorker = nullptr;
+    class ContentViewCoordinator* m_viewCoordinator = nullptr;
 };
 
 } // namespace QuarkMeta
