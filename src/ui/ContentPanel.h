@@ -66,6 +66,8 @@ public:
         ActionCopyName, ActionCopyPath, ActionAddToFavorites, ActionRefresh, ActionReextractThumbnail, ActionBatchCreate
     };
 
+    friend class ContentViewCoordinator;
+
     explicit ContentPanel(QWidget* parent = nullptr);
     ~ContentPanel() override = default;
 
