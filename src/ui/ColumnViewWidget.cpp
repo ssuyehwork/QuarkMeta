@@ -35,12 +35,7 @@ public:
 protected:
     void mousePressEvent(QMouseEvent* event) override {
         if (event->button() == Qt::LeftButton && m_columnView) {
-            ColumnViewPane* rightPane = m_columnView->rightmostPane();
-            if (rightPane) {
-                rightPane->clearSelection();
-            }
-            m_columnView->updateParentHighlights();
-            emit m_columnView->selectionChanged();
+            m_columnView->clearRightmostSelection();
         }
         QWidget::mousePressEvent(event);
     }
@@ -877,8 +872,9 @@ void ColumnViewWidget::clearRightmostSelection() {
     ColumnViewPane* pane = rightmostPane();
     if (pane) {
         pane->clearSelection();
-        emit selectionChanged();
     }
+    updateParentHighlights();
+    emit selectionChanged();
 }
 
 void ColumnViewWidget::toggleFolderSectionCollapse() {
