@@ -93,6 +93,7 @@ public:
     void goUpColumn();
     void goUpColumnFromIndex(int paneIndex);
     void clearAllSelections();
+    void clearRightmostSelection();
     void toggleFolderSectionCollapse();
 
 signals:

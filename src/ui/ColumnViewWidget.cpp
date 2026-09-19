@@ -35,7 +35,7 @@ public:
 protected:
     void mousePressEvent(QMouseEvent* event) override {
         if (event->button() == Qt::LeftButton && m_columnView) {
-            m_columnView->clearAllSelections();
+            m_columnView->clearRightmostSelection();
         }
         QWidget::mousePressEvent(event);
     }
@@ -869,6 +869,14 @@ void ColumnViewWidget::clearAllSelections() {
         }
     }
     emit selectionChanged();
+}
+
+void ColumnViewWidget::clearRightmostSelection() {
+    ColumnViewPane* pane = rightmostPane();
+    if (pane) {
+        pane->clearSelection();
+        emit selectionChanged();
+    }
 }
 
 void ColumnViewWidget::toggleFolderSectionCollapse() {
