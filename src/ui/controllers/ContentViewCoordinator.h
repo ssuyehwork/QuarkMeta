@@ -5,6 +5,8 @@
 #include <QModelIndexList>
 #include <QSet>
 #include <QString>
+#include <QSortFilterProxyModel>
+#include "FilterStateModel.h"
 
 namespace QuarkMeta {
 
