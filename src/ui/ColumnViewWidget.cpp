@@ -25,7 +25,7 @@ public:
     explicit ColumnBlankCanvasWidget(ColumnViewWidget* columnView, ContentPanel* contentPanel, QWidget* parent = nullptr)
         : QWidget(parent), m_columnView(columnView), m_contentPanel(contentPanel) {
         setObjectName("ColumnBlankCanvasWidget");
-        setMinimumWidth(0);
+        setMinimumWidth(230);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         setAcceptDrops(true);
         setContextMenuPolicy(Qt::CustomContextMenu);
@@ -35,7 +35,12 @@ public:
 protected:
     void mousePressEvent(QMouseEvent* event) override {
         if (event->button() == Qt::LeftButton && m_columnView) {
-            m_columnView->clearRightmostSelection();
+            ColumnViewPane* rightPane = m_columnView->rightmostPane();
+            if (rightPane) {
+                rightPane->clearSelection();
+            }
+            m_columnView->updateParentHighlights();
+            emit m_columnView->selectionChanged();
         }
         QWidget::mousePressEvent(event);
     }
@@ -613,9 +618,6 @@ void ColumnViewWidget::scrollToRightmostPane() {
     QMetaObject::invokeMethod(this, [this]() {
         if (horizontalScrollBar()) {
             horizontalScrollBar()->setValue(horizontalScrollBar()->maximum());
-        }
-        if (!m_panes.isEmpty() && m_panes.last()) {
-            ensureWidgetVisible(m_panes.last(), 0, 0);
         }
     }, Qt::QueuedConnection);
 }
