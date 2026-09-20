@@ -336,6 +336,11 @@ QModelIndexList SectionedScrollCanvas::getSelectedIndexes() const {
     return res;
 }
 
+void SectionedScrollCanvas::resizeEvent(QResizeEvent* event) {
+    QScrollArea::resizeEvent(event);
+    updateSectionCounts();
+}
+
 void SectionedScrollCanvas::mousePressEvent(QMouseEvent* event) {
     if (m_folderView && m_folderView->selectionModel()) m_folderView->selectionModel()->clearSelection();
     if (m_fileView && m_fileView->selectionModel()) m_fileView->selectionModel()->clearSelection();
