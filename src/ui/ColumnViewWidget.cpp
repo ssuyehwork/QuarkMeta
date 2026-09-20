@@ -32,13 +32,6 @@ public:
     }
 
 protected:
-    void mousePressEvent(QMouseEvent* event) override {
-        if (event->button() == Qt::LeftButton && m_columnView) {
-            m_columnView->clearAllSelections();
-        }
-        QWidget::mousePressEvent(event);
-    }
-
     void mouseDoubleClickEvent(QMouseEvent* event) override {
         if (event->button() == Qt::LeftButton && m_columnView) {
             m_columnView->goUpColumn();
@@ -616,7 +609,7 @@ ColumnViewWidget::ColumnViewWidget(ContentPanel* contentPanel, QWidget* parent)
     m_layout->setAlignment(Qt::AlignLeft);
 
     m_blankCanvasWidget = new ColumnBlankCanvasWidget(this, m_contentPanel, m_container);
-    m_layout->addWidget(m_blankCanvasWidget);
+    m_blankCanvasWidget->show();
 
     setWidget(m_container);
 
@@ -872,13 +865,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     });
 
     m_panes.append(pane);
-    if (m_blankCanvasWidget) {
-        m_layout->removeWidget(m_blankCanvasWidget);
-    }
     m_layout->addWidget(pane);
-    if (m_blankCanvasWidget) {
-        m_layout->addWidget(m_blankCanvasWidget);
-    }
     updatePaneWidths();
     updateParentHighlights();
     for (int i = 0; i < m_panes.size(); ++i) {
@@ -942,6 +929,15 @@ void ColumnViewWidget::updatePaneWidths() {
         pane->setFixedWidth(defaultWidth);
         pane->setMinimumWidth(defaultWidth);
         pane->setMaximumWidth(defaultWidth);
+    }
+
+    int totalPanesWidth = m_panes.size() * defaultWidth;
+    int containerHeight = m_container ? m_container->height() : viewport()->height();
+    if (m_blankCanvasWidget) {
+        m_blankCanvasWidget->setGeometry(totalPanesWidth, 0, 230, qMax(containerHeight, viewport()->height()));
+    }
+    if (m_container) {
+        m_container->setMinimumWidth(totalPanesWidth + 230);
     }
 }
 
