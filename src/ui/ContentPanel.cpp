@@ -115,7 +115,9 @@ ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
     connect(&TrashService::instance(), &TrashService::trashOperationCompleted, this, &ContentPanel::refreshAll);
     connect(&PermanentDeleteService::instance(), &PermanentDeleteService::permanentDeleteCompleted, this, &ContentPanel::refreshAll);
     connect(&ClipboardService::instance(), &ClipboardService::pasteCompleted, this, [this](const QString& dir) {
-        if (m_currentPath == dir) refreshAll();
+        if (m_currentPath == dir || (m_currentViewMode == ColumnView && m_columnView && m_columnView->containsPath(dir))) {
+            refreshAll();
+        }
     });
 
     m_keyHandler = new ContentKeyHandler(this);
