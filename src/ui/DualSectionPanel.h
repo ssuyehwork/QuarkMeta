@@ -39,6 +39,7 @@ public:
     // hostViewportHeight：宿主QScrollArea当前viewport()->height()，用于撑满剩余空间的计算
     void updateSectionCounts(int hostViewportHeight);
     void toggleFolderSectionCollapse();
+    int fileViewMinHeight() const { return computeFileViewMinHeight(m_lastHostViewportHeight); }
 
     QAbstractItemView* activeItemView() const;
     QModelIndexList getSelectedIndexes() const;
@@ -48,6 +49,7 @@ public:
 
 signals:
     void selectionChanged();
+    void folderCollapseToggled(bool collapsed);
 
 private:
     int computeFileViewMinHeight(int hostViewportHeight) const;

@@ -47,6 +47,7 @@ DualSectionPanel::DualSectionPanel(QAbstractItemView* folderView, QAbstractItemV
         if (m_folderView && m_folderHeader->count() > 0) {
             m_folderView->setVisible(!collapsed);
             updateSectionCounts(m_lastHostViewportHeight);
+            emit folderCollapseToggled(collapsed);
         }
     });
 
