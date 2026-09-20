@@ -1,6 +1,5 @@
 #include "ContentKeyHandler.h"
 #include "../ContentPanel.h"
-#include "../ColumnViewWidget.h"
 #include "../CardLayoutEngine.h"
 #include "../RatingBarLayout.h"
 #include "../ToolTipOverlay.h"
@@ -452,15 +451,8 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
             return true;
         }
         if (keyEvent->key() == Qt::Key_V) {
-            QString pasteTarget = m_panel->currentPath();
-            if (m_panel->currentViewMode() == ContentPanel::ColumnView && m_panel->columnView()) {
-                ColumnViewPane* pane = m_panel->columnView()->activePane();
-                if (pane && !pane->currentPath().isEmpty()) {
-                    pasteTarget = pane->currentPath();
-                }
-            }
-            if (m_panel->canPaste(pasteTarget)) {
-                ClipboardService::instance().executePaste(pasteTarget, m_panel);
+            if (m_panel->canPaste()) {
+                ClipboardService::instance().executePaste(m_panel->currentPath(), m_panel);
             }
             return true;
         }
@@ -486,16 +478,10 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
     }
 
     // 8. 导航键
-    if (keyEvent->key() == Qt::Key_Backspace || keyEvent->key() == Qt::Key_Left) {
-        if (m_panel->currentViewMode() == ContentPanel::ColumnView && m_panel->columnView()) {
-            m_panel->columnView()->goUpColumn();
-            return true;
-        }
-        if (keyEvent->key() == Qt::Key_Backspace) {
-            QDir dir(m_panel->currentPath());
-            if (dir.cdUp()) emit m_panel->directorySelected(dir.absolutePath());
-            return true;
-        }
+    if (keyEvent->key() == Qt::Key_Backspace) {
+        QDir dir(m_panel->currentPath());
+        if (dir.cdUp()) emit m_panel->directorySelected(dir.absolutePath());
+        return true;
     }
     if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
         m_panel->onDoubleClicked(view->currentIndex());

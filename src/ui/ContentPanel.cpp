@@ -204,7 +204,6 @@ void ContentPanel::initUi() {
     connect(m_columnView, &ColumnViewWidget::pathNavigated, this, [this](const QString& path) {
         if (!path.isEmpty() && path != m_currentPath) {
             m_currentPath = path;
-            emit directorySelected(path);
             updateStatusBarStats();
         }
     });
