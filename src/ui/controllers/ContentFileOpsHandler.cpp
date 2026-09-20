@@ -1,5 +1,6 @@
 #include "ContentFileOpsHandler.h"
 #include "../ContentPanel.h"
+#include "../ColumnViewWidget.h"
 #include "../ToolTipOverlay.h"
 #include "../BatchRenameDialog.h"
 #include "../FileCollisionDialog.h"

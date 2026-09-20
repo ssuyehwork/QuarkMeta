@@ -1,5 +1,6 @@
 #include "ContentKeyHandler.h"
 #include "../ContentPanel.h"
+#include "../ColumnViewWidget.h"
 #include "../CardLayoutEngine.h"
 #include "../RatingBarLayout.h"
 #include "../ToolTipOverlay.h"
