@@ -223,8 +223,6 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_emptyFilterHintLabel->hide();
     canvasLayout->addWidget(m_emptyFilterHintLabel);
 
-    canvasLayout->addStretch(1);
-
     m_paneScrollArea->setWidget(m_canvasWidget);
     layout->addWidget(m_paneScrollArea);
 
@@ -260,7 +258,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
                 int rowH = m_listView->sizeHintForRow(0);
                 if (rowH <= 0) rowH = 28;
                 int fileH = fileCount * rowH + 2;
-                m_listView->setFixedHeight(fileH);
+                m_listView->setFixedHeight(qMax(fileH, computeFileViewMinHeight()));
             }
         }
 
@@ -378,8 +376,23 @@ void ColumnViewPane::paintEvent(QPaintEvent* event) {
     }
 }
 
+int ColumnViewPane::computeFileViewMinHeight() const {
+    int used = 0;
+    if (m_folderHeader && m_folderHeader->isVisible()) used += m_folderHeader->height();
+    if (m_folderListView && m_folderListView->isVisible()) used += m_folderListView->height();
+    if (m_fileHeader && m_fileHeader->isVisible()) used += m_fileHeader->height();
+    return qMax(0, m_paneScrollArea->viewport()->height() - used);
+}
+
 void ColumnViewPane::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
+    if (m_listView && m_fileProxyModel) {
+        int fileCount = m_fileProxyModel->rowCount();
+        int rowH = m_listView->sizeHintForRow(0);
+        if (rowH <= 0) rowH = 28;
+        int fileH = fileCount * rowH + 2;
+        m_listView->setFixedHeight(qMax(fileH, computeFileViewMinHeight()));
+    }
     update();
 }
 
