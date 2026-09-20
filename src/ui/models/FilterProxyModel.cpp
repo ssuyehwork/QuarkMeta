@@ -1,6 +1,7 @@
 #include "FilterProxyModel.h"
 #include "../ContentPanel.h"
 #include "../UiHelper.h"
+#include "../Logger.h"
 #include <QDateTime>
 #include <cmath>
 
@@ -187,8 +188,22 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         bool isGraphic = UiHelper::isGraphicsFile(ext) || (record.width > 0 && record.height > 0);
         bool hasThumb = (record.thumbStatus != 1) && isGraphic && !iconOnlyExts.contains(ext);
 
-        if (currentFilter.thumbnailPresence == FilterState::HasThumbnail && !hasThumb) return false;
-        if (currentFilter.thumbnailPresence == FilterState::NoThumbnail && (hasThumb || record.thumbStatus != 1 || !isGraphic)) return false;
+        bool accepted = true;
+        if (currentFilter.thumbnailPresence == FilterState::HasThumbnail && !hasThumb) accepted = false;
+        if (currentFilter.thumbnailPresence == FilterState::NoThumbnail && (hasThumb || record.thumbStatus != 1 || !isGraphic)) accepted = false;
+
+        Logger::log(QString("[FilterProxyModel] ThumbFilter | File: %1 | ext: %2 | thumbStatus: %3 | widthxheight: %4x%5 | isGraphic: %6 | hasThumb: %7 | mode: %8 | accepted: %9")
+            .arg(record.filename)
+            .arg(ext)
+            .arg(record.thumbStatus)
+            .arg(record.width)
+            .arg(record.height)
+            .arg(isGraphic ? "true" : "false")
+            .arg(hasThumb ? "true" : "false")
+            .arg(currentFilter.thumbnailPresence == FilterState::HasThumbnail ? "HasThumbnail" : "NoThumbnail")
+            .arg(accepted ? "PASS" : "REJECT"));
+
+        if (!accepted) return false;
     }
 
     // 7. 搜索关键词匹配
