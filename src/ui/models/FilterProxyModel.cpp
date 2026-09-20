@@ -180,6 +180,17 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         if (currentFilter.duplicatePresence == FilterState::UniqueOnly && isDuplicate) return false;
     }
 
+    if (currentFilter.thumbnailPresence != FilterState::ThumbAll) {
+        if (record.isDir) return false;
+        static const QStringList iconOnlyExts = {"cur", "ico", "ani"};
+        QString ext = record.suffix.toLower();
+        bool isGraphic = UiHelper::isGraphicsFile(ext) || (record.width > 0 && record.height > 0);
+        bool hasThumb = (record.thumbStatus != 1) && isGraphic && !iconOnlyExts.contains(ext);
+
+        if (currentFilter.thumbnailPresence == FilterState::HasThumbnail && !hasThumb) return false;
+        if (currentFilter.thumbnailPresence == FilterState::NoThumbnail && (hasThumb || record.thumbStatus != 1 || !isGraphic)) return false;
+    }
+
     // 7. 搜索关键词匹配
     if (!currentFilter.keyword.isEmpty()) {
         const QString& kw = currentFilter.keyword;

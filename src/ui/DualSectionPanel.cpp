@@ -69,12 +69,14 @@ int DualSectionPanel::computeFileViewMinHeight(int hostViewportHeight) const {
 
 void DualSectionPanel::updateEmptyFilterHint() {
     if (!m_emptyFilterHintLabel || !m_folderProxyModel || !m_fileProxyModel) return;
-    bool folderEmpty = m_folderProxyModel->rowCount() == 0;
-    bool fileEmpty = m_fileProxyModel->rowCount() == 0;
-    // 具体"隐藏了多少项"的判断逻辑跟原 ColumnViewPane 实现保持一致，
-    // 这里先给出统一入口，实际隐藏计数逻辑在接入阶段核对原实现后补全。
-    if (folderEmpty && fileEmpty) {
-        m_emptyFilterHintLabel->setText("所有内容已被筛选隐藏");
+    auto* srcModel = qobject_cast<const ItemModelBase*>(m_folderProxyModel->sourceModel());
+    if (!srcModel) srcModel = qobject_cast<const ItemModelBase*>(m_fileProxyModel->sourceModel());
+
+    int totalCount = srcModel ? srcModel->rowCount() : 0;
+    int visibleCount = m_folderProxyModel->rowCount() + m_fileProxyModel->rowCount();
+
+    if (totalCount > 0 && visibleCount == 0) {
+        m_emptyFilterHintLabel->setText(QString("所有内容已被筛选隐藏 (%1 个项目)").arg(totalCount));
         m_emptyFilterHintLabel->show();
     } else {
         m_emptyFilterHintLabel->hide();
