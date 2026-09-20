@@ -24,6 +24,12 @@ ContentFileOpsHandler::ContentFileOpsHandler(ContentPanel* panel)
 void ContentFileOpsHandler::createNewItem(const QString& type) {
     if (!m_panel) return;
     QString currentPath = m_panel->currentPath();
+    if (m_panel->currentViewMode() == ContentPanel::ColumnView && m_panel->columnView()) {
+        ColumnViewPane* pane = m_panel->columnView()->activePane();
+        if (pane && !pane->currentPath().isEmpty()) {
+            currentPath = pane->currentPath();
+        }
+    }
     if (currentPath.isEmpty() || currentPath == "computer://") return;
 
     QString baseName = (type == "folder") ? "新建文件夹" : "未命名";
