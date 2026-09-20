@@ -157,6 +157,7 @@ void SectionedScrollCanvas::setupConnections() {
     connect(m_folderHeader, &FolderSectionHeaderBar::collapseToggled, this, [this](bool collapsed) {
         if (m_folderView && m_folderHeader->count() > 0) {
             m_folderView->setVisible(!collapsed);
+            updateSectionCounts();
         }
     });
 

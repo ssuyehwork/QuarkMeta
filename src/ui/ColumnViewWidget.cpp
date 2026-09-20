@@ -191,6 +191,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     connect(m_folderHeader, &FolderSectionHeaderBar::collapseToggled, this, [this](bool collapsed) {
         if (m_folderListView && m_folderHeader->count() > 0) {
             m_folderListView->setVisible(!collapsed);
+            updateSectionCountsAndHints();
         }
     });
 
