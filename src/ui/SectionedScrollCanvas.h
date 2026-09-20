@@ -61,6 +61,7 @@ protected:
 private:
     void initViews(QObject* eventFilter);
     void setupConnections();
+    int computeFileViewMinHeight() const;
 
     CanvasType m_type;
     QWidget* m_containerWidget = nullptr;
