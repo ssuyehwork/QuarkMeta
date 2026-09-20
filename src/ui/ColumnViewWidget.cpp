@@ -148,7 +148,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_folderListView->setFrameShape(QFrame::NoFrame);
     m_folderListView->setFocusPolicy(Qt::StrongFocus);
     m_folderListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_folderListView->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_folderListView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_folderListView->setDragEnabled(true);
     m_folderListView->setAcceptDrops(true);
     m_folderListView->setDropIndicatorShown(true);
@@ -283,32 +283,29 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         emit selectionChanged();
     });
 
-    // 文件夹点击
-    connect(m_folderListView, &QListView::clicked, this, [this](const QModelIndex& index) {
+    // 单击：文件区里点到文件才发 fileSelected，点到文件夹走原生选中高亮，不再触发射新列
+    connect(m_listView, &QListView::clicked, this, [this](const QModelIndex& index) {
+        QString itemPath = index.data(PathRole).toString();
+        bool isDir = (index.data(TypeRole).toString() == "folder") || index.data(Qt::UserRole + 2).toBool() || QFileInfo(itemPath).isDir();
+        int paneIdx = property("paneIndex").toInt();
+        if (!isDir) {
+            emit fileSelected(itemPath, paneIdx);
+        }
+    });
+
+    // 双击：文件夹才触发展开新列，文件走原有的双击打开逻辑
+    connect(m_folderListView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
         QString itemPath = index.data(PathRole).toString();
         int paneIdx = property("paneIndex").toInt();
         emit folderSelected(itemPath, paneIdx);
     });
-
-    // 文件点击
-    connect(m_listView, &QListView::clicked, this, [this](const QModelIndex& index) {
+    connect(m_listView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
         QString itemPath = index.data(PathRole).toString();
         bool isDir = (index.data(TypeRole).toString() == "folder") || index.data(Qt::UserRole + 2).toBool() || QFileInfo(itemPath).isDir();
         int paneIdx = property("paneIndex").toInt();
         if (isDir) {
             emit folderSelected(itemPath, paneIdx);
-        } else {
-            emit fileSelected(itemPath, paneIdx);
-        }
-    });
-
-    connect(m_folderListView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
-        if (m_contentPanel && index.isValid()) {
-            m_contentPanel->onDoubleClicked(index);
-        }
-    });
-    connect(m_listView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
-        if (m_contentPanel && index.isValid()) {
+        } else if (m_contentPanel && index.isValid()) {
             m_contentPanel->onDoubleClicked(index);
         }
     });
