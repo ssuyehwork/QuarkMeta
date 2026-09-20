@@ -188,13 +188,6 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_folderListView->hide();
     canvasLayout->addWidget(m_folderListView);
 
-    connect(m_folderHeader, &FolderSectionHeaderBar::collapseToggled, this, [this](bool collapsed) {
-        if (m_folderListView && m_folderHeader->count() > 0) {
-            m_folderListView->setVisible(!collapsed);
-            updateSectionCountsAndHints();
-        }
-    });
-
     // 5. 内容文件区分界条
     m_fileHeader = new FileSectionHeaderBar(m_canvasWidget);
     m_fileHeader->hide();
@@ -278,6 +271,13 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         }
         update();
     };
+
+    connect(m_folderHeader, &FolderSectionHeaderBar::collapseToggled, this, [this, updateSectionCountsAndHints](bool collapsed) {
+        if (m_folderListView && m_folderHeader->count() > 0) {
+            m_folderListView->setVisible(!collapsed);
+            updateSectionCountsAndHints();
+        }
+    });
 
     connect(m_folderProxyModel, &QAbstractItemModel::modelReset, this, updateSectionCountsAndHints);
     connect(m_folderProxyModel, &QAbstractItemModel::layoutChanged, this, updateSectionCountsAndHints);
