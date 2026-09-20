@@ -11,6 +11,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QCoreApplication>
 #include <QDir>
+#include <QKeyEvent>
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QDragEnterEvent>
@@ -32,6 +33,19 @@ public:
     }
 
 protected:
+    void mousePressEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::LeftButton && m_columnView) {
+            // 🚨 方案一联动：单击最右侧空白仅取消当前活跃列自身文件选区，绝对不抹杀左侧父级路径高亮
+            ColumnViewPane* rightPane = m_columnView->rightmostPane();
+            if (rightPane) {
+                rightPane->clearSelection();
+            }
+            m_columnView->updateParentHighlights();
+            emit m_columnView->selectionChanged();
+        }
+        QWidget::mousePressEvent(event);
+    }
+
     void mouseDoubleClickEvent(QMouseEvent* event) override {
         if (event->button() == Qt::LeftButton && m_columnView) {
             m_columnView->goUpColumn();
@@ -294,6 +308,9 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         emit blankSpaceDoubleClicked(paneIdx);
     });
 
+    m_folderListView->installEventFilter(this);
+    m_listView->installEventFilter(this);
+
     if (m_contentPanel) {
         m_folderListView->installEventFilter(m_contentPanel);
         m_listView->installEventFilter(m_contentPanel);
@@ -335,33 +352,43 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         emit selectionChanged();
     });
 
-    // 文件夹点击
+    // 1. 文件夹单击：【纯选中看属性】，绝不展开新列、绝不飞滚视口、绝不误杀子列
     connect(m_folderListView, &QListView::clicked, this, [this](const QModelIndex& index) {
         QString itemPath = index.data(PathRole).toString();
         int paneIdx = property("paneIndex").toInt();
-        emit folderSelected(itemPath, paneIdx);
+        emit folderClicked(itemPath, paneIdx);
     });
 
-    // 文件点击
+    // 2. 文件单击：【纯选中看属性】，绝不销毁右侧子列
     connect(m_listView, &QListView::clicked, this, [this](const QModelIndex& index) {
         QString itemPath = index.data(PathRole).toString();
-        bool isDir = (index.data(TypeRole).toString() == "folder") || index.data(Qt::UserRole + 2).toBool() || QFileInfo(itemPath).isDir();
         int paneIdx = property("paneIndex").toInt();
+        bool isDir = (index.data(TypeRole).toString() == "folder") || index.data(Qt::UserRole + 2).toBool() || QFileInfo(itemPath).isDir();
         if (isDir) {
-            emit folderSelected(itemPath, paneIdx);
+            emit folderClicked(itemPath, paneIdx);
         } else {
-            emit fileSelected(itemPath, paneIdx);
+            emit fileClicked(itemPath, paneIdx);
         }
     });
 
+    // 3. 文件夹双击：【方案一核心】双击才执行深入展开新列
     connect(m_folderListView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
-        if (m_contentPanel && index.isValid()) {
-            m_contentPanel->onDoubleClicked(index);
-        }
+        if (!index.isValid()) return;
+        QString itemPath = index.data(PathRole).toString();
+        int paneIdx = property("paneIndex").toInt();
+        emit folderDoubleClicked(itemPath, paneIdx);
     });
+
+    // 4. 文件双击：目录则深入展开新列，文件则激活/预览
     connect(m_listView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
-        if (m_contentPanel && index.isValid()) {
-            m_contentPanel->onDoubleClicked(index);
+        if (!index.isValid()) return;
+        QString itemPath = index.data(PathRole).toString();
+        int paneIdx = property("paneIndex").toInt();
+        bool isDir = (index.data(TypeRole).toString() == "folder") || index.data(Qt::UserRole + 2).toBool() || QFileInfo(itemPath).isDir();
+        if (isDir) {
+            emit folderDoubleClicked(itemPath, paneIdx);
+        } else {
+            emit fileDoubleClicked(index);
         }
     });
 }
@@ -381,6 +408,36 @@ void ColumnViewPane::paintEvent(QPaintEvent* event) {
 void ColumnViewPane::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     update();
+}
+
+bool ColumnViewPane::eventFilter(QObject* watched, QEvent* event) {
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        int key = keyEvent->key();
+
+        // 键盘向右深入 (Right / Enter)
+        if (key == Qt::Key_Right || key == Qt::Key_Return || key == Qt::Key_Enter) {
+            auto* lv = qobject_cast<QListView*>(watched);
+            if (lv && lv->currentIndex().isValid()) {
+                QString path = lv->currentIndex().data(PathRole).toString();
+                bool isDir = (lv->currentIndex().data(TypeRole).toString() == "folder") || QFileInfo(path).isDir();
+                if (isDir) {
+                    int paneIdx = property("paneIndex").toInt();
+                    emit folderDoubleClicked(path, paneIdx);
+                    return true;
+                }
+            }
+        }
+        // 键盘向左回退父列 (Left)
+        else if (key == Qt::Key_Left) {
+            int paneIdx = property("paneIndex").toInt();
+            if (paneIdx > 0 && m_contentPanel && m_contentPanel->columnView()) {
+                m_contentPanel->columnView()->focusPane(paneIdx - 1);
+                return true;
+            }
+        }
+    }
+    return QWidget::eventFilter(watched, event);
 }
 
 void ColumnViewPane::setFilterState(const FilterState& state) {
@@ -836,34 +893,56 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
         }
     });
 
-    connect(pane, &ColumnViewPane::folderSelected, this, [this](const QString& folderPath, int paneIdx) {
-        if (paneIdx + 1 < m_panes.size() &&
-            QDir::cleanPath(m_panes[paneIdx + 1]->currentPath()) == QDir::cleanPath(folderPath)) {
-            dismissSubColumns(paneIdx + 1);
-            m_activePaneIndex = paneIdx + 1;
-            emit selectionChanged();
-            return;
+    // 1. 文件夹单击响应：仅作为活跃列与选区切换，绝对不展开新列、不误杀子列
+    connect(pane, &ColumnViewPane::folderClicked, this, [this](const QString& folderPath, int paneIdx) {
+        m_activePaneIndex = paneIdx;
+        emit selectionChanged();
+        if (!folderPath.isEmpty()) {
+            emit pathNavigated(folderPath);
         }
-
-        dismissSubColumns(paneIdx);
-        // 保持父列高亮：仅清空 paneIdx 右侧深层列的选区，保留 paneIdx 及其左侧父列的高亮
-        for (int i = paneIdx + 1; i < m_panes.size(); ++i) {
-            m_panes[i]->clearSelection();
-        }
-        appendColumn(folderPath);
-        emit pathNavigated(folderPath);
         if (m_contentPanel) {
             m_contentPanel->recalculateAndEmitStats();
         }
     });
 
-    connect(pane, &ColumnViewPane::fileSelected, this, [this](const QString& filePath, int paneIdx) {
+    // 2. 文件单击响应：仅作为活跃列与选区切换，绝对不误杀子列
+    connect(pane, &ColumnViewPane::fileClicked, this, [this](const QString& filePath, int paneIdx) {
         Q_UNUSED(filePath);
         m_activePaneIndex = paneIdx;
+        emit selectionChanged();
+        if (m_contentPanel) {
+            m_contentPanel->recalculateAndEmitStats();
+        }
+    });
+
+    // 3. 文件夹双击响应：【方案一】双击才深入生成并挂载下一列
+    connect(pane, &ColumnViewPane::folderDoubleClicked, this, [this](const QString& folderPath, int paneIdx) {
+        if (paneIdx + 1 < m_panes.size() &&
+            QDir::cleanPath(m_panes[paneIdx + 1]->currentPath()) == QDir::cleanPath(folderPath)) {
+            // 已展开该目录，顺畅聚焦至下一列
+            m_activePaneIndex = paneIdx + 1;
+            focusPane(paneIdx + 1);
+            return;
+        }
+
         dismissSubColumns(paneIdx);
-        clearOtherSelections(paneIdx);
-        if (paneIdx >= 0 && paneIdx < m_panes.size()) {
-            emit pathNavigated(m_panes[paneIdx]->currentPath());
+        for (int i = paneIdx + 1; i < m_panes.size(); ++i) {
+            m_panes[i]->clearSelection();
+        }
+        ColumnViewPane* newPane = appendColumn(folderPath);
+        emit pathNavigated(folderPath);
+        if (m_contentPanel) {
+            m_contentPanel->recalculateAndEmitStats();
+        }
+        if (newPane) {
+            focusPane(m_panes.size() - 1);
+        }
+    });
+
+    // 4. 文件双击响应：激活打开文件或进入快速预览
+    connect(pane, &ColumnViewPane::fileDoubleClicked, this, [this](const QModelIndex& index) {
+        if (m_contentPanel && index.isValid()) {
+            m_contentPanel->onDoubleClicked(index);
         }
     });
 
@@ -988,6 +1067,24 @@ void ColumnViewWidget::updateMetadataForPath(const QString& path) {
 
 void ColumnViewWidget::goUpColumn() {
     goUpColumnFromIndex(m_panes.size() - 1);
+}
+
+void ColumnViewWidget::focusPane(int paneIndex) {
+    if (paneIndex >= 0 && paneIndex < m_panes.size()) {
+        m_activePaneIndex = paneIndex;
+        ColumnViewPane* pane = m_panes[paneIndex];
+        if (pane) {
+            QListView* targetView = pane->listView();
+            if (pane->folderListView() && pane->folderListView()->selectionModel() && pane->folderListView()->selectionModel()->hasSelection()) {
+                targetView = pane->folderListView();
+            }
+            if (targetView) {
+                targetView->setFocus();
+            }
+            ensureWidgetVisible(pane, 0, 0);
+            emit selectionChanged();
+        }
+    }
 }
 
 void ColumnViewWidget::goUpColumnFromIndex(int paneIndex) {

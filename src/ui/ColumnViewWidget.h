@@ -39,6 +39,10 @@ public:
     FolderSectionHeaderBar* folderHeader() const { return m_folderHeader; }
 
 signals:
+    void folderClicked(const QString& folderPath, int paneIndex);
+    void fileClicked(const QString& filePath, int paneIndex);
+    void folderDoubleClicked(const QString& folderPath, int paneIndex);
+    void fileDoubleClicked(const QModelIndex& index);
     void folderSelected(const QString& folderPath, int paneIndex);
     void fileSelected(const QString& filePath, int paneIndex);
     void selectionChanged();
@@ -48,6 +52,7 @@ signals:
 protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private slots:
     void tryPendingSelection();
@@ -92,8 +97,10 @@ public:
     void applyFilterState(const FilterState& state);
     void goUpColumn();
     void goUpColumnFromIndex(int paneIndex);
+    void focusPane(int paneIndex);
     void clearAllSelections();
     void toggleFolderSectionCollapse();
+    void updateParentHighlights();
 
 signals:
     void pathNavigated(const QString& path);
@@ -109,7 +116,6 @@ private:
     ColumnViewPane* appendColumn(const QString& path);
     void clearOtherSelections(int activePaneIdx);
     void updatePaneWidths();
-    void updateParentHighlights();
 
     ContentPanel* m_contentPanel = nullptr;
     FilterState m_currentFilter;

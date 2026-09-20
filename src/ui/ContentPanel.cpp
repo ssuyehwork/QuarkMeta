@@ -205,7 +205,7 @@ void ContentPanel::initUi() {
         if (!path.isEmpty() && path != m_currentPath) {
             m_currentPath = path;
             updateStatusBarStats();
-            NavigationService::instance().navigateTo(path, true);
+            emit directorySelected(path);
         }
     });
     connect(m_columnView, &ColumnViewWidget::activeColumnRecordsChanged, this, [this](const std::vector<QuarkMeta::ItemRecord>& records) {
