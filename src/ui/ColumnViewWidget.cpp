@@ -96,9 +96,9 @@ private:
             QAbstractItemView* view = m_contentPanel->activeItemView();
             if (view && view->viewport()) {
                 QPoint viewPos = view->viewport()->mapFromGlobal(globalPos);
-                m_contentPanel->onCustomContextMenuRequested(viewPos);
+                m_contentPanel->onCustomContextMenuRequested(view, viewPos);
             } else {
-                m_contentPanel->onCustomContextMenuRequested(globalPos);
+                m_contentPanel->onCustomContextMenuRequested(nullptr, globalPos);
             }
         }
     }
@@ -140,7 +140,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         DropListView* targetView = m_listView ? m_listView : m_folderListView;
         if (targetView && targetView->viewport()) {
             QPoint viewPos = targetView->viewport()->mapFromGlobal(globalPos);
-            m_contentPanel->onCustomContextMenuRequested(viewPos);
+            m_contentPanel->onCustomContextMenuRequested(targetView, viewPos);
         }
     };
 
@@ -304,8 +304,16 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     if (m_contentPanel) {
         m_folderListView->installEventFilter(m_contentPanel);
         m_listView->installEventFilter(m_contentPanel);
-        connect(m_folderListView, &QListView::customContextMenuRequested, m_contentPanel, &ContentPanel::onCustomContextMenuRequested);
-        connect(m_listView, &QListView::customContextMenuRequested, m_contentPanel, &ContentPanel::onCustomContextMenuRequested);
+        connect(m_folderListView, &QListView::customContextMenuRequested, this, [this](const QPoint& pos) {
+            if (m_contentPanel) {
+                m_contentPanel->onCustomContextMenuRequested(m_folderListView, pos);
+            }
+        });
+        connect(m_listView, &QListView::customContextMenuRequested, this, [this](const QPoint& pos) {
+            if (m_contentPanel) {
+                m_contentPanel->onCustomContextMenuRequested(m_listView, pos);
+            }
+        });
         connect(m_folderListView, &DropListView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
             if (m_contentPanel) {
                 m_contentPanel->onPathsDropped(paths, targetIndex, m_path, m_folderProxyModel);

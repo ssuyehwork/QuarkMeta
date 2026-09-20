@@ -292,6 +292,10 @@ void ContentPanel::startVisibleTimer() {
 
 void ContentPanel::onCustomContextMenuRequested(const QPoint& pos) {
     QAbstractItemView* view = qobject_cast<QAbstractItemView*>(sender());
+    onCustomContextMenuRequested(view, pos);
+}
+
+void ContentPanel::onCustomContextMenuRequested(QAbstractItemView* view, const QPoint& pos) {
     if (!view) view = activeItemView();
     if (!view) return;
     ContentContextMenu menuHandler(this);
