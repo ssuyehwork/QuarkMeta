@@ -92,7 +92,14 @@ protected:
 private:
     void onContextMenuRequested(const QPoint& pos) {
         if (m_contentPanel) {
-            m_contentPanel->onCustomContextMenuRequested(mapToGlobal(pos));
+            QPoint globalPos = mapToGlobal(pos);
+            QAbstractItemView* view = m_contentPanel->activeItemView();
+            if (view && view->viewport()) {
+                QPoint viewPos = view->viewport()->mapFromGlobal(globalPos);
+                m_contentPanel->onCustomContextMenuRequested(viewPos);
+            } else {
+                m_contentPanel->onCustomContextMenuRequested(globalPos);
+            }
         }
     }
 
@@ -118,12 +125,31 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_paneScrollArea->setFrameShape(QFrame::NoFrame);
     m_paneScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_paneScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_paneScrollArea->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_canvasWidget = new QWidget(m_paneScrollArea);
     m_canvasWidget->setObjectName("ColumnPaneCanvasWidget");
+    m_canvasWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     QVBoxLayout* canvasLayout = new QVBoxLayout(m_canvasWidget);
     canvasLayout->setContentsMargins(0, 0, 0, 0);
     canvasLayout->setSpacing(0);
+
+    auto handlePaneBlankContextMenu = [this](const QPoint& pos, QWidget* sourceWidget) {
+        if (!m_contentPanel) return;
+        QPoint globalPos = sourceWidget ? sourceWidget->mapToGlobal(pos) : QCursor::pos();
+        DropListView* targetView = m_listView ? m_listView : m_folderListView;
+        if (targetView && targetView->viewport()) {
+            QPoint viewPos = targetView->viewport()->mapFromGlobal(globalPos);
+            m_contentPanel->onCustomContextMenuRequested(viewPos);
+        }
+    };
+
+    connect(m_paneScrollArea, &QWidget::customContextMenuRequested, this, [this, handlePaneBlankContextMenu](const QPoint& pos) {
+        handlePaneBlankContextMenu(pos, m_paneScrollArea);
+    });
+    connect(m_canvasWidget, &QWidget::customContextMenuRequested, this, [this, handlePaneBlankContextMenu](const QPoint& pos) {
+        handlePaneBlankContextMenu(pos, m_canvasWidget);
+    });
 
     m_model = new DiskItemModel(this);
     m_model->setCurrentPath(path);
