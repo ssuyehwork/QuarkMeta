@@ -47,9 +47,7 @@ PanelMediator::PanelMediator(const PanelMediatorComponents& components, QObject*
 }
 
 void PanelMediator::bindActiveContentPanel(ContentPanel* newPanel) {
-    if (m_contentPanel == newPanel) return;
-
-    if (m_contentPanel) {
+    if (m_contentPanel && m_contentPanel != newPanel) {
         m_contentPanel->disconnect(this);
         if (m_searchController) m_contentPanel->disconnect(m_searchController);
         if (m_metaPanel) m_contentPanel->disconnect(m_metaPanel);

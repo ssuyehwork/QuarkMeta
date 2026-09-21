@@ -39,6 +39,10 @@ void TitleBarWidget::setPinned(bool pinned) {
     m_btnPinTop->setIcon(UiHelper::getIcon(pinned ? "pin_vertical" : "pin_tilted", pinned ? Style::ActiveOrange : Style::TextMain));
 }
 
+int TitleBarWidget::zoomLevel() const {
+    return m_sizeSlider ? m_sizeSlider->value() : 96;
+}
+
 void TitleBarWidget::setZoomLevel(int value) {
     if (!m_sizeSlider) return;
     QSignalBlocker blocker(m_sizeSlider);

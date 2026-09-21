@@ -32,6 +32,7 @@ public:
 
     bool isPinned() const;
     void setPinned(bool pinned);
+    int zoomLevel() const;
     void setZoomLevel(int value);
     Q_INVOKABLE void setWindowMaximized(bool maximized);
     void setViewModeOption(ViewModeOption mode);
