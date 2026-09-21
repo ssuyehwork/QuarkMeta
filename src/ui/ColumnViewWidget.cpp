@@ -237,6 +237,19 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     connect(m_fileProxyModel, &QAbstractItemModel::modelReset, this, updateSectionCountsAndHints);
     connect(m_fileProxyModel, &QAbstractItemModel::layoutChanged, this, updateSectionCountsAndHints);
 
+    connect(m_folderListView, &DropListView::blankSpaceClicked, this, [this]() {
+        int paneIdx = property("paneIndex").toInt();
+        if (m_contentPanel && m_contentPanel->columnView()) {
+            m_contentPanel->columnView()->activatePaneFromBlankClick(paneIdx);
+        }
+    });
+    connect(m_listView, &DropListView::blankSpaceClicked, this, [this]() {
+        int paneIdx = property("paneIndex").toInt();
+        if (m_contentPanel && m_contentPanel->columnView()) {
+            m_contentPanel->columnView()->activatePaneFromBlankClick(paneIdx);
+        }
+    });
+
     connect(m_folderListView, &DropListView::blankSpaceDoubleClicked, this, [this]() {
         int paneIdx = property("paneIndex").toInt();
         emit blankSpaceDoubleClicked(paneIdx);
@@ -916,16 +929,20 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
         }
     });
 
-    connect(pane, &ColumnViewPane::folderClicked, this, [this](const QString& folderPath, int paneIdx) {
+    connect(pane, &ColumnViewPane::folderClicked, this, [this, pane](const QString&, int paneIdx) {
         setActivePaneIndex(paneIdx);
         emit selectionChanged();
-        emit pathNavigated(folderPath);
+        if (pane) {
+            emit pathNavigated(pane->currentPath());
+        }
     });
 
-    connect(pane, &ColumnViewPane::fileClicked, this, [this](const QString& filePath, int paneIdx) {
+    connect(pane, &ColumnViewPane::fileClicked, this, [this, pane](const QString&, int paneIdx) {
         setActivePaneIndex(paneIdx);
         emit selectionChanged();
-        emit pathNavigated(filePath);
+        if (pane) {
+            emit pathNavigated(pane->currentPath());
+        }
     });
 
     auto handleFolderExpand = [this](const QString& folderPath, int paneIdx) {
@@ -999,17 +1016,19 @@ void ColumnViewWidget::clearOtherSelections(int activePaneIdx) {
 void ColumnViewWidget::updateParentHighlights() {
     for (int i = 0; i < m_panes.size(); ++i) {
         ColumnViewPane* parentPane = m_panes[i];
-        if (!parentPane || !parentPane->proxyModel()) continue;
+        if (!parentPane) continue;
 
         ColumnViewPane* childPane = (i + 1 < m_panes.size()) ? m_panes[i + 1] : nullptr;
         QString childPath = childPane ? QDir::toNativeSeparators(QDir::cleanPath(childPane->currentPath())) : "";
-        FilterProxyModel* model = parentPane->proxyModel();
 
-        for (int r = 0; r < model->rowCount(); ++r) {
-            QModelIndex idx = model->index(r, 0);
-            QString itemPath = QDir::toNativeSeparators(QDir::cleanPath(idx.data(PathRole).toString()));
-            bool isExpandedParent = !childPath.isEmpty() && (QString::compare(itemPath, childPath, Qt::CaseInsensitive) == 0);
-            model->setData(idx, isExpandedParent, IsParentExpandedRole);
+        for (FilterProxyModel* model : {parentPane->folderProxyModel(), parentPane->fileProxyModel()}) {
+            if (!model) continue;
+            for (int r = 0; r < model->rowCount(); ++r) {
+                QModelIndex idx = model->index(r, 0);
+                QString itemPath = QDir::toNativeSeparators(QDir::cleanPath(idx.data(PathRole).toString()));
+                bool isExpandedParent = !childPath.isEmpty() && (QString::compare(itemPath, childPath, Qt::CaseInsensitive) == 0);
+                model->setData(idx, isExpandedParent, IsParentExpandedRole);
+            }
         }
     }
 }
