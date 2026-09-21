@@ -614,6 +614,7 @@ void ColumnViewWidget::activatePaneFromBlankClick(int paneIndex) {
         ColumnViewPane* pane = m_panes[paneIndex];
         if (pane) {
             pane->clearSelection();
+            clearOtherSelections(paneIndex);
             focusPane(paneIndex);
             emit selectionChanged();
             emit pathNavigated(pane->currentPath());
@@ -931,6 +932,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
 
     connect(pane, &ColumnViewPane::folderClicked, this, [this, pane](const QString&, int paneIdx) {
         setActivePaneIndex(paneIdx);
+        clearOtherSelections(paneIdx);
         emit selectionChanged();
         if (pane) {
             emit pathNavigated(pane->currentPath());
@@ -939,6 +941,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
 
     connect(pane, &ColumnViewPane::fileClicked, this, [this, pane](const QString&, int paneIdx) {
         setActivePaneIndex(paneIdx);
+        clearOtherSelections(paneIdx);
         emit selectionChanged();
         if (pane) {
             emit pathNavigated(pane->currentPath());
