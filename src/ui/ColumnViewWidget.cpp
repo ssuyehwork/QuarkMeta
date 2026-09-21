@@ -110,7 +110,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     setMinimumWidth(220);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 1, 0);
+    layout->setContentsMargins(0, 1, 1, 0);
     layout->setSpacing(0);
 
     m_paneScrollArea = new QScrollArea(this);
@@ -335,12 +335,23 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     });
 }
 
+void ColumnViewPane::setActive(bool active) {
+    if (m_isActive != active) {
+        m_isActive = active;
+        update();
+    }
+}
+
 void ColumnViewPane::paintEvent(QPaintEvent* event) {
     QWidget::paintEvent(event);
+    QPainter painter(this);
+    if (m_isActive) {
+        painter.setPen(QPen(QColor("#3498db"), 1));
+        painter.drawLine(0, 0, width(), 0);
+    }
     if (m_folderListView && m_folderListView->isVisible()) {
         int folderBottom = m_folderListView->y() + m_folderListView->height();
         if (folderBottom >= height()) {
-            QPainter painter(this);
             painter.setPen(QPen(QColor("#3498db"), 1));
             painter.drawLine(0, height() - 1, width(), height() - 1);
         }
@@ -574,9 +585,20 @@ void ColumnViewPane::tryPendingSelection() {
     }
 }
 
+void ColumnViewWidget::setActivePaneIndex(int newIndex) {
+    if (newIndex < 0 || newIndex >= m_panes.size()) return;
+    int oldIndex = m_activePaneIndex;
+    m_activePaneIndex = newIndex;
+    for (int i = 0; i < m_panes.size(); ++i) {
+        if (m_panes[i]) {
+            m_panes[i]->setActive(i == newIndex);
+        }
+    }
+}
+
 void ColumnViewWidget::activatePaneFromBlankClick(int paneIndex) {
     if (paneIndex >= 0 && paneIndex < m_panes.size()) {
-        m_activePaneIndex = paneIndex;
+        setActivePaneIndex(paneIndex);
         ColumnViewPane* pane = m_panes[paneIndex];
         if (pane) {
             pane->clearSelection();
@@ -704,7 +726,7 @@ ColumnViewPane* ColumnViewWidget::rightmostPane() const {
 
 void ColumnViewWidget::focusPane(int paneIndex) {
     if (paneIndex >= 0 && paneIndex < m_panes.size()) {
-        m_activePaneIndex = paneIndex;
+        setActivePaneIndex(paneIndex);
         ColumnViewPane* pane = m_panes[paneIndex];
         if (pane) {
             DropListView* view = pane->listView();
@@ -793,7 +815,7 @@ void ColumnViewWidget::setRootPath(const QString& path) {
 
     if (path == "computer://") {
         appendColumn("computer://");
-        m_activePaneIndex = 0;
+        setActivePaneIndex(0);
         updatePaneWidths();
         return;
     }
@@ -833,7 +855,7 @@ void ColumnViewWidget::setRootPath(const QString& path) {
         m_panes.last()->selectItemByPath(targetFilePath);
     }
 
-    m_activePaneIndex = m_panes.size() - 1;
+    setActivePaneIndex(m_panes.size() - 1);
 
     updatePaneWidths();
     updateParentHighlights();
@@ -869,7 +891,6 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     int newIdx = m_panes.size();
     ColumnViewPane* pane = new ColumnViewPane(path, m_contentPanel, m_container);
     pane->setProperty("paneIndex", newIdx);
-    m_activePaneIndex = newIdx;
 
     connect(pane, &ColumnViewPane::blankSpaceDoubleClicked, this, [this](int paneIdx) {
         goUpColumnFromIndex(paneIdx);
@@ -889,7 +910,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     });
 
     connect(pane, &ColumnViewPane::selectionChanged, this, [this, pane]() {
-        m_activePaneIndex = pane->property("paneIndex").toInt();
+        setActivePaneIndex(pane->property("paneIndex").toInt());
         emit selectionChanged();
         if (rightmostPane() && rightmostPane()->model()) {
             emit activeColumnRecordsChanged(rightmostPane()->model()->allRecords());
@@ -897,13 +918,13 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     });
 
     connect(pane, &ColumnViewPane::folderClicked, this, [this](const QString& folderPath, int paneIdx) {
-        m_activePaneIndex = paneIdx;
+        setActivePaneIndex(paneIdx);
         emit selectionChanged();
         emit pathNavigated(folderPath);
     });
 
     connect(pane, &ColumnViewPane::fileClicked, this, [this](const QString& filePath, int paneIdx) {
-        m_activePaneIndex = paneIdx;
+        setActivePaneIndex(paneIdx);
         emit selectionChanged();
         emit pathNavigated(filePath);
     });
@@ -911,7 +932,7 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     auto handleFolderExpand = [this](const QString& folderPath, int paneIdx) {
         if (paneIdx + 1 < m_panes.size() &&
             QDir::cleanPath(m_panes[paneIdx + 1]->currentPath()) == QDir::cleanPath(folderPath)) {
-            m_activePaneIndex = paneIdx + 1;
+            setActivePaneIndex(paneIdx + 1);
             focusPane(paneIdx + 1);
             emit selectionChanged();
             return;
@@ -930,13 +951,14 @@ ColumnViewPane* ColumnViewWidget::appendColumn(const QString& path) {
     connect(pane, &ColumnViewPane::folderSelected, this, handleFolderExpand);
 
     connect(pane, &ColumnViewPane::fileSelected, this, [this](const QString& filePath, int paneIdx) {
-        m_activePaneIndex = paneIdx;
+        setActivePaneIndex(paneIdx);
         emit selectionChanged();
         emit pathNavigated(filePath);
     });
 
     m_panes.append(pane);
     m_layout->addWidget(pane);
+    setActivePaneIndex(newIdx);
     updatePaneWidths();
     updateParentHighlights();
     for (int i = 0; i < m_panes.size(); ++i) {
@@ -1070,7 +1092,7 @@ void ColumnViewWidget::goUpColumnFromIndex(int paneIndex) {
             dismissSubColumns(m_panes.size() - 2);
             ColumnViewPane* newActive = rightmostPane();
             if (newActive) {
-                m_activePaneIndex = m_panes.size() - 1;
+                setActivePaneIndex(m_panes.size() - 1);
                 emit pathNavigated(newActive->currentPath());
                 emit selectionChanged();
             }
@@ -1083,7 +1105,7 @@ void ColumnViewWidget::goUpColumnFromIndex(int paneIndex) {
         dismissSubColumns(paneIndex);
         ColumnViewPane* newActive = rightmostPane();
         if (newActive) {
-            m_activePaneIndex = m_panes.size() - 1;
+            setActivePaneIndex(m_panes.size() - 1);
             emit pathNavigated(newActive->currentPath());
             emit selectionChanged();
         }

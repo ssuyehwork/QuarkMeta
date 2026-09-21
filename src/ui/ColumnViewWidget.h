@@ -25,6 +25,9 @@ public:
     QString currentPath() const { return m_path; }
     void loadDirectory();
 
+    bool isActive() const { return m_isActive; }
+    void setActive(bool active);
+
     void selectItemByPath(const QString& targetPath);
     void setPendingSelectPaths(const QSet<QString>& paths);
     void clearSelection();
@@ -68,6 +71,7 @@ private:
     FilterProxyModel* m_proxyModel = nullptr;
     FilterProxyModel* m_folderProxyModel = nullptr;
     FilterProxyModel* m_fileProxyModel = nullptr;
+    bool m_isActive = false;
     QScrollArea* m_paneScrollArea = nullptr;
     DualSectionPanel* m_panel = nullptr;
     DropListView* m_folderListView = nullptr;
@@ -87,6 +91,7 @@ public:
     ColumnViewPane* rightmostPane() const;
     void focusPane(int paneIndex);
     void activatePaneFromBlankClick(int paneIndex);
+    void setActivePaneIndex(int newIndex);
     bool containsPath(const QString& path) const;
     void refreshActiveColumn();
     void refreshAllColumns();
