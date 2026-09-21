@@ -26,6 +26,16 @@ public:
 
 signals:
     /**
+     * @brief Ctrl+T 新建标签页
+     */
+    void newTabRequested();
+
+    /**
+     * @brief Ctrl+W / Ctrl+Shift+W 关闭当前标签页
+     */
+    void closeTabRequested();
+
+    /**
      * @brief Alt+Q 局内快捷键触发置顶状态翻转
      */
     void togglePinRequested();

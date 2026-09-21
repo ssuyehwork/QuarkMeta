@@ -195,6 +195,8 @@ set(SOURCES
     src/ui/NavBarWidget.cpp
     src/ui/TitleBarWidget.h
     src/ui/TitleBarWidget.cpp
+    src/ui/TabBarWidget.h
+    src/ui/TabBarWidget.cpp
     src/ui/ContentHeaderWidget.h
     src/ui/ContentHeaderWidget.cpp
     src/ui/SearchController.h
