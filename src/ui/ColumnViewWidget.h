@@ -42,6 +42,9 @@ public:
     void refreshVisibleThumbnails();
 
 signals:
+    void folderClicked(const QString& folderPath, int paneIndex);
+    void fileClicked(const QString& filePath, int paneIndex);
+    void folderExpandRequested(const QString& folderPath, int paneIndex);
     void folderSelected(const QString& folderPath, int paneIndex);
     void fileSelected(const QString& filePath, int paneIndex);
     void selectionChanged();
@@ -51,6 +54,7 @@ signals:
 protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
 private slots:
     void tryPendingSelection();
@@ -81,6 +85,7 @@ public:
 
     ColumnViewPane* activePane() const;
     ColumnViewPane* rightmostPane() const;
+    void focusPane(int paneIndex);
     bool containsPath(const QString& path) const;
     void refreshActiveColumn();
     void refreshAllColumns();
