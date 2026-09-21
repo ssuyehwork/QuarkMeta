@@ -217,7 +217,7 @@ void SectionedScrollCanvas::updateSectionCounts() {
             if (auto* fjv = qobject_cast<JustifiedView*>(folderView)) {
                 int baseH = fjv->totalHeight();
                 if (fileCount == 0) {
-                    folderView->setFixedHeight(qMax(baseH, m_panel->fileViewMinHeight()));
+                    folderView->setFixedHeight(qMax(baseH, m_panel->folderViewMinHeight()));
                 } else {
                     folderView->setFixedHeight(baseH);
                 }
@@ -231,7 +231,7 @@ void SectionedScrollCanvas::updateSectionCounts() {
             int hdrH = (tv->header() && tv->header()->isVisible()) ? tv->header()->height() : 0;
             int baseH = folderCount * rowH + hdrH + 2;
             if (fileCount == 0) {
-                folderView->setFixedHeight(qMax(baseH, m_panel->fileViewMinHeight()));
+                folderView->setFixedHeight(qMax(baseH, m_panel->folderViewMinHeight()));
             } else {
                 folderView->setFixedHeight(baseH);
             }

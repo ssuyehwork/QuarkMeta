@@ -213,7 +213,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
             if (rowH <= 0) rowH = 28;
             int folderH = folderCount * rowH + 2;
             if (fileCount == 0) {
-                m_folderListView->setFixedHeight(qMax(folderH, m_panel->fileViewMinHeight()));
+                m_folderListView->setFixedHeight(qMax(folderH, m_panel->folderViewMinHeight()));
             } else {
                 m_folderListView->setFixedHeight(folderH);
             }
@@ -352,7 +352,7 @@ void ColumnViewPane::resizeEvent(QResizeEvent* event) {
             if (rowH <= 0) rowH = 28;
             int folderH = folderCount * rowH + 2;
             if (fileCount == 0) {
-                m_folderListView->setFixedHeight(qMax(folderH, m_panel->fileViewMinHeight()));
+                m_folderListView->setFixedHeight(qMax(folderH, m_panel->folderViewMinHeight()));
             } else {
                 m_folderListView->setFixedHeight(folderH);
             }
