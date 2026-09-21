@@ -28,6 +28,7 @@ signals:
     void currentChanged(int index);
     void tabCloseRequested(int index);
     void newTabRequested();
+    void tabMoved(int from, int to);
 
 private:
     QHBoxLayout* m_layout = nullptr;

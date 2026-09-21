@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "TitleBarWidget.h"
+#include "TabBarWidget.h"
 #include "UiHelper.h"
 #include "HoverEventFilter.h"
 #include "SvgIconRenderer.h"
@@ -78,6 +79,9 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
     m_logoLabel->setAlignment(Qt::AlignCenter);
     m_logoLabel->setObjectName("TitleLogoLabel");
     m_layout->addWidget(m_logoLabel);
+
+    m_tabBarWidget = new TabBarWidget(this);
+    m_layout->addWidget(m_tabBarWidget, 1);
 
     m_layout->addStretch();
 

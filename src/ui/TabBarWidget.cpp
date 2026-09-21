@@ -33,6 +33,7 @@ TabBarWidget::TabBarWidget(QWidget* parent)
 
     connect(m_tabBar, &QTabBar::currentChanged, this, &TabBarWidget::currentChanged);
     connect(m_tabBar, &QTabBar::tabCloseRequested, this, &TabBarWidget::tabCloseRequested);
+    connect(m_tabBar, &QTabBar::tabMoved, this, &TabBarWidget::tabMoved);
     connect(m_btnNewTab, &QPushButton::clicked, this, &TabBarWidget::newTabRequested);
 }
 

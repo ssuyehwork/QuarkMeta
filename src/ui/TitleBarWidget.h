@@ -9,6 +9,7 @@
 namespace QuarkMeta {
 
 class HoverEventFilter;
+class TabBarWidget;
 
 /**
  * @brief 独立标题栏组件
@@ -34,6 +35,7 @@ public:
     void setPinned(bool pinned);
     int zoomLevel() const;
     void setZoomLevel(int value);
+    TabBarWidget* tabBarWidget() const { return m_tabBarWidget; }
     Q_INVOKABLE void setWindowMaximized(bool maximized);
     void setViewModeOption(ViewModeOption mode);
     void setDriveBarVisible(bool visible);
@@ -54,6 +56,7 @@ private:
     QHBoxLayout* m_layout = nullptr;
     QLabel* m_logoLabel = nullptr;
     QLabel* m_appNameLabel = nullptr;
+    TabBarWidget* m_tabBarWidget = nullptr;
 
     QPushButton* m_btnViewMenu = nullptr;
     QSlider* m_sizeSlider = nullptr;

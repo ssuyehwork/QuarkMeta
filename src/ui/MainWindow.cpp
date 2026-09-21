@@ -153,7 +153,6 @@ QWidget* MainWindow::setupCentralPanels(QWidget* parentWidget) {
     m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin);
     m_bodyLayout->setSpacing(0);
 
-    m_tabBarWidget = new TabBarWidget(bodyWrapper);
     m_contentStack = new QStackedWidget(bodyWrapper);
 
     m_mainSplitter = new QSplitter(Qt::Horizontal, bodyWrapper);
@@ -174,11 +173,9 @@ QWidget* MainWindow::setupCentralPanels(QWidget* parentWidget) {
     m_mainSplitter->addWidget(m_metaPanel);
     m_mainSplitter->addWidget(m_filterPanel);
 
-    m_bodyLayout->addWidget(m_tabBarWidget);
     m_bodyLayout->addWidget(m_mainSplitter);
 
-    // 默认开辟初始标签页
-    m_tabBarWidget->addTab("此电脑", "computer://");
+    m_tabBarWidget = m_titleBarWidget ? m_titleBarWidget->tabBarWidget() : nullptr;
 
     auto createNewTab = [this](const QString& initialPath = "") {
         ContentPanel* newPanel = new ContentPanel(this);
@@ -192,36 +189,51 @@ QWidget* MainWindow::setupCentralPanels(QWidget* parentWidget) {
         QString title = (targetPath == "computer://") ? "此电脑" : (targetPath == "trash://" ? "回收站" : fi.fileName());
         if (title.isEmpty()) title = targetPath;
 
-        int newIdx = m_tabBarWidget->addTab(title, targetPath);
-        m_tabBarWidget->setCurrentIndex(newIdx);
+        if (m_tabBarWidget) {
+            int newIdx = m_tabBarWidget->addTab(title, targetPath);
+            m_tabBarWidget->setCurrentIndex(newIdx);
+        }
     };
 
-    connect(m_tabBarWidget, &TabBarWidget::newTabRequested, this, [createNewTab]() {
-        createNewTab();
-    });
+    if (m_tabBarWidget) {
+        // 初始化第一个 Tab
+        m_tabBarWidget->addTab("此电脑", "computer://");
 
-    connect(m_tabBarWidget, &TabBarWidget::currentChanged, this, [this](int index) {
-        if (index >= 0 && index < m_contentStack->count()) {
-            m_contentStack->setCurrentIndex(index);
-            ContentPanel* activePanel = qobject_cast<ContentPanel*>(m_contentStack->widget(index));
-            if (activePanel) {
-                m_contentPanel = activePanel;
-                if (m_panelMediator) {
-                    m_panelMediator->bindActiveContentPanel(activePanel);
+        connect(m_tabBarWidget, &TabBarWidget::newTabRequested, this, [createNewTab]() {
+            createNewTab();
+        });
+
+        connect(m_tabBarWidget, &TabBarWidget::currentChanged, this, [this](int index) {
+            if (index >= 0 && index < m_contentStack->count()) {
+                m_contentStack->setCurrentIndex(index);
+                ContentPanel* activePanel = qobject_cast<ContentPanel*>(m_contentStack->widget(index));
+                if (activePanel) {
+                    m_contentPanel = activePanel;
+                    if (m_panelMediator) {
+                        m_panelMediator->bindActiveContentPanel(activePanel);
+                    }
                 }
             }
-        }
-    });
+        });
 
-    connect(m_tabBarWidget, &TabBarWidget::tabCloseRequested, this, [this](int index) {
-        if (m_tabBarWidget->count() <= 1) return; // 至少保留 1 个标签页
-        QWidget* w = m_contentStack->widget(index);
-        if (w) {
-            m_contentStack->removeWidget(w);
-            w->deleteLater();
-        }
-        m_tabBarWidget->removeTab(index);
-    });
+        connect(m_tabBarWidget, &TabBarWidget::tabCloseRequested, this, [this](int index) {
+            if (m_tabBarWidget->count() <= 1) return; // 至少保留 1 个标签页
+            QWidget* w = m_contentStack->widget(index);
+            if (w) {
+                m_contentStack->removeWidget(w);
+                w->deleteLater();
+            }
+            m_tabBarWidget->removeTab(index);
+        });
+
+        connect(m_tabBarWidget, &TabBarWidget::tabMoved, this, [this](int from, int to) {
+            if (from >= 0 && from < m_contentStack->count() && to >= 0 && to < m_contentStack->count()) {
+                QWidget* w = m_contentStack->widget(from);
+                m_contentStack->removeWidget(w);
+                m_contentStack->insertWidget(to, w);
+            }
+        });
+    }
 
     return bodyWrapper;
 }
