@@ -26,7 +26,6 @@ public:
     explicit ColumnBlankCanvasWidget(ColumnViewWidget* columnView, ContentPanel* contentPanel, QWidget* parent = nullptr)
         : QWidget(parent), m_columnView(columnView), m_contentPanel(contentPanel) {
         setObjectName("ColumnBlankCanvasWidget");
-        setFixedWidth(230);
         setAcceptDrops(true);
         setContextMenuPolicy(Qt::CustomContextMenu);
         connect(this, &QWidget::customContextMenuRequested, this, &ColumnBlankCanvasWidget::onContextMenuRequested);
