@@ -123,6 +123,16 @@ void AppShortcutController::initShortcuts() {
         UndoManager::instance().redo();
     });
 
+    // 3.5. Ctrl+T: 局内新建标签页
+    QShortcut* scNewTab = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_T), m_window);
+    scNewTab->setContext(Qt::WindowShortcut);
+    connect(scNewTab, &QShortcut::activated, this, &AppShortcutController::newTabRequested);
+
+    // 3.6. Ctrl+W: 关闭当前标签页
+    QShortcut* scCloseTab = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_W), m_window);
+    scCloseTab->setContext(Qt::WindowShortcut);
+    connect(scCloseTab, &QShortcut::activated, this, &AppShortcutController::closeTabRequested);
+
     // 4. Alt+Q: 局内切换窗口置顶
     QShortcut* scPin = new QShortcut(QKeySequence(Qt::ALT | Qt::Key_Q), m_window);
     scPin->setContext(Qt::WindowShortcut);

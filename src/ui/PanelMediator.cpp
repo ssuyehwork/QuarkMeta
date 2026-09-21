@@ -46,6 +46,158 @@ PanelMediator::PanelMediator(const PanelMediatorComponents& components, QObject*
       m_shortcutController(components.shortcutController) {
 }
 
+void PanelMediator::bindActiveContentPanel(ContentPanel* newPanel) {
+    if (m_contentPanel == newPanel) return;
+
+    if (m_contentPanel) {
+        m_contentPanel->disconnect(this);
+        if (m_searchController) m_contentPanel->disconnect(m_searchController);
+        if (m_metaPanel) m_contentPanel->disconnect(m_metaPanel);
+        if (m_filterPanel) m_contentPanel->disconnect(m_filterPanel);
+        if (m_titleBar) m_contentPanel->disconnect(m_titleBar);
+    }
+
+    m_contentPanel = newPanel;
+    if (!m_contentPanel) return;
+
+    if (m_searchController) {
+        m_searchController->bindContentPanel(m_contentPanel);
+    }
+
+    if (m_titleBar) {
+        m_contentPanel->setZoomLevel(m_titleBar->zoomLevel());
+        connect(m_titleBar, &TitleBarWidget::viewModeRequested, m_contentPanel, [this](TitleBarWidget::ViewModeOption option) {
+            if (!m_contentPanel) return;
+            ContentPanel::ViewMode targetMode = ContentPanel::GridView;
+            if (option == TitleBarWidget::JustifiedViewMode) targetMode = ContentPanel::JustifiedViewMode;
+            else if (option == TitleBarWidget::GridViewMode) targetMode = ContentPanel::GridView;
+            else if (option == TitleBarWidget::ListViewMode) targetMode = ContentPanel::ListView;
+            else if (option == TitleBarWidget::ColumnViewMode) targetMode = ContentPanel::ColumnView;
+
+            m_contentPanel->setViewMode(targetMode);
+        });
+
+        connect(m_titleBar, &TitleBarWidget::createItemRequested, m_contentPanel, [this](const QString& type) {
+            if (m_contentPanel) m_contentPanel->createNewItem(type);
+        });
+
+        connect(m_titleBar, &TitleBarWidget::zoomLevelChanged, m_contentPanel, [this](int value) {
+            if (m_contentPanel) m_contentPanel->setZoomLevel(value);
+        });
+
+        connect(m_contentPanel, &ContentPanel::zoomLevelChanged, m_titleBar, [this](int level) {
+            if (m_titleBar) m_titleBar->setZoomLevel(level);
+        });
+    }
+
+    if (m_filterPanel) {
+        connect(m_contentPanel, &ContentPanel::directoryStatsReady, m_filterPanel, [this](const ScanStats& stats) {
+            if (m_filterPanel) {
+                m_filterPanel->populateStats(stats);
+                AppEvent ev;
+                ev.type = AppEventType::FilterStateChanged;
+                CentralEventHub::instance().publishEvent(ev);
+            }
+        });
+
+        connect(m_filterPanel, &FilterPanel::filterChanged, m_contentPanel, [this](const FilterState& state) {
+            if (m_contentPanel) m_contentPanel->applyFilters(state);
+        });
+
+        if (m_contentPanel->columnView()) {
+            connect(m_contentPanel->columnView(), &ColumnViewWidget::pathNavigated, m_filterPanel, [this](const QString&) {
+                if (m_filterPanel) m_filterPanel->clearAllFilters(false);
+            });
+        }
+    }
+
+    if (m_metaPanel) {
+        connect(m_contentPanel, &ContentPanel::selectionChanged, m_metaPanel, [this](const QStringList& paths) {
+            if (!m_metaPanel || !m_contentPanel) return;
+            m_metaPanel->setSelectedPaths(paths);
+            if (paths.isEmpty()) {
+                m_metaPanel->setImagePreview(QPixmap());
+                m_metaPanel->updateInfo("-", "-", "-", "-", "-", "-", "-", false, 0, 0);
+                m_metaPanel->setRating(0, false);
+                m_metaPanel->setColor(QString(""), false);
+                m_metaPanel->setTags(QStringList());
+                m_metaPanel->setNote(QString(""));
+                m_metaPanel->setURL(QString(""));
+                m_metaPanel->setPalettes({});
+            } else if (paths.size() == 1) {
+                QModelIndexList selectedIndices = m_contentPanel->getSelectedIndexes();
+                QModelIndex idx = selectedIndices.isEmpty() ? QModelIndex() : selectedIndices.first();
+                QString path = paths.first();
+                QFileInfo fi(path);
+
+                QString name = idx.isValid() ? idx.sibling(idx.row(), 0).data(Qt::DisplayRole).toString() : fi.fileName();
+                QString type = idx.isValid() ? ((idx.data(TypeRole).toString() == "folder") ? "文件夹" : idx.sibling(idx.row(), 4).data(Qt::DisplayRole).toString() + " 文件") : (fi.isDir() ? "文件夹" : fi.suffix().toUpper() + " 文件");
+                QString sizeStr = idx.isValid() ? idx.sibling(idx.row(), 5).data(Qt::DisplayRole).toString() : "-";
+                QString mtimeStr = idx.isValid() ? idx.sibling(idx.row(), 6).data(Qt::DisplayRole).toString() : "-";
+                bool encrypted = idx.isValid() ? idx.data(EncryptedRole).toBool() : false;
+
+                m_metaPanel->updateInfo(name, type, sizeStr, "-", mtimeStr, "-", path, encrypted, 0, 0);
+
+                auto meta = MetadataManager::instance().getMeta(path.toStdWString());
+                QVector<QPair<QColor, float>> qPalettes;
+                qPalettes.reserve(static_cast<int>(meta.palettes.size()));
+                for (const auto& entry : meta.palettes) {
+                    qPalettes.append(qMakePair(entry.color, entry.ratio));
+                }
+
+                if (idx.isValid()) {
+                    int rating = idx.data(RatingRole).toInt();
+                    QString color = idx.data(ColorRole).toString();
+                    QStringList tags = idx.data(TagsRole).toStringList();
+                    QString note = idx.data(NoteRole).toString();
+                    QString url = idx.data(UrlRole).toString();
+
+                    int finalRating = rating > 0 ? rating : meta.rating;
+                    QString finalColor = !color.isEmpty() ? color : QString::fromStdWString(meta.manualColor);
+                    QStringList finalTags = !tags.isEmpty() ? tags : meta.tags;
+                    QString finalNote = !note.isEmpty() ? note : QString::fromStdWString(meta.note);
+                    QString finalUrl = !url.isEmpty() ? url : QString::fromStdWString(meta.url);
+
+                    m_metaPanel->setRating(finalRating, false);
+                    m_metaPanel->setColor(finalColor, false);
+                    m_metaPanel->setTags(finalTags);
+                    m_metaPanel->setNote(finalNote);
+                    m_metaPanel->setURL(finalUrl);
+                    m_metaPanel->setPalettes(qPalettes);
+
+                    QVariant decData = idx.data(Qt::DecorationRole);
+                    QPixmap previewPixmap;
+                    if (decData.canConvert<QIcon>()) {
+                        previewPixmap = decData.value<QIcon>().pixmap(128, 128);
+                    } else if (decData.canConvert<QPixmap>()) {
+                        previewPixmap = decData.value<QPixmap>();
+                    }
+                    m_metaPanel->setImagePreview(previewPixmap);
+                } else {
+                    m_metaPanel->setRating(meta.rating, false);
+                    m_metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);
+                    m_metaPanel->setTags(meta.tags);
+                    m_metaPanel->setNote(QString::fromStdWString(meta.note));
+                    m_metaPanel->setURL(QString::fromStdWString(meta.url));
+                    m_metaPanel->setPalettes(qPalettes);
+                    m_metaPanel->setImagePreview(QPixmap());
+                }
+            }
+        });
+    }
+
+    connect(m_contentPanel, &ContentPanel::directorySelected, &NavigationService::instance(), [](const QString& path) {
+        NavigationService::instance().navigateTo(path);
+    });
+
+    if (m_contentPanel->currentPath().isEmpty()) {
+        m_contentPanel->loadDirectory(NavigationService::instance().currentUrl());
+    } else {
+        m_contentPanel->recalculateAndEmitStats();
+        emit m_contentPanel->selectionChanged(m_contentPanel->getSelectedPaths());
+    }
+}
+
 void PanelMediator::setupConnections() {
     NavPanel* navPanel = m_navPanel;
     FavoritePanel* favoritePanel = m_favoritePanel;

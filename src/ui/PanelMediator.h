@@ -48,6 +48,7 @@ public:
      * @brief 建立各面板间的信号槽连接
      */
     void setupConnections();
+    void bindActiveContentPanel(ContentPanel* newPanel);
 
 signals:
     /**

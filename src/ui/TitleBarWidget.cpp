@@ -75,9 +75,6 @@ void TitleBarWidget::initUi(HoverEventFilter* hoverFilter) {
     m_logoLabel->setObjectName("TitleLogoLabel");
     m_layout->addWidget(m_logoLabel);
 
-    m_appNameLabel = new QLabel("QuarkMeta", this);
-    m_appNameLabel->setObjectName("AppNameLabel");
-    m_layout->addWidget(m_appNameLabel);
     m_layout->addStretch();
 
     auto createTitleBtn = [this, hoverFilter](const QString& iconKey, const QString& tip) -> QPushButton* {

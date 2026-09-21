@@ -38,6 +38,7 @@ class AppShortcutController;
 class PanelMediator;
 class PanelLayoutManager;
 class FramelessWindowHelper;
+class TabBarWidget;
 
 /**
  * @brief 主窗口类
@@ -86,10 +87,13 @@ private:
     AddressBar* m_addressBar = nullptr;
     SearchController* m_searchController = nullptr;
 
-    // 5 大核心面板与 Splitter
+    // 多标签页与 5 大核心面板
+    TabBarWidget* m_tabBarWidget = nullptr;
+    QStackedWidget* m_contentStack = nullptr;
+
     NavPanel* m_navPanel = nullptr;
     FavoritePanel* m_favoritePanel = nullptr;
-    ContentPanel* m_contentPanel = nullptr;
+    ContentPanel* m_contentPanel = nullptr; // 当前活跃的 ContentPanel 句柄
     MetaPanel* m_metaPanel = nullptr;
     FilterPanel* m_filterPanel = nullptr;
 

@@ -5,6 +5,7 @@
 #include "TitleBarWidget.h"
 #include "NavBarWidget.h"
 #include "DriveBarWidget.h"
+#include "TabBarWidget.h"
 #include "UiHelper.h"
 #include "SearchHistoryPanel.h"
 #include "AppShortcutController.h"
@@ -152,6 +153,9 @@ QWidget* MainWindow::setupCentralPanels(QWidget* parentWidget) {
     m_bodyLayout->setContentsMargins(kLayoutEdgeMargin, 0, kLayoutEdgeMargin, kLayoutEdgeMargin);
     m_bodyLayout->setSpacing(0);
 
+    m_tabBarWidget = new TabBarWidget(bodyWrapper);
+    m_contentStack = new QStackedWidget(bodyWrapper);
+
     m_mainSplitter = new QSplitter(Qt::Horizontal, bodyWrapper);
     m_mainSplitter->setHandleWidth(5);
     m_mainSplitter->setChildrenCollapsible(false);
@@ -162,13 +166,62 @@ QWidget* MainWindow::setupCentralPanels(QWidget* parentWidget) {
     m_metaPanel     = new MetaPanel(this);     m_metaPanel->setObjectName("MetadataContainer");
     m_filterPanel   = new FilterPanel(this);   m_filterPanel->setObjectName("FilterContainer");
 
+    m_contentStack->addWidget(m_contentPanel);
+
     m_mainSplitter->addWidget(m_navPanel);
     m_mainSplitter->addWidget(m_favoritePanel);
-    m_mainSplitter->addWidget(m_contentPanel);
+    m_mainSplitter->addWidget(m_contentStack);
     m_mainSplitter->addWidget(m_metaPanel);
     m_mainSplitter->addWidget(m_filterPanel);
 
+    m_bodyLayout->addWidget(m_tabBarWidget);
     m_bodyLayout->addWidget(m_mainSplitter);
+
+    // 默认开辟初始标签页
+    m_tabBarWidget->addTab("此电脑", "computer://");
+
+    auto createNewTab = [this](const QString& initialPath = "") {
+        ContentPanel* newPanel = new ContentPanel(this);
+        newPanel->setObjectName("EditorContainer");
+        m_contentStack->addWidget(newPanel);
+
+        QString targetPath = initialPath.isEmpty() ? NavigationService::instance().currentUrl() : initialPath;
+        if (targetPath.isEmpty()) targetPath = "computer://";
+
+        QFileInfo fi(targetPath);
+        QString title = (targetPath == "computer://") ? "此电脑" : (targetPath == "trash://" ? "回收站" : fi.fileName());
+        if (title.isEmpty()) title = targetPath;
+
+        int newIdx = m_tabBarWidget->addTab(title, targetPath);
+        m_tabBarWidget->setCurrentIndex(newIdx);
+    };
+
+    connect(m_tabBarWidget, &TabBarWidget::newTabRequested, this, [createNewTab]() {
+        createNewTab();
+    });
+
+    connect(m_tabBarWidget, &TabBarWidget::currentChanged, this, [this](int index) {
+        if (index >= 0 && index < m_contentStack->count()) {
+            m_contentStack->setCurrentIndex(index);
+            ContentPanel* activePanel = qobject_cast<ContentPanel*>(m_contentStack->widget(index));
+            if (activePanel) {
+                m_contentPanel = activePanel;
+                if (m_panelMediator) {
+                    m_panelMediator->bindActiveContentPanel(activePanel);
+                }
+            }
+        }
+    });
+
+    connect(m_tabBarWidget, &TabBarWidget::tabCloseRequested, this, [this](int index) {
+        if (m_tabBarWidget->count() <= 1) return; // 至少保留 1 个标签页
+        QWidget* w = m_contentStack->widget(index);
+        if (w) {
+            m_contentStack->removeWidget(w);
+            w->deleteLater();
+        }
+        m_tabBarWidget->removeTab(index);
+    });
 
     return bodyWrapper;
 }
@@ -184,6 +237,16 @@ void MainWindow::setupControllersAndMediators() {
             m_titleBarWidget->setPinned(nextState);
             FramelessWindowHelper::setAlwaysOnTop(this, nextState);
             AppConfig::instance().setValue("MainWindow/AlwaysOnTop", nextState);
+        }
+    });
+
+    connect(m_shortcutController, &AppShortcutController::newTabRequested, this, [this]() {
+        if (m_tabBarWidget) emit m_tabBarWidget->newTabRequested();
+    });
+
+    connect(m_shortcutController, &AppShortcutController::closeTabRequested, this, [this]() {
+        if (m_tabBarWidget && m_tabBarWidget->currentIndex() >= 0) {
+            emit m_tabBarWidget->tabCloseRequested(m_tabBarWidget->currentIndex());
         }
     });
 
