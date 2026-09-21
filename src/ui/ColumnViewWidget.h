@@ -86,6 +86,7 @@ public:
     ColumnViewPane* activePane() const;
     ColumnViewPane* rightmostPane() const;
     void focusPane(int paneIndex);
+    void activatePaneFromBlankClick(int paneIndex);
     bool containsPath(const QString& path) const;
     void refreshActiveColumn();
     void refreshAllColumns();

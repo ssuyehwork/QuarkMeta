@@ -246,6 +246,8 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         emit blankSpaceDoubleClicked(paneIdx);
     });
 
+    m_paneScrollArea->installEventFilter(this);
+    m_panel->installEventFilter(this);
     m_folderListView->installEventFilter(this);
     m_listView->installEventFilter(this);
 
@@ -346,6 +348,16 @@ void ColumnViewPane::paintEvent(QPaintEvent* event) {
 }
 
 bool ColumnViewPane::eventFilter(QObject* obj, QEvent* event) {
+    if (event && event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton && (obj == m_paneScrollArea || obj == m_panel)) {
+            int paneIdx = property("paneIndex").toInt();
+            if (m_contentPanel && m_contentPanel->columnView()) {
+                m_contentPanel->columnView()->activatePaneFromBlankClick(paneIdx);
+            }
+        }
+    }
+
     if (event && event->type() == QEvent::KeyPress && (obj == m_folderListView || obj == m_listView)) {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
         int paneIdx = property("paneIndex").toInt();
@@ -558,6 +570,19 @@ void ColumnViewPane::tryPendingSelection() {
                     return;
                 }
             }
+        }
+    }
+}
+
+void ColumnViewWidget::activatePaneFromBlankClick(int paneIndex) {
+    if (paneIndex >= 0 && paneIndex < m_panes.size()) {
+        m_activePaneIndex = paneIndex;
+        ColumnViewPane* pane = m_panes[paneIndex];
+        if (pane) {
+            pane->clearSelection();
+            focusPane(paneIndex);
+            emit selectionChanged();
+            emit pathNavigated(pane->currentPath());
         }
     }
 }
