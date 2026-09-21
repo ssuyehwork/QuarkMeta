@@ -587,7 +587,6 @@ void ColumnViewPane::tryPendingSelection() {
 
 void ColumnViewWidget::setActivePaneIndex(int newIndex) {
     if (newIndex < 0 || newIndex >= m_panes.size()) return;
-    int oldIndex = m_activePaneIndex;
     m_activePaneIndex = newIndex;
     for (int i = 0; i < m_panes.size(); ++i) {
         if (m_panes[i]) {
