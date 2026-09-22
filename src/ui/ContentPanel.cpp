@@ -579,7 +579,7 @@ void ContentPanel::onCustomContextMenuRequested(QAbstractItemView* view, const Q
 void ContentPanel::loadDirectory(const QString& path, bool recursive) {
     if (m_currentViewMode == ColumnView) {
         m_currentPath = path;
-        m_isRecursive = recursive;
+        setIsRecursive(recursive);
         if (m_columnView) {
             if (m_columnView->containsPath(path)) {
                 m_columnView->refreshAllColumns();
