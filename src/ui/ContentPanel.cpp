@@ -4,6 +4,8 @@
 #include "ContentPanel.h"
 #include "ContentHeaderWidget.h"
 #include "FolderSectionWidget.h"
+#include "TitleBarWidget.h"
+#include "TabBarWidget.h"
 #include <QSplitter>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
