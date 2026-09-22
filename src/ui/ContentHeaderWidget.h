@@ -24,7 +24,6 @@ public:
     void setRecursive(bool recursive);
     void setLayersEnabled(bool enabled, const QString& tooltip);
     void setTitleText(const QString& title);
-    void setCloseButtonVisible(bool visible);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -32,7 +31,6 @@ protected:
 signals:
     void filterStateChanged(const FilterState& state);
     void recursiveToggled(bool recursive);
-    void closeRequested();
 
 private:
     void initUi();
@@ -45,7 +43,6 @@ private:
     QPushButton* m_btnToggleHidden = nullptr;
     QPushButton* m_btnToggleFolders = nullptr;
     QPushButton* m_btnToggleFiles = nullptr;
-    QPushButton* m_btnClosePane = nullptr;
 
     FilterState m_filterState;
 };

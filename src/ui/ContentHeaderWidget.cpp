@@ -79,27 +79,11 @@ void ContentHeaderWidget::initUi() {
     });
 
     m_layout->addWidget(m_btnLayers, 0, Qt::AlignVCenter);
-
-    m_btnClosePane = new QPushButton(this);
-    m_btnClosePane->setFixedSize(20, 20);
-    m_btnClosePane->setIcon(UiHelper::getIcon("close", QColor("#888888"), 12));
-    m_btnClosePane->setObjectName("PaneCloseBtn");
-    m_btnClosePane->setProperty("tooltipText", "关闭此窗格");
-    m_btnClosePane->hide();
-    m_btnClosePane->installEventFilter(this);
-    connect(m_btnClosePane, &QPushButton::clicked, this, &ContentHeaderWidget::closeRequested);
-    m_layout->addWidget(m_btnClosePane, 0, Qt::AlignVCenter);
 }
 
 void ContentHeaderWidget::setTitleText(const QString& title) {
     if (m_titleLabel) {
         m_titleLabel->setText(title.isEmpty() ? "内容" : title);
-    }
-}
-
-void ContentHeaderWidget::setCloseButtonVisible(bool visible) {
-    if (m_btnClosePane) {
-        m_btnClosePane->setVisible(visible);
     }
 }
 
