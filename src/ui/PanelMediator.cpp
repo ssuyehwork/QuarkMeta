@@ -529,16 +529,32 @@ void PanelMediator::setupConnections() {
 
     // 4. 统计与过滤联动 (动态支持多分栏焦点切换)
     if (filterPanel) {
-        auto bindFilterToActivePanel = [this, filterPanel](ContentPanel* activePanel) {
+        // 用于管理当前绑定面板的连接断开，防止后台窗格发送统计冲刷侧边栏
+        auto activeStatsConn = std::make_shared<QMetaObject::Connection>();
+
+        auto bindFilterToActivePanel = [this, filterPanel, activeStatsConn](ContentPanel* activePanel) {
             if (!activePanel) return;
 
-            // 收到分栏统计准备就绪信号时，刷出统计
-            connect(activePanel, &ContentPanel::directoryStatsReady, filterPanel, [filterPanel](const ScanStats& stats) {
+            // 1. 严格解绑上一个窗格的统计信号，杜绝后台非焦点窗格冲刷侧边栏
+            if (*activeStatsConn) {
+                QObject::disconnect(*activeStatsConn);
+            }
+
+            // 2. 绑定新焦点窗格的统计就绪信号
+            *activeStatsConn = connect(activePanel, &ContentPanel::directoryStatsReady, filterPanel, [filterPanel](const ScanStats& stats) {
                 filterPanel->populateStats(stats);
                 AppEvent ev;
                 ev.type = AppEventType::FilterStateChanged;
                 CentralEventHub::instance().publishEvent(ev);
-            }, Qt::UniqueConnection);
+            });
+
+            // 3. 切换焦点的瞬间：反向刷出新焦点窗格已有的 FilterState 与统计数据给 FilterPanel
+            filterPanel->blockSignals(true);
+            filterPanel->syncUIFromFilterState();
+            filterPanel->blockSignals(false);
+
+            // 触发当前焦点窗格重新计算并广播统计
+            activePanel->recalculateAndEmitStats();
         };
 
         // 绑定初始主面板
@@ -546,14 +562,14 @@ void PanelMediator::setupConnections() {
             bindFilterToActivePanel(contentPanel);
         }
 
-        // 焦点分栏切换时动态绑定并应用当前筛选条件
+        // 焦点分栏切换时动态绑定并同步刷出状态
         connect(this, &PanelMediator::activeContentPanelChanged, this, [this, filterPanel, bindFilterToActivePanel](ContentPanel* newActivePanel) {
             if (newActivePanel) {
                 bindFilterToActivePanel(newActivePanel);
             }
         });
 
-        // 筛选条件变动时应用至当前激活分栏
+        // 筛选条件变动时精准应用至当前激活分栏
         connect(filterPanel, &FilterPanel::filterChanged, this, [this](const FilterState& state) {
             ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : m_contentPanel.data();
             if (target) {
