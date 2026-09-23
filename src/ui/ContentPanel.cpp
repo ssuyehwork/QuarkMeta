@@ -581,9 +581,7 @@ void ContentPanel::loadDirectory(const QString& path, bool recursive) {
         m_currentPath = path;
         setIsRecursive(recursive);
         if (m_columnView) {
-            if (m_columnView->containsPath(path)) {
-                m_columnView->refreshAllColumns();
-            } else {
+            if (!m_columnView->containsPath(path)) {
                 m_columnView->setRootPath(path);
                 restoreSelections();
             }
