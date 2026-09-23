@@ -81,18 +81,20 @@ void PanelMediator::setupConnections() {
             });
         }
         if (contentPanel) {
-            connect(titleBar, &TitleBarWidget::viewModeRequested, contentPanel, [contentPanel](TitleBarWidget::ViewModeOption option) {
+            connect(titleBar, &TitleBarWidget::viewModeRequested, this, [this, contentPanel](TitleBarWidget::ViewModeOption option) {
                 ContentPanel::ViewMode targetMode = ContentPanel::GridView;
                 if (option == TitleBarWidget::JustifiedViewMode) targetMode = ContentPanel::JustifiedViewMode;
                 else if (option == TitleBarWidget::GridViewMode) targetMode = ContentPanel::GridView;
                 else if (option == TitleBarWidget::ListViewMode) targetMode = ContentPanel::ListView;
                 else if (option == TitleBarWidget::ColumnViewMode) targetMode = ContentPanel::ColumnView;
 
-                contentPanel->setViewMode(targetMode);
+                ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+                if (target) target->setViewMode(targetMode);
             });
 
-            connect(titleBar, &TitleBarWidget::createItemRequested, contentPanel, [contentPanel](const QString& type) {
-                contentPanel->createNewItem(type);
+            connect(titleBar, &TitleBarWidget::createItemRequested, this, [this, contentPanel](const QString& type) {
+                ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+                if (target) target->createNewItem(type);
             });
 
             // 缩放级别初始化与双向同步 + 持久化
@@ -101,8 +103,9 @@ void PanelMediator::setupConnections() {
             titleBar->setZoomLevel(boundZoom);
             contentPanel->setZoomLevel(boundZoom);
 
-            connect(titleBar, &TitleBarWidget::zoomLevelChanged, this, [contentPanel](int value) {
-                if (contentPanel) contentPanel->setZoomLevel(value);
+            connect(titleBar, &TitleBarWidget::zoomLevelChanged, this, [this, contentPanel](int value) {
+                ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+                if (target) target->setZoomLevel(value);
                 AppConfig::instance().setValue("UI/GridZoomLevel", value);
             });
 
@@ -190,10 +193,11 @@ void PanelMediator::setupConnections() {
             NavigationService::instance().navigateTo(path);
         });
 
-        connect(favoritePanel, &FavoritePanel::requestLocateFile, this, [contentPanel](const QString& path) {
+        connect(favoritePanel, &FavoritePanel::requestLocateFile, this, [this, contentPanel](const QString& path) {
             QFileInfo fi(path);
-            if (contentPanel) {
-                contentPanel->setPendingSelectName(fi.fileName(), false);
+            ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+            if (target) {
+                target->setPendingSelectName(fi.fileName(), false);
             }
             NavigationService::instance().navigateTo(fi.absolutePath());
         });
@@ -251,43 +255,8 @@ void PanelMediator::setupConnections() {
         }
     });
 
-    // 2. 内容面板选中项改变 -> 元数据面板 0 毫秒极速同步
+    // 2. 内容面板选中项改变 / 界面数据修改 -> 元数据面板 0 毫秒极速同步
     if (contentPanel && metaPanel) {
-        // 监听卡片/列表上的就地修改，0 毫秒同步右侧 MetaPanel
-        connect(contentPanel->model(), &QAbstractItemModel::dataChanged, metaPanel, 
-                [contentPanel, metaPanel](const QModelIndex& topLeft, const QModelIndex&, const QVector<int>& roles) {
-            if (!roles.isEmpty() && !roles.contains(RatingRole) && !roles.contains(ColorRole) && !roles.contains(TagsRole) && !roles.contains(NoteRole) && !roles.contains(UrlRole)) {
-                return;
-            }
-
-            QModelIndexList selected = contentPanel->getSelectedIndexes();
-            if (selected.isEmpty()) return;
-
-            QModelIndex currentSel = selected.first();
-            QString selPath = QDir::cleanPath(currentSel.data(PathRole).toString());
-            QString changedPath = QDir::cleanPath(topLeft.data(PathRole).toString());
-
-            if (!selPath.isEmpty() && QString::compare(selPath, changedPath, Qt::CaseInsensitive) == 0) {
-                if (roles.isEmpty() || roles.contains(RatingRole)) {
-                    int newRating = currentSel.data(RatingRole).toInt();
-                    metaPanel->setRating(newRating, false);
-                }
-                if (roles.isEmpty() || roles.contains(ColorRole)) {
-                    QString newColor = currentSel.data(ColorRole).toString();
-                    metaPanel->setColor(newColor, false);
-                }
-                if (roles.isEmpty() || roles.contains(TagsRole)) {
-                    metaPanel->setTags(currentSel.data(TagsRole).toStringList());
-                }
-                if (roles.isEmpty() || roles.contains(NoteRole)) {
-                    metaPanel->setNote(currentSel.data(NoteRole).toString());
-                }
-                if (roles.isEmpty() || roles.contains(UrlRole)) {
-                    metaPanel->setURL(currentSel.data(UrlRole).toString());
-                }
-            }
-        });
-
         auto updateMetaPanelFromPanel = [metaPanel](ContentPanel* panel) {
             if (!panel || !metaPanel) return;
             QStringList paths = panel->getSelectedPaths();
@@ -337,8 +306,7 @@ void PanelMediator::setupConnections() {
 
                     int finalRating = rating > 0 ? rating : meta.rating;
                     QString finalColor = !color.isEmpty() ? color : QString::fromStdWString(meta.manualColor);
-                    QStringList finalTags = !tags.isEmpty() ? tags : meta.tags;
-                    QStringList finalTagsList = !finalTags.isEmpty() ? finalTags : meta.tags;
+                    QStringList finalTagsList = !tags.isEmpty() ? tags : meta.tags;
                     QString finalNote = !note.isEmpty() ? note : QString::fromStdWString(meta.note);
                     QString finalUrl = !url.isEmpty() ? url : QString::fromStdWString(meta.url);
 
@@ -369,19 +337,48 @@ void PanelMediator::setupConnections() {
             }
         };
 
-        auto wireSelectionToMeta = [this, metaPanel, updateMetaPanelFromPanel](ContentPanel* panel) {
+        auto wireSelectionAndDataToMeta = [this, metaPanel, updateMetaPanelFromPanel](ContentPanel* panel) {
             if (!panel) return;
+
+            // 1. 选中项改变时同步更新 MetaPanel
             connect(panel, &ContentPanel::selectionChanged, metaPanel, [this, panel, updateMetaPanelFromPanel](const QStringList&) {
                 if (m_activeContentPanel == panel || (!m_activeContentPanel && panel == m_contentPanel.data())) {
                     updateMetaPanelFromPanel(panel);
                 }
             });
+
+            // 2. 补全主/副窗格数据变动同步：监听该面板 model 的 dataChanged，在就地修改（右键/快捷键等）时实时刷出至 MetaPanel！
+            if (panel->model()) {
+                connect(panel->model(), &QAbstractItemModel::dataChanged, metaPanel,
+                        [this, panel, updateMetaPanelFromPanel](const QModelIndex& topLeft, const QModelIndex&, const QVector<int>& roles) {
+                    if (m_activeContentPanel != panel && (m_activeContentPanel || panel != m_contentPanel.data())) {
+                        return;
+                    }
+                    if (!roles.isEmpty() && !roles.contains(RatingRole) && !roles.contains(ColorRole) && !roles.contains(TagsRole) && !roles.contains(NoteRole) && !roles.contains(UrlRole)) {
+                        return;
+                    }
+
+                    QString changedPath = QDir::cleanPath(topLeft.data(PathRole).toString());
+                    QStringList selPaths = panel->getSelectedPaths();
+                    bool containsPath = false;
+                    for (const QString& sp : selPaths) {
+                        if (QString::compare(QDir::cleanPath(sp), changedPath, Qt::CaseInsensitive) == 0) {
+                            containsPath = true;
+                            break;
+                        }
+                    }
+
+                    if (containsPath || selPaths.isEmpty()) {
+                        updateMetaPanelFromPanel(panel);
+                    }
+                });
+            }
         };
 
         m_activeContentPanel = contentPanel;
 
         auto bindPanelActivation = std::make_shared<std::function<void(ContentPanel*)>>();
-        *bindPanelActivation = [this, addressBar, bindPanelActivation, wireSelectionToMeta](ContentPanel* panel) {
+        *bindPanelActivation = [this, addressBar, bindPanelActivation, wireSelectionAndDataToMeta](ContentPanel* panel) {
             if (!panel) return;
             connect(panel, &ContentPanel::panelActivated, this, [this, addressBar](ContentPanel* activePanel) {
                 if (m_activeContentPanel != activePanel) {
@@ -392,8 +389,8 @@ void PanelMediator::setupConnections() {
                     addressBar->setPath(activePanel->currentPath());
                 }
             });
-            connect(panel, &ContentPanel::secondaryPaneCreated, this, [wireSelectionToMeta, bindPanelActivation](ContentPanel* pane) {
-                wireSelectionToMeta(pane);
+            connect(panel, &ContentPanel::secondaryPaneCreated, this, [wireSelectionAndDataToMeta, bindPanelActivation](ContentPanel* pane) {
+                wireSelectionAndDataToMeta(pane);
                 if (*bindPanelActivation) {
                     (*bindPanelActivation)(pane);
                 }
@@ -401,7 +398,7 @@ void PanelMediator::setupConnections() {
         };
 
         (*bindPanelActivation)(contentPanel);
-        wireSelectionToMeta(contentPanel);
+        wireSelectionAndDataToMeta(contentPanel);
 
         connect(this, &PanelMediator::activeContentPanelChanged, this, [contentPanel, updateMetaPanelFromPanel](ContentPanel* activePanel) {
             std::function<void(ContentPanel*)> updateActiveState = [&updateActiveState, activePanel](ContentPanel* node) {
@@ -441,22 +438,24 @@ void PanelMediator::setupConnections() {
     }
 
     connect(&QuickLookWindow::instance(), &QuickLookWindow::prevRequested, this, [this, contentPanel]() {
-        if (!contentPanel) return;
-        QString prev = contentPanel->getAdjacentFilePath(m_currentQuickLookPath, -1);
+        ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+        if (!target) return;
+        QString prev = target->getAdjacentFilePath(m_currentQuickLookPath, -1);
         if (!prev.isEmpty()) {
             m_currentQuickLookPath = prev;
             QuickLookWindow::instance().previewFile(prev);
-            contentPanel->selectAndScrollToPath(prev);
+            target->selectAndScrollToPath(prev);
         }
     });
 
     connect(&QuickLookWindow::instance(), &QuickLookWindow::nextRequested, this, [this, contentPanel]() {
-        if (!contentPanel) return;
-        QString next = contentPanel->getAdjacentFilePath(m_currentQuickLookPath, 1);
+        ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+        if (!target) return;
+        QString next = target->getAdjacentFilePath(m_currentQuickLookPath, 1);
         if (!next.isEmpty()) {
             m_currentQuickLookPath = next;
             QuickLookWindow::instance().previewFile(next);
-            contentPanel->selectAndScrollToPath(next);
+            target->selectAndScrollToPath(next);
         }
     });
 
@@ -470,8 +469,9 @@ void PanelMediator::setupConnections() {
         cmd.params["rating"] = rating;
         CoreEngine::instance().executeCommand(cmd);
 
+        ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
         if (metaPanel) metaPanel->setRating(rating, false);
-        if (contentPanel) contentPanel->updateItemMetadata(m_currentQuickLookPath);
+        if (target) target->updateItemMetadata(m_currentQuickLookPath);
     });
 
     // QuickLook 改颜色 -> 同步更新内容面板卡片
@@ -484,21 +484,23 @@ void PanelMediator::setupConnections() {
         cmd.params["color"] = color;
         CoreEngine::instance().executeCommand(cmd);
 
+        ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
         if (metaPanel) metaPanel->setColor(color, false);
-        if (contentPanel) contentPanel->updateItemMetadata(m_currentQuickLookPath);
+        if (target) target->updateItemMetadata(m_currentQuickLookPath);
     });
 
     connect(&QuickLookWindow::instance(), &QuickLookWindow::deleteRequested, this, [this, contentPanel](const QString& path) {
         if (path.isEmpty()) return;
+        ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
 
-        if (TrashService::instance().moveToTrash({path}, contentPanel)) {
-            if (contentPanel) {
-                QString next = contentPanel->getAdjacentFilePath(path, 1);
+        if (TrashService::instance().moveToTrash({path}, target)) {
+            if (target) {
+                QString next = target->getAdjacentFilePath(path, 1);
                 if (!next.isEmpty()) {
                     m_currentQuickLookPath = next;
                     QuickLookWindow::instance().previewFile(next);
                 } else {
-                    QString prev = contentPanel->getAdjacentFilePath(path, -1);
+                    QString prev = target->getAdjacentFilePath(path, -1);
                     if (!prev.isEmpty()) {
                         m_currentQuickLookPath = prev;
                         QuickLookWindow::instance().previewFile(prev);
@@ -506,7 +508,7 @@ void PanelMediator::setupConnections() {
                         QuickLookWindow::instance().closePreview();
                     }
                 }
-                contentPanel->refreshAll();
+                target->refreshAll();
             }
         }
     });
@@ -744,15 +746,19 @@ void PanelMediator::setupConnections() {
     }
 
     // 7. 全局事件总线 CentralEventHub 增量通知响应
-    connect(&CentralEventHub::instance(), &CentralEventHub::eventOccurred, this, [contentPanel, metaPanel](const QuarkMeta::AppEvent& event) {
-        if (!contentPanel) return;
+    connect(&CentralEventHub::instance(), &CentralEventHub::eventOccurred, this, [this, contentPanel, metaPanel](const QuarkMeta::AppEvent& event) {
+        ContentPanel* activeOrRoot = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+        if (!activeOrRoot) return;
 
         if (event.type == QuarkMeta::AppEventType::MetadataUpdated) {
             if (!event.targetPath.isEmpty()) {
-                contentPanel->updateItemMetadata(event.targetPath);
+                activeOrRoot->updateItemMetadata(event.targetPath);
+                if (contentPanel && contentPanel != activeOrRoot) {
+                    contentPanel->updateItemMetadata(event.targetPath);
+                }
                 if (metaPanel) {
                     QString targetClean = QDir::cleanPath(event.targetPath);
-                    for (const QString& p : contentPanel->getSelectedPaths()) {
+                    for (const QString& p : activeOrRoot->getSelectedPaths()) {
                         if (QString::compare(QDir::cleanPath(p), targetClean, Qt::CaseInsensitive) == 0) {
                             if (event.payload.contains("field") && event.payload["field"].toString() == "color") {
                                 QString newColor = event.payload.value("value").toString();
@@ -767,16 +773,25 @@ void PanelMediator::setupConnections() {
                 }
             } else if (!event.paths.isEmpty()) {
                 for (const QString& p : event.paths) {
-                    contentPanel->updateItemMetadata(p);
+                    activeOrRoot->updateItemMetadata(p);
+                    if (contentPanel && contentPanel != activeOrRoot) {
+                        contentPanel->updateItemMetadata(p);
+                    }
                 }
             } else {
-                contentPanel->refreshAll();
+                activeOrRoot->refreshAll();
+                if (contentPanel && contentPanel != activeOrRoot) {
+                    contentPanel->refreshAll();
+                }
             }
-            contentPanel->recalculateAndEmitStats();
+            activeOrRoot->recalculateAndEmitStats();
         } else if (event.type == QuarkMeta::AppEventType::ItemsDeleted ||
                    event.type == QuarkMeta::AppEventType::ItemsRenamed ||
                    event.type == QuarkMeta::AppEventType::UndoRedoPerformed) {
-            contentPanel->refreshAll();
+            activeOrRoot->refreshAll();
+            if (contentPanel && contentPanel != activeOrRoot) {
+                contentPanel->refreshAll();
+            }
         }
     });
 }
