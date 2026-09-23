@@ -86,17 +86,6 @@ void PanelMediator::setupConnections() {
                 NavigationService::instance().refresh();
             });
 
-            connect(&NavigationService::instance(), &NavigationService::currentUrlChanged, this, [this, titleBar, contentPanel](const QString& url, const QString& displayPath) {
-                Q_UNUSED(url);
-                Q_UNUSED(displayPath);
-                if (titleBar->tabBar()) {
-                    ContentPanel* root = contentPanel ? contentPanel->rootPane() : nullptr;
-                    if (root && root->splitManager()) {
-                        TabSplitState state = root->splitManager()->exportSplitState();
-                        titleBar->tabBar()->updateSplitTabTitle(state);
-                    }
-                }
-            });
         }
         if (layoutManager) {
             connect(titleBar, &TitleBarWidget::layoutMenuRequested, layoutManager, [layoutManager](const QPoint& pos) {
@@ -184,6 +173,15 @@ void PanelMediator::setupConnections() {
                 targetPanel->loadCategory("trash");
             } else {
                 targetPanel->loadDirectory(url);
+            }
+        }
+
+        // 🚀【核心根治】：在 targetPanel 加载完最新目录路径后，统一刷出最新快照给 TabBar，确保 Tab 标题与地址栏路径 100% 同步！
+        if (titleBar && titleBar->tabBar()) {
+            ContentPanel* root = contentPanel ? contentPanel->rootPane() : nullptr;
+            if (root && root->splitManager()) {
+                TabSplitState state = root->splitManager()->exportSplitState();
+                titleBar->tabBar()->updateSplitTabTitle(state);
             }
         }
     });
