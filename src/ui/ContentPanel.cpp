@@ -360,9 +360,20 @@ void ContentPanel::splitPane(Qt::Orientation orientation, const QString& seconda
         m_paneSplitter->addWidget(m_primaryPaneContainer);
         m_mainLayout->addWidget(m_paneSplitter, 1);
     } else {
+        m_isSplit = true;
         m_paneSplitter->setOrientation(m_splitOrientation);
+        if (m_primaryPaneContainer) {
+            if (m_headerWidget && m_primaryPaneContainer->layout()) {
+                m_mainLayout->removeWidget(m_headerWidget);
+                m_primaryPaneContainer->layout()->addWidget(m_headerWidget);
+            }
+            if (m_viewStack && m_primaryPaneContainer->layout()) {
+                m_mainLayout->removeWidget(m_viewStack);
+                m_primaryPaneContainer->layout()->addWidget(m_viewStack, 1);
+            }
+            m_primaryPaneContainer->show();
+        }
         m_paneSplitter->show();
-        m_primaryPaneContainer->show();
     }
 
     if (paneCount() >= kMaxPanes) {
