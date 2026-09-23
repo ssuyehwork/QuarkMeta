@@ -269,6 +269,8 @@ set(SOURCES
     src/ui/controllers/ContentFileOpsHandler.cpp
     src/ui/controllers/ContentViewCoordinator.h
     src/ui/controllers/ContentViewCoordinator.cpp
+    src/ui/controllers/ContentPaneSplitManager.h
+    src/ui/controllers/ContentPaneSplitManager.cpp
     src/ui/workers/ContentStatsWorker.h
     src/ui/workers/ContentStatsWorker.cpp
     src/core/ActionCommand.h

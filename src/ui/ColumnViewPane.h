@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <QScrollArea>
 #include <QSet>
+#include <QPointer>
 #include "models/DiskItemModel.h"
 #include "models/FilterProxyModel.h"
 #include "DropListView.h"
