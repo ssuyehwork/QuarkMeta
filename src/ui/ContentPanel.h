@@ -76,6 +76,9 @@ public:
     bool isSplitMode() const;
     bool isSecondaryPane() const { return m_isSecondaryPane; }
     void setIsSecondaryPane(bool secondary) { m_isSecondaryPane = secondary; }
+    ContentPanel* secondaryContentPanel() const { return m_secondaryContentPanel; }
+    void setActivePane(bool active);
+    bool isActivePane() const { return m_isActivePane; }
     void splitPane(Qt::Orientation orientation, const QString& secondaryPath = QString());
     void closeSecondaryPane();
     void requestClosePane();
@@ -254,6 +257,7 @@ private:
     Qt::Orientation m_splitOrientation = Qt::Horizontal;
     bool m_isSplit = false;
     bool m_isSecondaryPane = false;
+    bool m_isActivePane = true;
 
     void updateDragOverlay(const QPoint& pos);
     void hideDragOverlay();
