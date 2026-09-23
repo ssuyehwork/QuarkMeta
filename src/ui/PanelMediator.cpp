@@ -527,17 +527,38 @@ void PanelMediator::setupConnections() {
         }
     });
 
-    // 4. 统计与过滤联动
-    if (contentPanel && filterPanel) {
-        connect(contentPanel, &ContentPanel::directoryStatsReady, filterPanel, [filterPanel](const ScanStats& stats) {
-            filterPanel->populateStats(stats);
-            AppEvent ev;
-            ev.type = AppEventType::FilterStateChanged;
-            CentralEventHub::instance().publishEvent(ev);
+    // 4. 统计与过滤联动 (动态支持多分栏焦点切换)
+    if (filterPanel) {
+        auto bindFilterToActivePanel = [this, filterPanel](ContentPanel* activePanel) {
+            if (!activePanel) return;
+
+            // 收到分栏统计准备就绪信号时，刷出统计
+            connect(activePanel, &ContentPanel::directoryStatsReady, filterPanel, [filterPanel](const ScanStats& stats) {
+                filterPanel->populateStats(stats);
+                AppEvent ev;
+                ev.type = AppEventType::FilterStateChanged;
+                CentralEventHub::instance().publishEvent(ev);
+            }, Qt::UniqueConnection);
+        };
+
+        // 绑定初始主面板
+        if (contentPanel) {
+            bindFilterToActivePanel(contentPanel);
+        }
+
+        // 焦点分栏切换时动态绑定并应用当前筛选条件
+        connect(this, &PanelMediator::activeContentPanelChanged, this, [this, filterPanel, bindFilterToActivePanel](ContentPanel* newActivePanel) {
+            if (newActivePanel) {
+                bindFilterToActivePanel(newActivePanel);
+            }
         });
 
-        connect(filterPanel, &FilterPanel::filterChanged, contentPanel, [contentPanel](const FilterState& state) {
-            contentPanel->applyFilters(state);
+        // 筛选条件变动时应用至当前激活分栏
+        connect(filterPanel, &FilterPanel::filterChanged, this, [this](const FilterState& state) {
+            ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : m_contentPanel.data();
+            if (target) {
+                target->applyFilters(state);
+            }
         });
     }
 
