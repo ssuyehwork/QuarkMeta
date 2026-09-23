@@ -14,6 +14,7 @@
 #include "../core/NavigationService.h"
 #include <QHeaderView>
 #include <QMouseEvent>
+#include <QScrollBar>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QMimeData>

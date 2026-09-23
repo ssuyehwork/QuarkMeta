@@ -11,6 +11,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrent>
 
