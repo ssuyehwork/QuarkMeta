@@ -114,6 +114,10 @@ QSplitter::handle:horizontal:hover {
     padding: 0px;
 }
 
+#EditorContainer[activePane="true"], ContentPanel[activePane="true"] {
+    border: 1px solid #555555;
+}
+
 #ContentPanelHost {
     background-color: transparent;
     border: none;

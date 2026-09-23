@@ -382,22 +382,38 @@ void PanelMediator::setupConnections() {
 
         m_activeContentPanel = contentPanel;
 
-        auto bindPanelActivation = [this, addressBar, filterPanel](ContentPanel* panel) {
+        auto bindPanelActivation = std::make_shared<std::function<void(ContentPanel*)>>();
+        *bindPanelActivation = [this, addressBar, bindPanelActivation, wireSelectionToMeta](ContentPanel* panel) {
             if (!panel) return;
-            connect(panel, &ContentPanel::panelActivated, this, [this, panel, addressBar, filterPanel](ContentPanel* activePanel) {
-                m_activeContentPanel = activePanel;
+            connect(panel, &ContentPanel::panelActivated, this, [this, addressBar](ContentPanel* activePanel) {
+                if (m_activeContentPanel != activePanel) {
+                    m_activeContentPanel = activePanel;
+                    emit activeContentPanelChanged(activePanel);
+                }
                 if (addressBar) {
                     addressBar->setPath(activePanel->currentPath());
                 }
             });
+            connect(panel, &ContentPanel::secondaryPaneCreated, this, [wireSelectionToMeta, bindPanelActivation](ContentPanel* pane) {
+                wireSelectionToMeta(pane);
+                if (*bindPanelActivation) {
+                    (*bindPanelActivation)(pane);
+                }
+            });
         };
 
-        bindPanelActivation(contentPanel);
+        (*bindPanelActivation)(contentPanel);
         wireSelectionToMeta(contentPanel);
 
-        connect(contentPanel, &ContentPanel::secondaryPaneCreated, this, [this, wireSelectionToMeta, bindPanelActivation](ContentPanel* pane) {
-            wireSelectionToMeta(pane);
-            bindPanelActivation(pane);
+        connect(this, &PanelMediator::activeContentPanelChanged, this, [contentPanel](ContentPanel* activePanel) {
+            std::function<void(ContentPanel*)> updateActiveState = [&updateActiveState, activePanel](ContentPanel* node) {
+                if (!node) return;
+                node->setActivePane(node == activePanel);
+                if (node->isSplitMode() && node->secondaryContentPanel()) {
+                    updateActiveState(node->secondaryContentPanel());
+                }
+            };
+            updateActiveState(contentPanel);
         });
     }
 

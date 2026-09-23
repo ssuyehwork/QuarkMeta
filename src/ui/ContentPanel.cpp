@@ -440,7 +440,18 @@ void ContentPanel::requestClosePane() {
 }
 
 void ContentPanel::setActivePane(bool active) {
-    Q_UNUSED(active);
+    if (property("activePane").isValid() && property("activePane").toBool() == active) {
+        return;
+    }
+    setProperty("activePane", active);
+    style()->unpolish(this);
+    style()->polish(this);
+    if (m_primaryPaneContainer) {
+        m_primaryPaneContainer->setProperty("activePane", active);
+        style()->unpolish(m_primaryPaneContainer);
+        style()->polish(m_primaryPaneContainer);
+    }
+    update();
 }
 
 void ContentPanel::closeSecondaryPane() {
