@@ -141,7 +141,8 @@ void PanelMediator::setupConnections() {
             searchController->searchEdit()->clear();
             searchController->searchEdit()->blockSignals(false);
         }
-        ContentPanel* targetPanel = (m_activeContentPanel && m_activeContentPanel->isVisible()) ? m_activeContentPanel : contentPanel;
+        ContentPanel* activePanel = m_activeContentPanel.data();
+        ContentPanel* targetPanel = (activePanel && activePanel->isVisible()) ? activePanel : contentPanel;
         if (targetPanel) {
             targetPanel->search("");
         }
