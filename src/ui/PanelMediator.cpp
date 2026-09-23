@@ -147,7 +147,7 @@ void PanelMediator::setupConnections() {
 
     // 1. 路径变更与导航驱动
     connect(&NavigationService::instance(), &NavigationService::currentUrlChanged, this,
-            [this, contentPanel, addressBar, navPanel, filterPanel, searchController](const QString& url, const QString& displayPath) {
+            [this, contentPanel, addressBar, navPanel, filterPanel, searchController, titleBar](const QString& url, const QString& displayPath) {
         if (searchController && searchController->searchEdit()) {
             searchController->searchEdit()->blockSignals(true);
             searchController->searchEdit()->clear();
