@@ -409,8 +409,10 @@ void PanelMediator::setupConnections() {
             std::function<void(ContentPanel*)> updateActiveState = [&updateActiveState, activePanel](ContentPanel* node) {
                 if (!node) return;
                 node->setActivePane(node == activePanel);
-                if (node->isSplitMode() && node->secondaryContentPanel()) {
-                    updateActiveState(node->secondaryContentPanel());
+                if (node->isSplitMode()) {
+                    for (ContentPanel* pane : node->panes()) {
+                        updateActiveState(pane);
+                    }
                 }
             };
             updateActiveState(contentPanel);
