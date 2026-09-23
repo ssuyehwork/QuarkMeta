@@ -350,6 +350,7 @@ void ContentPanel::splitPane(Qt::Orientation orientation, const QString& seconda
         m_primaryPaneContainer = new QFrame(m_paneSplitter);
         m_primaryPaneContainer->setObjectName("EditorContainer");
         m_primaryPaneContainer->setAttribute(Qt::WA_StyledBackground, true);
+        m_primaryPaneContainer->setMinimumWidth(230);
         QVBoxLayout* primLayout = new QVBoxLayout(m_primaryPaneContainer);
         primLayout->setContentsMargins(0, 0, 0, 0);
         primLayout->setSpacing(0);
@@ -367,6 +368,7 @@ void ContentPanel::splitPane(Qt::Orientation orientation, const QString& seconda
 
         // 2. Secondary pane container
         m_secondaryPaneContainer = new QWidget(m_paneSplitter);
+        m_secondaryPaneContainer->setMinimumWidth(230);
         QVBoxLayout* secLayout = new QVBoxLayout(m_secondaryPaneContainer);
         secLayout->setContentsMargins(0, 0, 0, 0);
         secLayout->setSpacing(0);
