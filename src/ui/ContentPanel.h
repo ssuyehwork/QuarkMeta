@@ -79,6 +79,7 @@ public:
     void splitPane(Qt::Orientation orientation, const QString& secondaryPath = QString());
     void closeSecondaryPane();
     void requestClosePane();
+    void setActivePane(bool active);
 
     QSize minimumSizeHint() const override { return QSize(230, 100); }
     void deferredInit() {}

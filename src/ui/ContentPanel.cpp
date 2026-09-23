@@ -437,6 +437,10 @@ void ContentPanel::requestClosePane() {
     }
 }
 
+void ContentPanel::setActivePane(bool active) {
+    Q_UNUSED(active);
+}
+
 void ContentPanel::closeSecondaryPane() {
     if (!m_isSplit) return;
 
