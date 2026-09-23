@@ -169,6 +169,12 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         emit blankSpaceDoubleClicked(paneIdx);
     });
 
+    if (m_paneScrollArea && m_paneScrollArea->verticalScrollBar()) {
+        connect(m_paneScrollArea->verticalScrollBar(), &QScrollBar::valueChanged, this, [this]() {
+            refreshVisibleThumbnails();
+        });
+    }
+
     m_paneScrollArea->installEventFilter(this);
     m_panel->installEventFilter(this);
     m_folderListView->installEventFilter(this);
