@@ -76,6 +76,7 @@ public:
     bool isSplitMode() const;
     bool isSecondaryPane() const { return m_isSecondaryPane; }
     void setIsSecondaryPane(bool secondary) { m_isSecondaryPane = secondary; }
+    ContentPanel* secondaryContentPanel() const { return m_secondaryContentPanel; }
     void splitPane(Qt::Orientation orientation, const QString& secondaryPath = QString());
     void closeSecondaryPane();
     void requestClosePane();
