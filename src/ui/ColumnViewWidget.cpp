@@ -640,7 +640,7 @@ void ColumnViewPane::loadDirectory() {
     bool recursive = false;
     if (m_contentPanel && m_contentPanel->isRecursive()) {
         if (m_contentPanel->columnView() &&
-            m_contentPanel->columnView()->rightmostPane() == this) {
+            m_contentPanel->columnView()->activePane() == this) {
             recursive = true;
         }
     }
