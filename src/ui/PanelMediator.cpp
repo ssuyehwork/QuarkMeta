@@ -132,14 +132,15 @@ void PanelMediator::setupConnections() {
 
     // 1. 路径变更与导航驱动
     connect(&NavigationService::instance(), &NavigationService::currentUrlChanged, this,
-            [contentPanel, addressBar, navPanel, filterPanel, searchController](const QString& url, const QString& displayPath) {
+            [this, contentPanel, addressBar, navPanel, filterPanel, searchController](const QString& url, const QString& displayPath) {
         if (searchController && searchController->searchEdit()) {
             searchController->searchEdit()->blockSignals(true);
             searchController->searchEdit()->clear();
             searchController->searchEdit()->blockSignals(false);
         }
-        if (contentPanel) {
-            contentPanel->search("");
+        ContentPanel* targetPanel = (m_activeContentPanel && m_activeContentPanel->isVisible()) ? m_activeContentPanel : contentPanel;
+        if (targetPanel) {
+            targetPanel->search("");
         }
         if (filterPanel) {
             filterPanel->clearAllFilters();
@@ -150,13 +151,13 @@ void PanelMediator::setupConnections() {
         if (addressBar) addressBar->setPath(displayPath);
         if (navPanel) navPanel->selectPath(url == "computer://" ? "" : url);
 
-        if (contentPanel) {
+        if (targetPanel) {
             if (url == "computer://") {
-                contentPanel->loadDirectory("computer://");
+                targetPanel->loadDirectory("computer://");
             } else if (url == "trash://") {
-                contentPanel->loadCategory("trash");
+                targetPanel->loadCategory("trash");
             } else {
-                contentPanel->loadDirectory(url);
+                targetPanel->loadDirectory(url);
             }
         }
     });

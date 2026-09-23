@@ -4,6 +4,7 @@
 #include "../core/AppConfig.h"
 #include <QEvent>
 #include <QCursor>
+#include <QStyle>
 
 namespace QuarkMeta {
 

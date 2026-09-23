@@ -369,7 +369,11 @@ void ContentPanel::splitPane(Qt::Orientation orientation, const QString& seconda
             }
             if (m_viewStack && m_primaryPaneContainer->layout()) {
                 m_mainLayout->removeWidget(m_viewStack);
-                m_primaryPaneContainer->layout()->addWidget(m_viewStack, 1);
+                if (QVBoxLayout* primVBox = qobject_cast<QVBoxLayout*>(m_primaryPaneContainer->layout())) {
+                    primVBox->addWidget(m_viewStack, 1);
+                } else {
+                    m_primaryPaneContainer->layout()->addWidget(m_viewStack);
+                }
             }
             m_primaryPaneContainer->show();
         }
