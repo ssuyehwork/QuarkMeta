@@ -3,6 +3,7 @@
 #include "FavoritePanel.h"
 #include "ContentPanel.h"
 #include "ColumnViewWidget.h"
+#include "controllers/ContentPaneSplitManager.h"
 #include "MetaPanel.h"
 #include "FilterPanel.h"
 #include "AddressBar.h"
