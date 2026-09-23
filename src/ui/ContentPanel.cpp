@@ -335,6 +335,9 @@ void ContentPanel::splitPane(Qt::Orientation orientation, const QString& seconda
 
     if (!m_paneSplitter) {
         m_isSplit = true;
+        setProperty("isHostPanel", "true");
+        style()->unpolish(this);
+        style()->polish(this);
 
         m_paneSplitter = new QSplitter(m_splitOrientation, this);
         m_paneSplitter->setHandleWidth(5);
@@ -361,6 +364,9 @@ void ContentPanel::splitPane(Qt::Orientation orientation, const QString& seconda
         m_mainLayout->addWidget(m_paneSplitter, 1);
     } else {
         m_isSplit = true;
+        setProperty("isHostPanel", "true");
+        style()->unpolish(this);
+        style()->polish(this);
         m_paneSplitter->setOrientation(m_splitOrientation);
         if (m_primaryPaneContainer) {
             if (m_headerWidget && m_primaryPaneContainer->layout()) {
@@ -454,6 +460,9 @@ void ContentPanel::closePane(ContentPanel* pane) {
 
     if (m_panes.isEmpty()) {
         m_isSplit = false;
+        setProperty("isHostPanel", "false");
+        style()->unpolish(this);
+        style()->polish(this);
         if (m_paneSplitter) {
             m_paneSplitter->hide();
         }
