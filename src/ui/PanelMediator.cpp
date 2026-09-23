@@ -288,95 +288,92 @@ void PanelMediator::setupConnections() {
             }
         });
 
-        auto wireSelectionToMeta = [metaPanel](ContentPanel* panel) {
-            if (!panel) return;
-            connect(panel, &ContentPanel::selectionChanged, metaPanel, [panel, metaPanel](const QStringList& paths) {
-                QElapsedTimer timer;
-                timer.start();
+        auto updateMetaPanelFromPanel = [metaPanel](ContentPanel* panel) {
+            if (!panel || !metaPanel) return;
+            QStringList paths = panel->getSelectedPaths();
+            metaPanel->setSelectedPaths(paths);
 
-                metaPanel->setSelectedPaths(paths);
-                qint64 tSetSelected = timer.elapsed();
+            if (paths.isEmpty()) {
+                metaPanel->setImagePreview(QPixmap());
+                metaPanel->updateInfo("-", "-", "-", "-", "-", "-", "-", false, 0, 0);
+                metaPanel->setRating(0, false);
+                metaPanel->setColor(QString(""), false);
+                metaPanel->setTags(QStringList());
+                metaPanel->setNote(QString(""));
+                metaPanel->setURL(QString(""));
+                metaPanel->setPalettes({});
+            } else if (paths.size() == 1) {
+                QModelIndexList selectedIndices = panel->getSelectedIndexes();
+                QModelIndex idx = selectedIndices.isEmpty() ? QModelIndex() : selectedIndices.first();
 
-                if (paths.isEmpty()) {
+                QString path = paths.first();
+                QFileInfo fi(path);
+
+                QString name = idx.isValid() ? idx.sibling(idx.row(), 0).data(Qt::DisplayRole).toString() : fi.fileName();
+                QString type = idx.isValid() ? ((idx.data(TypeRole).toString() == "folder") ? "文件夹" : idx.sibling(idx.row(), 4).data(Qt::DisplayRole).toString() + " 文件") : (fi.isDir() ? "文件夹" : fi.suffix().toUpper() + " 文件");
+                QString sizeStr = idx.isValid() ? idx.sibling(idx.row(), 5).data(Qt::DisplayRole).toString() : "-";
+                QString mtimeStr = idx.isValid() ? idx.sibling(idx.row(), 6).data(Qt::DisplayRole).toString() : "-";
+                bool encrypted = idx.isValid() ? idx.data(EncryptedRole).toBool() : false;
+
+                metaPanel->updateInfo(
+                    name, type, sizeStr, "-", mtimeStr, "-",
+                    path, encrypted, 0, 0
+                );
+
+                auto meta = MetadataManager::instance().getMeta(path.toStdWString());
+
+                QVector<QPair<QColor, float>> qPalettes;
+                qPalettes.reserve(static_cast<int>(meta.palettes.size()));
+                for (const auto& entry : meta.palettes) {
+                    qPalettes.append(qMakePair(entry.color, entry.ratio));
+                }
+
+                if (idx.isValid()) {
+                    int rating = idx.data(RatingRole).toInt();
+                    QString color = idx.data(ColorRole).toString();
+                    QStringList tags = idx.data(TagsRole).toStringList();
+                    QString note = idx.data(NoteRole).toString();
+                    QString url = idx.data(UrlRole).toString();
+
+                    int finalRating = rating > 0 ? rating : meta.rating;
+                    QString finalColor = !color.isEmpty() ? color : QString::fromStdWString(meta.manualColor);
+                    QStringList finalTags = !tags.isEmpty() ? tags : meta.tags;
+                    QStringList finalTagsList = !finalTags.isEmpty() ? finalTags : meta.tags;
+                    QString finalNote = !note.isEmpty() ? note : QString::fromStdWString(meta.note);
+                    QString finalUrl = !url.isEmpty() ? url : QString::fromStdWString(meta.url);
+
+                    metaPanel->setRating(finalRating, false);
+                    metaPanel->setColor(finalColor, false);
+                    metaPanel->setTags(finalTagsList);
+                    metaPanel->setNote(finalNote);
+                    metaPanel->setURL(finalUrl);
+                    metaPanel->setPalettes(qPalettes);
+
+                    QVariant decData = idx.data(Qt::DecorationRole);
+                    QPixmap previewPixmap;
+                    if (decData.canConvert<QIcon>()) {
+                        previewPixmap = decData.value<QIcon>().pixmap(128, 128);
+                    } else if (decData.canConvert<QPixmap>()) {
+                        previewPixmap = decData.value<QPixmap>();
+                    }
+                    metaPanel->setImagePreview(previewPixmap);
+                } else {
+                    metaPanel->setRating(meta.rating, false);
+                    metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);
+                    metaPanel->setTags(meta.tags);
+                    metaPanel->setNote(QString::fromStdWString(meta.note));
+                    metaPanel->setURL(QString::fromStdWString(meta.url));
+                    metaPanel->setPalettes(qPalettes);
                     metaPanel->setImagePreview(QPixmap());
-                    metaPanel->updateInfo("-", "-", "-", "-", "-", "-", "-", false, 0, 0);
-                    metaPanel->setRating(0, false);
-                    metaPanel->setColor(QString(""), false);
-                    metaPanel->setTags(QStringList());
-                    metaPanel->setNote(QString(""));
-                    metaPanel->setURL(QString(""));
-                    metaPanel->setPalettes({});
-                } else if (paths.size() == 1) {
-                    QModelIndexList selectedIndices = panel->getSelectedIndexes();
-                    qint64 tGetSel = timer.elapsed();
+                }
+            }
+        };
 
-                    QModelIndex idx = selectedIndices.isEmpty() ? QModelIndex() : selectedIndices.first();
-
-                    QString path = paths.first();
-                    QFileInfo fi(path);
-
-                    QString name = idx.isValid() ? idx.sibling(idx.row(), 0).data(Qt::DisplayRole).toString() : fi.fileName();
-                    QString type = idx.isValid() ? ((idx.data(TypeRole).toString() == "folder") ? "文件夹" : idx.sibling(idx.row(), 4).data(Qt::DisplayRole).toString() + " 文件") : (fi.isDir() ? "文件夹" : fi.suffix().toUpper() + " 文件");
-                    QString sizeStr = idx.isValid() ? idx.sibling(idx.row(), 5).data(Qt::DisplayRole).toString() : "-";
-                    QString mtimeStr = idx.isValid() ? idx.sibling(idx.row(), 6).data(Qt::DisplayRole).toString() : "-";
-                    bool encrypted = idx.isValid() ? idx.data(EncryptedRole).toBool() : false;
-
-                    metaPanel->updateInfo(
-                        name, type, sizeStr, "-", mtimeStr, "-",
-                        path, encrypted, 0, 0
-                    );
-                    qint64 tUpdateInfo = timer.elapsed();
-
-                    auto meta = MetadataManager::instance().getMeta(path.toStdWString());
-                    qint64 tGetMeta = timer.elapsed();
-
-                    QVector<QPair<QColor, float>> qPalettes;
-                    qPalettes.reserve(static_cast<int>(meta.palettes.size()));
-                    for (const auto& entry : meta.palettes) {
-                        qPalettes.append(qMakePair(entry.color, entry.ratio));
-                    }
-
-                    if (idx.isValid()) {
-                        int rating = idx.data(RatingRole).toInt();
-                        QString color = idx.data(ColorRole).toString();
-                        QStringList tags = idx.data(TagsRole).toStringList();
-                        QString note = idx.data(NoteRole).toString();
-                        QString url = idx.data(UrlRole).toString();
-
-                        int finalRating = rating > 0 ? rating : meta.rating;
-                        QString finalColor = !color.isEmpty() ? color : QString::fromStdWString(meta.manualColor);
-                        QStringList finalTags = !tags.isEmpty() ? tags : meta.tags;
-                        QString finalNote = !note.isEmpty() ? note : QString::fromStdWString(meta.note);
-                        QString finalUrl = !url.isEmpty() ? url : QString::fromStdWString(meta.url);
-
-                        metaPanel->setRating(finalRating, false);
-                        metaPanel->setColor(finalColor, false);
-                        metaPanel->setTags(finalTags);
-                        metaPanel->setNote(finalNote);
-                        metaPanel->setURL(finalUrl);
-                        metaPanel->setPalettes(qPalettes);
-
-                        QVariant decData = idx.data(Qt::DecorationRole);
-                        QPixmap previewPixmap;
-                        if (decData.canConvert<QIcon>()) {
-                            previewPixmap = decData.value<QIcon>().pixmap(128, 128);
-                        } else if (decData.canConvert<QPixmap>()) {
-                            previewPixmap = decData.value<QPixmap>();
-                        }
-                        metaPanel->setImagePreview(previewPixmap);
-                    } else {
-                        metaPanel->setRating(meta.rating, false);
-                        metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);
-                        metaPanel->setTags(meta.tags);
-                        metaPanel->setNote(QString::fromStdWString(meta.note));
-                        metaPanel->setURL(QString::fromStdWString(meta.url));
-                        metaPanel->setPalettes(qPalettes);
-                        metaPanel->setImagePreview(QPixmap());
-                    }
-                    qint64 tTotal = timer.elapsed();
-
-                    Logger::log(QString("[Perf] PanelMediator::selectionChanged handler: setSelectedPaths=%1ms, getSelectedIndexes=%2ms, updateInfo=%3ms, getMeta=%4ms, setMetaUI=%5ms, total=%6ms")
-                                .arg(tSetSelected).arg(tGetSel - tSetSelected).arg(tUpdateInfo - tGetSel).arg(tGetMeta - tUpdateInfo).arg(tTotal - tGetMeta).arg(tTotal));
+        auto wireSelectionToMeta = [this, metaPanel, updateMetaPanelFromPanel](ContentPanel* panel) {
+            if (!panel) return;
+            connect(panel, &ContentPanel::selectionChanged, metaPanel, [this, panel, updateMetaPanelFromPanel](const QStringList&) {
+                if (m_activeContentPanel == panel || (!m_activeContentPanel && panel == m_contentPanel.data())) {
+                    updateMetaPanelFromPanel(panel);
                 }
             });
         };
@@ -406,7 +403,7 @@ void PanelMediator::setupConnections() {
         (*bindPanelActivation)(contentPanel);
         wireSelectionToMeta(contentPanel);
 
-        connect(this, &PanelMediator::activeContentPanelChanged, this, [contentPanel](ContentPanel* activePanel) {
+        connect(this, &PanelMediator::activeContentPanelChanged, this, [contentPanel, updateMetaPanelFromPanel](ContentPanel* activePanel) {
             std::function<void(ContentPanel*)> updateActiveState = [&updateActiveState, activePanel](ContentPanel* node) {
                 if (!node) return;
                 node->setActivePane(node == activePanel);
@@ -417,6 +414,7 @@ void PanelMediator::setupConnections() {
                 }
             };
             updateActiveState(contentPanel);
+            updateMetaPanelFromPanel(activePanel);
         });
     }
 
@@ -606,70 +604,89 @@ void PanelMediator::setupConnections() {
         }
     }
 
-    // 6. 响应元数据面板解耦信号 -> 驱动 CoreEngine 与 ContentPanel 同步
+    // 6. 响应元数据面板解耦信号 -> 驱动 CoreEngine 与当前激活 ContentPanel 同步
     if (metaPanel && contentPanel) {
-        connect(metaPanel, &MetaPanel::ratingChanged, contentPanel, [contentPanel](const QStringList& paths, int rating) {
+        auto activeOrRootPanel = [this, contentPanel]() -> ContentPanel* {
+            return m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+        };
+
+        connect(metaPanel, &MetaPanel::ratingChanged, this, [activeOrRootPanel](const QStringList& paths, int rating) {
             if (paths.isEmpty()) return;
             AppCommand cmd;
             cmd.type = AppCommandType::SetRating;
             cmd.targetPaths = paths;
             cmd.params["rating"] = rating;
             CoreEngine::instance().executeCommand(cmd);
-            for (const QString& p : paths) {
-                contentPanel->updateItemMetadata(p);
+            ContentPanel* target = activeOrRootPanel();
+            if (target) {
+                for (const QString& p : paths) {
+                    target->updateItemMetadata(p);
+                }
+                target->recalculateAndEmitStats();
             }
-            contentPanel->recalculateAndEmitStats();
         });
 
-        connect(metaPanel, &MetaPanel::colorChanged, contentPanel, [contentPanel](const QStringList& paths, const QString& hexColor) {
+        connect(metaPanel, &MetaPanel::colorChanged, this, [activeOrRootPanel](const QStringList& paths, const QString& hexColor) {
             if (paths.isEmpty()) return;
             AppCommand cmd;
             cmd.type = AppCommandType::SetColor;
             cmd.targetPaths = paths;
             cmd.params["color"] = hexColor;
             CoreEngine::instance().executeCommand(cmd);
-            for (const QString& p : paths) {
-                contentPanel->updateItemMetadata(p);
+            ContentPanel* target = activeOrRootPanel();
+            if (target) {
+                for (const QString& p : paths) {
+                    target->updateItemMetadata(p);
+                }
+                target->recalculateAndEmitStats();
             }
-            contentPanel->recalculateAndEmitStats();
         });
 
-        connect(metaPanel, &MetaPanel::primaryColorChanged, contentPanel, [contentPanel](const QString& path, const QColor& color) {
+        connect(metaPanel, &MetaPanel::primaryColorChanged, this, [activeOrRootPanel](const QString& path, const QColor& color) {
             if (path.isEmpty()) return;
             AppCommand cmd;
             cmd.type = AppCommandType::SetColor;
             cmd.targetPaths = {path};
             cmd.params["color"] = color.name(QColor::HexRgb);
             CoreEngine::instance().executeCommand(cmd);
-            contentPanel->updateItemMetadata(path);
-            contentPanel->recalculateAndEmitStats();
+            ContentPanel* target = activeOrRootPanel();
+            if (target) {
+                target->updateItemMetadata(path);
+                target->recalculateAndEmitStats();
+            }
         });
 
-        connect(metaPanel, &MetaPanel::tagAddRequested, contentPanel, [contentPanel](const QStringList& paths, const QString& newTag) {
+        connect(metaPanel, &MetaPanel::tagAddRequested, this, [activeOrRootPanel](const QStringList& paths, const QString& newTag) {
             if (!paths.isEmpty() && !newTag.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::AddTag;
                 cmd.targetPaths = paths;
                 cmd.params["tag"] = newTag;
                 CoreEngine::instance().executeCommand(cmd);
-                for (const QString& p : paths) {
-                    contentPanel->updateItemMetadata(p);
+                ContentPanel* target = activeOrRootPanel();
+                if (target) {
+                    for (const QString& p : paths) {
+                        target->updateItemMetadata(p);
+                    }
+                    target->recalculateAndEmitStats();
                 }
-                contentPanel->recalculateAndEmitStats();
             }
         });
 
-        connect(metaPanel, &MetaPanel::tagRemoveRequested, contentPanel, [contentPanel](const QStringList& paths, const QString& removeTag) {
+        connect(metaPanel, &MetaPanel::tagRemoveRequested, this, [activeOrRootPanel](const QStringList& paths, const QString& removeTag) {
             if (!paths.isEmpty() && !removeTag.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::RemoveTag;
                 cmd.targetPaths = paths;
                 cmd.params["tag"] = removeTag;
                 CoreEngine::instance().executeCommand(cmd);
-                for (const QString& p : paths) {
-                    contentPanel->updateItemMetadata(p);
+                ContentPanel* target = activeOrRootPanel();
+                if (target) {
+                    for (const QString& p : paths) {
+                        target->updateItemMetadata(p);
+                    }
+                    target->recalculateAndEmitStats();
                 }
-                contentPanel->recalculateAndEmitStats();
             }
         });
 
@@ -679,37 +696,48 @@ void PanelMediator::setupConnections() {
             });
         }
 
-        connect(metaPanel, &MetaPanel::renameRequested, contentPanel, [contentPanel](const QString& oldPath, const QString& newPath) {
+        connect(metaPanel, &MetaPanel::renameRequested, this, [activeOrRootPanel](const QString& oldPath, const QString& newPath) {
+            ContentPanel* target = activeOrRootPanel();
             if (ShellHelper::renameItem(oldPath, newPath)) {
-                contentPanel->migrateModelCache(oldPath, newPath);
-                contentPanel->refreshAll();
+                if (target) {
+                    target->migrateModelCache(oldPath, newPath);
+                    target->refreshAll();
+                }
             } else {
-                contentPanel->updateItemMetadata(oldPath);
+                if (target) {
+                    target->updateItemMetadata(oldPath);
+                }
             }
         });
 
-        connect(metaPanel, &MetaPanel::noteEdited, contentPanel, [contentPanel](const QStringList& paths, const QString& newNote) {
+        connect(metaPanel, &MetaPanel::noteEdited, this, [activeOrRootPanel](const QStringList& paths, const QString& newNote) {
             if (!paths.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::SetNote;
                 cmd.targetPaths = paths;
                 cmd.params["note"] = newNote;
                 CoreEngine::instance().executeCommand(cmd);
-                for (const QString& p : paths) {
-                    contentPanel->updateItemMetadata(p);
+                ContentPanel* target = activeOrRootPanel();
+                if (target) {
+                    for (const QString& p : paths) {
+                        target->updateItemMetadata(p);
+                    }
                 }
             }
         });
 
-        connect(metaPanel, &MetaPanel::linkEdited, contentPanel, [contentPanel](const QStringList& paths, const QString& newLink) {
+        connect(metaPanel, &MetaPanel::linkEdited, this, [activeOrRootPanel](const QStringList& paths, const QString& newLink) {
             if (!paths.isEmpty()) {
                 AppCommand cmd;
                 cmd.type = AppCommandType::SetURL;
                 cmd.targetPaths = paths;
                 cmd.params["url"] = newLink;
                 CoreEngine::instance().executeCommand(cmd);
-                for (const QString& p : paths) {
-                    contentPanel->updateItemMetadata(p);
+                ContentPanel* target = activeOrRootPanel();
+                if (target) {
+                    for (const QString& p : paths) {
+                        target->updateItemMetadata(p);
+                    }
                 }
             }
         });
