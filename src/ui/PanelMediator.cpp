@@ -89,9 +89,6 @@ void PanelMediator::setupConnections() {
                 else if (option == TitleBarWidget::ColumnViewMode) targetMode = ContentPanel::ColumnView;
 
                 contentPanel->setViewMode(targetMode);
-                if (contentPanel->isSplitMode() && contentPanel->secondaryContentPanel()) {
-                    contentPanel->secondaryContentPanel()->setViewMode(targetMode);
-                }
             });
 
             connect(titleBar, &TitleBarWidget::createItemRequested, contentPanel, [contentPanel](const QString& type) {
@@ -385,18 +382,12 @@ void PanelMediator::setupConnections() {
 
         m_activeContentPanel = contentPanel;
 
-        auto bindPanelActivation = [this, contentPanel, addressBar, filterPanel](ContentPanel* panel) {
+        auto bindPanelActivation = [this, addressBar, filterPanel](ContentPanel* panel) {
             if (!panel) return;
-            connect(panel, &ContentPanel::panelActivated, this, [this, contentPanel, panel, addressBar, filterPanel](ContentPanel* activePanel) {
+            connect(panel, &ContentPanel::panelActivated, this, [this, panel, addressBar, filterPanel](ContentPanel* activePanel) {
                 m_activeContentPanel = activePanel;
                 if (addressBar) {
                     addressBar->setPath(activePanel->currentPath());
-                }
-                if (contentPanel && contentPanel->isSplitMode()) {
-                    contentPanel->setActivePane(activePanel == contentPanel);
-                    if (contentPanel->secondaryContentPanel()) {
-                        contentPanel->secondaryContentPanel()->setActivePane(activePanel == contentPanel->secondaryContentPanel());
-                    }
                 }
             });
         };

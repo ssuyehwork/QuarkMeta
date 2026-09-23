@@ -373,7 +373,6 @@ void ContentPanel::splitPane(Qt::Orientation orientation, const QString& seconda
 
         m_secondaryContentPanel = new ContentPanel(m_secondaryPaneContainer);
         m_secondaryContentPanel->setIsSecondaryPane(true);
-        m_secondaryContentPanel->setViewMode(m_currentViewMode);
         connect(m_secondaryContentPanel, &ContentPanel::closePaneRequested, this, &ContentPanel::closeSecondaryPane);
 
         secLayout->addWidget(m_secondaryContentPanel);
@@ -435,21 +434,6 @@ void ContentPanel::requestClosePane() {
         emit closePaneRequested();
     } else if (m_isSplit) {
         closeSecondaryPane();
-    }
-}
-
-void ContentPanel::setActivePane(bool active) {
-    if (m_isActivePane == active) return;
-    m_isActivePane = active;
-
-    if (m_isSplit && m_primaryPaneContainer) {
-        m_primaryPaneContainer->setProperty("activePane", active ? "true" : "false");
-        m_primaryPaneContainer->style()->unpolish(m_primaryPaneContainer);
-        m_primaryPaneContainer->style()->polish(m_primaryPaneContainer);
-    } else {
-        setProperty("activePane", active ? "true" : "false");
-        style()->unpolish(this);
-        style()->polish(this);
     }
 }
 
