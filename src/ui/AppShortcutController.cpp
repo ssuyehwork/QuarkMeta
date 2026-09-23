@@ -182,8 +182,8 @@ void AppShortcutController::initShortcuts() {
         }
     });
 
-    // 6c. Ctrl+1 ~ Ctrl+9 数字快捷切换标签
-    for (int i = 1; i <= 9; ++i) {
+    // 6c. Ctrl+6 ~ Ctrl+9 数字快捷切换标签 (Ctrl+1 ~ Ctrl+5 物理上 100% 独占归属于 ContentKeyHandler 星级评分)
+    for (int i = 6; i <= 9; ++i) {
         QShortcut* scNumTab = new QShortcut(QKeySequence(Qt::CTRL | (Qt::Key_0 + i)), m_window);
         scNumTab->setContext(Qt::WindowShortcut);
         connect(scNumTab, &QShortcut::activated, this, [this, i]() {
