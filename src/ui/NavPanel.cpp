@@ -11,6 +11,7 @@
 #include "../core/TrashService.h"
 #include "../meta/FavoriteDao.h"
 #include "../meta/FavoriteService.h"
+#include "../meta/MetadataManager.h"
 #include "controllers/ContextMenuFactory.h"
 #include <QHeaderView>
 #include <QScrollBar>
@@ -211,10 +212,13 @@ void NavPanel::updateRecentVisitedList() {
                 displayName = QDir::toNativeSeparators(path);
             }
 
-            QIcon icon = ShellIconManager::getFileIcon(path, 18);
-            if (icon.isNull()) {
-                icon = UiHelper::getIcon("folder_filled", QColor("#3498db"), 18);
+            RuntimeMeta meta = MetadataManager::instance().getMeta(path.toStdWString());
+            QColor folderColor("#888888");
+            if (!meta.manualColor.empty()) {
+                QColor parsed = UiHelper::parseColorName(QString::fromStdWString(meta.manualColor));
+                if (parsed.isValid()) folderColor = parsed;
             }
+            QIcon icon = UiHelper::getIcon("folder_filled", folderColor, 18);
 
             validItems.append({path, displayName, icon});
             count++;
@@ -356,7 +360,13 @@ void NavPanel::fetchChildDirs(QStandardItem* parent) {
             safeParent->removeRows(0, safeParent->rowCount());
 
             for (const auto& info : results) {
-                QIcon folderIcon = ShellIconManager::getFileIcon(info.absPath, 18);
+                RuntimeMeta meta = MetadataManager::instance().getMeta(info.absPath.toStdWString());
+                QColor folderColor("#888888");
+                if (!meta.manualColor.empty()) {
+                    QColor parsed = UiHelper::parseColorName(QString::fromStdWString(meta.manualColor));
+                    if (parsed.isValid()) folderColor = parsed;
+                }
+                QIcon folderIcon = UiHelper::getIcon("folder_filled", folderColor, 18);
                 QStandardItem* child = new QStandardItem(folderIcon, info.name);
                 child->setData(info.absPath, Qt::UserRole + 1);
 
