@@ -6,6 +6,8 @@
 #include <QBuffer>
 #include <QDir>
 #include <QMutexLocker>
+#include <QThread>
+#include <QCoreApplication>
 
 namespace QuarkMeta {
 
@@ -20,6 +22,11 @@ QMutex& SvgIconRenderer::iconMutex() {
 }
 
 QPixmap SvgIconRenderer::renderIcon(const QString& key, const QSize& size, const QColor& color) {
+    // 🚀【绝对红线 - 线程安全断言】：QPixmap 和 QPainter 物理禁止在非 GUI 主线程创建/绘制，非主线程调用立即安全拦截
+    if (qApp && QThread::currentThread() != qApp->thread()) {
+        return QPixmap();
+    }
+
     if (!SvgIcons::icons.contains(key)) return QPixmap();
     QString svgData = SvgIcons::icons[key];
     svgData.replace("currentColor", color.name());
