@@ -200,8 +200,8 @@ void SectionedScrollCanvas::setupConnections() {
 
     auto handleBlankContextMenu = [this](const QPoint&) {
         QPoint globalPos = QCursor::pos();
-        QAbstractItemView* fView = folderView();
-        QAbstractItemView* vView = fileView();
+        QAbstractItemView* fView = this->folderView();
+        QAbstractItemView* vView = this->fileView();
 
         if (fView && fView->isVisible() && fView->viewport()) {
             QPoint fPos = fView->viewport()->mapFromGlobal(globalPos);
