@@ -59,6 +59,16 @@ QIcon SvgIconRenderer::getIcon(const QString& key, const QColor& color, int size
     QIcon icon;
     QPixmap pix = getPixmap(key, QSize(size, size), color);
     if (!pix.isNull()) icon.addPixmap(pix);
+
+    // 🚀【矢量高清渲染】：若请求的 size 较大 (>= 32)，同时注入高清阶梯 Pixmap (64, 128, 256)，防止在 Grid/Card 中放大导致模糊
+    if (size >= 32) {
+        for (int hdSize : {64, 128, 256}) {
+            if (hdSize > size) {
+                QPixmap hdPix = getPixmap(key, QSize(hdSize, hdSize), color);
+                if (!hdPix.isNull()) icon.addPixmap(hdPix);
+            }
+        }
+    }
     return icon;
 }
 

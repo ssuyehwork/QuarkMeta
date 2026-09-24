@@ -621,7 +621,7 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
                 QColor parsed = UiHelper::parseColorName(record.manualColor);
                 if (parsed.isValid()) folderColor = parsed;
             }
-            return UiHelper::getIcon("folder_filled", folderColor);
+            return UiHelper::getIcon("folder_filled", folderColor, 128);
         }
 
         QString cacheKey = path;

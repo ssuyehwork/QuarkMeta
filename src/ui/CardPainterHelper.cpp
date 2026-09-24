@@ -41,12 +41,10 @@ void CardPainterHelper::drawCardCover(QPainter* painter, const QRect& cardRect, 
     } else if (!defaultIcon.isNull()) {
         int iconSize = qMin(cardRect.width(), cardRect.height()) * 0.65;
 
-        QList<QSize> availSizes = defaultIcon.availableSizes();
-        QSize nativeSize = availSizes.isEmpty() ? QSize(32, 32) : availSizes.last();
-        QPixmap iconPixmap = defaultIcon.pixmap(nativeSize);
-
+        // 🚀【彻底根治锯齿与模糊】：直接通过 QIcon 请求精确或更高分辨率的高清 Pixmap，禁用 18px 强行低清放大！
+        QPixmap iconPixmap = defaultIcon.pixmap(QSize(iconSize, iconSize));
         if (iconPixmap.isNull()) {
-            iconPixmap = defaultIcon.pixmap(iconSize, iconSize);
+            iconPixmap = defaultIcon.pixmap(128, 128);
         }
 
         if (!iconPixmap.isNull() && (iconPixmap.width() != iconSize || iconPixmap.height() != iconSize)) {
