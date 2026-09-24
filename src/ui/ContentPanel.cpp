@@ -390,13 +390,19 @@ void ContentPanel::hideDragOverlay() {
 
 void ContentPanel::dragEnterEvent(QDragEnterEvent* event) {
     if (event->mimeData()->hasUrls() || event->mimeData()->hasText() ||
-        event->mimeData()->hasFormat("application/x-quarkmeta-tabindex")) {
+        event->mimeData()->hasFormat("application/x-quarkmeta-tabindex") ||
+        event->mimeData()->hasFormat("application/x-quarkmeta-taburl")) {
         event->acceptProposedAction();
     }
 }
 
 void ContentPanel::dragMoveEvent(QDragMoveEvent* event) {
-    updateDragOverlay(event->position().toPoint());
+    if (event->mimeData()->hasFormat("application/x-quarkmeta-tabindex") ||
+        event->mimeData()->hasFormat("application/x-quarkmeta-taburl")) {
+        updateDragOverlay(event->position().toPoint());
+    } else {
+        hideDragOverlay();
+    }
     event->acceptProposedAction();
 }
 
@@ -409,34 +415,37 @@ void ContentPanel::dropEvent(QDropEvent* event) {
     QPoint pos = event->position().toPoint();
     hideDragOverlay();
 
-    int w = width();
-    int h = height();
+    if (event->mimeData()->hasFormat("application/x-quarkmeta-tabindex") ||
+        event->mimeData()->hasFormat("application/x-quarkmeta-taburl")) {
+        int w = width();
+        int h = height();
 
-    QString targetUrl;
-    if (event->mimeData()->hasFormat("application/x-quarkmeta-taburl")) {
-        targetUrl = QString::fromUtf8(event->mimeData()->data("application/x-quarkmeta-taburl"));
-    } else if (event->mimeData()->hasText()) {
-        targetUrl = event->mimeData()->text();
-    }
-
-    if (pos.x() > w * 0.75 || pos.x() < w * 0.25) {
-        splitPane(Qt::Horizontal, targetUrl);
-        event->acceptProposedAction();
-    } else if (pos.y() > h * 0.75 || pos.y() < h * 0.25) {
-        splitPane(Qt::Vertical, targetUrl);
-        event->acceptProposedAction();
-    } else {
-        if (event->mimeData()->hasUrls()) {
-            QStringList paths;
-            for (const QUrl& url : event->mimeData()->urls()) {
-                paths << url.toLocalFile();
-            }
-            onPathsDropped(paths, QModelIndex());
-            event->acceptProposedAction();
+        QString targetUrl;
+        if (event->mimeData()->hasFormat("application/x-quarkmeta-taburl")) {
+            targetUrl = QString::fromUtf8(event->mimeData()->data("application/x-quarkmeta-taburl"));
         } else if (event->mimeData()->hasText()) {
-            splitPane(Qt::Horizontal, event->mimeData()->text());
+            targetUrl = event->mimeData()->text();
+        }
+
+        if (pos.x() > w * 0.75 || pos.x() < w * 0.25) {
+            splitPane(Qt::Horizontal, targetUrl);
+            event->acceptProposedAction();
+        } else if (pos.y() > h * 0.75 || pos.y() < h * 0.25) {
+            splitPane(Qt::Vertical, targetUrl);
+            event->acceptProposedAction();
+        } else {
             event->acceptProposedAction();
         }
+        return;
+    }
+
+    if (event->mimeData()->hasUrls()) {
+        QStringList paths;
+        for (const QUrl& url : event->mimeData()->urls()) {
+            paths << url.toLocalFile();
+        }
+        onPathsDropped(paths, QModelIndex());
+        event->acceptProposedAction();
     }
 }
 
