@@ -109,6 +109,7 @@ QString DiskMediaExtractor::getDiskThumbCachePath(const QString& filePath) {
 bool DiskMediaExtractor::saveDiskThumbnail(const QString& filePath, const QImage& img512) {
     if (img512.isNull()) return false;
     QString diskCachePath = getDiskThumbCachePath(filePath);
+    if (QFile::exists(diskCachePath)) return true;
     std::lock_guard<std::mutex> lock(s_thumbFileMutex);
     return img512.save(diskCachePath, "PNG");
 }
