@@ -611,9 +611,9 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
         static const QStringList iconOnlyExts = {"cur", "ico", "ani"};
         QString ext = record.suffix.toLower();
         if (iconOnlyExts.contains(ext)) return false;
-        if (m_iconCache.contains(path) || (m_aspectRatios.contains(QDir::toNativeSeparators(path)) && m_aspectRatios.value(QDir::toNativeSeparators(path)) > 0.0)) return true;
+        if (UiHelper::isGraphicsFile(ext)) return true;
         if (record.width > 0 && record.height > 0) return true;
-        return false;
+        return m_aspectRatios.contains(QDir::toNativeSeparators(path)) && m_aspectRatios.value(QDir::toNativeSeparators(path)) > 0.0;
     } else if (role == Qt::DecorationRole && index.column() == 0) {
         QString cacheKey = path;
         QIcon* cached = m_iconCache.object(cacheKey);
