@@ -12,12 +12,6 @@ std::vector<ItemRecord> DiskScanService::scanDirectory(const QString& path,
                                                         int maxDepth) { 
     std::vector<ItemRecord> allItems; 
     QSet<QString> visitedDirs;
-    int imageCount = 0;
-    static const int kMaxImageCountLimit = 3000;
-    static const QSet<QString> graphicsExts = {
-        "jpg", "jpeg", "png", "gif", "bmp", "webp", "tif", "tiff",
-        "psd", "ai", "eps", "pdf", "svg", "raw", "cr2", "nef", "arw", "dng", "heic", "avif"
-    };
 
     std::function<void(const QString&, bool, int)> scanDir; 
     scanDir = [&](const QString& p, bool rec, int currentDepth) { 
@@ -41,14 +35,6 @@ std::vector<ItemRecord> DiskScanService::scanDirectory(const QString& path,
             // 🚨 统一调用文件过滤服务（归一化处理所有辅助文件、.arc、.QuarkMeta） 
             if (FileFilterService::isAuxiliaryFile(absPath)) continue; 
  
-            if (!info.isDir()) {
-                QString ext = info.suffix().toLower();
-                if (graphicsExts.contains(ext)) {
-                    if (imageCount >= kMaxImageCountLimit) continue;
-                    imageCount++;
-                }
-            }
-
             ItemRecord itemRec = ItemRecord::create(absPath, nullptr); 
             allItems.push_back(itemRec); 
  

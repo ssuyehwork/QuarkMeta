@@ -45,28 +45,6 @@ void DiskItemModel::incrementGeneration() {
 
 DiskItemModel::DiskItemModel(QObject* parent) : ItemModelBase(parent) {
     m_iconCache.setMaxCost(500);
-    m_thumbBatchTimer = new QTimer(this);
-    m_thumbBatchTimer->setSingleShot(true);
-    m_thumbBatchTimer->setInterval(80);
-    connect(m_thumbBatchTimer, &QTimer::timeout, this, &DiskItemModel::flushPendingThumbDataChanged);
-}
-
-void DiskItemModel::flushPendingThumbDataChanged() {
-    if (m_pendingThumbRows.isEmpty()) return;
-
-    int minRow = std::numeric_limits<int>::max();
-    int maxRow = std::numeric_limits<int>::min();
-    for (int r : m_pendingThumbRows) {
-        if (r < minRow) minRow = r;
-        if (r > maxRow) maxRow = r;
-    }
-    m_pendingThumbRows.clear();
-
-    if (minRow <= maxRow && minRow >= 0 && minRow < static_cast<int>(m_allRecords.size())) {
-        int validMaxRow = qMin(maxRow, static_cast<int>(m_allRecords.size()) - 1);
-        emit dataChanged(index(minRow, 0), index(validMaxRow, columnCount() - 1),
-                          {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
-    }
 }
 
 DiskItemModel::~DiskItemModel() {}
@@ -97,8 +75,6 @@ QVariant DiskItemModel::headerData(int section, Qt::Orientation orientation, int
 }
 
 void DiskItemModel::setRecords(const std::vector<ItemRecord>& records) {
-    if (m_thumbBatchTimer) m_thumbBatchTimer->stop();
-    m_pendingThumbRows.clear();
     incrementGeneration();
     beginResetModel();
     m_allRecords = records;
@@ -227,8 +203,6 @@ void DiskItemModel::preloadDimensionsAsync() {
 }
 
 void DiskItemModel::clear() {
-    if (m_thumbBatchTimer) m_thumbBatchTimer->stop();
-    m_pendingThumbRows.clear();
     incrementGeneration();
     beginResetModel();
     m_allRecords.clear();
@@ -521,10 +495,8 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
             auto it = weakThis->m_pathToIndex.find(path);
             if (it != weakThis->m_pathToIndex.end()) {
                 int rIdx = it->second;
-                weakThis->m_pendingThumbRows.insert(rIdx);
-                if (weakThis->m_thumbBatchTimer && !weakThis->m_thumbBatchTimer->isActive()) {
-                    weakThis->m_thumbBatchTimer->start();
-                }
+                emit weakThis->dataChanged(weakThis->index(rIdx, 0), weakThis->index(rIdx, 0),
+                                          {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
                 emit weakThis->thumbnailLoaded(rIdx);
             }
         }
@@ -639,9 +611,9 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
         static const QStringList iconOnlyExts = {"cur", "ico", "ani"};
         QString ext = record.suffix.toLower();
         if (iconOnlyExts.contains(ext)) return false;
-        if (UiHelper::isGraphicsFile(ext)) return true;
+        if (m_iconCache.contains(path) || (m_aspectRatios.contains(QDir::toNativeSeparators(path)) && m_aspectRatios.value(QDir::toNativeSeparators(path)) > 0.0)) return true;
         if (record.width > 0 && record.height > 0) return true;
-        return m_aspectRatios.contains(QDir::toNativeSeparators(path)) && m_aspectRatios.value(QDir::toNativeSeparators(path)) > 0.0;
+        return false;
     } else if (role == Qt::DecorationRole && index.column() == 0) {
         QString cacheKey = path;
         QIcon* cached = m_iconCache.object(cacheKey);

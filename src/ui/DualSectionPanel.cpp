@@ -170,23 +170,18 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
         int clampedTopY = qBound(0, topPoint.y(), view->height());
         int clampedBtmY = qBound(0, btmPoint.y(), view->height());
 
-        int viewW = view->viewport() ? view->viewport()->width() : view->width();
-        int sampleX = viewW > 0 ? qMin(viewW / 2, 100) : 10;
-
-        QModelIndex topIdx = view->indexAt(QPoint(sampleX, clampedTopY));
+        QModelIndex topIdx = view->indexAt(QPoint(10, clampedTopY));
         if (!topIdx.isValid()) {
-            for (int offset = 10; offset <= 200 && !topIdx.isValid(); offset += 10)
-                topIdx = view->indexAt(QPoint(sampleX, clampedTopY + offset));
+            for (int offset = 10; offset <= 100 && !topIdx.isValid(); offset += 10)
+                topIdx = view->indexAt(QPoint(10, clampedTopY + offset));
         }
-        QModelIndex btmIdx = view->indexAt(QPoint(sampleX, clampedBtmY));
+        QModelIndex btmIdx = view->indexAt(QPoint(10, clampedBtmY));
         if (!btmIdx.isValid()) {
-            for (int offset = 10; offset <= 200 && !btmIdx.isValid(); offset += 10)
-                btmIdx = view->indexAt(QPoint(sampleX, clampedBtmY - offset));
+            for (int offset = 10; offset <= 100 && !btmIdx.isValid(); offset += 10)
+                btmIdx = view->indexAt(QPoint(10, clampedBtmY - offset));
         }
 
-        if (!topIdx.isValid() && !btmIdx.isValid()) return;
-
-        int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : (btmIdx.isValid() ? qMax(0, btmIdx.row() - 20) : 0);
+        int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : 0;
         int bottom = btmIdx.isValid() ? qMin(proxy->rowCount() - 1, btmIdx.row() + 4) : qMin(proxy->rowCount() - 1, top + 20);
 
         for (int r = top; r <= bottom; ++r) {
