@@ -156,6 +156,9 @@ QModelIndexList DualSectionPanel::getSelectedIndexes() const {
 void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* hostViewport) {
     if (!model || !hostViewport || CoreController::isShuttingDown()) return;
 
+    QElapsedTimer timer;
+    timer.start();
+
     QRect vpRect = hostViewport->rect();
     QSet<int> visibleRows;
 
@@ -198,6 +201,12 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
 
     if (!visibleRows.isEmpty()) {
         model->loadThumbnailsForRows(visibleRows.values());
+    }
+
+    qint64 elapsed = timer.elapsed();
+    if (elapsed > 2) {
+        Logger::log(QString("[PerfDiag] DualSectionPanel::refreshVisibleThumbnails scanned %1 visible rows in %2ms")
+                    .arg(visibleRows.size()).arg(elapsed));
     }
 }
 

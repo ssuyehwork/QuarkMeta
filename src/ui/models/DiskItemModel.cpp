@@ -490,6 +490,8 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
 
     if (pathsToLoad.isEmpty()) return;
 
+    Logger::log(QString("[PerfDiag] DiskItemModel::loadThumbnailsForRows requesting batch load for %1 paths").arg(pathsToLoad.size()));
+
     QPointer<DiskItemModel> weakThis(this);
     ThumbnailPipelineService::instance().loadBatchAsync(pathsToLoad, 230, [weakThis, thisGen](const QString& path, const QPixmap& pixmap) {
         if (!weakThis || weakThis->currentGeneration() != thisGen) return;
