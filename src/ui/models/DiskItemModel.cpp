@@ -45,6 +45,11 @@ void DiskItemModel::incrementGeneration() {
 
 DiskItemModel::DiskItemModel(QObject* parent) : ItemModelBase(parent) {
     m_iconCache.setMaxCost(500);
+
+    m_thumbBatchTimer = new QTimer(this);
+    m_thumbBatchTimer->setSingleShot(true);
+    m_thumbBatchTimer->setInterval(80);
+    connect(m_thumbBatchTimer, &QTimer::timeout, this, &DiskItemModel::flushPendingThumbDataChanged);
 }
 
 DiskItemModel::~DiskItemModel() {}
@@ -76,6 +81,8 @@ QVariant DiskItemModel::headerData(int section, Qt::Orientation orientation, int
 
 void DiskItemModel::setRecords(const std::vector<ItemRecord>& records) {
     incrementGeneration();
+    m_pendingThumbRows.clear();
+    if (m_thumbBatchTimer) m_thumbBatchTimer->stop();
     beginResetModel();
     m_allRecords = records;
 
@@ -204,6 +211,8 @@ void DiskItemModel::preloadDimensionsAsync() {
 
 void DiskItemModel::clear() {
     incrementGeneration();
+    m_pendingThumbRows.clear();
+    if (m_thumbBatchTimer) m_thumbBatchTimer->stop();
     beginResetModel();
     m_allRecords.clear();
     m_pathToIndex.clear();
@@ -495,8 +504,10 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
             auto it = weakThis->m_pathToIndex.find(path);
             if (it != weakThis->m_pathToIndex.end()) {
                 int rIdx = it->second;
-                emit weakThis->dataChanged(weakThis->index(rIdx, 0), weakThis->index(rIdx, 0), 
-                                          {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
+                weakThis->m_pendingThumbRows.insert(rIdx);
+                if (weakThis->m_thumbBatchTimer && !weakThis->m_thumbBatchTimer->isActive()) {
+                    weakThis->m_thumbBatchTimer->start();
+                }
                 emit weakThis->thumbnailLoaded(rIdx);
             }
         }
@@ -651,6 +662,17 @@ void DiskItemModel::reloadThumbnailForPath(const QString& path) {
             {Qt::DecorationRole, Qt::DisplayRole, AspectRatioRole, HasThumbnailRole}
         );
     }
+}
+
+void DiskItemModel::flushPendingThumbDataChanged() {
+    if (m_pendingThumbRows.isEmpty()) return;
+
+    int minRow = *std::min_element(m_pendingThumbRows.begin(), m_pendingThumbRows.end());
+    int maxRow = *std::max_element(m_pendingThumbRows.begin(), m_pendingThumbRows.end());
+    m_pendingThumbRows.clear();
+
+    emit dataChanged(index(minRow, 0), index(maxRow, 0),
+                      {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
 }
 
 } // namespace QuarkMeta
