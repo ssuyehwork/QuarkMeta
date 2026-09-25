@@ -219,8 +219,8 @@ void ContentPanel::initUi() {
     for (auto* canvas : {m_gridCanvas, m_listCanvas}) {
         connect(canvas, &SectionedScrollCanvas::selectionChanged, this, &ContentPanel::onSelectionChanged);
         connect(canvas, &SectionedScrollCanvas::doubleClicked, this, &ContentPanel::onDoubleClicked);
-        connect(canvas, qOverload<QAbstractItemView*, const QPoint&>(&SectionedScrollCanvas::customContextMenuRequested), this, [this](QAbstractItemView* view, const QPoint& pos) {
-            onCustomContextMenuRequested(view, pos);
+        connect(canvas, &SectionedScrollCanvas::customContextMenuRequested, this, [this](const QPoint& pos) {
+            onCustomContextMenuRequested(pos);
         });
         connect(canvas, &SectionedScrollCanvas::pathsDropped, this, [this](const QStringList& p, const QModelIndex& idx, QAbstractItemModel* proxy) {
             onPathsDropped(p, idx, currentPath(), proxy);

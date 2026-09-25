@@ -14,7 +14,6 @@
 #include <unordered_map>
 #include <QSet>
 #include <QPointer>
-#include <QTimer>
 #include "../../core/CoreEngine.h"
 
 namespace QuarkMeta {
@@ -55,9 +54,6 @@ public:
 signals:
     void thumbnailLoaded(int rowIndex);
 
-private slots:
-    void flushPendingThumbDataChanged();
-
 protected:
     std::vector<QuarkMeta::ItemRecord> m_allRecords;
     std::unordered_map<QString, int, QuarkMeta::QStringHash> m_pathToIndex;
@@ -69,9 +65,6 @@ protected:
 
     QMutex m_genTokenMutex;
     QHash<uint64_t, std::shared_ptr<CancellationToken>> m_genTokens;
-
-    QSet<int> m_pendingThumbRows;
-    QTimer* m_thumbBatchTimer = nullptr;
 };
 
 } // namespace QuarkMeta

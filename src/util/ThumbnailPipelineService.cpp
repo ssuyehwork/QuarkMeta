@@ -78,10 +78,7 @@ void ThumbnailPipelineService::loadBatchAsync(const QStringList& filePaths,
                 return;
             }
 
-            QImage finalImg = DiskMediaExtractor::getCapsuleThumbnailReadOnly(path);
-            if (finalImg.isNull()) {
-                finalImg = decodeImageToThumbnail(path, targetSize);
-            }
+            QImage finalImg = decodeImageToThumbnail(path, targetSize);
 
             if (!finalImg.isNull()) {
                 if (m_currentGeneration.load(std::memory_order_relaxed) != taskGen) {

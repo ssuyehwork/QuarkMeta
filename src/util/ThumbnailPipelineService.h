@@ -57,7 +57,7 @@ private:
     mutable QCache<QString, QPixmap> m_memoryCache;
 
     std::atomic<uint64_t> m_currentGeneration{1};
-    static constexpr int kMaxMemoryCacheCount = 3000; // 内存最多缓存 3000 张缩略图 (约 200MB)，大幅提升高密度相册滚动效率
+    static constexpr int kMaxMemoryCacheCount = 800; // 内存最多缓存 800 张缩略图 (约 50~80MB)
 };
 
 } // namespace QuarkMeta
