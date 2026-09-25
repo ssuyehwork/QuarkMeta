@@ -1,6 +1,7 @@
 #include "DiskItemModel.h"
 #include "../../core/ModelContract.h"
 #include "UiHelper.h"
+#include "Logger.h"
 #include "ShellIconManager.h"
 #include "MetaCacheDecorator.h"
 #include "ThumbnailPipelineService.h"
