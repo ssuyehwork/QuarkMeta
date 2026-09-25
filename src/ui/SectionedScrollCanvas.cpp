@@ -190,10 +190,44 @@ void SectionedScrollCanvas::setupConnections() {
     connect(folderView, &QAbstractItemView::doubleClicked, this, &SectionedScrollCanvas::doubleClicked);
     connect(fileView, &QAbstractItemView::doubleClicked, this, &SectionedScrollCanvas::doubleClicked);
 
-    connect(this, &QScrollArea::customContextMenuRequested, this, &SectionedScrollCanvas::customContextMenuRequested);
-    connect(m_panel, &QWidget::customContextMenuRequested, this, &SectionedScrollCanvas::customContextMenuRequested);
-    connect(folderView, &QAbstractItemView::customContextMenuRequested, this, &SectionedScrollCanvas::customContextMenuRequested);
-    connect(fileView, &QAbstractItemView::customContextMenuRequested, this, &SectionedScrollCanvas::customContextMenuRequested);
+    connect(folderView, &QAbstractItemView::customContextMenuRequested, this, [this, folderView](const QPoint& pos) {
+        emit customContextMenuRequested(folderView, pos);
+    });
+
+    connect(fileView, &QAbstractItemView::customContextMenuRequested, this, [this, fileView](const QPoint& pos) {
+        emit customContextMenuRequested(fileView, pos);
+    });
+
+    auto handleBlankContextMenu = [this](const QPoint&) {
+        QPoint globalPos = QCursor::pos();
+        QAbstractItemView* fView = this->folderView();
+        QAbstractItemView* vView = this->fileView();
+
+        if (fView && fView->isVisible() && fView->viewport()) {
+            QPoint fPos = fView->viewport()->mapFromGlobal(globalPos);
+            if (fView->viewport()->rect().contains(fPos)) {
+                emit customContextMenuRequested(fView, fPos);
+                return;
+            }
+        }
+        if (vView && vView->isVisible() && vView->viewport()) {
+            QPoint vPos = vView->viewport()->mapFromGlobal(globalPos);
+            if (vView->viewport()->rect().contains(vPos)) {
+                emit customContextMenuRequested(vView, vPos);
+                return;
+            }
+        }
+
+        QAbstractItemView* targetView = activeItemView();
+        if (!targetView) targetView = vView;
+        if (targetView && targetView->viewport()) {
+            QPoint targetPos = targetView->viewport()->mapFromGlobal(globalPos);
+            emit customContextMenuRequested(targetView, targetPos);
+        }
+    };
+
+    connect(m_panel, &QWidget::customContextMenuRequested, this, handleBlankContextMenu);
+    connect(this, &QScrollArea::customContextMenuRequested, this, handleBlankContextMenu);
 
     if (m_type == CanvasType::Grid) {
         if (auto* dropFolder = qobject_cast<DropJustifiedView*>(folderView)) {

@@ -1,6 +1,7 @@
 #include "DiskItemModel.h"
 #include "../../core/ModelContract.h"
 #include "UiHelper.h"
+#include "Logger.h"
 #include "ShellIconManager.h"
 #include "MetaCacheDecorator.h"
 #include "ThumbnailPipelineService.h"
@@ -45,6 +46,11 @@ void DiskItemModel::incrementGeneration() {
 
 DiskItemModel::DiskItemModel(QObject* parent) : ItemModelBase(parent) {
     m_iconCache.setMaxCost(500);
+
+    m_thumbBatchTimer = new QTimer(this);
+    m_thumbBatchTimer->setSingleShot(true);
+    m_thumbBatchTimer->setInterval(80);
+    connect(m_thumbBatchTimer, &QTimer::timeout, this, &DiskItemModel::flushPendingThumbDataChanged);
 }
 
 DiskItemModel::~DiskItemModel() {}
@@ -76,6 +82,8 @@ QVariant DiskItemModel::headerData(int section, Qt::Orientation orientation, int
 
 void DiskItemModel::setRecords(const std::vector<ItemRecord>& records) {
     incrementGeneration();
+    m_pendingThumbRows.clear();
+    if (m_thumbBatchTimer) m_thumbBatchTimer->stop();
     beginResetModel();
     m_allRecords = records;
 
@@ -204,6 +212,8 @@ void DiskItemModel::preloadDimensionsAsync() {
 
 void DiskItemModel::clear() {
     incrementGeneration();
+    m_pendingThumbRows.clear();
+    if (m_thumbBatchTimer) m_thumbBatchTimer->stop();
     beginResetModel();
     m_allRecords.clear();
     m_pathToIndex.clear();
@@ -481,6 +491,8 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
 
     if (pathsToLoad.isEmpty()) return;
 
+    Logger::log(QString("[PerfDiag] DiskItemModel::loadThumbnailsForRows requesting batch load for %1 paths").arg(pathsToLoad.size()));
+
     QPointer<DiskItemModel> weakThis(this);
     ThumbnailPipelineService::instance().loadBatchAsync(pathsToLoad, 230, [weakThis, thisGen](const QString& path, const QPixmap& pixmap) {
         if (!weakThis || weakThis->currentGeneration() != thisGen) return;
@@ -495,8 +507,10 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
             auto it = weakThis->m_pathToIndex.find(path);
             if (it != weakThis->m_pathToIndex.end()) {
                 int rIdx = it->second;
-                emit weakThis->dataChanged(weakThis->index(rIdx, 0), weakThis->index(rIdx, 0), 
-                                          {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
+                weakThis->m_pendingThumbRows.insert(rIdx);
+                if (weakThis->m_thumbBatchTimer && !weakThis->m_thumbBatchTimer->isActive()) {
+                    weakThis->m_thumbBatchTimer->start();
+                }
                 emit weakThis->thumbnailLoaded(rIdx);
             }
         }
@@ -611,9 +625,9 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
         static const QStringList iconOnlyExts = {"cur", "ico", "ani"};
         QString ext = record.suffix.toLower();
         if (iconOnlyExts.contains(ext)) return false;
-        if (m_iconCache.contains(path) || (m_aspectRatios.contains(QDir::toNativeSeparators(path)) && m_aspectRatios.value(QDir::toNativeSeparators(path)) > 0.0)) return true;
+        if (UiHelper::isGraphicsFile(ext)) return true;
         if (record.width > 0 && record.height > 0) return true;
-        return false;
+        return m_aspectRatios.contains(QDir::toNativeSeparators(path)) && m_aspectRatios.value(QDir::toNativeSeparators(path)) > 0.0;
     } else if (role == Qt::DecorationRole && index.column() == 0) {
         QString cacheKey = path;
         QIcon* cached = m_iconCache.object(cacheKey);
@@ -651,6 +665,17 @@ void DiskItemModel::reloadThumbnailForPath(const QString& path) {
             {Qt::DecorationRole, Qt::DisplayRole, AspectRatioRole, HasThumbnailRole}
         );
     }
+}
+
+void DiskItemModel::flushPendingThumbDataChanged() {
+    if (m_pendingThumbRows.isEmpty()) return;
+
+    int minRow = *std::min_element(m_pendingThumbRows.begin(), m_pendingThumbRows.end());
+    int maxRow = *std::max_element(m_pendingThumbRows.begin(), m_pendingThumbRows.end());
+    m_pendingThumbRows.clear();
+
+    emit dataChanged(index(minRow, 0), index(maxRow, 0),
+                      {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
 }
 
 } // namespace QuarkMeta

@@ -109,6 +109,7 @@ QString DiskMediaExtractor::getDiskThumbCachePath(const QString& filePath) {
 bool DiskMediaExtractor::saveDiskThumbnail(const QString& filePath, const QImage& img512) {
     if (img512.isNull()) return false;
     QString diskCachePath = getDiskThumbCachePath(filePath);
+    if (QFile::exists(diskCachePath)) return true;
     std::lock_guard<std::mutex> lock(s_thumbFileMutex);
     return img512.save(diskCachePath, "PNG");
 }
@@ -160,16 +161,6 @@ DiskMediaExtractor::ExtractResult DiskMediaExtractor::getCapsuleExtractResult(co
     // 1. 极速缓存命中路径：若磁盘已存在缩略图缓存，免解码瞬间返回
     if (!res.thumbnail512.isNull()) {
         res.isValid = true;
-
-        std::lock_guard<std::mutex> lock(s_jsonSaveMutex);
-        QuarkMetaJson jsonCache(parentDir.toStdWString());
-        jsonCache.load();
-        const auto& cachedItems = jsonCache.items();
-        std::wstring wFileName = fileName.toStdWString();
-        auto it = cachedItems.find(wFileName);
-        if (it != cachedItems.end() && it->second.width > 0 && it->second.height > 0) {
-            res.originalSize = QSize(it->second.width, it->second.height);
-        }
         return res;
     }
 

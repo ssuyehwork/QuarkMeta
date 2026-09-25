@@ -47,6 +47,7 @@ signals:
     void selectionChanged();
     void doubleClicked(const QModelIndex& index);
     void customContextMenuRequested(const QPoint& pos);
+    void customContextMenuRequested(QAbstractItemView* view, const QPoint& pos);
     void pathsDropped(const QStringList& paths, const QModelIndex& targetIndex, QAbstractItemModel* sourceProxy);
 
 protected:

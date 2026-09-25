@@ -270,20 +270,14 @@ QImage FormatDecoders::extractAiPreview(const QString& filePath, int targetSize,
         }
     }
 
-    // 通道 3：Ghostscript 矢量引擎
-    QImage gsImg = renderGhostscriptSafely(filePath, targetSize, customTimeoutMs, token);
-    if (!gsImg.isNull()) {
-        return gsImg;
-    }
-
-    // 通道 4：Windows 原生系统 PDF 引擎
+    // 通道 3：Windows 原生系统 PDF/Shell 引擎（<20ms 极速通道）
     QImage pdfRenderImg = renderPdfAiFirstPage(filePath, targetSize);
     if (!pdfRenderImg.isNull()) {
         return pdfRenderImg;
     }
 
     // =========================================================================
-    // 通道 5：检索 PDF 规范下的 JPEG / PNG 裸数据流 (\xFF\xD8\xFF)
+    // 通道 4：快速检索 PDF/AI 规范下的 JPEG / PNG 内嵌裸数据流（<5ms 秒开）
     // =========================================================================
     int pngStart = rawData.indexOf("\x89PNG\r\n\x1a\n");
     if (pngStart != -1) {
@@ -307,6 +301,12 @@ QImage FormatDecoders::extractAiPreview(const QString& filePath, int targetSize,
                 return img;
             }
         }
+    }
+
+    // 通道 5：Ghostscript 矢量引擎（降级兜底手段，避免超时阻塞主渲染通道）
+    QImage gsImg = renderGhostscriptSafely(filePath, targetSize, customTimeoutMs, token);
+    if (!gsImg.isNull()) {
+        return gsImg;
     }
 
     // 通道 6：Windows Shell 严格缩略图兜底

@@ -156,6 +156,9 @@ QModelIndexList DualSectionPanel::getSelectedIndexes() const {
 void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* hostViewport) {
     if (!model || !hostViewport || CoreController::isShuttingDown()) return;
 
+    QElapsedTimer timer;
+    timer.start();
+
     QRect vpRect = hostViewport->rect();
     QSet<int> visibleRows;
 
@@ -170,15 +173,18 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
         int clampedTopY = qBound(0, topPoint.y(), view->height());
         int clampedBtmY = qBound(0, btmPoint.y(), view->height());
 
-        QModelIndex topIdx = view->indexAt(QPoint(10, clampedTopY));
+        int viewW = view->viewport() ? view->viewport()->width() : view->width();
+        int sampleX = viewW > 0 ? qMin(viewW / 2, 100) : 10;
+
+        QModelIndex topIdx = view->indexAt(QPoint(sampleX, clampedTopY));
         if (!topIdx.isValid()) {
             for (int offset = 10; offset <= 100 && !topIdx.isValid(); offset += 10)
-                topIdx = view->indexAt(QPoint(10, clampedTopY + offset));
+                topIdx = view->indexAt(QPoint(sampleX, clampedTopY + offset));
         }
-        QModelIndex btmIdx = view->indexAt(QPoint(10, clampedBtmY));
+        QModelIndex btmIdx = view->indexAt(QPoint(sampleX, clampedBtmY));
         if (!btmIdx.isValid()) {
             for (int offset = 10; offset <= 100 && !btmIdx.isValid(); offset += 10)
-                btmIdx = view->indexAt(QPoint(10, clampedBtmY - offset));
+                btmIdx = view->indexAt(QPoint(sampleX, clampedBtmY - offset));
         }
 
         int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : 0;
@@ -195,6 +201,12 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
 
     if (!visibleRows.isEmpty()) {
         model->loadThumbnailsForRows(visibleRows.values());
+    }
+
+    qint64 elapsed = timer.elapsed();
+    if (elapsed > 2) {
+        Logger::log(QString("[PerfDiag] DualSectionPanel::refreshVisibleThumbnails scanned %1 visible rows in %2ms")
+                    .arg(visibleRows.size()).arg(elapsed));
     }
 }
 
