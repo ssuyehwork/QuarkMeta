@@ -45,24 +45,9 @@ void DiskItemModel::incrementGeneration() {
 
 DiskItemModel::DiskItemModel(QObject* parent) : ItemModelBase(parent) {
     m_iconCache.setMaxCost(500);
-    m_thumbBatchTimer = new QTimer(this);
-    m_thumbBatchTimer->setSingleShot(true);
-    m_thumbBatchTimer->setInterval(80);
-    connect(m_thumbBatchTimer, &QTimer::timeout, this, &DiskItemModel::flushPendingThumbDataChanged);
 }
 
 void DiskItemModel::flushPendingThumbDataChanged() {
-    if (m_pendingThumbRows.isEmpty()) return;
-
-    QSet<int> rowsToEmit = m_pendingThumbRows;
-    m_pendingThumbRows.clear();
-
-    for (int r : rowsToEmit) {
-        if (r >= 0 && r < static_cast<int>(m_allRecords.size())) {
-            emit dataChanged(index(r, 0), index(r, columnCount() - 1),
-                              {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
-        }
-    }
 }
 
 DiskItemModel::~DiskItemModel() {}
