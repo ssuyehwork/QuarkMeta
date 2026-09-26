@@ -185,8 +185,8 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
                 btmIdx = view->indexAt(QPoint(clampedBtmX - offset, clampedBtmY - offset));
         }
 
-        int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : 0;
-        int bottom = btmIdx.isValid() ? qMin(proxy->rowCount() - 1, btmIdx.row() + 4) : qMin(proxy->rowCount() - 1, top + 20);
+        int top = topIdx.isValid() ? qMax(0, topIdx.row() - 10) : 0;
+        int bottom = btmIdx.isValid() ? qMin(proxy->rowCount() - 1, btmIdx.row() + 10) : qMin(proxy->rowCount() - 1, top + 50);
 
         for (int r = top; r <= bottom; ++r) {
             QModelIndex srcIdx = proxy->mapToSource(proxy->index(r, 0));
