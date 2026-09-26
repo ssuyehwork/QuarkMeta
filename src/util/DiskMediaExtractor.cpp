@@ -157,25 +157,28 @@ DiskMediaExtractor::ExtractResult DiskMediaExtractor::getCapsuleExtractResult(co
     QString parentDir = QDir::toNativeSeparators(fi.absolutePath());
     QString fileName = fi.fileName();
 
-    // 1. 极速缓存命中路径：若磁盘已存在缩略图缓存，免解码瞬间返回
+    // 1. 极速缓存命中路径：若磁盘已存在缩略图缓存，免解码零锁瞬间返回
     if (!res.thumbnail512.isNull()) {
         res.isValid = true;
+        return res;
+    }
 
+    // 2. 失败标记拦截路径：若 .QuarkMeta.json 中被标记 thumb_status == 1，说明此前已提取失败，直接跳过二次解码
+    {
         std::lock_guard<std::mutex> lock(s_jsonSaveMutex);
         QuarkMetaJson jsonCache(parentDir.toStdWString());
         jsonCache.load();
         const auto& cachedItems = jsonCache.items();
         std::wstring wFileName = fileName.toStdWString();
         auto it = cachedItems.find(wFileName);
-        if (it != cachedItems.end() && it->second.width > 0 && it->second.height > 0) {
-            res.originalSize = QSize(it->second.width, it->second.height);
+        if (it != cachedItems.end() && it->second.thumbStatus == 1) {
+            return res;
         }
-        return res;
     }
 
     if ((token && token->isCanceled()) || CoreController::isShuttingDown()) return res;
 
-    // 2. 解码路径：单次解码同时获取原始分辨率与 512px 缩略图
+    // 3. 解码路径：单次解码同时获取原始分辨率与 512px 缩略图
     DecodedMediaResult dec = ImageDecoderFacade::decodeSinglePass(filePath, size, 0, token);
     if (dec.isValid) {
         res.originalSize = dec.originalSize;
