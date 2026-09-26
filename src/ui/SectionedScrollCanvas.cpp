@@ -75,7 +75,7 @@ QAbstractItemView* SectionedScrollCanvas::createFolderView(QObject* eventFilter)
         folderJv->setSelectionMode(QAbstractItemView::SingleSelection);
         folderJv->setContextMenuPolicy(Qt::CustomContextMenu);
         folderJv->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        folderJv->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        folderJv->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         folderJv->setModel(m_folderProxyModel);
         folderJv->setAspectRatioRole(AspectRatioRole);
         auto* fDelegate = new ThumbnailDelegate(this);
@@ -94,7 +94,7 @@ QAbstractItemView* SectionedScrollCanvas::createFolderView(QObject* eventFilter)
         folderTv->setAlternatingRowColors(true);
         folderTv->setSortingEnabled(true);
         folderTv->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        folderTv->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        folderTv->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         folderTv->setContextMenuPolicy(Qt::CustomContextMenu);
         folderTv->setSelectionMode(QAbstractItemView::SingleSelection);
         folderTv->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -121,7 +121,7 @@ QAbstractItemView* SectionedScrollCanvas::createFileView(QObject* eventFilter) {
         fileJv->setSelectionMode(QAbstractItemView::ExtendedSelection);
         fileJv->setContextMenuPolicy(Qt::CustomContextMenu);
         fileJv->setEditTriggers(QAbstractItemView::NoEditTriggers);
-        fileJv->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        fileJv->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         fileJv->setModel(m_fileProxyModel);
         fileJv->setAspectRatioRole(AspectRatioRole);
         auto* delegate = new ThumbnailDelegate(this);
@@ -140,7 +140,7 @@ QAbstractItemView* SectionedScrollCanvas::createFileView(QObject* eventFilter) {
         fileTv->setAlternatingRowColors(true);
         fileTv->setSortingEnabled(true);
         fileTv->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        fileTv->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        fileTv->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         fileTv->setContextMenuPolicy(Qt::CustomContextMenu);
         fileTv->setSelectionMode(QAbstractItemView::ExtendedSelection);
         fileTv->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -175,17 +175,13 @@ void SectionedScrollCanvas::setupConnections() {
 
     if (m_type == CanvasType::Grid) {
         if (auto* fjv = qobject_cast<JustifiedView*>(folderView)) {
-            connect(fjv, &JustifiedView::totalHeightChanged, this, [this](int height) {
-                if (m_folderProxyModel && m_folderProxyModel->rowCount() > 0) {
-                    m_panel->folderView()->setFixedHeight(height);
-                }
+            connect(fjv, &JustifiedView::totalHeightChanged, this, [this](int) {
+                updateSectionCounts();
             });
         }
         if (auto* jv = qobject_cast<JustifiedView*>(fileView)) {
-            connect(jv, &JustifiedView::totalHeightChanged, this, [this](int height) {
-                if (m_fileProxyModel && m_fileProxyModel->rowCount() > 0) {
-                    m_panel->fileView()->setFixedHeight(height);
-                }
+            connect(jv, &JustifiedView::totalHeightChanged, this, [this](int) {
+                updateSectionCounts();
             });
         }
     }
