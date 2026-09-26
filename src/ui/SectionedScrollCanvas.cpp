@@ -45,6 +45,16 @@ SectionedScrollCanvas::SectionedScrollCanvas(CanvasType type, FilterProxyModel* 
         m_panel->installEventFilter(eventFilter);
     }
 
+    m_panel->installEventFilter(this);
+    if (folderView) {
+        folderView->installEventFilter(this);
+        if (folderView->viewport()) folderView->viewport()->installEventFilter(this);
+    }
+    if (fileView) {
+        fileView->installEventFilter(this);
+        if (fileView->viewport()) fileView->viewport()->installEventFilter(this);
+    }
+
     setupConnections();
 
     m_scrollThumbTimer = new QTimer(this);
@@ -324,6 +334,19 @@ QModelIndexList SectionedScrollCanvas::getSelectedIndexes() const {
 
 void SectionedScrollCanvas::refreshVisibleThumbnails(ItemModelBase* model) {
     m_panel->refreshVisibleThumbnails(model, viewport());
+}
+
+bool SectionedScrollCanvas::eventFilter(QObject* obj, QEvent* event) {
+    if (event && event->type() == QEvent::Wheel) {
+        auto* wEvent = static_cast<QWheelEvent*>(event);
+        if (!(wEvent->modifiers() & Qt::ControlModifier)) {
+            if (verticalScrollBar() && verticalScrollBar()->isVisible()) {
+                QCoreApplication::sendEvent(verticalScrollBar(), wEvent);
+                return true;
+            }
+        }
+    }
+    return QScrollArea::eventFilter(obj, event);
 }
 
 void SectionedScrollCanvas::resizeEvent(QResizeEvent* event) {
