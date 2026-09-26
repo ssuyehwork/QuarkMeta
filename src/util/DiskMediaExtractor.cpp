@@ -93,11 +93,6 @@ QString DiskMediaExtractor::getDiskThumbCachePathByFileId(uint32_t volSerial, ui
 }
 
 QString DiskMediaExtractor::getDiskThumbCachePath(const QString& filePath) {
-    uint32_t vol = 0;
-    uint64_t frn = 0;
-    if (fetchPhysicalFileId(filePath, vol, frn)) {
-        return getDiskThumbCachePathByFileId(vol, frn);
-    }
     quint64 h = qHash(QDir::toNativeSeparators(filePath).toLower(), 0);
     QString bucket = QString("%1").arg((h >> 32) & 0xFF, 2, 16, QChar('0'));
     QString fileKey = QString("%1.png").arg(h, 16, 16, QChar('0'));
@@ -137,7 +132,6 @@ QImage DiskMediaExtractor::getCapsuleThumbnailReadOnly(const QString& filePath) 
     QString diskCachePath = getDiskThumbCachePath(filePath);
     if (QFile::exists(diskCachePath)) {
         QImage img;
-        std::lock_guard<std::mutex> lock(s_thumbFileMutex);
         if (img.load(diskCachePath)) return img;
     }
     return QImage();
