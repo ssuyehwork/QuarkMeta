@@ -163,31 +163,27 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
     auto scanView = [&](QAbstractItemView* view, FilterProxyModel* proxy) {
         if (!view || !view->isVisible() || !proxy || proxy->rowCount() == 0) return;
 
-        QPoint topPoint = view->mapFromGlobal(hostViewport->mapToGlobal(vpRect.topLeft()));
-        QPoint btmPoint = view->mapFromGlobal(hostViewport->mapToGlobal(vpRect.bottomRight()));
+        // 计算宿主视口在当前 view 坐标系下的物理可见矩形
+        QPoint topL = view->mapFromGlobal(hostViewport->mapToGlobal(vpRect.topLeft()));
+        QPoint btmR = view->mapFromGlobal(hostViewport->mapToGlobal(vpRect.bottomRight()));
+        QRect visibleInView(topL, btmR);
 
-        if (topPoint.y() >= view->height() || btmPoint.y() <= 0) return;
+        QRect viewBounds(0, 0, view->width(), view->height());
+        QRect intersection = visibleInView.intersected(viewBounds);
+        if (intersection.isEmpty()) return;
 
-        int clampedTopY = qBound(0, topPoint.y(), view->height());
-        int clampedBtmY = qBound(0, btmPoint.y(), view->height());
+        int rowCount = proxy->rowCount();
 
-        QModelIndex topIdx = view->indexAt(QPoint(10, clampedTopY));
-        if (!topIdx.isValid()) {
-            for (int offset = 10; offset <= 100 && !topIdx.isValid(); offset += 10)
-                topIdx = view->indexAt(QPoint(10, clampedTopY + offset));
-        }
-        QModelIndex btmIdx = view->indexAt(QPoint(10, clampedBtmY));
-        if (!btmIdx.isValid()) {
-            for (int offset = 10; offset <= 100 && !btmIdx.isValid(); offset += 10)
-                btmIdx = view->indexAt(QPoint(10, clampedBtmY - offset));
-        }
-
-        int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : 0;
-        int bottom = btmIdx.isValid() ? qMin(proxy->rowCount() - 1, btmIdx.row() + 4) : qMin(proxy->rowCount() - 1, top + 20);
-
-        for (int r = top; r <= bottom; ++r) {
-            QModelIndex srcIdx = proxy->mapToSource(proxy->index(r, 0));
-            if (srcIdx.isValid()) visibleRows.insert(srcIdx.row());
+        // 🚀【精确矩形求交】：不依赖点采样 indexAt，直接遍历 proxy 中的每一行项，使用 view->visualRect 判定物理相交！
+        for (int r = 0; r < rowCount; ++r) {
+            QModelIndex proxyIdx = proxy->index(r, 0);
+            QRect itemRect = view->visualRect(proxyIdx);
+            if (!itemRect.isEmpty() && itemRect.intersects(intersection)) {
+                QModelIndex srcIdx = proxy->mapToSource(proxyIdx);
+                if (srcIdx.isValid()) {
+                    visibleRows.insert(srcIdx.row());
+                }
+            }
         }
     };
 
