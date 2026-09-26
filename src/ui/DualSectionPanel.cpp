@@ -168,11 +168,14 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
 
         if (topPoint.y() >= view->height() || btmPoint.y() <= 0) return;
 
-        int clampedTopX = qBound(16, topPoint.x(), view->width() - 1);
-        int clampedTopY = qBound(0, topPoint.y(), view->height() - 1);
+        int maxW = qMax(0, view->width() - 1);
+        int maxH = qMax(0, view->height() - 1);
+
+        int clampedTopX = qBound(qMin(16, maxW), topPoint.x(), maxW);
+        int clampedTopY = qBound(0, topPoint.y(), maxH);
 
         int clampedBtmX = qBound(0, btmPoint.x(), qMax(0, view->width() - 16));
-        int clampedBtmY = qBound(0, btmPoint.y(), view->height() - 1);
+        int clampedBtmY = qBound(0, btmPoint.y(), maxH);
 
         QModelIndex topIdx = view->indexAt(QPoint(clampedTopX, clampedTopY));
         if (!topIdx.isValid()) {

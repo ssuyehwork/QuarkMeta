@@ -45,9 +45,24 @@ void DiskItemModel::incrementGeneration() {
 
 DiskItemModel::DiskItemModel(QObject* parent) : ItemModelBase(parent) {
     m_iconCache.setMaxCost(500);
+    m_thumbBatchTimer = new QTimer(this);
+    m_thumbBatchTimer->setSingleShot(true);
+    m_thumbBatchTimer->setInterval(35);
+    connect(m_thumbBatchTimer, &QTimer::timeout, this, &DiskItemModel::flushPendingThumbDataChanged);
 }
 
 void DiskItemModel::flushPendingThumbDataChanged() {
+    if (m_pendingThumbRows.isEmpty()) return;
+
+    QSet<int> rowsToEmit = m_pendingThumbRows;
+    m_pendingThumbRows.clear();
+
+    for (int r : rowsToEmit) {
+        if (r >= 0 && r < static_cast<int>(m_allRecords.size())) {
+            emit dataChanged(index(r, 0), index(r, columnCount() - 1),
+                              {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole});
+        }
+    }
 }
 
 DiskItemModel::~DiskItemModel() {}
@@ -519,14 +534,17 @@ void DiskItemModel::loadThumbnailsForRows(const QList<int>& rows) {
             auto it = weakThis->m_pathToIndex.find(path);
             if (it != weakThis->m_pathToIndex.end()) {
                 int rIdx = it->second;
-                QMetaObject::invokeMethod(weakThis, [weakThis, rIdx]() {
+                QMetaObject::invokeMethod(weakThis, [weakThis, path, rIdx]() {
                     if (!weakThis) return;
-                    emit weakThis->dataChanged(
-                        weakThis->index(rIdx, 0),
-                        weakThis->index(rIdx, weakThis->columnCount() - 1),
-                        {Qt::DecorationRole, AspectRatioRole, HasThumbnailRole}
-                    );
-                    emit weakThis->thumbnailLoaded(rIdx);
+                    if (rIdx >= 0 && rIdx < static_cast<int>(weakThis->m_allRecords.size())) {
+                        if (weakThis->m_allRecords[rIdx].path == path) {
+                            weakThis->m_pendingThumbRows.insert(rIdx);
+                            if (weakThis->m_thumbBatchTimer && !weakThis->m_thumbBatchTimer->isActive()) {
+                                weakThis->m_thumbBatchTimer->start();
+                            }
+                            emit weakThis->thumbnailLoaded(rIdx);
+                        }
+                    }
                 }, Qt::QueuedConnection);
             }
         }
