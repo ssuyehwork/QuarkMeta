@@ -180,8 +180,10 @@ void SectionedScrollCanvas::setupConnections() {
             });
         }
         if (auto* jv = qobject_cast<JustifiedView*>(fileView)) {
-            connect(jv, &JustifiedView::totalHeightChanged, this, [this](int) {
-                updateSectionCounts();
+            connect(jv, &JustifiedView::totalHeightChanged, this, [this](int height) {
+                if (m_fileProxyModel && m_fileProxyModel->rowCount() > 0) {
+                    m_panel->fileView()->setFixedHeight(qMax(height, m_panel->fileViewMinHeight()));
+                }
             });
         }
     }
@@ -264,7 +266,7 @@ void SectionedScrollCanvas::updateSectionCounts() {
     if (fileView && fileCount > 0) {
         if (m_type == CanvasType::Grid) {
             if (auto* jv = qobject_cast<JustifiedView*>(fileView)) {
-                int targetH = jv->totalHeight();
+                int targetH = qMax(jv->totalHeight(), m_panel->fileViewMinHeight());
                 if (fileView->height() != targetH) {
                     fileView->setFixedHeight(targetH);
                 }
@@ -276,7 +278,7 @@ void SectionedScrollCanvas::updateSectionCounts() {
             if (rowH <= iconH) rowH = iconH + 10;
             if (rowH <= 0) rowH = 30;
             int hdrH = (tv->header() && tv->header()->isVisible()) ? tv->header()->height() : 0;
-            int targetH = fileCount * rowH + hdrH + 2;
+            int targetH = qMax(fileCount * rowH + hdrH + 2, m_panel->fileViewMinHeight());
             if (fileView->height() != targetH) {
                 fileView->setFixedHeight(targetH);
                 fileView->updateGeometry();
