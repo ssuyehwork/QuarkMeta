@@ -151,6 +151,11 @@ void ContentPanel::initUi() {
 
     m_viewStack = new QStackedWidget(this);
     m_viewStack->setFrameShape(QFrame::NoFrame);
+
+    m_gridSplitter = new QSplitter(Qt::Vertical, this);
+    m_gridSplitter->setChildrenCollapsible(false);
+    m_gridSplitter->setHandleWidth(4);
+
     initListView();
     initGridView();
     m_columnView = new ColumnViewWidget(this, this);
@@ -161,9 +166,6 @@ void ContentPanel::initUi() {
         }
         restoreSelections();
     });
-    m_gridSplitter = new QSplitter(Qt::Vertical, this);
-    m_gridSplitter->setChildrenCollapsible(false);
-    m_gridSplitter->setHandleWidth(4);
 
     m_listScrollArea = new QScrollArea(this);
     m_listScrollArea->setFrameShape(QFrame::NoFrame);
