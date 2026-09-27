@@ -681,14 +681,11 @@ void ContentPanel::refreshVisibleThumbnails() {
     QList<QAbstractItemView*> views;
     if (m_currentViewMode == ColumnView) {
         if (m_columnView && m_columnView->activePane()) {
-            if (m_columnView->activePane()->folderListView()) views << m_columnView->activePane()->folderListView();
             if (m_columnView->activePane()->listView()) views << m_columnView->activePane()->listView();
         }
     } else if (m_currentViewMode == ListView) {
-        if (m_folderTreeView) views << m_folderTreeView;
         if (m_treeView) views << m_treeView;
     } else {
-        if (m_folderGridView) views << m_folderGridView;
         if (m_gridView) views << m_gridView;
     }
 
