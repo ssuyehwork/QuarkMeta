@@ -15,112 +15,13 @@ void FilterProxyModel::setGroupHeadersEnabled(bool enabled) {
     }
 }
 
-void FilterProxyModel::calculateBaseCounts(int& folderCount, int& fileCount) const {
-    folderCount = 0;
-    fileCount = 0;
-    const auto* sourceModelPtr = qobject_cast<const ItemModelBase*>(sourceModel());
-    if (!sourceModelPtr) return;
-
-    const auto& records = sourceModelPtr->allRecords();
-    for (int i = 0; i < static_cast<int>(records.size()); ++i) {
-        if (!filterAcceptsRowBase(i, QModelIndex())) continue;
-        if (records[i].isDir) {
-            folderCount++;
-        } else {
-            fileCount++;
-        }
-    }
-}
-
-int FilterProxyModel::rowCount(const QModelIndex& parent) const {
-    if (parent.isValid()) return 0;
-    int baseCount = QSortFilterProxyModel::rowCount(parent);
-    if (!m_groupHeadersEnabled) return baseCount;
-
-    int folderCount = 0, fileCount = 0;
-    calculateBaseCounts(folderCount, fileCount);
-
-    int extraRows = 0;
-    if (folderCount > 0) extraRows++;
-    if (fileCount > 0) extraRows++;
-
-    return baseCount + extraRows;
-}
-
-QModelIndex FilterProxyModel::index(int row, int column, const QModelIndex& parent) const {
-    if (parent.isValid() || row < 0 || row >= rowCount(parent)) {
-        return QModelIndex();
-    }
-    if (!m_groupHeadersEnabled) {
-        return QSortFilterProxyModel::index(row, column, parent);
-    }
-    return createIndex(row, column);
-}
-
-QModelIndex FilterProxyModel::parent(const QModelIndex& child) const {
-    Q_UNUSED(child);
-    return QModelIndex();
-}
-
-QVariant FilterProxyModel::data(const QModelIndex& index, int role) const {
-    if (!index.isValid()) return QVariant();
-
-    if (!m_groupHeadersEnabled) {
-        return QSortFilterProxyModel::data(index, role);
-    }
-
-    int row = index.row();
-    int folderCount = 0, fileCount = 0;
-    calculateBaseCounts(folderCount, fileCount);
-
-    bool hasFolderHeader = (folderCount > 0);
-    bool hasFileHeader = (fileCount > 0);
-
-    int folderHeaderRow = hasFolderHeader ? 0 : -1;
-    int fileHeaderRow = -1;
-
-    if (hasFileHeader) {
-        int folderVisibleRows = m_foldersCollapsed ? 0 : folderCount;
-        fileHeaderRow = hasFolderHeader ? (1 + folderVisibleRows) : 0;
-    }
-
-    if (row == folderHeaderRow) {
-        if (role == IsGroupHeaderRole) return true;
-        if (role == IsGroupCollapsedRole) return m_foldersCollapsed;
-        if (role == TypeRole) return "folder_group_header";
-        if (role == Qt::DisplayRole && index.column() == 0) return QString("文件夹 (%1)").arg(folderCount);
-        return QVariant();
-    }
-
-    if (row == fileHeaderRow) {
-        if (role == IsGroupHeaderRole) return true;
-        if (role == IsGroupCollapsedRole) return m_filesCollapsed;
-        if (role == TypeRole) return "file_group_header";
-        if (role == Qt::DisplayRole && index.column() == 0) return QString("文件 (%1)").arg(fileCount);
-        return QVariant();
-    }
-
-    // Map virtual row to base proxy index
-    int baseRow = row;
-    if (hasFolderHeader && row > folderHeaderRow) {
-        baseRow--;
-    }
-    if (hasFileHeader && fileHeaderRow != -1 && row > fileHeaderRow) {
-        baseRow--;
-    }
-
-    QModelIndex baseIdx = QSortFilterProxyModel::index(baseRow, index.column(), QModelIndex());
-    return QSortFilterProxyModel::data(baseIdx, role);
-}
-
 bool FilterProxyModel::setData(const QModelIndex& index, const QVariant& value, int role) {
     if (role == IsGroupCollapsedRole) {
-        QString typeStr = index.data(TypeRole).toString();
-        if (typeStr == "folder_group_header") {
+        if (index.data(TypeRole).toString() == "folder_group_header") {
             m_foldersCollapsed = value.toBool();
             updateFilter();
             return true;
-        } else if (typeStr == "file_group_header") {
+        } else if (index.data(TypeRole).toString() == "file_group_header") {
             m_filesCollapsed = value.toBool();
             updateFilter();
             return true;
@@ -141,7 +42,7 @@ void FilterProxyModel::setCachedDuplicatePaths(const QSet<QString>& paths) {
     updateFilter();
 }
 
-bool FilterProxyModel::filterAcceptsRowBase(int sourceRow, const QModelIndex& sourceParent) const {
+bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
     Q_UNUSED(sourceParent);
     const auto* sourceModelPtr = qobject_cast<const ItemModelBase*>(sourceModel());
     if (!sourceModelPtr) return true;
@@ -155,7 +56,7 @@ bool FilterProxyModel::filterAcceptsRowBase(int sourceRow, const QModelIndex& so
         return true;
     }
 
-    auto* contentPanel = qobject_cast<ContentPanel*>(QObject::parent());
+    auto* contentPanel = qobject_cast<ContentPanel*>(parent());
     bool isTrashView = contentPanel && (contentPanel->getCurrentCategoryType() == "trash");
 
     // 0. 隐藏属性过滤
@@ -323,30 +224,6 @@ bool FilterProxyModel::filterAcceptsRowBase(int sourceRow, const QModelIndex& so
         }
 
         if (!match) return false;
-    }
-
-    return true;
-}
-
-bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
-    if (!filterAcceptsRowBase(sourceRow, sourceParent)) {
-        return false;
-    }
-
-    const auto* sourceModelPtr = qobject_cast<const ItemModelBase*>(sourceModel());
-    if (!sourceModelPtr) return true;
-
-    const auto& records = sourceModelPtr->allRecords();
-    if (sourceRow < 0 || sourceRow >= static_cast<int>(records.size())) return false;
-    const auto& record = records[sourceRow];
-
-    auto* contentPanel = qobject_cast<ContentPanel*>(QObject::parent());
-    bool isTrashView = contentPanel && (contentPanel->getCurrentCategoryType() == "trash");
-
-    // Section Collapse check
-    if (!isTrashView && m_groupHeadersEnabled) {
-        if (record.isDir && m_foldersCollapsed) return false;
-        if (!record.isDir && m_filesCollapsed) return false;
     }
 
     return true;

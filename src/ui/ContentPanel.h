@@ -216,6 +216,13 @@ private:
     class ContentHeaderWidget* m_headerWidget = nullptr;
 
     FilterProxyModel* m_proxyModel = nullptr;
+    FilterProxyModel* m_folderProxyModel = nullptr;
+    FilterProxyModel* m_fileProxyModel = nullptr;
+
+    QWidget* m_listContainerWidget = nullptr;
+    class FolderSectionHeaderBar* m_listFolderHeader = nullptr;
+    DropTreeView* m_folderTreeView = nullptr;
+    class FileSectionHeaderBar* m_listFileHeader = nullptr;
 
     QStackedWidget* m_viewStack = nullptr;
     QAbstractItemView* m_gridView = nullptr;
