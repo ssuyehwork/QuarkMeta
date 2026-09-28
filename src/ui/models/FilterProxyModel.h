@@ -29,11 +29,24 @@ public:
     void setGroupHeadersEnabled(bool enabled);
     bool groupHeadersEnabled() const { return m_groupHeadersEnabled; }
 
+    bool isFoldersCollapsed() const { return m_foldersCollapsed; }
+    bool isFilesCollapsed() const { return m_filesCollapsed; }
+    void toggleFoldersCollapsed() { m_foldersCollapsed = !m_foldersCollapsed; updateFilter(); }
+    void toggleFilesCollapsed() { m_filesCollapsed = !m_filesCollapsed; updateFilter(); }
+
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
+    QModelIndex parent(const QModelIndex& child) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
+    bool filterAcceptsRowBase(int sourceRow, const QModelIndex& sourceParent) const;
     bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
+
+private:
+    void calculateBaseCounts(int& folderCount, int& fileCount) const;
 
 private:
     QSet<QString> m_cachedDuplicatePaths;
