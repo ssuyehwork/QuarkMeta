@@ -15,13 +15,112 @@ void FilterProxyModel::setGroupHeadersEnabled(bool enabled) {
     }
 }
 
+int FilterProxyModel::rowCount(const QModelIndex& parent) const {
+    if (parent.isValid()) return 0;
+    int baseCount = QSortFilterProxyModel::rowCount(parent);
+    if (!m_groupHeadersEnabled || baseCount == 0) return baseCount;
+
+    int folderCount = 0;
+    int fileCount = 0;
+    for (int i = 0; i < baseCount; ++i) {
+        QModelIndex srcIdx = QSortFilterProxyModel::index(i, 0);
+        if (srcIdx.data(TypeRole).toString() == "folder") {
+            folderCount++;
+        } else {
+            fileCount++;
+        }
+    }
+
+    int extraRows = 0;
+    if (folderCount > 0) extraRows++;
+    if (fileCount > 0) extraRows++;
+
+    return baseCount + extraRows;
+}
+
+QModelIndex FilterProxyModel::index(int row, int column, const QModelIndex& parent) const {
+    if (parent.isValid() || row < 0 || row >= rowCount(parent)) {
+        return QModelIndex();
+    }
+    if (!m_groupHeadersEnabled) {
+        return QSortFilterProxyModel::index(row, column, parent);
+    }
+    return createIndex(row, column);
+}
+
+QModelIndex FilterProxyModel::parent(const QModelIndex& child) const {
+    Q_UNUSED(child);
+    return QModelIndex();
+}
+
+QVariant FilterProxyModel::data(const QModelIndex& index, int role) const {
+    if (!index.isValid()) return QVariant();
+
+    if (!m_groupHeadersEnabled) {
+        return QSortFilterProxyModel::data(index, role);
+    }
+
+    int row = index.row();
+    int baseCount = QSortFilterProxyModel::rowCount();
+
+    int folderCount = 0;
+    int fileCount = 0;
+    for (int i = 0; i < baseCount; ++i) {
+        QModelIndex srcIdx = QSortFilterProxyModel::index(i, 0);
+        if (srcIdx.data(TypeRole).toString() == "folder") {
+            folderCount++;
+        } else {
+            fileCount++;
+        }
+    }
+
+    bool hasFolderHeader = (folderCount > 0);
+    bool hasFileHeader = (fileCount > 0);
+
+    int folderHeaderRow = hasFolderHeader ? 0 : -1;
+    int fileHeaderRow = -1;
+
+    if (hasFileHeader) {
+        fileHeaderRow = hasFolderHeader ? (folderCount + 1) : 0;
+    }
+
+    if (row == folderHeaderRow) {
+        if (role == IsGroupHeaderRole) return true;
+        if (role == IsGroupCollapsedRole) return m_foldersCollapsed;
+        if (role == TypeRole) return "folder_group_header";
+        if (role == Qt::DisplayRole && index.column() == 0) return QString("文件夹 (%1)").arg(folderCount);
+        return QVariant();
+    }
+
+    if (row == fileHeaderRow) {
+        if (role == IsGroupHeaderRole) return true;
+        if (role == IsGroupCollapsedRole) return m_filesCollapsed;
+        if (role == TypeRole) return "file_group_header";
+        if (role == Qt::DisplayRole && index.column() == 0) return QString("文件 (%1)").arg(fileCount);
+        return QVariant();
+    }
+
+    // Map virtual row to base proxy index
+    int mappedRow = row;
+    if (hasFolderHeader && row > folderHeaderRow) {
+        mappedRow--;
+    }
+    if (hasFileHeader && fileHeaderRow != -1 && row > fileHeaderRow) {
+        mappedRow--;
+    }
+
+    QModelIndex baseIdx = QSortFilterProxyModel::index(mappedRow, index.column());
+    return QSortFilterProxyModel::data(baseIdx, role);
+}
+
 bool FilterProxyModel::setData(const QModelIndex& index, const QVariant& value, int role) {
     if (role == IsGroupCollapsedRole) {
-        if (index.data(TypeRole).toString() == "folder_group_header") {
+        QString typeStr = index.data(TypeRole).toString();
+        if (typeStr == "folder_group_header") {
             m_foldersCollapsed = value.toBool();
             updateFilter();
             return true;
-        } else if (index.data(TypeRole).toString() == "file_group_header") {
+        } else if (typeStr == "file_group_header") {
             m_filesCollapsed = value.toBool();
             updateFilter();
             return true;
@@ -64,12 +163,12 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         return false;
     }
 
-    // 1. 文件夹与文件显隐控制 (showFolders/showFiles 为顶栏切换按钮的绝对关断最高优先级)
+    // 1. 文件夹与文件显隐控制 (showFolders/showFiles 为顶栏切换按钮的绝对关断最高优先级，加群组折叠判定)
     if (!isTrashView) {
         if (record.isDir) {
-            if (!currentFilter.showFolders) return false;
+            if (!currentFilter.showFolders || m_foldersCollapsed) return false;
         } else {
-            if (!currentFilter.showFiles) return false;
+            if (!currentFilter.showFiles || m_filesCollapsed) return false;
         }
     }
 

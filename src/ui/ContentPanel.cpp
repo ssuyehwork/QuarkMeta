@@ -221,6 +221,9 @@ void ContentPanel::initListView() {
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_treeView->setRootIsDecorated(false);
     m_treeView->setItemDelegate(new TreeItemDelegate(this, true, true));
+    if (m_proxyModel) {
+        m_proxyModel->setGroupHeadersEnabled(true);
+    }
     m_treeView->setModel(m_proxyModel);
     m_treeView->installEventFilter(this);
     m_treeView->viewport()->installEventFilter(this);
@@ -393,6 +396,10 @@ void ContentPanel::onDoubleClicked(const QModelIndex& index) {
 void ContentPanel::toggleFolderSectionCollapse() {
     if (m_currentViewMode == ColumnView && m_columnView) {
         m_columnView->toggleFolderSectionCollapse();
+        return;
+    }
+    if (m_currentViewMode == ListView && m_proxyModel) {
+        m_proxyModel->toggleFoldersCollapsed();
         return;
     }
     if (auto* jv = qobject_cast<JustifiedView*>(m_gridView)) {
