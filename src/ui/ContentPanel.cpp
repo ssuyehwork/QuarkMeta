@@ -221,10 +221,6 @@ void ContentPanel::initListView() {
     m_listFolderHeader->hide();
     layout->addWidget(m_listFolderHeader);
 
-    m_listFileHeader = new FileSectionHeaderBar(m_listContainerWidget);
-    m_listFileHeader->hide();
-    layout->addWidget(m_listFileHeader);
-
     m_treeView = new DropTreeView(m_listContainerWidget);
     m_treeView->setFrameShape(QFrame::NoFrame);
     m_treeView->setAlternatingRowColors(true);
@@ -260,20 +256,14 @@ void ContentPanel::initListView() {
     auto updateListSectionCounts = [this]() {
         if (!m_model) return;
         int folderCount = 0;
-        int fileCount = 0;
         const auto& records = m_model->allRecords();
         for (const auto& rec : records) {
             if (rec.isDir) folderCount++;
-            else fileCount++;
         }
 
         if (m_listFolderHeader) {
             m_listFolderHeader->setCount(folderCount);
             m_listFolderHeader->setVisible(folderCount > 0);
-        }
-        if (m_listFileHeader) {
-            m_listFileHeader->setCount(fileCount);
-            m_listFileHeader->setVisible(fileCount > 0);
         }
     };
 

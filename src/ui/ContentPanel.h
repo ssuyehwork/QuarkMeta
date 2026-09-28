@@ -218,7 +218,6 @@ private:
     class ContentHeaderWidget* m_headerWidget = nullptr;
     QWidget* m_listContainerWidget = nullptr;
     FolderSectionHeaderBar* m_listFolderHeader = nullptr;
-    FileSectionHeaderBar* m_listFileHeader = nullptr;
 
     FilterProxyModel* m_proxyModel = nullptr;
 
