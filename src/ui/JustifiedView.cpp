@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "JustifiedView.h"
+#include "UiHelper.h"
 #include "CardLayoutEngine.h"
 #include "../core/ModelContract.h"
 #include <QPainter>
@@ -355,10 +356,30 @@ void JustifiedView::paintEvent(QPaintEvent*) {
         if (geo.isHeader) {
             painter.save();
             painter.fillRect(geo.rect, QColor("#202020"));
-            painter.setPen(QColor("#CCCCCC"));
-            painter.setFont(QFont("Microsoft YaHei", 9, QFont::Bold));
-            QString text = (geo.isFolderGroup ? (m_folderGroupCollapsed ? "▶ " : "▼ ") : "") + geo.headerText;
-            painter.drawText(geo.rect.adjusted(10, 0, -10, 0), Qt::AlignVCenter | Qt::AlignLeft, text);
+
+            const int iconSize = 12;
+            const int marginX = 10;
+            const QColor headerColor("#3498db");
+
+            if (geo.isFolderGroup) {
+                // Render SVG vector collapse/expand arrow icon via UiHelper
+                const QString iconName = m_folderGroupCollapsed ? "scroll-008.svg" : "scroll-010.svg";
+                QPixmap arrowPixmap = UiHelper::getIcon(iconName, headerColor, iconSize).pixmap(iconSize, iconSize);
+                int iconY = geo.rect.top() + (geo.rect.height() - iconSize) / 2;
+                painter.drawPixmap(geo.rect.left() + marginX, iconY, arrowPixmap);
+
+                // Render group title text next to the SVG icon
+                QRect textRect = geo.rect.adjusted(marginX + iconSize + 6, 0, -marginX, 0);
+                painter.setPen(headerColor);
+                painter.setFont(QFont("Microsoft YaHei", 9, QFont::Bold));
+                painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, geo.headerText);
+            } else {
+                QRect textRect = geo.rect.adjusted(marginX, 0, -marginX, 0);
+                painter.setPen(headerColor);
+                painter.setFont(QFont("Microsoft YaHei", 9, QFont::Bold));
+                painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, geo.headerText);
+            }
+
             painter.restore();
         } else {
             QModelIndex idx = model()->index(geo.index, 0);
