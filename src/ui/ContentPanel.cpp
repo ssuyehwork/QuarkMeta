@@ -168,9 +168,18 @@ void ContentPanel::initUi() {
         }
         restoreSelections();
     });
+    m_gridScrollArea = new QScrollArea(this);
+    m_gridScrollArea->setFrameShape(QFrame::NoFrame);
+    m_gridScrollArea->setWidgetResizable(true);
+    m_gridScrollArea->setWidget(m_gridContainerWidget);
 
-    m_viewStack->addWidget(m_treeView);
+    m_listScrollArea = new QScrollArea(this);
+    m_listScrollArea->setFrameShape(QFrame::NoFrame);
+    m_listScrollArea->setWidgetResizable(true);
+    m_listScrollArea->setWidget(m_listContainerWidget);
+
     m_viewStack->addWidget(m_gridView);
+    m_viewStack->addWidget(m_treeView);
     m_viewStack->addWidget(m_columnView);
     m_viewStack->setCurrentWidget(m_gridView);
 
@@ -395,10 +404,8 @@ void ContentPanel::toggleFolderSectionCollapse() {
         m_columnView->toggleFolderSectionCollapse();
         return;
     }
-    if ((m_currentViewMode == GridView || m_currentViewMode == JustifiedViewMode) && m_gridView) {
-        if (auto* jv = qobject_cast<JustifiedView*>(m_gridView)) {
-            jv->toggleFolderSectionCollapse();
-        }
+    if (auto* jv = qobject_cast<JustifiedView*>(m_gridView)) {
+        jv->toggleFolderSectionCollapse();
     }
 }
 
