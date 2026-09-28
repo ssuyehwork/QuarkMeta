@@ -2,6 +2,7 @@
 #define NOMINMAX
 #endif
 #include "JustifiedView.h"
+#include "UiHelper.h"
 #include "CardLayoutEngine.h"
 #include "../core/ModelContract.h"
 #include <QPainter>
