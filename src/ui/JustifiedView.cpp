@@ -355,7 +355,6 @@ void JustifiedView::paintEvent(QPaintEvent*) {
 
         if (geo.isHeader) {
             painter.save();
-            painter.fillRect(geo.rect, QColor("#202020"));
 
             const int iconSize = 12;
             const int marginX = 10;
