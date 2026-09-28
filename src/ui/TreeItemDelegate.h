@@ -42,7 +42,7 @@ public:
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         if (!index.isValid()) return;
 
-        bool isHeader = index.data(ModelContract::IsGroupHeaderRole).toBool();
+        bool isHeader = index.data(IsGroupHeaderRole).toBool();
         if (isHeader) {
             painter->save();
 
@@ -50,7 +50,7 @@ public:
             const int marginX = 10;
             const QColor headerColor("#3498db");
 
-            bool isCollapsed = index.data(ModelContract::IsGroupCollapsedRole).toBool();
+            bool isCollapsed = index.data(IsGroupCollapsedRole).toBool();
             QString headerText = index.data(Qt::DisplayRole).toString();
 
             // 1. Draw Section Title Text

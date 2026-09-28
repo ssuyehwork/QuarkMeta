@@ -78,9 +78,9 @@ void DropTreeView::updateGroupHeaderSpanning() {
     int rows = model()->rowCount();
     for (int r = 0; r < rows; ++r) {
         QModelIndex idx = model()->index(r, 0);
-        bool isHeader = idx.data(ModelContract::IsGroupHeaderRole).toBool();
+        bool isHeader = idx.data(IsGroupHeaderRole).toBool();
         if (isHeader) {
-            setFirstColumnSpanning(r, QModelIndex(), true);
+            setFirstColumnSpanned(r, QModelIndex(), true);
         }
     }
 }
