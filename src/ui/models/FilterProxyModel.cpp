@@ -155,7 +155,7 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         return true;
     }
 
-    auto* contentPanel = qobject_cast<ContentPanel*>(parent());
+    auto* contentPanel = qobject_cast<ContentPanel*>(QObject::parent());
     bool isTrashView = contentPanel && (contentPanel->getCurrentCategoryType() == "trash");
 
     // 0. 隐藏属性过滤
