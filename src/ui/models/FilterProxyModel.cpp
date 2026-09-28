@@ -15,21 +15,30 @@ void FilterProxyModel::setGroupHeadersEnabled(bool enabled) {
     }
 }
 
-int FilterProxyModel::rowCount(const QModelIndex& parent) const {
-    if (parent.isValid()) return 0;
-    int baseCount = QSortFilterProxyModel::rowCount(parent);
-    if (!m_groupHeadersEnabled || baseCount == 0) return baseCount;
+void FilterProxyModel::calculateBaseCounts(int& folderCount, int& fileCount) const {
+    folderCount = 0;
+    fileCount = 0;
+    const auto* sourceModelPtr = qobject_cast<const ItemModelBase*>(sourceModel());
+    if (!sourceModelPtr) return;
 
-    int folderCount = 0;
-    int fileCount = 0;
-    for (int i = 0; i < baseCount; ++i) {
-        QModelIndex srcIdx = QSortFilterProxyModel::index(i, 0);
-        if (srcIdx.data(TypeRole).toString() == "folder") {
+    const auto& records = sourceModelPtr->allRecords();
+    for (int i = 0; i < static_cast<int>(records.size()); ++i) {
+        if (!filterAcceptsRowBase(i, QModelIndex())) continue;
+        if (records[i].isDir) {
             folderCount++;
         } else {
             fileCount++;
         }
     }
+}
+
+int FilterProxyModel::rowCount(const QModelIndex& parent) const {
+    if (parent.isValid()) return 0;
+    int baseCount = QSortFilterProxyModel::rowCount(parent);
+    if (!m_groupHeadersEnabled) return baseCount;
+
+    int folderCount = 0, fileCount = 0;
+    calculateBaseCounts(folderCount, fileCount);
 
     int extraRows = 0;
     if (folderCount > 0) extraRows++;
@@ -61,18 +70,8 @@ QVariant FilterProxyModel::data(const QModelIndex& index, int role) const {
     }
 
     int row = index.row();
-    int baseCount = QSortFilterProxyModel::rowCount();
-
-    int folderCount = 0;
-    int fileCount = 0;
-    for (int i = 0; i < baseCount; ++i) {
-        QModelIndex srcIdx = QSortFilterProxyModel::index(i, 0);
-        if (srcIdx.data(TypeRole).toString() == "folder") {
-            folderCount++;
-        } else {
-            fileCount++;
-        }
-    }
+    int folderCount = 0, fileCount = 0;
+    calculateBaseCounts(folderCount, fileCount);
 
     bool hasFolderHeader = (folderCount > 0);
     bool hasFileHeader = (fileCount > 0);
@@ -81,7 +80,8 @@ QVariant FilterProxyModel::data(const QModelIndex& index, int role) const {
     int fileHeaderRow = -1;
 
     if (hasFileHeader) {
-        fileHeaderRow = hasFolderHeader ? (folderCount + 1) : 0;
+        int folderVisibleRows = m_foldersCollapsed ? 0 : folderCount;
+        fileHeaderRow = hasFolderHeader ? (1 + folderVisibleRows) : 0;
     }
 
     if (row == folderHeaderRow) {
@@ -101,15 +101,15 @@ QVariant FilterProxyModel::data(const QModelIndex& index, int role) const {
     }
 
     // Map virtual row to base proxy index
-    int mappedRow = row;
+    int baseRow = row;
     if (hasFolderHeader && row > folderHeaderRow) {
-        mappedRow--;
+        baseRow--;
     }
     if (hasFileHeader && fileHeaderRow != -1 && row > fileHeaderRow) {
-        mappedRow--;
+        baseRow--;
     }
 
-    QModelIndex baseIdx = QSortFilterProxyModel::index(mappedRow, index.column());
+    QModelIndex baseIdx = QSortFilterProxyModel::index(baseRow, index.column(), QModelIndex());
     return QSortFilterProxyModel::data(baseIdx, role);
 }
 
@@ -141,7 +141,7 @@ void FilterProxyModel::setCachedDuplicatePaths(const QSet<QString>& paths) {
     updateFilter();
 }
 
-bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
+bool FilterProxyModel::filterAcceptsRowBase(int sourceRow, const QModelIndex& sourceParent) const {
     Q_UNUSED(sourceParent);
     const auto* sourceModelPtr = qobject_cast<const ItemModelBase*>(sourceModel());
     if (!sourceModelPtr) return true;
@@ -163,12 +163,12 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         return false;
     }
 
-    // 1. 文件夹与文件显隐控制 (showFolders/showFiles 为顶栏切换按钮的绝对关断最高优先级，加群组折叠判定)
+    // 1. 文件夹与文件显隐控制 (showFolders/showFiles 为顶栏切换按钮的绝对关断最高优先级)
     if (!isTrashView) {
         if (record.isDir) {
-            if (!currentFilter.showFolders || m_foldersCollapsed) return false;
+            if (!currentFilter.showFolders) return false;
         } else {
-            if (!currentFilter.showFiles || m_filesCollapsed) return false;
+            if (!currentFilter.showFiles) return false;
         }
     }
 
@@ -323,6 +323,30 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         }
 
         if (!match) return false;
+    }
+
+    return true;
+}
+
+bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
+    if (!filterAcceptsRowBase(sourceRow, sourceParent)) {
+        return false;
+    }
+
+    const auto* sourceModelPtr = qobject_cast<const ItemModelBase*>(sourceModel());
+    if (!sourceModelPtr) return true;
+
+    const auto& records = sourceModelPtr->allRecords();
+    if (sourceRow < 0 || sourceRow >= static_cast<int>(records.size())) return false;
+    const auto& record = records[sourceRow];
+
+    auto* contentPanel = qobject_cast<ContentPanel*>(QObject::parent());
+    bool isTrashView = contentPanel && (contentPanel->getCurrentCategoryType() == "trash");
+
+    // Section Collapse check
+    if (!isTrashView && m_groupHeadersEnabled) {
+        if (record.isDir && m_foldersCollapsed) return false;
+        if (!record.isDir && m_filesCollapsed) return false;
     }
 
     return true;

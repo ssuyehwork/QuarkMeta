@@ -42,7 +42,11 @@ public:
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
+    bool filterAcceptsRowBase(int sourceRow, const QModelIndex& sourceParent) const;
     bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
+
+private:
+    void calculateBaseCounts(int& folderCount, int& fileCount) const;
 
 private:
     QSet<QString> m_cachedDuplicatePaths;
