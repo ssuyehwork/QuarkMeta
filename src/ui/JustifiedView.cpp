@@ -361,22 +361,25 @@ void JustifiedView::paintEvent(QPaintEvent*) {
             const int marginX = 10;
             const QColor headerColor("#3498db");
 
+            QFont font("Microsoft YaHei", 9, QFont::Bold);
+            painter.setFont(font);
+            painter.setPen(headerColor);
+
             if (geo.isFolderGroup) {
-                // Render SVG vector collapse/expand arrow icon via UiHelper
+                // 1. Render group title text on the left
+                QFontMetrics fm(font);
+                int textWidth = fm.horizontalAdvance(geo.headerText);
+                QRect textRect(geo.rect.left() + marginX, geo.rect.top(), textWidth, geo.rect.height());
+                painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, geo.headerText);
+
+                // 2. Render SVG vector collapse/expand arrow icon to the right of text
                 const QString iconName = m_folderGroupCollapsed ? "scroll-008.svg" : "scroll-010.svg";
                 QPixmap arrowPixmap = UiHelper::getIcon(iconName, headerColor, iconSize).pixmap(iconSize, iconSize);
+                int iconX = textRect.right() + 6;
                 int iconY = geo.rect.top() + (geo.rect.height() - iconSize) / 2;
-                painter.drawPixmap(geo.rect.left() + marginX, iconY, arrowPixmap);
-
-                // Render group title text next to the SVG icon
-                QRect textRect = geo.rect.adjusted(marginX + iconSize + 6, 0, -marginX, 0);
-                painter.setPen(headerColor);
-                painter.setFont(QFont("Microsoft YaHei", 9, QFont::Bold));
-                painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, geo.headerText);
+                painter.drawPixmap(iconX, iconY, arrowPixmap);
             } else {
                 QRect textRect = geo.rect.adjusted(marginX, 0, -marginX, 0);
-                painter.setPen(headerColor);
-                painter.setFont(QFont("Microsoft YaHei", 9, QFont::Bold));
                 painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, geo.headerText);
             }
 

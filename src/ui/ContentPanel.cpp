@@ -395,6 +395,11 @@ void ContentPanel::toggleFolderSectionCollapse() {
         m_columnView->toggleFolderSectionCollapse();
         return;
     }
+    if ((m_currentViewMode == GridView || m_currentViewMode == JustifiedViewMode) && m_gridView) {
+        if (auto* jv = qobject_cast<JustifiedView*>(m_gridView)) {
+            jv->toggleFolderSectionCollapse();
+        }
+    }
 }
 
 void ContentPanel::setViewMode(ViewMode mode) {

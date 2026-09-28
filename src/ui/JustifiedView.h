@@ -18,6 +18,11 @@ public:
     void setLayoutMode(LayoutMode mode);
     LayoutMode layoutMode() const;
 
+    void toggleFolderSectionCollapse() {
+        m_folderGroupCollapsed = !m_folderGroupCollapsed;
+        scheduleLayout();
+    }
+
     int totalHeight() const { return m_totalHeight; }
 
     // 🚀【物理契约】：彻底切断 QAbstractItemView 对父容器的尺寸顶推
