@@ -14,7 +14,6 @@
 #include "controllers/ContentViewCoordinator.h"
 #include "controllers/ContentPaneSplitManager.h"
 #include "workers/ContentStatsWorker.h"
-#include "DropJustifiedView.h"
 #include "DropTreeView.h"
 #include "DropListView.h"
 #include "ColumnViewWidget.h"
@@ -213,7 +212,7 @@ void ContentPanel::initUi() {
 
     m_gridCanvas = new SectionedScrollCanvas(SectionedScrollCanvas::CanvasType::Grid, m_gridFolderProxyModel, m_gridFileProxyModel, this, this);
     m_gridView = m_gridCanvas->fileView();
-    m_folderGridView = static_cast<DropJustifiedView*>(m_gridCanvas->folderView());
+    m_folderGridView = static_cast<JustifiedView*>(m_gridCanvas->folderView());
 
     // 统一信号透传
     for (auto* canvas : {m_gridCanvas, m_listCanvas}) {

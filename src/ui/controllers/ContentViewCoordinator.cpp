@@ -4,7 +4,6 @@
 #include "ContentViewCoordinator.h"
 #include "../ContentPanel.h"
 #include "../FolderSectionWidget.h"
-#include "../DropJustifiedView.h"
 #include "../DropTreeView.h"
 #include "../DropListView.h"
 #include "../ColumnViewWidget.h"
