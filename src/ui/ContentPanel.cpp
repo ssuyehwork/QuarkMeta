@@ -906,8 +906,9 @@ void ContentPanel::restoreSelections() {
 
     if (m_currentViewMode == ColumnView) {
         if (m_columnView && m_columnView->rightmostPane()) {
-            m_columnView->rightmostPane()->setPendingSelectPaths(m_selectionState.selectedPaths);
+            m_columnView->rightmostPane()->setPendingSelectPaths(m_selectionState.selectedPaths, m_isPendingEdit);
         }
+        m_isPendingEdit = false;
         m_isRestoringSelections = false;
         return;
     }
@@ -962,7 +963,7 @@ void ContentPanel::restoreSelections() {
 void ContentPanel::setPendingSelectName(const QString& name, bool edit) {
     m_selectionState.selectedPaths.clear();
     if (!name.isEmpty()) {
-        QString fullPath = m_currentPath + "/" + name;
+        QString fullPath = QDir::toNativeSeparators(QDir::cleanPath(QDir(m_currentPath).filePath(name)));
         m_selectionState.selectedPaths.insert(fullPath);
         m_selectionState.focusedPath = fullPath;
     }

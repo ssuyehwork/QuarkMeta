@@ -4,6 +4,7 @@
 #include "../ToolTipOverlay.h"
 #include "../BatchRenameDialog.h"
 #include "../FileCollisionDialog.h"
+#include "../models/DiskItemModel.h"
 #include "../../core/AppConfig.h"
 #include "../../core/ClipboardService.h"
 #include "../../core/NavigationHistoryService.h"
@@ -16,6 +17,9 @@
 #include <QApplication>
 #include <QPointer>
 #include <QDebug>
+#include <QtConcurrent/QtConcurrent>
+#include <QCoreApplication>
+#include <QMetaObject>
 
 namespace QuarkMeta {
 
@@ -30,29 +34,35 @@ void ContentFileOpsHandler::createNewItem(const QString& type) {
     QString baseName = (type == "folder") ? "新建文件夹" : "未命名";
     QString ext = (type == "md") ? ".md" : ((type == "txt") ? ".txt" : "");
     QString finalName = baseName + ext;
-    QString fullPath = currentPath + "/" + finalName;
+    QString fullPath = QDir(currentPath).filePath(finalName);
     int counter = 1;
 
     while (QFileInfo::exists(fullPath)) {
         finalName = baseName + QString(" (%1)").arg(counter++) + ext;
-        fullPath = currentPath + "/" + finalName;
+        fullPath = QDir(currentPath).filePath(finalName);
     }
 
-    if (type == "folder") {
-        QDir(currentPath).mkdir(finalName);
-    } else {
-        QFile f(fullPath);
-        if (f.open(QIODevice::WriteOnly)) {
-            f.close();
+    QPointer<ContentPanel> weakPanel(m_panel);
+    (void)QtConcurrent::run([weakPanel, currentPath, finalName, fullPath, type]() {
+        bool success = false;
+        if (type == "folder") {
+            success = QDir(currentPath).mkdir(finalName);
+        } else {
+            QFile f(fullPath);
+            if (f.open(QIODevice::WriteOnly)) {
+                f.close();
+                success = true;
+            }
         }
-    }
 
-    m_panel->setPendingSelectName(finalName, true);
-    if (m_panel->currentViewMode() == ContentPanel::ColumnView && m_panel->columnView()) {
-        m_panel->columnView()->refreshActiveColumn();
-    } else {
-        m_panel->loadDirectory(currentPath, m_panel->isRecursive());
-    }
+        if (!success) return;
+
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakPanel, finalName]() {
+            if (!weakPanel) return;
+            weakPanel->setPendingSelectName(finalName, true);
+            weakPanel->refreshAll();
+        });
+    });
 }
 
 void ContentFileOpsHandler::performBatchRename() {

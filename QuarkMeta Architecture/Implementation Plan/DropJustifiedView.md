@@ -23,8 +23,8 @@ Since `DragDropEventFilter` is already a decoupled event filter designed to atta
 ### 3.1 `CMakeLists.txt`
 ```
 <<<<<<< SEARCH
-    src/ui/DropJustifiedView.cpp
     src/ui/DropJustifiedView.h
+    src/ui/DropJustifiedView.cpp
 =======
 >>>>>>> REPLACE
 ```
