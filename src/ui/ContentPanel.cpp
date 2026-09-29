@@ -14,6 +14,7 @@
 #include "controllers/ContentViewCoordinator.h"
 #include "controllers/ContentPaneSplitManager.h"
 #include "workers/ContentStatsWorker.h"
+#include "JustifiedView.h"
 #include "DropTreeView.h"
 #include "DropListView.h"
 #include "ColumnViewWidget.h"
