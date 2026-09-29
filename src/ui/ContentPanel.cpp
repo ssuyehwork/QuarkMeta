@@ -771,6 +771,33 @@ void ContentPanel::recalculateAndEmitStats() {
 }
 
 void ContentPanel::refreshVisibleThumbnails() {
+    if (m_currentViewMode == ColumnView) {
+        if (m_columnView && m_columnView->activePane()) {
+            QList<QAbstractItemView*> views;
+            if (m_columnView->activePane()->folderListView()) views << m_columnView->activePane()->folderListView();
+            if (m_columnView->activePane()->listView()) views << m_columnView->activePane()->listView();
+            QSet<int> visibleRows;
+            for (auto* view : views) {
+                if (!view || !view->viewport() || !view->model()) continue;
+                auto* proxy = qobject_cast<QSortFilterProxyModel*>(view->model());
+                if (!proxy || proxy->rowCount() == 0) continue;
+                QRect vpRect = view->viewport()->rect();
+                QModelIndex topIdx = view->indexAt(vpRect.topLeft());
+                QModelIndex btmIdx = view->indexAt(vpRect.bottomRight());
+                int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : 0;
+                int bottom = btmIdx.isValid() ? qMin(proxy->rowCount() - 1, btmIdx.row() + 4) : proxy->rowCount() - 1;
+                for (int r = top; r <= bottom; ++r) {
+                    QModelIndex srcIdx = proxy->mapToSource(proxy->index(r, 0));
+                    if (srcIdx.isValid()) visibleRows.insert(srcIdx.row());
+                }
+            }
+            if (!visibleRows.isEmpty() && m_columnView->activePane()->model()) {
+                m_columnView->activePane()->model()->loadThumbnailsForRows(visibleRows.values());
+            }
+        }
+        return;
+    }
+
     if (m_currentViewMode == ListView && m_listCanvas) {
         m_listCanvas->refreshVisibleThumbnails(m_model);
     } else if ((m_currentViewMode == GridView || m_currentViewMode == JustifiedViewMode) && m_gridCanvas) {
@@ -907,6 +934,19 @@ void ContentPanel::restoreSelections() {
     if (m_currentViewMode == ColumnView) {
         if (m_columnView && m_columnView->rightmostPane()) {
             m_columnView->rightmostPane()->setPendingSelectPaths(m_selectionState.selectedPaths, m_isPendingEdit);
+            if (m_isPendingEdit) {
+                m_isPendingEdit = false;
+                QPointer<ColumnViewWidget> weakCol = m_columnView;
+                QTimer::singleShot(0, this, [weakCol]() {
+                    if (weakCol && weakCol->rightmostPane()) {
+                        QAbstractItemView* view = weakCol->rightmostPane()->listView();
+                        if (view && view->currentIndex().isValid()) {
+                            view->setFocus();
+                            view->edit(view->currentIndex());
+                        }
+                    }
+                });
+            }
         }
         m_isPendingEdit = false;
         m_isRestoringSelections = false;
