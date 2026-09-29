@@ -939,7 +939,20 @@ void ContentPanel::restoreSelections() {
                 }
             }
             view->selectionModel()->select(sel, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
-            if (lastIdx.isValid()) { view->scrollTo(lastIdx); if (m_isPendingEdit) view->edit(lastIdx); }
+            if (lastIdx.isValid()) {
+                view->scrollTo(lastIdx);
+                if (m_isPendingEdit) {
+                    m_isPendingEdit = false;
+                    QPointer<QAbstractItemView> weakView(view);
+                    QTimer::singleShot(0, this, [weakView, lastIdx]() {
+                        if (weakView && lastIdx.isValid()) {
+                            weakView->setFocus();
+                            weakView->setCurrentIndex(lastIdx);
+                            weakView->edit(lastIdx);
+                        }
+                    });
+                }
+            }
         }
     }
 
