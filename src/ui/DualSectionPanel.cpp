@@ -188,12 +188,47 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
             btmIdx = view->indexAt(QPoint(subVp->width() / 2, sampleBtmY));
         }
 
-        int top = topIdx.isValid() ? qMax(0, topIdx.row() - 4) : 0;
-        int bottom = btmIdx.isValid() ? qMin(proxy->rowCount() - 1, btmIdx.row() + 4) : proxy->rowCount() - 1;
+        int top = -1;
+        int bottom = -1;
 
-        for (int r = top; r <= bottom; ++r) {
-            QModelIndex srcIdx = proxy->mapToSource(proxy->index(r, 0));
-            if (srcIdx.isValid()) visibleRows.insert(srcIdx.row());
+        if (topIdx.isValid()) {
+            top = topIdx.row();
+        }
+        if (btmIdx.isValid()) {
+            bottom = btmIdx.row();
+        }
+
+        // 🚨【关键修复】：若采样的边缘坐标刚好命中卡片间隙（padding），向中心步进扫描寻找视口内第一个/最后一个有效索引
+        if (top == -1 || bottom == -1) {
+            int stepY = 16;
+            int currentY = sampleTopY;
+            while (top == -1 && currentY <= sampleBtmY) {
+                QModelIndex idx = view->indexAt(QPoint(subVp->width() / 2, currentY));
+                if (idx.isValid()) {
+                    top = idx.row();
+                }
+                currentY += stepY;
+            }
+
+            currentY = sampleBtmY;
+            while (bottom == -1 && currentY >= sampleTopY) {
+                QModelIndex idx = view->indexAt(QPoint(subVp->width() / 2, currentY));
+                if (idx.isValid()) {
+                    bottom = idx.row();
+                }
+                currentY -= stepY;
+            }
+        }
+
+        // 只有当视口内确实扫描到有效的卡片行时，才计算加载范围（前扩 4 行，后扩 4 行缓冲）；
+        // 如果视图完全为空或不在视口内部，绝对严禁退化为 0 ~ rowCount()-1 全量加载！
+        if (top != -1 && bottom != -1) {
+            int clampedTop = qMax(0, top - 4);
+            int clampedBottom = qMin(proxy->rowCount() - 1, bottom + 4);
+            for (int r = clampedTop; r <= clampedBottom; ++r) {
+                QModelIndex srcIdx = proxy->mapToSource(proxy->index(r, 0));
+                if (srcIdx.isValid()) visibleRows.insert(srcIdx.row());
+            }
         }
     };
 
@@ -201,7 +236,10 @@ void DualSectionPanel::refreshVisibleThumbnails(ItemModelBase* model, QWidget* h
     scanView(m_fileView, m_fileProxyModel);
 
     if (!visibleRows.isEmpty()) {
+        qDebug() << "[THUMB_TRACE] DualSectionPanel::refreshVisibleThumbnails - Submitting" << visibleRows.size() << "rows to loadThumbnailsForRows.";
         model->loadThumbnailsForRows(visibleRows.values());
+    } else {
+        qDebug() << "[THUMB_TRACE] DualSectionPanel::refreshVisibleThumbnails - No visible rows found in viewport sampling.";
     }
 }
 

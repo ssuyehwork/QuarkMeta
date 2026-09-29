@@ -771,6 +771,7 @@ void ContentPanel::recalculateAndEmitStats() {
 }
 
 void ContentPanel::refreshVisibleThumbnails() {
+    qDebug() << "[THUMB_TRACE] ContentPanel::refreshVisibleThumbnails called. Current view mode:" << static_cast<int>(m_currentViewMode);
     if (m_currentViewMode == ColumnView) {
         if (m_columnView && m_columnView->activePane()) {
             QList<QAbstractItemView*> views;
