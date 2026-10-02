@@ -112,62 +112,39 @@ void SearchController::showSearchMenu() {
     group->addAction(actLibrary);
 
     connect(actFolder, &QAction::triggered, this, [this]() {
-        if (m_searchScope != SearchScope::CurrentFolder) {
-            m_searchScope = SearchScope::CurrentFolder;
-            if (m_contentPanel) {
-                m_contentPanel->refreshAll();
-            }
-            doSearch(m_searchEdit ? m_searchEdit->text().trimmed() : QString());
-        }
+        m_searchScope = SearchScope::CurrentFolder;
     });
 
     connect(actLibrary, &QAction::triggered, this, [this]() {
-        if (m_searchScope != SearchScope::Library) {
-            m_searchScope = SearchScope::Library;
-            performLibrarySearch();
-        }
+        m_searchScope = SearchScope::Library;
     });
 
     QPoint globalPos = m_btnSearch->mapToGlobal(QPoint(0, m_btnSearch->height()));
     menu.exec(globalPos);
 }
 
-void SearchController::performLibrarySearch() {
-    if (!m_contentPanel) return;
-
-    LibraryDao::initTable();
-    auto categories = LibraryDao::getAllCategories();
-    QStringList allLibraryPaths;
-    for (const auto& cat : categories) {
-        allLibraryPaths.append(cat.associatedPaths);
-    }
-    allLibraryPaths.removeDuplicates();
-
-    m_contentPanel->loadPaths(allLibraryPaths);
-    QString keyword = m_searchEdit ? m_searchEdit->text().trimmed() : QString();
-    m_contentPanel->search(keyword);
-
-    if (!keyword.isEmpty()) {
-        SearchHistoryService::instance().appendSearch("global", keyword);
-        if (m_searchHistoryPanel) {
-            m_searchHistoryPanel->setHistory(SearchHistoryService::instance().getHistory("global"));
-        }
-    }
-    if (m_searchHistoryPanel) {
-        m_searchHistoryPanel->hide();
-    }
-    emit searchExecuted();
-}
-
 void SearchController::doSearch(const QString& keyword) {
     if (!m_contentPanel) return;
 
     if (m_searchScope == SearchScope::Library) {
-        performLibrarySearch();
-        return;
+        if (keyword.isEmpty()) {
+            m_contentPanel->refreshAll();
+        } else {
+            LibraryDao::initTable();
+            auto categories = LibraryDao::getAllCategories();
+            QStringList allLibraryPaths;
+            for (const auto& cat : categories) {
+                allLibraryPaths.append(cat.associatedPaths);
+            }
+            allLibraryPaths.removeDuplicates();
+
+            m_contentPanel->loadPaths(allLibraryPaths);
+            m_contentPanel->search(keyword);
+        }
+    } else {
+        m_contentPanel->search(keyword);
     }
 
-    m_contentPanel->search(keyword);
     if (!keyword.isEmpty()) {
         SearchHistoryService::instance().appendSearch("global", keyword);
         if (m_searchHistoryPanel) {

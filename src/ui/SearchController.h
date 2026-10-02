@@ -42,7 +42,6 @@ protected:
 private:
     void doSearch(const QString& keyword);
     void showSearchMenu();
-    void performLibrarySearch();
 
     QWidget* m_searchContainer = nullptr;
     QLineEdit* m_searchEdit = nullptr;
