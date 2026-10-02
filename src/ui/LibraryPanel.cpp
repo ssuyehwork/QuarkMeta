@@ -66,6 +66,21 @@ void LibraryItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
     painter->restore();
 }
 
+void LibraryItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const {
+    Q_UNUSED(index);
+    if (!editor) return;
+
+    int leftMargin = 10;
+    int iconSize = 18;
+    int spacing = 8;
+
+    QRect textRect = option.rect;
+    textRect.setLeft(option.rect.left() + leftMargin + iconSize + spacing);
+    textRect.setRight(option.rect.right() - 6);
+
+    editor->setGeometry(textRect);
+}
+
 LibraryPanel::LibraryPanel(QWidget* parent) : QFrame(parent) {
     setObjectName("LibraryContainer");
     setAttribute(Qt::WA_StyledBackground, true);
