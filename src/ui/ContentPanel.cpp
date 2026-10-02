@@ -786,6 +786,26 @@ void ContentPanel::refreshVisibleThumbnails() {
     }
 }
 
+void ContentPanel::selectAndEditPath(const QString& path) {
+    QSortFilterProxyModel* proxy = getActiveProxyModel();
+    QAbstractItemView* view = activeItemView();
+    if (!proxy || !view || path.isEmpty()) return;
+
+    for (int i = 0; i < proxy->rowCount(); ++i) {
+        QModelIndex proxyIdx = proxy->index(i, 0);
+        if (proxyIdx.data(PathRole).toString() == path) {
+            view->setFocus();
+            view->scrollTo(proxyIdx);
+            view->setCurrentIndex(proxyIdx);
+            if (view->selectionModel()) {
+                view->selectionModel()->select(proxyIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            }
+            view->edit(proxyIdx);
+            break;
+        }
+    }
+}
+
 void ContentPanel::selectAndScrollToPath(const QString& path) { selectAndScrollToItem(path); }
 void ContentPanel::selectAndScrollToItem(const QString& path) {
     if (m_currentViewMode == ColumnView) {

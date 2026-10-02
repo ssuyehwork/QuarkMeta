@@ -42,27 +42,26 @@ void ContentFileOpsHandler::createNewItem(const QString& type) {
         fullPath = QDir(currentPath).filePath(finalName);
     }
 
-    QPointer<ContentPanel> weakPanel(m_panel);
-    (void)QtConcurrent::run([weakPanel, currentPath, finalName, fullPath, type]() {
-        bool success = false;
-        if (type == "folder") {
-            success = QDir(currentPath).mkdir(finalName);
-        } else {
-            QFile f(fullPath);
-            if (f.open(QIODevice::WriteOnly)) {
-                f.close();
-                success = true;
-            }
+    bool success = false;
+    if (type == "folder") {
+        success = QDir(currentPath).mkdir(finalName);
+    } else {
+        QFile f(fullPath);
+        if (f.open(QIODevice::WriteOnly)) {
+            f.close();
+            success = true;
         }
+    }
 
-        if (!success) return;
+    if (!success) return;
 
-        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakPanel, finalName]() {
-            if (!weakPanel) return;
-            weakPanel->setPendingSelectName(finalName, true);
-            weakPanel->refreshAll();
-        });
-    });
+    ItemRecord newRec = ItemRecord::create(fullPath);
+    if (m_panel->model()) {
+        m_panel->model()->appendRecord(newRec);
+    }
+    m_panel->applyFilters();
+
+    m_panel->selectAndEditPath(fullPath);
 }
 
 void ContentFileOpsHandler::performBatchRename() {
