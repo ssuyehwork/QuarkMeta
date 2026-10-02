@@ -787,17 +787,38 @@ void ContentPanel::refreshVisibleThumbnails() {
 }
 
 void ContentPanel::selectAndEditPath(const QString& path) {
-    QSortFilterProxyModel* proxy = getActiveProxyModel();
-    QAbstractItemView* view = activeItemView();
+    if (path.isEmpty()) return;
+
+    bool isDir = QFileInfo(path).isDir();
+    QAbstractItemView* view = nullptr;
+    QSortFilterProxyModel* proxy = nullptr;
+
+    if (m_currentViewMode == ColumnView) {
+        if (m_columnView && m_columnView->activePane()) {
+            if (isDir) {
+                view = m_columnView->activePane()->folderListView();
+            } else {
+                view = m_columnView->activePane()->listView();
+            }
+            if (view) proxy = qobject_cast<QSortFilterProxyModel*>(view->model());
+        }
+    } else if (m_currentViewMode == ListView) {
+        view = isDir ? static_cast<QAbstractItemView*>(m_folderTreeView) : static_cast<QAbstractItemView*>(m_treeView);
+        proxy = isDir ? m_folderProxyModel : m_fileProxyModel;
+    } else { // GridView / JustifiedViewMode
+        view = isDir ? static_cast<QAbstractItemView*>(m_folderGridView) : static_cast<QAbstractItemView*>(m_gridView);
+        proxy = isDir ? m_gridFolderProxyModel : m_gridFileProxyModel;
+    }
 
     qDebug() << "[CREATE_ITEM_DIAG] selectAndEditPath 触发 | 目标路径:" << path
+             << "| isDir:" << isDir
              << "| 当前视图模式:" << m_currentViewMode
              << "| view 指针:" << view
              << "| proxy 指针:" << proxy
              << "| proxy 行数:" << (proxy ? proxy->rowCount() : -1);
 
-    if (!proxy || !view || path.isEmpty()) {
-        qWarning() << "[CREATE_ITEM_DIAG] 异常退出: proxy 或 view 为空或路径为空！";
+    if (!proxy || !view) {
+        qWarning() << "[CREATE_ITEM_DIAG] 异常退出: proxy 或 view 为空！";
         return;
     }
 
@@ -826,7 +847,7 @@ void ContentPanel::selectAndEditPath(const QString& path) {
     }
 
     if (!found) {
-        qWarning() << "[CREATE_ITEM_DIAG] 警告: 未在当前 view 的 proxy 中找到路径:" << path;
+        qWarning() << "[CREATE_ITEM_DIAG] 警告: 未在指定 view 的 proxy 中找到路径:" << path;
     }
 }
 
