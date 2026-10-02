@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
+#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -44,14 +45,18 @@ bool FileCreationService::createNewItem(ContentPanel* panel, const QString& type
 
     if (!success) return false;
 
+    qDebug() << "[CREATE_ITEM_DIAG] 新建类型:" << type << "| 目标路径:" << fullPath << "| 物理创建成功";
+
     // 1. 同步将新项目追加至 Model，彻底消除全盘异步扫描的时序脱节与状态遗失
     ItemRecord newRec = ItemRecord::create(fullPath);
     if (panel->model()) {
         panel->model()->appendRecord(newRec);
+        qDebug() << "[CREATE_ITEM_DIAG] 已向 Model 追加新记录，当前记录总数:" << panel->model()->allRecords().size();
     }
     panel->applyFilters();
 
     // 2. 强锁定焦点并即时触发 Delegate 代理重命名编辑框 (100% 稳固)
+    qDebug() << "[CREATE_ITEM_DIAG] 准备调用 selectAndEditPath...";
     panel->selectAndEditPath(fullPath);
     return true;
 }
