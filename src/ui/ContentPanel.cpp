@@ -786,6 +786,71 @@ void ContentPanel::refreshVisibleThumbnails() {
     }
 }
 
+void ContentPanel::selectAndEditPath(const QString& path) {
+    if (path.isEmpty()) return;
+
+    bool isDir = QFileInfo(path).isDir();
+    QAbstractItemView* view = nullptr;
+    QSortFilterProxyModel* proxy = nullptr;
+
+    if (m_currentViewMode == ColumnView) {
+        if (m_columnView && m_columnView->activePane()) {
+            if (isDir) {
+                view = m_columnView->activePane()->folderListView();
+            } else {
+                view = m_columnView->activePane()->listView();
+            }
+            if (view) proxy = qobject_cast<QSortFilterProxyModel*>(view->model());
+        }
+    } else if (m_currentViewMode == ListView) {
+        view = isDir ? static_cast<QAbstractItemView*>(m_folderTreeView) : static_cast<QAbstractItemView*>(m_treeView);
+        proxy = isDir ? m_folderProxyModel : m_fileProxyModel;
+    } else { // GridView / JustifiedViewMode
+        view = isDir ? static_cast<QAbstractItemView*>(m_folderGridView) : static_cast<QAbstractItemView*>(m_gridView);
+        proxy = isDir ? m_gridFolderProxyModel : m_gridFileProxyModel;
+    }
+
+    qDebug() << "[CREATE_ITEM_DIAG] selectAndEditPath 触发 | 目标路径:" << path
+             << "| isDir:" << isDir
+             << "| 当前视图模式:" << m_currentViewMode
+             << "| view 指针:" << view
+             << "| proxy 指针:" << proxy
+             << "| proxy 行数:" << (proxy ? proxy->rowCount() : -1);
+
+    if (!proxy || !view) {
+        qWarning() << "[CREATE_ITEM_DIAG] 异常退出: proxy 或 view 为空！";
+        return;
+    }
+
+    bool found = false;
+    for (int i = 0; i < proxy->rowCount(); ++i) {
+        QModelIndex proxyIdx = proxy->index(i, 0);
+        QString idxPath = proxyIdx.data(PathRole).toString();
+        if (QString::compare(QDir::cleanPath(idxPath), QDir::cleanPath(path), Qt::CaseInsensitive) == 0) {
+            found = true;
+            qDebug() << "[CREATE_ITEM_DIAG] 在 proxy 行" << i << "找到匹配项目，准备激活焦点与触发编辑...";
+
+            view->setFocus();
+            view->scrollTo(proxyIdx);
+            view->setCurrentIndex(proxyIdx);
+            if (view->selectionModel()) {
+                view->selectionModel()->select(proxyIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            }
+
+            bool isEditable = (proxyIdx.flags() & Qt::ItemIsEditable);
+            qDebug() << "[CREATE_ITEM_DIAG] 目标索引是否包含 Qt::ItemIsEditable 标志:" << isEditable;
+
+            view->edit(proxyIdx);
+            qDebug() << "[CREATE_ITEM_DIAG] view->edit(proxyIdx) 已调用完毕";
+            break;
+        }
+    }
+
+    if (!found) {
+        qWarning() << "[CREATE_ITEM_DIAG] 警告: 未在指定 view 的 proxy 中找到路径:" << path;
+    }
+}
+
 void ContentPanel::selectAndScrollToPath(const QString& path) { selectAndScrollToItem(path); }
 void ContentPanel::selectAndScrollToItem(const QString& path) {
     if (m_currentViewMode == ColumnView) {
