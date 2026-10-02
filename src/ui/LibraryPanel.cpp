@@ -70,13 +70,9 @@ void LibraryItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOpti
     Q_UNUSED(index);
     if (!editor) return;
 
-    int leftMargin = 10;
-    int iconSize = 18;
-    int spacing = 8;
-
     QRect textRect = option.rect;
-    textRect.setLeft(option.rect.left() + leftMargin + iconSize + spacing);
-    textRect.setRight(option.rect.right() - 6);
+    textRect.setLeft(option.rect.left() + 33);
+    textRect.setRight(option.rect.right() - 3);
 
     editor->setGeometry(textRect);
 }
