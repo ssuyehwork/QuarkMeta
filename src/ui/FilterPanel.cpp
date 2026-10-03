@@ -8,6 +8,7 @@
 #include "FileSizeGroup.h"
 #include "ColorLabelGroup.h"
 #include "RatingGroup.h"
+#include "FileTypeGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -482,86 +483,15 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("文件类型", gl);
 
-        QWidget* wType = new QWidget(g);
-        QHBoxLayout* lType = new QHBoxLayout(wType);
-        lType->setContentsMargins(5, 6, 5, 4);
-        lType->setSpacing(0);
+        m_editType = FileTypeGroup::populate(this, g, gl, m_filterModel, currentSt,
+            m_emptyFolderCount, m_typeCounts,
+            [this](QVBoxLayout* layout, const QString& label, int count) {
+                return addFilterRow(layout, label, count);
+            },
+            [this](const QString& key, const QString& text) {
+                saveFilterHistory(key, text);
+            });
 
-        m_editType = new QLineEdit(wType);
-        m_editType->setClearButtonEnabled(true);
-        m_editType->setPlaceholderText("例： png / 文件夹...");
-        m_editType->setText(currentSt.typeFilterText);
-        m_editType->setObjectName("FilterSearchEdit");
-        m_editType->setFixedHeight(22);
-        m_editType->installEventFilter(this);
-        connect(m_editType, &QLineEdit::returnPressed, this, [this]() {
-            FilterState st = m_filterModel->state();
-            st.typeFilterText = m_editType->text();
-            saveFilterHistory("Type", st.typeFilterText);
-            m_filterModel->setState(st);
-        });
-        connect(m_editType, &QLineEdit::textChanged, this, [this](const QString& text) {
-            FilterState st = m_filterModel->state();
-            if (text.isEmpty() && !st.typeFilterText.isEmpty()) {
-                st.typeFilterText = "";
-                m_filterModel->setState(st);
-            }
-        });
-        lType->addWidget(m_editType);
-        gl->addWidget(wType);
-
-        if (m_emptyFolderCount > 0) {
-            QCheckBox* cb = addFilterRow(gl, "空文件夹", m_emptyFolderCount);
-            cb->blockSignals(true);
-            cb->setChecked(currentSt.types.contains("空文件夹"));
-            cb->blockSignals(false);
-            connect(cb, &QCheckBox::toggled, this, [this](bool on) {
-                FilterState st = m_filterModel->state();
-                if (on) { if (!st.types.contains("空文件夹")) st.types.append("空文件夹"); }
-                else    st.types.removeAll("空文件夹");
-                m_filterModel->setState(st);
-            });
-        }
-
-        if (m_typeCounts.contains("folder") && m_typeCounts["folder"] > 0) {
-            QCheckBox* cb = addFilterRow(gl, "文件夹", m_typeCounts["folder"]);
-            cb->blockSignals(true);
-            cb->setChecked(currentSt.types.contains("folder"));
-            cb->blockSignals(false);
-            connect(cb, &QCheckBox::toggled, this, [this](bool on) {
-                FilterState st = m_filterModel->state();
-                if (on) { if (!st.types.contains("folder")) st.types.append("folder"); }
-                else    st.types.removeAll("folder");
-                m_filterModel->setState(st);
-            });
-        }
-        if (m_typeCounts.contains("file") && m_typeCounts["file"] > 0) {
-            QCheckBox* cb = addFilterRow(gl, "文件", m_typeCounts["file"]);
-            cb->blockSignals(true);
-            cb->setChecked(currentSt.types.contains("file"));
-            cb->blockSignals(false);
-            connect(cb, &QCheckBox::toggled, this, [this](bool on) {
-                FilterState st = m_filterModel->state();
-                if (on) { if (!st.types.contains("file")) st.types.append("file"); }
-                else    st.types.removeAll("file");
-                m_filterModel->setState(st);
-            });
-        }
-        QStringList exts = m_typeCounts.keys(); exts.sort();
-        for (const QString& ext : exts) {
-            if (ext == "folder" || ext == "file" || ext == "空文件夹" || m_typeCounts[ext] <= 0) continue;
-            QString label = ext.isEmpty() ? "无扩展名" : ext;
-            QCheckBox* cb = addFilterRow(gl, label, m_typeCounts[ext]);
-            cb->blockSignals(true);
-            cb->setChecked(currentSt.types.contains(ext));
-            cb->blockSignals(false);
-            connect(cb, &QCheckBox::toggled, this, [this, ext](bool on) {
-                FilterState st = m_filterModel->state();
-                if (on) { if (!st.types.contains(ext)) st.types.append(ext); }
-                else st.types.removeAll(ext);
-                m_filterModel->setState(st);
-            });
-        }
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
 

@@ -196,6 +196,8 @@ set(SOURCES
     src/ui/ColorLabelGroup.h
     src/ui/RatingGroup.cpp
     src/ui/RatingGroup.h
+    src/ui/FileTypeGroup.cpp
+    src/ui/FileTypeGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

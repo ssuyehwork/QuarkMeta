@@ -30,6 +30,7 @@ class AspectRatioGroup;
 class FileSizeGroup;
 class ColorLabelGroup;
 class RatingGroup;
+class FileTypeGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT
