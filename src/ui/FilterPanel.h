@@ -32,6 +32,7 @@ class ColorLabelGroup;
 class RatingGroup;
 class FileTypeGroup;
 class CreateDateGroup;
+class ModifyDateGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT

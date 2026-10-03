@@ -200,6 +200,8 @@ set(SOURCES
     src/ui/FileTypeGroup.h
     src/ui/CreateDateGroup.cpp
     src/ui/CreateDateGroup.h
+    src/ui/ModifyDateGroup.cpp
+    src/ui/ModifyDateGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

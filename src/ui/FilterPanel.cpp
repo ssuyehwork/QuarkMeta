@@ -10,6 +10,7 @@
 #include "RatingGroup.h"
 #include "FileTypeGroup.h"
 #include "CreateDateGroup.h"
+#include "ModifyDateGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -522,49 +523,15 @@ void FilterPanel::rebuildGroups() {
         QWidget* g = buildGroup("修改日期", gl, &hdrLayout);
         m_modifyDateLayout = gl;
 
-        QPushButton* btnSort = new QPushButton(g);
-        btnSort->setFixedSize(16, 16);
-        btnSort->setIconSize(QSize(12, 12));
-        btnSort->setIcon(UiHelper::getIcon(m_modifyDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
-        btnSort->setFlat(true);
-        btnSort->setCursor(Qt::PointingHandCursor);
-        btnSort->setObjectName("FilterBtnSort");
-        hdrLayout->addWidget(btnSort);
-        connect(btnSort, &QPushButton::clicked, this, [this, btnSort]() {
-            m_modifyDateDesc = !m_modifyDateDesc;
-            btnSort->setIcon(UiHelper::getIcon(m_modifyDateDesc ? "scroll-010.svg" : "scroll-007.svg", QColor("#B0B0B0")));
-            rebuildDateCheckboxes(false, m_modifyDateDesc);
-        });
+        m_editModifyDate = ModifyDateGroup::populate(this, g, hdrLayout, gl, m_filterModel, currentSt,
+            m_modifyDateDesc,
+            [this](bool isCreateDate, bool descending) {
+                rebuildDateCheckboxes(isCreateDate, descending);
+            },
+            [this](const QString& key, const QString& text) {
+                saveFilterHistory(key, text);
+            });
 
-        QWidget* wModifyDate = new QWidget(g);
-        QHBoxLayout* lModifyDate = new QHBoxLayout(wModifyDate);
-        lModifyDate->setContentsMargins(5, 6, 5, 4);
-        lModifyDate->setSpacing(0);
-
-        m_editModifyDate = new QLineEdit(wModifyDate);
-        m_editModifyDate->setClearButtonEnabled(true);
-        m_editModifyDate->setPlaceholderText("例： 2025 / 03-2025...");
-        m_editModifyDate->setText(currentSt.modifyDateFilterText);
-        m_editModifyDate->setObjectName("FilterSearchEdit");
-        m_editModifyDate->setFixedHeight(22);
-        m_editModifyDate->installEventFilter(this);
-        connect(m_editModifyDate, &QLineEdit::returnPressed, this, [this]() {
-            FilterState st = m_filterModel->state();
-            st.modifyDateFilterText = m_editModifyDate->text();
-            saveFilterHistory("ModifyDate", st.modifyDateFilterText);
-            m_filterModel->setState(st);
-        });
-        connect(m_editModifyDate, &QLineEdit::textChanged, this, [this](const QString& text) {
-            FilterState st = m_filterModel->state();
-            if (text.isEmpty() && !st.modifyDateFilterText.isEmpty()) {
-                st.modifyDateFilterText = "";
-                m_filterModel->setState(st);
-            }
-        });
-        lModifyDate->addWidget(m_editModifyDate);
-        gl->addWidget(wModifyDate);
-
-        rebuildDateCheckboxes(false, m_modifyDateDesc);
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
 
