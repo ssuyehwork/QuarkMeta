@@ -180,6 +180,8 @@ set(SOURCES
     src/ui/FilterPanel.h
     src/ui/ThumbnailStatusGroup.cpp
     src/ui/ThumbnailStatusGroup.h
+    src/ui/DuplicateStatusGroup.cpp
+    src/ui/DuplicateStatusGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h
