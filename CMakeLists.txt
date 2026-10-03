@@ -198,6 +198,8 @@ set(SOURCES
     src/ui/RatingGroup.h
     src/ui/FileTypeGroup.cpp
     src/ui/FileTypeGroup.h
+    src/ui/CreateDateGroup.cpp
+    src/ui/CreateDateGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

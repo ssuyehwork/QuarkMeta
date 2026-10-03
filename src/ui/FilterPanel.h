@@ -31,6 +31,7 @@ class FileSizeGroup;
 class ColorLabelGroup;
 class RatingGroup;
 class FileTypeGroup;
+class CreateDateGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT
