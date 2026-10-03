@@ -465,8 +465,8 @@ void FilterPanel::rebuildGroups() {
         QWidget* g = buildGroup("标签", gl);
 
         TagStatusGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
-            [this](QVBoxLayout* layout, const QString& label, int count) {
-                return addFilterRow(layout, label, count);
+            [this](QVBoxLayout* layout, const QString& label, int count, const QString& rowKey) {
+                return addFilterRow(layout, label, count, QColor(), rowKey);
             });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
@@ -560,8 +560,8 @@ void FilterPanel::rebuildGroups() {
         QWidget* g = buildGroup("链接", gl);
 
         LinkStatusGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
-            [this](QVBoxLayout* layout, const QString& label, int count) {
-                return addFilterRow(layout, label, count);
+            [this](QVBoxLayout* layout, const QString& label, int count, const QString& rowKey) {
+                return addFilterRow(layout, label, count, QColor(), rowKey);
             });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
@@ -573,8 +573,8 @@ void FilterPanel::rebuildGroups() {
         QWidget* g = buildGroup("备注", gl);
 
         NoteStatusGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
-            [this](QVBoxLayout* layout, const QString& label, int count) {
-                return addFilterRow(layout, label, count);
+            [this](QVBoxLayout* layout, const QString& label, int count, const QString& rowKey) {
+                return addFilterRow(layout, label, count, QColor(), rowKey);
             });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
@@ -596,8 +596,8 @@ void FilterPanel::rebuildGroups() {
         QWidget* g = buildGroup("图像比例", gl);
 
         AspectRatioGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
-            [this](QVBoxLayout* layout, const QString& label, int count) {
-                return addFilterRow(layout, label, count);
+            [this](QVBoxLayout* layout, const QString& label, int count, const QString& rowKey) {
+                return addFilterRow(layout, label, count, QColor(), rowKey);
             });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
@@ -609,8 +609,8 @@ void FilterPanel::rebuildGroups() {
         QWidget* g = buildGroup("重复状态", gl);
 
         DuplicateStatusGroup::populate(gl, m_filterModel, m_currentStats, currentSt,
-            [this](QVBoxLayout* layout, const QString& label, int count) {
-                return addFilterRow(layout, label, count);
+            [this](QVBoxLayout* layout, const QString& label, int count, const QString& rowKey) {
+                return addFilterRow(layout, label, count, QColor(), rowKey);
             });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
@@ -622,8 +622,8 @@ void FilterPanel::rebuildGroups() {
         QWidget* g = buildGroup("缩略图状态", gl);
 
         ThumbnailStatusGroup::populate(gl, m_filterModel, m_currentStats, currentSt,
-            [this](QVBoxLayout* layout, const QString& label, int count) {
-                return addFilterRow(layout, label, count);
+            [this](QVBoxLayout* layout, const QString& label, int count, const QString& rowKey) {
+                return addFilterRow(layout, label, count, QColor(), rowKey);
             });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);

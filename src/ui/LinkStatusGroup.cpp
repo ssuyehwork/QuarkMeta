@@ -14,7 +14,7 @@ void LinkStatusGroup::populate(QWidget* parentWidget,
     QButtonGroup* linkGroup = new QButtonGroup(parentWidget ? parentWidget : contentLayout->parentWidget());
     linkGroup->setExclusive(false);
 
-    QCheckBox* cbYes = addFilterRow(contentLayout, "有链接", currentStats.hasLinkCount);
+    QCheckBox* cbYes = addFilterRow(contentLayout, "有链接", currentStats.hasLinkCount, "link:yes");
     if (currentState.linkPresence == FilterState::Yes) cbYes->setChecked(true);
     QObject::connect(cbYes, &QCheckBox::toggled, cbYes, [filterModel, linkGroup, cbYes](bool on) {
         FilterState st = filterModel->state();
@@ -26,7 +26,7 @@ void LinkStatusGroup::populate(QWidget* parentWidget,
     });
     linkGroup->addButton(cbYes);
 
-    QCheckBox* cbNo = addFilterRow(contentLayout, "无链接", currentStats.noLinkCount);
+    QCheckBox* cbNo = addFilterRow(contentLayout, "无链接", currentStats.noLinkCount, "link:no");
     if (currentState.linkPresence == FilterState::No) cbNo->setChecked(true);
     QObject::connect(cbNo, &QCheckBox::toggled, cbNo, [filterModel, linkGroup, cbNo](bool on) {
         FilterState st = filterModel->state();

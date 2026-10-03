@@ -11,7 +11,7 @@ namespace QuarkMeta {
 
 class LinkStatusGroup {
 public:
-    using AddFilterRowFunc = std::function<QCheckBox*(QVBoxLayout* layout, const QString& label, int count)>;
+    using AddFilterRowFunc = std::function<QCheckBox*(QVBoxLayout* layout, const QString& label, int count, const QString& rowKey)>;
 
     static void populate(QWidget* parentWidget,
                          QVBoxLayout* contentLayout,

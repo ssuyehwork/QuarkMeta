@@ -13,7 +13,7 @@ void ThumbnailStatusGroup::populate(QVBoxLayout* contentLayout,
     QButtonGroup* thumbGroup = new QButtonGroup(contentLayout->parentWidget());
     thumbGroup->setExclusive(false);
 
-    QCheckBox* cbYes = addFilterRow(contentLayout, "有缩略图", currentStats.hasThumbnailCount);
+    QCheckBox* cbYes = addFilterRow(contentLayout, "有缩略图", currentStats.hasThumbnailCount, "thumb:has");
     if (currentState.thumbnailPresence == FilterState::HasThumbnail) cbYes->setChecked(true);
     QObject::connect(cbYes, &QCheckBox::toggled, cbYes, [filterModel, thumbGroup, cbYes](bool on) {
         FilterState st = filterModel->state();
@@ -25,7 +25,7 @@ void ThumbnailStatusGroup::populate(QVBoxLayout* contentLayout,
     });
     thumbGroup->addButton(cbYes);
 
-    QCheckBox* cbNo = addFilterRow(contentLayout, "无缩略图 (提取失败)", currentStats.noThumbnailCount);
+    QCheckBox* cbNo = addFilterRow(contentLayout, "无缩略图 (提取失败)", currentStats.noThumbnailCount, "thumb:none");
     if (currentState.thumbnailPresence == FilterState::NoThumbnail) cbNo->setChecked(true);
     QObject::connect(cbNo, &QCheckBox::toggled, cbNo, [filterModel, thumbGroup, cbNo](bool on) {
         FilterState st = filterModel->state();

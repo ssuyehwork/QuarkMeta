@@ -14,7 +14,7 @@ void NoteStatusGroup::populate(QWidget* parentWidget,
     QButtonGroup* noteGroup = new QButtonGroup(parentWidget ? parentWidget : contentLayout->parentWidget());
     noteGroup->setExclusive(false);
 
-    QCheckBox* cbYes = addFilterRow(contentLayout, "有备注", currentStats.hasNoteCount);
+    QCheckBox* cbYes = addFilterRow(contentLayout, "有备注", currentStats.hasNoteCount, "note:yes");
     if (currentState.notePresence == FilterState::Yes) cbYes->setChecked(true);
     QObject::connect(cbYes, &QCheckBox::toggled, cbYes, [filterModel, noteGroup, cbYes](bool on) {
         FilterState st = filterModel->state();
@@ -26,7 +26,7 @@ void NoteStatusGroup::populate(QWidget* parentWidget,
     });
     noteGroup->addButton(cbYes);
 
-    QCheckBox* cbNo = addFilterRow(contentLayout, "无备注", currentStats.noNoteCount);
+    QCheckBox* cbNo = addFilterRow(contentLayout, "无备注", currentStats.noNoteCount, "note:no");
     if (currentState.notePresence == FilterState::No) cbNo->setChecked(true);
     QObject::connect(cbNo, &QCheckBox::toggled, cbNo, [filterModel, noteGroup, cbNo](bool on) {
         FilterState st = filterModel->state();
