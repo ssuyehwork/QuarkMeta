@@ -401,6 +401,7 @@ void JustifiedView::updateGeometries() {
 }
 
 void JustifiedView::doLayout() {
+    m_layoutDirty = false;
     m_geometries.clear();
     m_totalHeight = 0;
 
@@ -410,15 +411,18 @@ void JustifiedView::doLayout() {
         return;
     }
 
-    int viewWidth = viewport()->width();
-    if (viewWidth <= 0) viewWidth = width();
-    if (viewWidth <= 0) viewWidth = 800;
+    const int margin = 6;
+    const int spacing = 5;
 
-    int spacing = 6;
-    int currentY = spacing;
+    int scrollBarW = (verticalScrollBar() && verticalScrollBar()->isVisible()) ? verticalScrollBar()->width() : 0;
+    int containerWidth = width() - scrollBarW - (margin * 2);
+    if (containerWidth <= 0) containerWidth = viewport()->width() - (margin * 2);
+    if (containerWidth <= 0) containerWidth = 800;
+
     int count = model()->rowCount();
+    m_geometries.resize(count);
 
-    // 扫描分类：提取文件夹与文件索引
+    // 1. 分离文件夹与文件项的索引集合
     std::vector<int> folderIndices;
     std::vector<int> fileIndices;
 
@@ -432,34 +436,132 @@ void JustifiedView::doLayout() {
         }
     }
 
-    // 1. 文件夹区块布局
-    if (!folderIndices.empty() && !m_foldersCollapsed) {
-        for (int idx : folderIndices) {
-            QModelIndex modelIdx = model()->index(idx, 0);
-            double aspect = modelIdx.data(m_aspectRatioRole).toDouble();
-            if (aspect <= 0.1) aspect = 1.0;
-            int itemW = static_cast<int>(m_targetRowHeight * aspect);
+    int currentY = margin;
+    const int cardPadding = CardLayoutEngine::totalPaddingHorizontal();
+    const int extraHeight = CardLayoutEngine::extraHeight();
 
-            m_geometries.push_back({ QRect(spacing, currentY, itemW, m_targetRowHeight), idx, false, "", false });
-            currentY += m_targetRowHeight + spacing;
+    // 通用 lambda：按全宽多列网格排版某一组索引
+    auto layoutGridGroup = [&](const std::vector<int>& indices) {
+        if (indices.empty()) return;
+        int itemWidth = m_targetRowHeight + cardPadding;
+        int itemHeight = m_targetRowHeight + extraHeight;
+
+        int maxNumInRow = (containerWidth + spacing) / (itemWidth + spacing);
+        if (maxNumInRow <= 0) maxNumInRow = 1;
+
+        int standardSpacing = spacing;
+        if (maxNumInRow > 1) {
+            standardSpacing = (containerWidth - (maxNumInRow * itemWidth)) / (maxNumInRow - 1);
         }
+
+        size_t total = indices.size();
+        size_t idx = 0;
+        while (idx < total) {
+            size_t numInRow = std::min((size_t)maxNumInRow, total - idx);
+            int currentX = margin;
+            if (maxNumInRow == 1) {
+                currentX = margin + std::max(0, (containerWidth - itemWidth) / 2);
+            }
+
+            for (size_t j = 0; j < numInRow; ++j) {
+                int itemIdx = indices[idx + j];
+                m_geometries[itemIdx] = { QRect(currentX, currentY, itemWidth, itemHeight), itemIdx };
+                currentX += itemWidth + standardSpacing;
+            }
+            currentY += itemHeight + spacing;
+            idx += numInRow;
+        }
+    };
+
+    // 通用 lambda：按自适应行排版某一组索引
+    auto layoutJustifiedGroup = [&](const std::vector<int>& indices) {
+        if (indices.empty()) return;
+        size_t total = indices.size();
+        size_t idx = 0;
+
+        while (idx < total) {
+            size_t rowStart = idx;
+            double rowAspectRatioSum = 0;
+            std::vector<double> aspectRatios;
+
+            while (idx < total) {
+                int itemIdx = indices[idx];
+                QModelIndex modelIdx = model()->index(itemIdx, 0);
+                double ar = modelIdx.data(m_aspectRatioRole).toDouble();
+                if (ar <= 0) ar = 1.0;
+
+                aspectRatios.push_back(ar);
+                rowAspectRatioSum += ar;
+
+                int numInRow = (int)aspectRatios.size();
+                double estimatedWidth = (rowAspectRatioSum * m_targetRowHeight) + (cardPadding * numInRow) + (spacing * (numInRow - 1));
+                if (estimatedWidth > containerWidth) {
+                    if (numInRow > 1) {
+                        aspectRatios.pop_back();
+                        rowAspectRatioSum -= ar;
+                    } else {
+                        idx++;
+                    }
+                    break;
+                }
+                idx++;
+            }
+
+            size_t rowEnd = idx;
+            int numInRow = (int)(rowEnd - rowStart);
+            if (numInRow <= 0) break;
+
+            int actualHeight = m_targetRowHeight;
+            bool isLastRow = (idx == total);
+            bool rowIsJustified = !isLastRow;
+
+            int availableImageWidth = containerWidth - (spacing * (numInRow - 1)) - (cardPadding * numInRow);
+
+            if (rowIsJustified) {
+                actualHeight = qRound(availableImageWidth / rowAspectRatioSum);
+                actualHeight = std::max(actualHeight, (int)(m_targetRowHeight * 0.75));
+                actualHeight = std::min(actualHeight, (int)(m_targetRowHeight * 1.5));
+            }
+
+            int currentX = margin;
+            for (int j = 0; j < numInRow; ++j) {
+                int itemIdx = indices[rowStart + j];
+                int itemWidth;
+
+                if (j == numInRow - 1 && rowIsJustified) {
+                    itemWidth = (containerWidth + margin) - currentX;
+                } else {
+                    itemWidth = qRound(aspectRatios[j] * actualHeight) + cardPadding;
+                }
+
+                m_geometries[itemIdx] = { QRect(currentX, currentY, itemWidth, actualHeight + extraHeight), itemIdx };
+                currentX += itemWidth + spacing;
+            }
+            currentY += actualHeight + extraHeight + spacing;
+        }
+    };
+
+    // 执行网格/平铺排版
+    if (m_layoutMode == GridMode) {
+        if (!m_foldersCollapsed) {
+            layoutGridGroup(folderIndices);
+        }
+        layoutGridGroup(fileIndices);
+    } else {
+        if (!m_foldersCollapsed) {
+            layoutGridGroup(folderIndices); // 文件夹在平铺模式下仍保持规整网格卡片
+        }
+        layoutJustifiedGroup(fileIndices); // 文件采用自适应等高平铺
     }
 
-    // 2. 文件区块布局
-    if (!fileIndices.empty()) {
-        for (int idx : fileIndices) {
-            QModelIndex modelIdx = model()->index(idx, 0);
-            double aspect = modelIdx.data(m_aspectRatioRole).toDouble();
-            if (aspect <= 0.1) aspect = 1.0;
-            int itemW = static_cast<int>(m_targetRowHeight * aspect);
+    int oldHeight = m_totalHeight;
+    m_totalHeight = currentY;
+    updateGeometries();
+    viewport()->update();
 
-            m_geometries.push_back({ QRect(spacing, currentY, itemW, m_targetRowHeight), idx, false, "", false });
-            currentY += m_targetRowHeight + spacing;
-        }
+    if (oldHeight != m_totalHeight) {
+        emit totalHeightChanged(m_totalHeight);
     }
-
-    m_totalHeight = currentY + spacing;
-    emit totalHeightChanged(m_totalHeight);
     emit layoutFinished();
 }
 
