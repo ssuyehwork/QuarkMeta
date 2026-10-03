@@ -188,6 +188,8 @@ set(SOURCES
     src/ui/NoteStatusGroup.h
     src/ui/TagStatusGroup.cpp
     src/ui/TagStatusGroup.h
+    src/ui/AspectRatioGroup.cpp
+    src/ui/AspectRatioGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

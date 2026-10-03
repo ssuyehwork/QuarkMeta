@@ -4,6 +4,7 @@
 #include "LinkStatusGroup.h"
 #include "NoteStatusGroup.h"
 #include "TagStatusGroup.h"
+#include "AspectRatioGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -818,28 +819,11 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("图像比例", gl);
 
-        QButtonGroup* ratioGroup = new QButtonGroup(g);
-        ratioGroup->setExclusive(false);
-
-        const QList<std::tuple<FilterState::AspectRatio, QString, int>> ratioItems = {
-            {FilterState::Horizontal, "横图", m_currentStats.ratioHorizontalCount},
-            {FilterState::Vertical, "竖图", m_currentStats.ratioVerticalCount},
-            {FilterState::Square, "方形", m_currentStats.ratioSquareCount},
-            {FilterState::Ratio169, "16:9", m_currentStats.ratio169Count}
-        };
-        for (const auto& [ratio, label, count] : ratioItems) {
-            QCheckBox* cb = addFilterRow(gl, label, count);
-            if (currentSt.ratio == ratio) cb->setChecked(true);
-            connect(cb, &QCheckBox::toggled, this, [this, ratio, ratioGroup, cb](bool on) {
-                FilterState st = m_filterModel->state();
-                if (on) {
-                    for (QAbstractButton* b : ratioGroup->buttons()) if (b != cb && b->isChecked()) b->setChecked(false);
-                    st.ratio = ratio;
-                } else st.ratio = FilterState::AspectAny;
-                m_filterModel->setState(st);
+        AspectRatioGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
+            [this](QVBoxLayout* layout, const QString& label, int count) {
+                return addFilterRow(layout, label, count);
             });
-            ratioGroup->addButton(cb);
-        }
+
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
 
