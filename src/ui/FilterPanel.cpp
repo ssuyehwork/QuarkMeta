@@ -7,6 +7,7 @@
 #include "AspectRatioGroup.h"
 #include "FileSizeGroup.h"
 #include "ColorLabelGroup.h"
+#include "RatingGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -39,9 +40,6 @@ QMap<QString, QColor> FilterPanel::s_colorMap() {
     return map;
 }
 
-static QString ratingDisplayName(int r) {
-    return r == 0 ? "无评级" : QString("★").repeated(r);
-}
 
 void FilterPanel::syncUIFromFilterState() {
     updateHeaderStatus();
@@ -456,45 +454,11 @@ void FilterPanel::rebuildGroups() {
     {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("评级", gl);
-        for (int r : {0, 1, 2, 3, 4, 5}) {
-            int cnt = m_ratingCounts.value(r, 0);
-            bool isChecked = currentSt.ratings.contains(r);
-            if (cnt <= 0 && !isChecked) continue;
 
-            QCheckBox* cb = addFilterRow(gl, ratingDisplayName(r), cnt);
-            cb->blockSignals(true);
-            cb->setChecked(isChecked);
-            cb->blockSignals(false);
-
-            ClickableRow* row = qobject_cast<ClickableRow*>(cb->parentWidget());
-            if (row) {
-                row->setProperty("ratingValue", r);
-                if (r > 0) {
-                    QLabel* lbl = row->findChild<QLabel*>("FilterItemLabel");
-                    if (lbl) {
-                        int starSize = 12;
-                        int spacing = 2;
-                        int totalW = r * starSize + (r - 1) * spacing;
-                        QPixmap pix(totalW, starSize);
-                        pix.fill(Qt::transparent);
-                        QPainter painter(&pix);
-                        QPixmap starPix = UiHelper::getIcon("star_filled", QColor("#CCCCCC"), starSize).pixmap(starSize, starSize);
-                        for (int i = 0; i < r; ++i) {
-                            painter.drawPixmap(i * (starSize + spacing), 0, starPix);
-                        }
-                        painter.end();
-                        lbl->setPixmap(pix);
-                    }
-                }
-            }
-
-            connect(cb, &QCheckBox::toggled, this, [this, r](bool on) {
-                FilterState st = m_filterModel->state();
-                if (on) { if (!st.ratings.contains(r)) st.ratings.append(r); }
-                else st.ratings.removeAll(r);
-                m_filterModel->setState(st);
+        RatingGroup::populate(g, gl, m_filterModel, m_ratingCounts, currentSt,
+            [this](QVBoxLayout* layout, const QString& label, int count) {
+                return addFilterRow(layout, label, count);
             });
-        }
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }

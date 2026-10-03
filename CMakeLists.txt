@@ -194,6 +194,8 @@ set(SOURCES
     src/ui/FileSizeGroup.h
     src/ui/ColorLabelGroup.cpp
     src/ui/ColorLabelGroup.h
+    src/ui/RatingGroup.cpp
+    src/ui/RatingGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

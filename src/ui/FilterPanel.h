@@ -29,6 +29,7 @@ class TagStatusGroup;
 class AspectRatioGroup;
 class FileSizeGroup;
 class ColorLabelGroup;
+class RatingGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT
