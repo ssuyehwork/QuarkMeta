@@ -182,6 +182,8 @@ set(SOURCES
     src/ui/ThumbnailStatusGroup.h
     src/ui/DuplicateStatusGroup.cpp
     src/ui/DuplicateStatusGroup.h
+    src/ui/LinkStatusGroup.cpp
+    src/ui/LinkStatusGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

@@ -1,6 +1,7 @@
 #include "FilterPanel.h"
 #include "ThumbnailStatusGroup.h"
 #include "DuplicateStatusGroup.h"
+#include "LinkStatusGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -747,32 +748,10 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("链接", gl);
 
-        QButtonGroup* linkGroup = new QButtonGroup(g);
-        linkGroup->setExclusive(false);
-
-        QCheckBox* cbYes = addFilterRow(gl, "有链接", m_currentStats.hasLinkCount);
-        if (currentSt.linkPresence == FilterState::Yes) cbYes->setChecked(true);
-        connect(cbYes, &QCheckBox::toggled, this, [this, linkGroup, cbYes](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : linkGroup->buttons()) if (b != cbYes && b->isChecked()) b->setChecked(false);
-                st.linkPresence = FilterState::Yes;
-            } else st.linkPresence = FilterState::All;
-            m_filterModel->setState(st);
-        });
-        linkGroup->addButton(cbYes);
-
-        QCheckBox* cbNo = addFilterRow(gl, "无链接", m_currentStats.noLinkCount);
-        if (currentSt.linkPresence == FilterState::No) cbNo->setChecked(true);
-        connect(cbNo, &QCheckBox::toggled, this, [this, linkGroup, cbNo](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : linkGroup->buttons()) if (b != cbNo && b->isChecked()) b->setChecked(false);
-                st.linkPresence = FilterState::No;
-            } else st.linkPresence = FilterState::All;
-            m_filterModel->setState(st);
-        });
-        linkGroup->addButton(cbNo);
+        LinkStatusGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
+            [this](QVBoxLayout* layout, const QString& label, int count) {
+                return addFilterRow(layout, label, count);
+            });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
