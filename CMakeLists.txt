@@ -190,6 +190,8 @@ set(SOURCES
     src/ui/TagStatusGroup.h
     src/ui/AspectRatioGroup.cpp
     src/ui/AspectRatioGroup.h
+    src/ui/FileSizeGroup.cpp
+    src/ui/FileSizeGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

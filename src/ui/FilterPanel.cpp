@@ -5,6 +5,7 @@
 #include "NoteStatusGroup.h"
 #include "TagStatusGroup.h"
 #include "AspectRatioGroup.h"
+#include "FileSizeGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -755,61 +756,7 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("文件大小", gl);
 
-        QHBoxLayout* hs = new QHBoxLayout();
-        hs->setContentsMargins(5, 4, 5, 8);
-        hs->setSpacing(8);
-        
-        QLineEdit* minEdit = new QLineEdit(g);
-        minEdit->setClearButtonEnabled(true);
-        QLineEdit* maxEdit = new QLineEdit(g);
-        maxEdit->setClearButtonEnabled(true);
-        QComboBox* unitCombo = new QComboBox(g);
-        unitCombo->addItems({"KB", "MB", "GB"});
-        unitCombo->setCurrentIndex(1);
-
-        minEdit->setObjectName("FilterSizeEdit");
-        maxEdit->setObjectName("FilterSizeEdit");
-        unitCombo->setObjectName("FilterUnitCombo");
-        minEdit->setPlaceholderText("最小");
-        maxEdit->setPlaceholderText("最大");
-        minEdit->setFixedHeight(24);
-        maxEdit->setFixedHeight(24);
-
-        unitCombo->setFixedHeight(24);
-        unitCombo->setFixedWidth(52); 
-
-        hs->addWidget(minEdit);
-        QLabel* sep = new QLabel("-", g); sep->setObjectName("FilterSepLabel"); hs->addWidget(sep);
-        hs->addWidget(maxEdit);
-        hs->addWidget(unitCombo);
-        gl->addLayout(hs);
-
-        auto updateSizeFilter = [this, minEdit, maxEdit, unitCombo]() {
-            auto toBytes = [](const QString& txt, const QString& unit) -> long long {
-                if (txt.isEmpty()) return -1;
-                bool ok;
-                double val = txt.toDouble(&ok);
-                if (!ok) return -1;
-                long long factor = 1024;
-                if (unit == "MB") factor = 1024 * 1024;
-                else if (unit == "GB") factor = 1024 * 1024 * 1024;
-                return (long long)(val * factor);
-            };
-            FilterState st = m_filterModel->state();
-            st.minSize = toBytes(minEdit->text(), unitCombo->currentText());
-            st.maxSize = toBytes(maxEdit->text(), unitCombo->currentText());
-            m_filterModel->setState(st);
-        };
-
-        connect(minEdit, &QLineEdit::editingFinished, this, updateSizeFilter);
-        connect(minEdit, &QLineEdit::textChanged, this, [updateSizeFilter](const QString& text) {
-            if (text.isEmpty()) updateSizeFilter();
-        });
-        connect(maxEdit, &QLineEdit::editingFinished, this, updateSizeFilter);
-        connect(maxEdit, &QLineEdit::textChanged, this, [updateSizeFilter](const QString& text) {
-            if (text.isEmpty()) updateSizeFilter();
-        });
-        connect(unitCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [updateSizeFilter](int){ updateSizeFilter(); });
+        FileSizeGroup::populate(g, gl, m_filterModel);
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
