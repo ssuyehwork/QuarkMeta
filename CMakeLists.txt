@@ -192,6 +192,8 @@ set(SOURCES
     src/ui/AspectRatioGroup.h
     src/ui/FileSizeGroup.cpp
     src/ui/FileSizeGroup.h
+    src/ui/ColorLabelGroup.cpp
+    src/ui/ColorLabelGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

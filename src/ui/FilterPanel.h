@@ -28,6 +28,7 @@ class NoteStatusGroup;
 class TagStatusGroup;
 class AspectRatioGroup;
 class FileSizeGroup;
+class ColorLabelGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT

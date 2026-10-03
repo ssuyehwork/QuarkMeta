@@ -6,6 +6,7 @@
 #include "TagStatusGroup.h"
 #include "AspectRatioGroup.h"
 #include "FileSizeGroup.h"
+#include "ColorLabelGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -500,33 +501,14 @@ void FilterPanel::rebuildGroups() {
 
     // ── 3. 颜色标记 ────────────
     {
-        const auto& colorsList = Style::getColorPalette();
-
         QVBoxLayout* gl = nullptr;
         QHBoxLayout* hdrLayout = nullptr;
         QWidget* g = buildGroup("颜色标记", gl, &hdrLayout);
 
-        for (const auto& item : colorsList) {
-            int cnt = m_colorCounts.value(item.hex, m_colorCounts.value(item.name, 0));
-            bool isChecked = (currentSt.colors.contains(item.name) || currentSt.colors.contains(item.hex));
-
-            if (cnt == 0 && !isChecked) {
-                continue;
-            }
-
-            QCheckBox* cb = addFilterRow(gl, item.name, cnt, item.color);
-            cb->setChecked(isChecked);
-            connect(cb, &QCheckBox::checkStateChanged, this, [this, name = item.name, hex = item.hex](Qt::CheckState state) {
-                FilterState st = m_filterModel->state();
-                if (state == Qt::Checked) {
-                    if (!st.colors.contains(name)) st.colors.append(name);
-                } else {
-                    st.colors.removeAll(name);
-                    st.colors.removeAll(hex);
-                }
-                m_filterModel->setState(st);
+        ColorLabelGroup::populate(g, gl, m_filterModel, m_colorCounts, currentSt,
+            [this](QVBoxLayout* layout, const QString& label, int count, const QColor& color) {
+                return addFilterRow(layout, label, count, color);
             });
-        }
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
