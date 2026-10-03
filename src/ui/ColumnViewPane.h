@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QScrollArea>
+#include <QVBoxLayout>
 #include <QSet>
 #include <QPointer>
 #include "models/DiskItemModel.h"
@@ -79,7 +80,7 @@ private:
     bool m_isActive = false;
     QScrollArea* m_paneScrollArea = nullptr;
     QWidget* m_containerWidget = nullptr;
-    class QVBoxLayout* m_containerLayout = nullptr;
+    QVBoxLayout* m_containerLayout = nullptr;
     FolderSectionHeaderBar* m_folderHeader = nullptr;
     FileSectionHeaderBar* m_fileHeader = nullptr;
     DropListView* m_unifiedListView = nullptr;

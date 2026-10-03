@@ -2,6 +2,7 @@
 
 #include <QScrollArea>
 #include <QAbstractItemView>
+#include <QVBoxLayout>
 #include <QSet>
 #include <QTimer>
 #include "models/FilterProxyModel.h"
@@ -11,7 +12,6 @@ namespace QuarkMeta {
 
 class FolderSectionHeaderBar;
 class FileSectionHeaderBar;
-class QVBoxLayout;
 
 /**
  * @brief 单视图组装滚动画布：List/Grid 专属外壳，直接持有单 unifiedView 与标头
