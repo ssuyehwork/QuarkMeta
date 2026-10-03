@@ -3,6 +3,7 @@
 #include "DuplicateStatusGroup.h"
 #include "LinkStatusGroup.h"
 #include "NoteStatusGroup.h"
+#include "TagStatusGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -440,32 +441,10 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("标签", gl);
 
-        QButtonGroup* tagGroup = new QButtonGroup(g);
-        tagGroup->setExclusive(false);
-
-        QCheckBox* cbYes = addFilterRow(gl, "已标签", m_currentStats.hasTagCount);
-        if (currentSt.tagPresence == FilterState::Yes) cbYes->setChecked(true);
-        connect(cbYes, &QCheckBox::toggled, this, [this, tagGroup, cbYes](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : tagGroup->buttons()) if (b != cbYes && b->isChecked()) b->setChecked(false);
-                st.tagPresence = FilterState::Yes;
-            } else st.tagPresence = FilterState::All;
-            m_filterModel->setState(st);
-        });
-        tagGroup->addButton(cbYes);
-
-        QCheckBox* cbNo = addFilterRow(gl, "未标签", m_currentStats.noTagCount);
-        if (currentSt.tagPresence == FilterState::No) cbNo->setChecked(true);
-        connect(cbNo, &QCheckBox::toggled, this, [this, tagGroup, cbNo](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : tagGroup->buttons()) if (b != cbNo && b->isChecked()) b->setChecked(false);
-                st.tagPresence = FilterState::No;
-            } else st.tagPresence = FilterState::All;
-            m_filterModel->setState(st);
-        });
-        tagGroup->addButton(cbNo);
+        TagStatusGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
+            [this](QVBoxLayout* layout, const QString& label, int count) {
+                return addFilterRow(layout, label, count);
+            });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }

@@ -25,6 +25,7 @@ class ThumbnailStatusGroup;
 class DuplicateStatusGroup;
 class LinkStatusGroup;
 class NoteStatusGroup;
+class TagStatusGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT
