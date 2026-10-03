@@ -53,6 +53,15 @@ void FilterPanel::syncUIFromFilterState() {
     for (auto* cb : allCheckBoxes) {
         ClickableRow* row = qobject_cast<ClickableRow*>(cb->parentWidget());
         if (!row) continue;
+
+        QVariant keyProp = row->property("rowKey");
+        if (keyProp.isValid() && !keyProp.toString().isEmpty()) {
+            bool shouldCheck = isRowKeyChecked(keyProp.toString(), currentSt);
+            cb->blockSignals(true);
+            cb->setChecked(shouldCheck);
+            cb->blockSignals(false);
+            continue;
+        }
         
         QLabel* labelWidget = row->findChild<QLabel*>();
         if (!labelWidget) continue;
@@ -321,6 +330,15 @@ void FilterPanel::populate(
         syncUIFromFilterState();
         QList<ClickableRow*> rows = m_container->findChildren<ClickableRow*>();
         for (auto* row : rows) {
+             QVariant keyProp = row->property("rowKey");
+             if (keyProp.isValid() && !keyProp.toString().isEmpty()) {
+                 QLabel* cntLabel = row->findChild<QLabel*>("FilterItemCountLabel");
+                 if (cntLabel) {
+                     cntLabel->setText(QString::number(countForRowKey(keyProp.toString())));
+                 }
+                 continue;
+             }
+
              QList<QLabel*> labels = row->findChildren<QLabel*>();
              if (labels.size() >= 2) {
                  QLabel* cntLabel = labels.last();
@@ -399,7 +417,8 @@ void FilterPanel::rebuildDateCheckboxes(bool isCreateDate, bool descending) {
     });
 
     for (const QString& d : dates) {
-        QCheckBox* cb = addFilterRow(layout, d, counts[d]);
+        QString rowKey = isCreateDate ? ("createDate:" + d) : ("modifyDate:" + d);
+        QCheckBox* cb = addFilterRow(layout, d, counts[d], Qt::transparent, rowKey);
         cb->blockSignals(true);
         cb->setChecked(selected.contains(d));
         cb->blockSignals(false);
@@ -669,10 +688,107 @@ QWidget* FilterPanel::buildGroup(const QString& title, QVBoxLayout*& outContentL
     return wrapper;
 }
 
-QCheckBox* FilterPanel::addFilterRow(QVBoxLayout* layout, const QString& label, int count, const QColor& dotColor) {
+bool FilterPanel::isRowKeyChecked(const QString& key, const FilterState& st) const {
+    int colonIdx = key.indexOf(':');
+    if (colonIdx == -1) return false;
+
+    QString prefix = key.left(colonIdx);
+    QString value = key.mid(colonIdx + 1);
+
+    if (prefix == "rating") {
+        return st.ratings.contains(value.toInt());
+    } else if (prefix == "color") {
+        if (st.colors.contains(value)) return true;
+        for (const auto& item : Style::getColorPalette()) {
+            if (item.hex == value && st.colors.contains(item.name)) return true;
+        }
+        return false;
+    } else if (prefix == "type") {
+        return st.types.contains(value);
+    } else if (prefix == "createDate") {
+        return st.createDates.contains(value);
+    } else if (prefix == "modifyDate") {
+        return st.modifyDates.contains(value);
+    } else if (prefix == "tag") {
+        if (value == "yes") return st.tagPresence == FilterState::Yes;
+        if (value == "no") return st.tagPresence == FilterState::No;
+    } else if (prefix == "link") {
+        if (value == "yes") return st.linkPresence == FilterState::Yes;
+        if (value == "no") return st.linkPresence == FilterState::No;
+    } else if (prefix == "note") {
+        if (value == "yes") return st.notePresence == FilterState::Yes;
+        if (value == "no") return st.notePresence == FilterState::No;
+    } else if (prefix == "ratio") {
+        if (value == "h") return st.ratio == FilterState::Horizontal;
+        if (value == "v") return st.ratio == FilterState::Vertical;
+        if (value == "sq") return st.ratio == FilterState::Square;
+        if (value == "169") return st.ratio == FilterState::Ratio169;
+    } else if (prefix == "dup") {
+        if (value == "only") return st.duplicatePresence == FilterState::DuplicateOnly;
+        if (value == "unique") return st.duplicatePresence == FilterState::UniqueOnly;
+    } else if (prefix == "thumb") {
+        if (value == "has") return st.thumbnailPresence == FilterState::HasThumbnail;
+        if (value == "none") return st.thumbnailPresence == FilterState::NoThumbnail;
+    }
+    return false;
+}
+
+int FilterPanel::countForRowKey(const QString& key) const {
+    int colonIdx = key.indexOf(':');
+    if (colonIdx == -1) return 0;
+
+    QString prefix = key.left(colonIdx);
+    QString value = key.mid(colonIdx + 1);
+
+    if (prefix == "rating") {
+        return m_ratingCounts.value(value.toInt(), 0);
+    } else if (prefix == "color") {
+        QString name;
+        for (const auto& item : Style::getColorPalette()) {
+            if (item.hex == value) {
+                name = item.name;
+                break;
+            }
+        }
+        return m_colorCounts.value(value, m_colorCounts.value(name, 0));
+    } else if (prefix == "type") {
+        if (value == "空文件夹") return m_emptyFolderCount;
+        return m_typeCounts.value(value, 0);
+    } else if (prefix == "createDate") {
+        return m_createDateCounts.value(value, 0);
+    } else if (prefix == "modifyDate") {
+        return m_modifyDateCounts.value(value, 0);
+    } else if (prefix == "tag") {
+        if (value == "yes") return m_currentStats.hasTagCount;
+        if (value == "no") return m_currentStats.noTagCount;
+    } else if (prefix == "link") {
+        if (value == "yes") return m_currentStats.hasLinkCount;
+        if (value == "no") return m_currentStats.noLinkCount;
+    } else if (prefix == "note") {
+        if (value == "yes") return m_currentStats.hasNoteCount;
+        if (value == "no") return m_currentStats.noNoteCount;
+    } else if (prefix == "ratio") {
+        if (value == "h") return m_currentStats.ratioHorizontalCount;
+        if (value == "v") return m_currentStats.ratioVerticalCount;
+        if (value == "sq") return m_currentStats.ratioSquareCount;
+        if (value == "169") return m_currentStats.ratio169Count;
+    } else if (prefix == "dup") {
+        if (value == "only") return m_currentStats.duplicateCount;
+        if (value == "unique") return m_currentStats.uniqueCount;
+    } else if (prefix == "thumb") {
+        if (value == "has") return m_currentStats.hasThumbnailCount;
+        if (value == "none") return m_currentStats.noThumbnailCount;
+    }
+    return 0;
+}
+
+QCheckBox* FilterPanel::addFilterRow(QVBoxLayout* layout, const QString& label, int count, const QColor& dotColor, const QString& rowKey) {
     StyledCheckBox* cb = new StyledCheckBox();
 
     ClickableRow* row = new ClickableRow(cb);
+    if (!rowKey.isEmpty()) {
+        row->setProperty("rowKey", rowKey);
+    }
     row->setFixedHeight(24);
 
     QHBoxLayout* rl = new QHBoxLayout(row);
