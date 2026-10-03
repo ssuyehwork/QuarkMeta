@@ -2,6 +2,7 @@
 #include "ThumbnailStatusGroup.h"
 #include "DuplicateStatusGroup.h"
 #include "LinkStatusGroup.h"
+#include "NoteStatusGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -761,32 +762,10 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("备注", gl);
 
-        QButtonGroup* noteGroup = new QButtonGroup(g);
-        noteGroup->setExclusive(false);
-
-        QCheckBox* cbYes = addFilterRow(gl, "有备注", m_currentStats.hasNoteCount);
-        if (currentSt.notePresence == FilterState::Yes) cbYes->setChecked(true);
-        connect(cbYes, &QCheckBox::toggled, this, [this, noteGroup, cbYes](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : noteGroup->buttons()) if (b != cbYes && b->isChecked()) b->setChecked(false);
-                st.notePresence = FilterState::Yes;
-            } else st.notePresence = FilterState::All;
-            m_filterModel->setState(st);
-        });
-        noteGroup->addButton(cbYes);
-
-        QCheckBox* cbNo = addFilterRow(gl, "无备注", m_currentStats.noNoteCount);
-        if (currentSt.notePresence == FilterState::No) cbNo->setChecked(true);
-        connect(cbNo, &QCheckBox::toggled, this, [this, noteGroup, cbNo](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : noteGroup->buttons()) if (b != cbNo && b->isChecked()) b->setChecked(false);
-                st.notePresence = FilterState::No;
-            } else st.notePresence = FilterState::All;
-            m_filterModel->setState(st);
-        });
-        noteGroup->addButton(cbNo);
+        NoteStatusGroup::populate(g, gl, m_filterModel, m_currentStats, currentSt,
+            [this](QVBoxLayout* layout, const QString& label, int count) {
+                return addFilterRow(layout, label, count);
+            });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }

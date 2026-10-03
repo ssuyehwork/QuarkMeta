@@ -24,6 +24,7 @@ class SearchHistoryPanel;
 class ThumbnailStatusGroup;
 class DuplicateStatusGroup;
 class LinkStatusGroup;
+class NoteStatusGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT
