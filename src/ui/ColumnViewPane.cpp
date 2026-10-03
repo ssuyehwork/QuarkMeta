@@ -1,6 +1,5 @@
 #include "ColumnViewPane.h"
 #include "ContentPanel.h"
-#include "DualSectionPanel.h"
 #include "ColumnViewWidget.h"
 #include "ColumnItemDelegate.h"
 #include "../core/DiskScanService.h"
@@ -39,65 +38,47 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     m_model = new DiskItemModel(this);
     m_model->setCurrentPath(path);
 
-    m_folderProxyModel = new FilterProxyModel(this);
-    m_folderProxyModel->setSourceModel(m_model);
-    FilterState folderOnlyFilter;
-    folderOnlyFilter.showFolders = true;
-    folderOnlyFilter.showFiles = false;
-    m_folderProxyModel->currentFilter = folderOnlyFilter;
+    m_proxyModel = new FilterProxyModel(this);
+    m_proxyModel->setSourceModel(m_model);
+    m_proxyModel->setFilterKeyColumn(0);
+    m_proxyModel->setDynamicSortFilter(true);
 
-    m_fileProxyModel = new FilterProxyModel(this);
-    m_fileProxyModel->setSourceModel(m_model);
-    FilterState fileOnlyFilter;
-    fileOnlyFilter.showFolders = false;
-    fileOnlyFilter.showFiles = true;
-    m_fileProxyModel->currentFilter = fileOnlyFilter;
+    m_containerWidget = new QWidget(this);
+    m_containerLayout = new QVBoxLayout(m_containerWidget);
+    m_containerLayout->setContentsMargins(0, 0, 0, 0);
+    m_containerLayout->setSpacing(0);
 
-    m_proxyModel = m_fileProxyModel;
+    m_folderHeader = new FolderSectionHeaderBar(m_containerWidget);
+    m_folderHeader->hide();
+    m_containerLayout->addWidget(m_folderHeader);
 
-    m_folderListView = new DropListView();
-    m_folderListView->setObjectName("ColumnViewFolderList");
-    m_folderListView->setFrameShape(QFrame::NoFrame);
-    m_folderListView->setFocusPolicy(Qt::StrongFocus);
-    m_folderListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_folderListView->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_folderListView->setDragEnabled(true);
-    m_folderListView->setAcceptDrops(true);
-    m_folderListView->setDropIndicatorShown(true);
-    m_folderListView->setContextMenuPolicy(Qt::CustomContextMenu);
-    m_folderListView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_folderListView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_folderListView->setModel(m_folderProxyModel);
-    m_folderListView->setItemDelegate(new ColumnItemDelegate(this));
-    m_folderListView->hide();
+    m_unifiedListView = new DropListView();
+    m_unifiedListView->setObjectName("ColumnViewPaneListView");
+    m_unifiedListView->setFrameShape(QFrame::NoFrame);
+    m_unifiedListView->setFocusPolicy(Qt::StrongFocus);
+    m_unifiedListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_unifiedListView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_unifiedListView->setDragEnabled(true);
+    m_unifiedListView->setAcceptDrops(true);
+    m_unifiedListView->setDropIndicatorShown(true);
+    m_unifiedListView->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_unifiedListView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_unifiedListView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_unifiedListView->setModel(m_proxyModel);
+    m_unifiedListView->setItemDelegate(new ColumnItemDelegate(this));
+    m_containerLayout->addWidget(m_unifiedListView);
 
-    m_listView = new DropListView();
-    m_listView->setObjectName("ColumnViewPaneListView");
-    m_listView->setFrameShape(QFrame::NoFrame);
-    m_listView->setFocusPolicy(Qt::StrongFocus);
-    m_listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    m_listView->setDragEnabled(true);
-    m_listView->setAcceptDrops(true);
-    m_listView->setDropIndicatorShown(true);
-    m_listView->setContextMenuPolicy(Qt::CustomContextMenu);
-    m_listView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_listView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_listView->setModel(m_fileProxyModel);
-    m_listView->setItemDelegate(new ColumnItemDelegate(this));
+    m_fileHeader = new FileSectionHeaderBar(m_containerWidget);
+    m_fileHeader->hide();
+    m_containerLayout->addWidget(m_fileHeader);
 
-    m_panel = new DualSectionPanel(m_folderListView, m_listView, m_folderProxyModel, m_fileProxyModel, this);
-    m_panel->setContextMenuPolicy(Qt::CustomContextMenu);
-    m_panel->setFocusPolicy(Qt::StrongFocus);
-    m_panel->setAcceptDrops(true);
-
-    m_paneScrollArea->setWidget(m_panel);
+    m_paneScrollArea->setWidget(m_containerWidget);
     layout->addWidget(m_paneScrollArea);
 
     auto handlePaneBlankContextMenu = [this](const QPoint& pos, QWidget* sourceWidget) {
         if (!m_contentPanel) return;
         QPoint globalPos = sourceWidget ? sourceWidget->mapToGlobal(pos) : QCursor::pos();
-        DropListView* targetView = m_listView ? m_listView : m_folderListView;
+        DropListView* targetView = m_unifiedListView;
         if (targetView && targetView->viewport()) {
             QPoint viewPos = targetView->viewport()->mapFromGlobal(globalPos);
             m_contentPanel->onCustomContextMenuRequested(targetView, viewPos);
@@ -107,65 +88,51 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     connect(m_paneScrollArea, &QWidget::customContextMenuRequested, this, [this, handlePaneBlankContextMenu](const QPoint& pos) {
         handlePaneBlankContextMenu(pos, m_paneScrollArea);
     });
-    connect(m_panel, &QWidget::customContextMenuRequested, this, [this, handlePaneBlankContextMenu](const QPoint& pos) {
-        handlePaneBlankContextMenu(pos, m_panel);
+    connect(m_containerWidget, &QWidget::customContextMenuRequested, this, [this, handlePaneBlankContextMenu](const QPoint& pos) {
+        handlePaneBlankContextMenu(pos, m_containerWidget);
     });
 
     auto updateSectionCountsAndHints = [this]() {
         tryPendingSelection();
-        int viewportH = m_paneScrollArea && m_paneScrollArea->viewport() ? m_paneScrollArea->viewport()->height() : 0;
-        m_panel->updateSectionCounts(viewportH);
-
-        int folderCount = m_folderProxyModel ? m_folderProxyModel->rowCount() : 0;
-        int fileCount = m_fileProxyModel ? m_fileProxyModel->rowCount() : 0;
-
-        if (m_folderListView && folderCount > 0 && m_folderListView->isVisible()) {
-            int rowH = m_folderListView->sizeHintForRow(0);
-            if (rowH <= 0) rowH = 28;
-            int folderH = folderCount * rowH + 2;
-            if (fileCount == 0) {
-                m_folderListView->setFixedHeight(qMax(folderH, m_panel->folderViewMinHeight()));
-            } else {
-                m_folderListView->setFixedHeight(folderH);
-            }
+        int total = m_proxyModel ? m_proxyModel->rowCount() : 0;
+        int folderCount = 0;
+        int fileCount = 0;
+        for (int i = 0; i < total; ++i) {
+            QModelIndex idx = m_proxyModel->index(i, 0);
+            bool isDir = idx.data(TypeRole).toString() == "folder" || idx.data(Qt::UserRole + 2).toBool();
+            if (isDir) folderCount++;
+            else fileCount++;
         }
 
-        if (m_listView && fileCount > 0) {
-            int rowH = m_listView->sizeHintForRow(0);
+        if (m_folderHeader) {
+            m_folderHeader->setCount(folderCount);
+            m_folderHeader->setVisible(folderCount > 0);
+        }
+        if (m_fileHeader) {
+            m_fileHeader->setCount(fileCount);
+            m_fileHeader->setVisible(fileCount > 0 && folderCount > 0);
+        }
+
+        if (m_unifiedListView && total > 0) {
+            int rowH = m_unifiedListView->sizeHintForRow(0);
             if (rowH <= 0) rowH = 28;
-            int fileH = fileCount * rowH + 2;
-            m_listView->setFixedHeight(qMax(fileH, m_panel->fileViewMinHeight()));
+            int totalH = total * rowH + 2;
+            m_unifiedListView->setFixedHeight(totalH);
         }
         update();
     };
 
-    connect(m_panel, &DualSectionPanel::folderCollapseToggled, this, [updateSectionCountsAndHints](bool) {
-        updateSectionCountsAndHints();
-    });
+    connect(m_proxyModel, &QAbstractItemModel::modelReset, this, updateSectionCountsAndHints);
+    connect(m_proxyModel, &QAbstractItemModel::layoutChanged, this, updateSectionCountsAndHints);
 
-    connect(m_folderProxyModel, &QAbstractItemModel::modelReset, this, updateSectionCountsAndHints);
-    connect(m_folderProxyModel, &QAbstractItemModel::layoutChanged, this, updateSectionCountsAndHints);
-    connect(m_fileProxyModel, &QAbstractItemModel::modelReset, this, updateSectionCountsAndHints);
-    connect(m_fileProxyModel, &QAbstractItemModel::layoutChanged, this, updateSectionCountsAndHints);
-
-    connect(m_folderListView, &DropListView::blankSpaceClicked, this, [this]() {
-        int paneIdx = property("paneIndex").toInt();
-        if (m_contentPanel && m_contentPanel->columnView()) {
-            m_contentPanel->columnView()->activatePaneFromBlankClick(paneIdx);
-        }
-    });
-    connect(m_listView, &DropListView::blankSpaceClicked, this, [this]() {
+    connect(m_unifiedListView, &DropListView::blankSpaceClicked, this, [this]() {
         int paneIdx = property("paneIndex").toInt();
         if (m_contentPanel && m_contentPanel->columnView()) {
             m_contentPanel->columnView()->activatePaneFromBlankClick(paneIdx);
         }
     });
 
-    connect(m_folderListView, &DropListView::blankSpaceDoubleClicked, this, [this]() {
-        int paneIdx = property("paneIndex").toInt();
-        emit blankSpaceDoubleClicked(paneIdx);
-    });
-    connect(m_listView, &DropListView::blankSpaceDoubleClicked, this, [this]() {
+    connect(m_unifiedListView, &DropListView::blankSpaceDoubleClicked, this, [this]() {
         int paneIdx = property("paneIndex").toInt();
         emit blankSpaceDoubleClicked(paneIdx);
     });
@@ -177,63 +144,36 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
     }
 
     m_paneScrollArea->installEventFilter(this);
-    m_panel->installEventFilter(this);
-    m_folderListView->installEventFilter(this);
-    if (m_folderListView->viewport()) m_folderListView->viewport()->installEventFilter(this);
-    m_listView->installEventFilter(this);
-    if (m_listView->viewport()) m_listView->viewport()->installEventFilter(this);
+    m_containerWidget->installEventFilter(this);
+    m_unifiedListView->installEventFilter(this);
+    if (m_unifiedListView->viewport()) m_unifiedListView->viewport()->installEventFilter(this);
 
     if (m_contentPanel) {
-        m_folderListView->installEventFilter(m_contentPanel);
-        m_listView->installEventFilter(m_contentPanel);
-        connect(m_folderListView, &QListView::customContextMenuRequested, this, [this](const QPoint& pos) {
-            emit contextMenuRequested(m_folderListView, pos);
+        m_unifiedListView->installEventFilter(m_contentPanel);
+        m_paneScrollArea->installEventFilter(m_contentPanel);
+        m_containerWidget->installEventFilter(m_contentPanel);
+
+        connect(m_unifiedListView, &QListView::customContextMenuRequested, this, [this](const QPoint& pos) {
+            emit contextMenuRequested(m_unifiedListView, pos);
             if (m_contentPanel) {
-                m_contentPanel->onCustomContextMenuRequested(m_folderListView, pos);
+                m_contentPanel->onCustomContextMenuRequested(m_unifiedListView, pos);
             }
         });
-        connect(m_listView, &QListView::customContextMenuRequested, this, [this](const QPoint& pos) {
-            emit contextMenuRequested(m_listView, pos);
-            if (m_contentPanel) {
-                m_contentPanel->onCustomContextMenuRequested(m_listView, pos);
-            }
-        });
-        connect(m_folderListView, &DropListView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
+        connect(m_unifiedListView, &DropListView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
             emit pathsDroppedSignal(paths, targetIndex, m_path);
             if (m_contentPanel) {
-                m_contentPanel->onPathsDropped(paths, targetIndex, m_path, m_folderProxyModel);
-            }
-        });
-        connect(m_listView, &DropListView::pathsDropped, this, [this](const QStringList& paths, const QModelIndex& targetIndex) {
-            emit pathsDroppedSignal(paths, targetIndex, m_path);
-            if (m_contentPanel) {
-                m_contentPanel->onPathsDropped(paths, targetIndex, m_path, m_fileProxyModel);
+                m_contentPanel->onPathsDropped(paths, targetIndex, m_path, m_proxyModel);
             }
         });
     }
 
-    connect(m_folderListView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this]() {
-        if (m_folderListView->selectionModel()->hasSelection() && m_listView->selectionModel()) {
-            QSignalBlocker blocker(m_listView->selectionModel());
-            m_listView->clearSelection();
-        }
-        emit selectionChanged();
-    });
-    connect(m_listView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this]() {
-        if (m_listView->selectionModel()->hasSelection() && m_folderListView->selectionModel()) {
-            QSignalBlocker blocker(m_folderListView->selectionModel());
-            m_folderListView->clearSelection();
-        }
-        emit selectionChanged();
-    });
+    if (m_unifiedListView->selectionModel()) {
+        connect(m_unifiedListView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [this]() {
+            emit selectionChanged();
+        });
+    }
 
-    connect(m_folderListView, &QListView::clicked, this, [this](const QModelIndex& index) {
-        QString itemPath = index.data(PathRole).toString();
-        int paneIdx = property("paneIndex").toInt();
-        emit folderClicked(itemPath, paneIdx);
-    });
-
-    connect(m_listView, &QListView::clicked, this, [this](const QModelIndex& index) {
+    connect(m_unifiedListView, &QListView::clicked, this, [this](const QModelIndex& index) {
         QString itemPath = index.data(PathRole).toString();
         bool isDir = (index.data(TypeRole).toString() == "folder") || index.data(Qt::UserRole + 2).toBool() || QFileInfo(itemPath).isDir();
         int paneIdx = property("paneIndex").toInt();
@@ -244,15 +184,7 @@ ColumnViewPane::ColumnViewPane(const QString& path, ContentPanel* contentPanel, 
         }
     });
 
-    connect(m_folderListView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
-        if (index.isValid()) {
-            QString itemPath = index.data(PathRole).toString();
-            int paneIdx = property("paneIndex").toInt();
-            emit folderExpandRequested(itemPath, paneIdx);
-        }
-    });
-
-    connect(m_listView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
+    connect(m_unifiedListView, &QListView::doubleClicked, this, [this](const QModelIndex& index) {
         if (index.isValid()) {
             QString itemPath = index.data(PathRole).toString();
             bool isDir = (index.data(TypeRole).toString() == "folder") || index.data(Qt::UserRole + 2).toBool() || QFileInfo(itemPath).isDir();
