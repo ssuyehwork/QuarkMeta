@@ -178,6 +178,8 @@ set(SOURCES
     src/ui/ScanStatsEngine.cpp
     src/ui/FilterPanel.cpp
     src/ui/FilterPanel.h
+    src/ui/ThumbnailStatusGroup.cpp
+    src/ui/ThumbnailStatusGroup.h
     src/ui/FramelessDialogBase.h
     src/ui/FramelessDialog.cpp
     src/ui/FramelessDialog.h

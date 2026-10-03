@@ -21,6 +21,7 @@
 namespace QuarkMeta {
 
 class SearchHistoryPanel;
+class ThumbnailStatusGroup;
 
 class FilterPanel : public QFrame {
     Q_OBJECT

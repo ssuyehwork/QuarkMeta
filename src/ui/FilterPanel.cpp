@@ -1,4 +1,5 @@
 #include "FilterPanel.h"
+#include "ThumbnailStatusGroup.h"
 #include "../core/AppConfig.h"
 #include <QSet>
 #include <QDate>
@@ -937,32 +938,10 @@ void FilterPanel::rebuildGroups() {
         QVBoxLayout* gl = nullptr;
         QWidget* g = buildGroup("缩略图状态", gl);
 
-        QButtonGroup* thumbGroup = new QButtonGroup(g);
-        thumbGroup->setExclusive(false);
-
-        QCheckBox* cbYes = addFilterRow(gl, "有缩略图", m_currentStats.hasThumbnailCount);
-        if (currentSt.thumbnailPresence == FilterState::HasThumbnail) cbYes->setChecked(true);
-        connect(cbYes, &QCheckBox::toggled, this, [this, thumbGroup, cbYes](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : thumbGroup->buttons()) if (b != cbYes && b->isChecked()) b->setChecked(false);
-                st.thumbnailPresence = FilterState::HasThumbnail;
-            } else st.thumbnailPresence = FilterState::ThumbAll;
-            m_filterModel->setState(st);
-        });
-        thumbGroup->addButton(cbYes);
-
-        QCheckBox* cbNo = addFilterRow(gl, "无缩略图 (提取失败)", m_currentStats.noThumbnailCount);
-        if (currentSt.thumbnailPresence == FilterState::NoThumbnail) cbNo->setChecked(true);
-        connect(cbNo, &QCheckBox::toggled, this, [this, thumbGroup, cbNo](bool on) {
-            FilterState st = m_filterModel->state();
-            if (on) {
-                for (QAbstractButton* b : thumbGroup->buttons()) if (b != cbNo && b->isChecked()) b->setChecked(false);
-                st.thumbnailPresence = FilterState::NoThumbnail;
-            } else st.thumbnailPresence = FilterState::ThumbAll;
-            m_filterModel->setState(st);
-        });
-        thumbGroup->addButton(cbNo);
+        ThumbnailStatusGroup::populate(gl, m_filterModel, m_currentStats, currentSt,
+            [this](QVBoxLayout* layout, const QString& label, int count) {
+                return addFilterRow(layout, label, count);
+            });
 
         m_containerLayout->insertWidget(m_containerLayout->count() - 1, g);
     }
