@@ -1,4 +1,5 @@
 #include "FilterProxyModel.h"
+#include "ItemModelBase.h"
 #include "../UiHelper.h"
 #include <QDateTime>
 #include <cmath>
