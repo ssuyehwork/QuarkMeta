@@ -283,7 +283,7 @@ void ContentPaneSplitManager::setActivePane(bool active) {
         m_primaryPaneContainer->style()->unpolish(m_primaryPaneContainer);
         m_primaryPaneContainer->style()->polish(m_primaryPaneContainer);
     } else {
-        m_panel->setProperty("activePane", active ? "true" : "false");
+        m_panel->setProperty("activePane", m_isSplit && active ? "true" : "false");
         m_panel->style()->unpolish(m_panel);
         m_panel->style()->polish(m_panel);
     }
