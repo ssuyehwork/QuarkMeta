@@ -81,7 +81,7 @@ QSortFilterProxyModel* ContentViewCoordinator::getActiveProxyModel() const {
         return m_panel->columnView()->activePane()->proxyModel();
     }
 
-    return m_panel->proxyModel();
+    return m_panel->getProxyModel();
 }
 
 QModelIndexList ContentViewCoordinator::getSelectedIndexes() const {

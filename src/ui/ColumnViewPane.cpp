@@ -183,7 +183,7 @@ bool ColumnViewPane::eventFilter(QObject* obj, QEvent* event) {
 
     if (event && event->type() == QEvent::MouseButtonPress) {
         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-        if (mouseEvent->button() == Qt::LeftButton && (obj == m_paneScrollArea || obj == m_panel)) {
+        if (mouseEvent->button() == Qt::LeftButton && (obj == m_paneScrollArea || obj == this)) {
             int paneIdx = property("paneIndex").toInt();
             if (m_contentPanel && m_contentPanel->columnView()) {
                 m_contentPanel->columnView()->activatePaneFromBlankClick(paneIdx);

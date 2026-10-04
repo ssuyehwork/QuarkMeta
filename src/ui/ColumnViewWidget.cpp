@@ -2,6 +2,7 @@
 #include "ColumnBlankCanvasWidget.h"
 #include "ColumnViewPane.h"
 #include "ContentPanel.h"
+#include "models/SectionProxyModel.h"
 #include "../core/NavigationService.h"
 #include <QDir>
 #include <QFileInfo>
