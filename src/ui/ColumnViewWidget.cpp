@@ -314,8 +314,8 @@ void ColumnViewWidget::clearAllSelections() {
 void ColumnViewWidget::toggleFolderSectionCollapse() {
     ColumnViewPane* pane = activePane();
     if (!pane) pane = rightmostPane();
-    if (pane && pane->folderHeader() && pane->folderHeader()->isVisible() && pane->folderHeader()->count() > 0) {
-        pane->folderHeader()->setCollapsed(!pane->folderHeader()->isCollapsed());
+    if (pane && pane->sectionProxyModel()) {
+        pane->sectionProxyModel()->setFolderCollapsed(!pane->sectionProxyModel()->isFolderCollapsed());
     }
 }
 
