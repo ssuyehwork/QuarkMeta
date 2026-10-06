@@ -92,8 +92,11 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
     if (paneCount() >= ContentPanel::kMaxPanes) {
         ContentPanel* root = rootPane();
         ContentPanel* activeTarget = root;
-        if (m_activePaneForSplit) {
-            activeTarget = m_activePaneForSplit;
+        for (ContentPanel* p : root->panes()) {
+            if (p && p->property("activePane").toBool()) {
+                activeTarget = p;
+                break;
+            }
         }
         if (!secondaryPath.isEmpty() && activeTarget) {
             activeTarget->loadDirectory(secondaryPath);
@@ -143,11 +146,6 @@ void ContentPaneSplitManager::closePane(ContentPanel* pane) {
     if (rootPane() != m_panel) {
         rootPane()->m_splitManager->closePane(pane);
         return;
-    }
-
-    ContentPanel* root = rootPane();
-    if (root && root->m_splitManager && root->m_splitManager->m_activePaneForSplit == pane) {
-        root->m_splitManager->m_activePaneForSplit = nullptr;
     }
 
     int idx = m_panes.indexOf(pane);
@@ -206,10 +204,7 @@ void ContentPaneSplitManager::closeSecondaryPane() {
 
     if (m_panes.isEmpty()) return;
 
-    ContentPanel* target = m_activePaneForSplit ? m_activePaneForSplit : m_panes.last();
-    if (target == m_panel) {
-        target = m_panes.last();
-    }
+    ContentPanel* target = m_panes.last();
     closePane(target);
 }
 

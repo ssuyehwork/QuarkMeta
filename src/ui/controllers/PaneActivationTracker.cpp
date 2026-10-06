@@ -18,7 +18,7 @@ bool PaneActivationTracker::eventFilter(QObject* watched, QEvent* event) {
             while (curr) {
                 ContentPanel* panel = qobject_cast<ContentPanel*>(curr);
                 if (panel) {
-                    foundPanel = panel; // 持续向上寻找最近的 ContentPanel (副窗格位于根窗格内部，取最近的)
+                    foundPanel = panel;
                     break;
                 }
                 curr = curr->parentWidget();
@@ -28,7 +28,7 @@ bool PaneActivationTracker::eventFilter(QObject* watched, QEvent* event) {
             }
         }
     }
-    return false; // 始终返回 false，不吞掉任何事件
+    return false;
 }
 
 } // namespace QuarkMeta
