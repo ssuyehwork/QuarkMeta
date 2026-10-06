@@ -276,9 +276,8 @@ void ContentPanel::initListView() {
     tree->setSortingEnabled(false);
     tree->header()->setSectionsClickable(true);
     tree->header()->setFixedHeight(32);
-    tree->header()->setMinimumSectionSize(230);
+    tree->header()->setMinimumSectionSize(0);
     tree->applyColumnPolicies();
-    tree->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     tree->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     auto* delegate = new TreeItemDelegate(this, true, true);
