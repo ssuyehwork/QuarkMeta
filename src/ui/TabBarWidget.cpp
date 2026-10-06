@@ -895,7 +895,7 @@ void TabBarWidget::rebuildTabsUi() {
         });
 
         connect(tabItem, &TabItemButton::tabClicked, this, [this](int idx) {
-            setCurrentIndex(idx, true);
+            setCurrentIndex(idx, false);
         });
 
         connect(tabItem, &TabItemButton::customContextMenuRequested, this, [this](int idx, const QPoint& globalPos) {
