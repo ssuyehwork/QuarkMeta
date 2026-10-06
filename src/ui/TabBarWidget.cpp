@@ -478,7 +478,6 @@ void TabBarWidget::saveStateToConfig() {
 
     QString jsonStr = QString::fromUtf8(QJsonDocument(stateObj).toJson(QJsonDocument::Compact));
     AppConfig::instance().setValue("TabBar/SavedState", jsonStr);
-    AppConfig::instance().sync();
 }
 
 bool TabBarWidget::restoreStateFromConfig() {

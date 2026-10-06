@@ -152,7 +152,7 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
         newPane->loadDirectory(path);
         emit m_panel->dualPanePathsChanged(m_panel->currentPath(), path);
         emit newPane->panelActivated(newPane);
-        emit layoutChanged();
+        notifyLayoutChanged();
     });
 
     layout->addWidget(newPane);
@@ -174,7 +174,26 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
 
     updateContainerMinimumWidth();
     refreshActiveIndicators();
-    emit layoutChanged();
+    notifyLayoutChanged();
+}
+
+void ContentPaneSplitManager::notifyLayoutChanged() {
+    if (m_blockLayoutSignals) return;
+
+    if (!m_layoutDebounceTimer) {
+        m_layoutDebounceTimer = new QTimer(this);
+        m_layoutDebounceTimer->setSingleShot(true);
+        m_layoutDebounceTimer->setInterval(0);
+        connect(m_layoutDebounceTimer, &QTimer::timeout, this, [this]() {
+            if (!m_blockLayoutSignals) {
+                emit layoutChanged();
+            }
+        });
+    }
+
+    if (!m_layoutDebounceTimer->isActive()) {
+        m_layoutDebounceTimer->start();
+    }
 }
 
 void ContentPaneSplitManager::updateContainerMinimumWidth() {
@@ -246,7 +265,7 @@ void ContentPaneSplitManager::closePane(ContentPanel* pane) {
 
     updateContainerMinimumWidth();
     refreshActiveIndicators();
-    emit layoutChanged();
+    notifyLayoutChanged();
 }
 
 void ContentPaneSplitManager::closeSecondaryPane() {
@@ -322,6 +341,8 @@ void ContentPaneSplitManager::restoreSplitState(const TabSplitState& state) {
         return;
     }
 
+    m_blockLayoutSignals = true;
+
     // 1. 关闭现有所有副窗格
     while (!m_panes.isEmpty()) {
         closePane(m_panes.last());
@@ -330,7 +351,8 @@ void ContentPaneSplitManager::restoreSplitState(const TabSplitState& state) {
     if (state.panePaths.isEmpty()) {
         updateContainerMinimumWidth();
         refreshActiveIndicators();
-        emit layoutChanged();
+        m_blockLayoutSignals = false;
+        notifyLayoutChanged();
         return;
     }
 
@@ -367,7 +389,9 @@ void ContentPaneSplitManager::restoreSplitState(const TabSplitState& state) {
 
     updateContainerMinimumWidth();
     refreshActiveIndicators();
-    emit layoutChanged();
+
+    m_blockLayoutSignals = false;
+    notifyLayoutChanged();
 }
 
 void ContentPaneSplitManager::setActivePane(bool active) {

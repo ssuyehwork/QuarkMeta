@@ -563,16 +563,15 @@ void PanelMediator::setupConnections() {
 
         if (metaPanel) {
             connect(this, &PanelMediator::activeContentPanelChanged, this, [contentPanel, updateMetaPanelFromPanel](ContentPanel* activePanel) {
-                std::function<void(ContentPanel*)> updateActiveState = [&updateActiveState, activePanel](ContentPanel* node) {
-                    if (!node) return;
-                    node->setActivePane(node == activePanel);
-                    if (node->isSplitMode()) {
-                        for (ContentPanel* pane : node->panes()) {
-                            updateActiveState(pane);
+                ContentPanel* root = contentPanel ? contentPanel->rootPane() : nullptr;
+                if (root) {
+                    root->setActivePane(root == activePanel);
+                    for (ContentPanel* pane : root->panes()) {
+                        if (pane && pane != root) {
+                            pane->setActivePane(pane == activePanel);
                         }
                     }
-                };
-                updateActiveState(contentPanel);
+                }
                 updateMetaPanelFromPanel(activePanel);
             });
         }
