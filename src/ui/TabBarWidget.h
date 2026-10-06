@@ -73,6 +73,8 @@ public:
     void closeOtherTabs(int index);
     void closeRightTabs(int index);
     void duplicateTab(int index);
+    void mergeTab(int sourceIndex, int targetIndex);
+    void splitTab(int tabIndex);
     void restoreLastClosedTab();
     void setCurrentIndex(int index, bool forceNotify = false);
     int currentIndex() const { return m_currentIndex; }

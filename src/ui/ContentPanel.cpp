@@ -53,7 +53,7 @@ ContentPanel::ContentPanel(QWidget* parent) : QFrame(parent) {
     setContextMenuPolicy(Qt::CustomContextMenu);
     setObjectName("EditorContainer");
     setAttribute(Qt::WA_StyledBackground, true);
-    setMinimumWidth(230);
+    setMinimumWidth(kMinPaneWidth);
 
     m_mainLayout = new QVBoxLayout(this);
     m_mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -401,6 +401,8 @@ void ContentPanel::onCustomContextMenuRequested(QAbstractItemView* view, const Q
 }
 
 bool ContentPanel::isSplitMode() const {
+    ContentPanel* root = rootPane();
+    if (root && root != this) return root->isSplitMode();
     return m_splitManager ? m_splitManager->isSplitMode() : false;
 }
 
@@ -417,10 +419,14 @@ ContentPanel* ContentPanel::secondaryContentPanel() const {
 }
 
 QList<ContentPanel*> ContentPanel::panes() const {
+    ContentPanel* root = rootPane();
+    if (root && root != this) return root->panes();
     return m_splitManager ? m_splitManager->panes() : QList<ContentPanel*>{const_cast<ContentPanel*>(this)};
 }
 
 int ContentPanel::paneCount() const {
+    ContentPanel* root = rootPane();
+    if (root && root != this) return root->paneCount();
     return m_splitManager ? m_splitManager->paneCount() : 1;
 }
 
@@ -632,11 +638,9 @@ void ContentPanel::setViewMode(ViewMode mode) {
         }
     }
 
-    // 更新窗格及容器的动态最小宽度约束（列视图锁定 460px 保证 1列数据230px + 1列留白230px）
-    int minW = (mode == ColumnView) ? 460 : 230;
-    setMinimumWidth(minW);
-    if (parentWidget() && parentWidget()->objectName() == "EditorContainer") {
-        parentWidget()->setMinimumWidth(minW);
+    setMinimumWidth(kMinPaneWidth);
+    if (parentWidget()) {
+        parentWidget()->setMinimumWidth(kMinPaneWidth);
     }
 
     // 2. 消费 SelectionState 真理源同步恢复选区

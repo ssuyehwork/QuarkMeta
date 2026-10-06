@@ -72,6 +72,7 @@ public:
     explicit ContentPanel(QWidget* parent = nullptr);
     ~ContentPanel() override = default;
 
+    static constexpr int kMinPaneWidth = 230;
     static constexpr int kMaxPanes = 4;
 
     // Dual-pane state inspection & split controls
@@ -88,7 +89,7 @@ public:
     void requestClosePane();
     void setActivePane(bool active);
 
-    QSize minimumSizeHint() const override { return QSize(m_currentViewMode == ColumnView ? 460 : 230, 100); }
+    QSize minimumSizeHint() const override { return QSize(kMinPaneWidth, 100); }
     void deferredInit() {}
 
     // 1. 状态与配置查询

@@ -275,6 +275,16 @@ void PanelMediator::setupConnections() {
             }
         });
 
+        ContentPanel* rootPanel = contentPanel ? contentPanel->rootPane() : nullptr;
+        if (rootPanel && rootPanel->splitManager()) {
+            connect(rootPanel->splitManager(), &ContentPaneSplitManager::layoutChanged, this, [this, titleBar, rootPanel]() {
+                if (titleBar && titleBar->tabBar()) {
+                    TabSplitState state = rootPanel->splitManager()->exportSplitState();
+                    titleBar->tabBar()->updateSplitTabTitle(state);
+                }
+            });
+        }
+
         if (contentPanel->columnView()) {
             connect(contentPanel->columnView(), &ColumnViewWidget::pathNavigated, this, [filterPanel](const QString& path) {
                 if (filterPanel) {

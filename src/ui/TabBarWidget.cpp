@@ -3,6 +3,8 @@
 #include "StyleLibrary.h"
 #include "ColorPicker.h"
 #include "HoverEventFilter.h"
+#include "ToolTipOverlay.h"
+#include "ContentPanel.h"
 #include "../meta/MetadataManager.h"
 #include "../core/CoreEngine.h"
 #include "../meta/FavoriteDao.h"
@@ -273,6 +275,100 @@ void TabBarWidget::duplicateTab(int index) {
     if (index < 0 || index >= m_tabs.size()) return;
     const auto& src = m_tabs[index];
     addTab(src.title, src.url, true);
+    saveStateToConfig();
+}
+
+static QString cleanNameForTab(const QString& u) {
+    if (u == "computer://" || u.isEmpty()) return "此电脑";
+    if (u == "trash://") return "回收站";
+    QFileInfo fi(QDir::cleanPath(u));
+    QString fn = fi.fileName();
+    return fn.isEmpty() ? u : fn;
+}
+
+void TabBarWidget::mergeTab(int sourceIndex, int targetIndex) {
+    if (sourceIndex < 0 || sourceIndex >= m_tabs.size()) return;
+    if (targetIndex < 0 || targetIndex >= m_tabs.size()) return;
+    if (sourceIndex == targetIndex) return;
+
+    const auto& sourceTab = m_tabs[sourceIndex];
+    const auto& targetTab = m_tabs[targetIndex];
+
+    QStringList sourcePaths = sourceTab.splitState.isSplit && !sourceTab.splitState.panePaths.isEmpty()
+        ? sourceTab.splitState.panePaths
+        : QStringList{sourceTab.url};
+
+    QStringList targetPaths = targetTab.splitState.isSplit && !targetTab.splitState.panePaths.isEmpty()
+        ? targetTab.splitState.panePaths
+        : QStringList{targetTab.url};
+
+    if (sourcePaths.size() + targetPaths.size() > ContentPanel::kMaxPanes) {
+        ToolTipOverlay::instance()->showText(QCursor::pos(), "窗格数量超出上限4窗格，不支持合并", 2000, QColor("#e81123"));
+        return;
+    }
+
+    QStringList mergedPaths = targetPaths + sourcePaths;
+    TabSplitState mergedState;
+    mergedState.isSplit = true;
+    mergedState.orientation = targetTab.splitState.isSplit ? targetTab.splitState.orientation : Qt::Horizontal;
+    mergedState.panePaths = mergedPaths;
+    mergedState.activePaneIndex = targetTab.splitState.activePaneIndex;
+
+    m_tabs[targetIndex].splitState = mergedState;
+    m_tabs[targetIndex].url = mergedPaths.first();
+
+    QStringList formattedNames;
+    for (const QString& p : mergedPaths) {
+        formattedNames.append(cleanNameForTab(p));
+    }
+    m_tabs[targetIndex].title = formattedNames.join(" | ");
+
+    // 移除源标签页（不计入最近关闭历史）
+    m_tabs.removeAt(sourceIndex);
+
+    int newTargetIdx = targetIndex;
+    if (sourceIndex < targetIndex) {
+        newTargetIdx--;
+    }
+
+    if (m_currentIndex == sourceIndex) {
+        m_currentIndex = newTargetIdx;
+    } else if (m_currentIndex > sourceIndex) {
+        m_currentIndex--;
+    }
+
+    rebuildTabsUi();
+    setCurrentIndex(m_currentIndex, true);
+    saveStateToConfig();
+}
+
+void TabBarWidget::splitTab(int tabIndex) {
+    if (tabIndex < 0 || tabIndex >= m_tabs.size()) return;
+
+    TabInfo tab = m_tabs[tabIndex];
+    QStringList paths = tab.splitState.isSplit && !tab.splitState.panePaths.isEmpty()
+        ? tab.splitState.panePaths
+        : QStringList{tab.url};
+
+    if (paths.size() <= 1) return;
+
+    // 将原标签页退化为单窗格标签页（对应首个路径）
+    m_tabs[tabIndex].url = paths.first();
+    m_tabs[tabIndex].title = cleanNameForTab(paths.first());
+    m_tabs[tabIndex].splitState = TabSplitState();
+
+    // 依次将剩余路径拆分为紧随其后的独立单窗格标签页
+    for (int i = 1; i < paths.size(); ++i) {
+        TabInfo newTab;
+        newTab.id = QString::number(QDateTime::currentMSecsSinceEpoch()) + "_" + QString::number(m_tabs.size()) + "_" + QString::number(i);
+        newTab.url = paths[i];
+        newTab.title = cleanNameForTab(paths[i]);
+        newTab.active = false;
+        m_tabs.insert(tabIndex + i, newTab);
+    }
+
+    rebuildTabsUi();
+    setCurrentIndex(m_currentIndex, true);
     saveStateToConfig();
 }
 
@@ -696,6 +792,28 @@ void TabBarWidget::showTabContextMenu(int index, const QPoint& globalPos) {
 
     QAction* actRefresh = menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 16), "重新加载 (F5)");
     QAction* actDuplicate = menu.addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 16), "复制标签页");
+
+    QMenu* mergeMenu = menu.addMenu(UiHelper::getIcon("layout_filled", QColor("#EEEEEE"), 16), "合并到");
+    UiHelper::applyMenuStyle(mergeMenu);
+    for (int i = 0; i < m_tabs.size(); ++i) {
+        if (i != index) {
+            QAction* mergeAct = mergeMenu->addAction(m_tabs[i].title);
+            connect(mergeAct, &QAction::triggered, this, [this, index, i]() {
+                mergeTab(index, i);
+            });
+        }
+    }
+    mergeMenu->setEnabled(m_tabs.size() > 1);
+
+    int paneCount = (index < m_tabs.size() && m_tabs[index].splitState.isSplit && !m_tabs[index].splitState.panePaths.isEmpty())
+        ? m_tabs[index].splitState.panePaths.size()
+        : 1;
+    QAction* actSplit = menu.addAction(UiHelper::getIcon("grid_filled", QColor("#EEEEEE"), 16), "拆分标签页");
+    actSplit->setEnabled(paneCount > 1);
+    connect(actSplit, &QAction::triggered, this, [this, index]() {
+        splitTab(index);
+    });
+
     menu.addSeparator();
     QAction* actClose = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE"), 16), "关闭标签页 (Ctrl+W)");
     QAction* actCloseOthers = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE"), 16), "关闭其他标签页");

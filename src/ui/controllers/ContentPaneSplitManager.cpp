@@ -79,7 +79,7 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
         m_primaryPaneContainer = new QFrame(m_paneSplitter);
         m_primaryPaneContainer->setObjectName("EditorContainer");
         m_primaryPaneContainer->setAttribute(Qt::WA_StyledBackground, true);
-        m_primaryPaneContainer->setMinimumWidth(m_panel->currentViewMode() == ContentPanel::ColumnView ? 460 : 230);
+        m_primaryPaneContainer->setMinimumWidth(ContentPanel::kMinPaneWidth);
         QVBoxLayout* primLayout = new QVBoxLayout(m_primaryPaneContainer);
         primLayout->setContentsMargins(0, 0, 0, 0);
         primLayout->setSpacing(0);
@@ -137,7 +137,7 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
     layout->setSpacing(0);
 
     ContentPanel* newPane = new ContentPanel(container);
-    container->setMinimumWidth(newPane->currentViewMode() == ContentPanel::ColumnView ? 460 : 230);
+    container->setMinimumWidth(ContentPanel::kMinPaneWidth);
     newPane->setIsSecondaryPane(true);
     if (newPane->m_splitManager) {
         newPane->m_splitManager->m_rootPane = m_panel;
@@ -152,6 +152,7 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
         newPane->loadDirectory(path);
         emit m_panel->dualPanePathsChanged(m_panel->currentPath(), path);
         emit newPane->panelActivated(newPane);
+        emit layoutChanged();
     });
 
     layout->addWidget(newPane);
@@ -172,6 +173,7 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
     emit m_panel->secondaryPaneCreated(newPane);
 
     refreshActiveIndicators();
+    emit layoutChanged();
 }
 
 void ContentPaneSplitManager::closePane(ContentPanel* pane) {
@@ -231,6 +233,7 @@ void ContentPaneSplitManager::closePane(ContentPanel* pane) {
     }
 
     refreshActiveIndicators();
+    emit layoutChanged();
 }
 
 void ContentPaneSplitManager::closeSecondaryPane() {
@@ -319,6 +322,7 @@ void ContentPaneSplitManager::restoreSplitState(const TabSplitState& state) {
     }
 
     refreshActiveIndicators();
+    emit layoutChanged();
 }
 
 void ContentPaneSplitManager::setActivePane(bool active) {

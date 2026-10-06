@@ -46,6 +46,10 @@ public:
     void updateDragOverlay(const QPoint& pos);
     void hideDragOverlay();
 
+signals:
+    void activePaneChanged(ContentPanel* panel);
+    void layoutChanged();
+
 private:
     ContentPanel* m_panel = nullptr;
     QSplitter* m_paneSplitter = nullptr;
