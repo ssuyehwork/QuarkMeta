@@ -203,7 +203,7 @@ void FavoritePanel::onFavoriteClicked(const QModelIndex& index) {
         FramelessConfirmDialog dlg("提示", msg, FramelessConfirmDialog::OkCancel, "alert_warning", QColor("#e74c3c"), this);
         if (dlg.exec() == QDialog::Accepted) {
             if (recId > 0) {
-                FavoriteDao::deleteFavorite(recId);
+                FavoriteDao::removeFavoriteById(recId);
             }
             removeFavoriteItem(path);
             saveFavorites();
