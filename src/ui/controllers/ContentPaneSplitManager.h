@@ -45,6 +45,7 @@ public:
     void restoreSplitState(const struct TabSplitState& state);
     void updateDragOverlay(const QPoint& pos);
     void hideDragOverlay();
+    void updateContainerMinimumWidth();
 
 signals:
     void activePaneChanged(ContentPanel* panel);

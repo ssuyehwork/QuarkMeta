@@ -4,7 +4,6 @@
 #include "ColorPicker.h"
 #include "HoverEventFilter.h"
 #include "ToolTipOverlay.h"
-#include "ContentPanel.h"
 #include "../meta/MetadataManager.h"
 #include "../core/CoreEngine.h"
 #include "../meta/FavoriteDao.h"
@@ -278,12 +277,26 @@ void TabBarWidget::duplicateTab(int index) {
     saveStateToConfig();
 }
 
-static QString cleanNameForTab(const QString& u) {
-    if (u == "computer://" || u.isEmpty()) return "此电脑";
-    if (u == "trash://") return "回收站";
-    QFileInfo fi(QDir::cleanPath(u));
+static QString cleanNameForTab(const QString& path) {
+    if (path.isEmpty() || path == "computer://") {
+        return "此电脑";
+    }
+    if (path == "trash://") {
+        return "回收站";
+    }
+    QString cleanP = QDir::cleanPath(path);
+    QFileInfo fi(cleanP);
+    if (fi.isRoot() || cleanP.endsWith(":\\") || cleanP.endsWith(":/") || (cleanP.length() == 2 && cleanP.endsWith(':'))) {
+        return cleanP;
+    }
     QString fn = fi.fileName();
-    return fn.isEmpty() ? u : fn;
+    return fn.isEmpty() ? cleanP : fn;
+}
+
+static int paneCountForTab(const TabInfo& tab) {
+    return (tab.splitState.isSplit && !tab.splitState.panePaths.isEmpty())
+        ? tab.splitState.panePaths.size()
+        : 1;
 }
 
 void TabBarWidget::mergeTab(int sourceIndex, int targetIndex) {
@@ -294,24 +307,20 @@ void TabBarWidget::mergeTab(int sourceIndex, int targetIndex) {
     const auto& sourceTab = m_tabs[sourceIndex];
     const auto& targetTab = m_tabs[targetIndex];
 
-    QStringList sourcePaths = sourceTab.splitState.isSplit && !sourceTab.splitState.panePaths.isEmpty()
+    QStringList sourcePaths = (sourceTab.splitState.isSplit && !sourceTab.splitState.panePaths.isEmpty())
         ? sourceTab.splitState.panePaths
         : QStringList{sourceTab.url};
 
-    QStringList targetPaths = targetTab.splitState.isSplit && !targetTab.splitState.panePaths.isEmpty()
+    QStringList targetPaths = (targetTab.splitState.isSplit && !targetTab.splitState.panePaths.isEmpty())
         ? targetTab.splitState.panePaths
         : QStringList{targetTab.url};
-
-    if (sourcePaths.size() + targetPaths.size() > ContentPanel::kMaxPanes) {
-        ToolTipOverlay::instance()->showText(QCursor::pos(), "窗格数量超出上限4窗格，不支持合并", 2000, QColor("#e81123"));
-        return;
-    }
 
     QStringList mergedPaths = targetPaths + sourcePaths;
     TabSplitState mergedState;
     mergedState.isSplit = true;
     mergedState.orientation = targetTab.splitState.isSplit ? targetTab.splitState.orientation : Qt::Horizontal;
     mergedState.panePaths = mergedPaths;
+    mergedState.primaryIndex = 0;
     mergedState.activePaneIndex = targetTab.splitState.activePaneIndex;
 
     m_tabs[targetIndex].splitState = mergedState;
@@ -331,14 +340,8 @@ void TabBarWidget::mergeTab(int sourceIndex, int targetIndex) {
         newTargetIdx--;
     }
 
-    if (m_currentIndex == sourceIndex) {
-        m_currentIndex = newTargetIdx;
-    } else if (m_currentIndex > sourceIndex) {
-        m_currentIndex--;
-    }
-
     rebuildTabsUi();
-    setCurrentIndex(m_currentIndex, true);
+    setCurrentIndex(newTargetIdx, true);
     saveStateToConfig();
 }
 
@@ -346,11 +349,14 @@ void TabBarWidget::splitTab(int tabIndex) {
     if (tabIndex < 0 || tabIndex >= m_tabs.size()) return;
 
     TabInfo tab = m_tabs[tabIndex];
-    QStringList paths = tab.splitState.isSplit && !tab.splitState.panePaths.isEmpty()
+    QStringList paths = (tab.splitState.isSplit && !tab.splitState.panePaths.isEmpty())
         ? tab.splitState.panePaths
         : QStringList{tab.url};
 
     if (paths.size() <= 1) return;
+
+    int newCount = paths.size();
+    int addedCount = newCount - 1;
 
     // 将原标签页退化为单窗格标签页（对应首个路径）
     m_tabs[tabIndex].url = paths.first();
@@ -367,8 +373,16 @@ void TabBarWidget::splitTab(int tabIndex) {
         m_tabs.insert(tabIndex + i, newTab);
     }
 
+    if (m_currentIndex > tabIndex) {
+        m_currentIndex += addedCount;
+    }
+
+    for (int i = 0; i < m_tabs.size(); ++i) {
+        m_tabs[i].active = (i == m_currentIndex);
+    }
+
     rebuildTabsUi();
-    setCurrentIndex(m_currentIndex, true);
+    emit currentTabChanged(m_currentIndex, m_tabs[m_currentIndex].url);
     saveStateToConfig();
 }
 
@@ -400,23 +414,17 @@ void TabBarWidget::updateSplitTabTitle(const TabSplitState& state) {
 
     m_tabs[m_currentIndex].splitState = state;
 
-    auto cleanName = [](const QString& u) -> QString {
-        if (u == "computer://" || u.isEmpty()) return "此电脑";
-        QFileInfo fi(QDir::cleanPath(u));
-        QString fn = fi.fileName();
-        return fn.isEmpty() ? u : fn;
-    };
-
     if (state.isSplit && !state.panePaths.isEmpty()) {
         QStringList nameList;
         for (const QString& p : state.panePaths) {
-            nameList.append(cleanName(p)); // 保持完整映射，哪怕路径相同也重复保留，绝对不进行去重合并
+            nameList.append(cleanNameForTab(p));
         }
         QString mergedTitle = nameList.join(" | ");
         m_tabs[m_currentIndex].title = mergedTitle;
-        m_tabs[m_currentIndex].url = state.panePaths.first();
+        int primIdx = qBound(0, state.primaryIndex, state.panePaths.size() - 1);
+        m_tabs[m_currentIndex].url = state.panePaths[primIdx];
     } else if (!state.panePaths.isEmpty()) {
-        m_tabs[m_currentIndex].title = cleanName(state.panePaths.first());
+        m_tabs[m_currentIndex].title = cleanNameForTab(state.panePaths.first());
         m_tabs[m_currentIndex].url = state.panePaths.first();
     }
 
@@ -456,6 +464,7 @@ void TabBarWidget::saveStateToConfig() {
             pathsArray.append(p);
         }
         splitObj["panePaths"] = pathsArray;
+        splitObj["primaryIndex"] = tab.splitState.primaryIndex;
         splitObj["activePaneIndex"] = tab.splitState.activePaneIndex;
         splitObj["isSplit"] = tab.splitState.isSplit;
         obj["splitState"] = splitObj;
@@ -507,6 +516,7 @@ bool TabBarWidget::restoreStateFromConfig() {
         if (obj.contains("splitState") && obj["splitState"].isObject()) {
             QJsonObject splitObj = obj["splitState"].toObject();
             info.splitState.orientation = static_cast<Qt::Orientation>(splitObj["orientation"].toInt(static_cast<int>(Qt::Horizontal)));
+            info.splitState.primaryIndex = splitObj["primaryIndex"].toInt(0);
             info.splitState.activePaneIndex = splitObj["activePaneIndex"].toInt(0);
             info.splitState.isSplit = splitObj["isSplit"].toBool(false);
             QJsonArray pathsArray = splitObj["panePaths"].toArray();
@@ -622,33 +632,6 @@ void TabBarWidget::dropEvent(QDropEvent* event) {
     QWidget::dropEvent(event);
 }
 
-void TabBarWidget::updateDualPaneTabTitle(const QString& title1, const QString& url1, const QString& title2, const QString& url2) {
-    if (m_currentIndex < 0 || m_currentIndex >= m_tabs.size()) return;
-
-    auto cleanName = [](const QString& t, const QString& u) -> QString {
-        if (u == "computer://" || u.isEmpty()) return "此电脑";
-        if (t.contains("/") || t.contains("\\")) {
-            QString cleanPath = QDir::cleanPath(u);
-            QFileInfo fi(cleanPath);
-            QString fn = fi.fileName();
-            return fn.isEmpty() ? cleanPath : fn;
-        }
-        return t.isEmpty() ? "此电脑" : t;
-    };
-
-    QString name1 = cleanName(title1, url1);
-    QString name2 = cleanName(title2, url2);
-    QString mergedTitle = name1 + " | " + name2;
-
-    m_tabs[m_currentIndex].title = mergedTitle;
-    m_tabs[m_currentIndex].url = url1;
-
-    if (m_currentIndex < m_tabWidgets.size()) {
-        auto tabBtn = m_tabWidgets[m_currentIndex];
-        tabBtn->setTabTitle(mergedTitle);
-    }
-    saveStateToConfig();
-}
 
 void TabBarWidget::updateCurrentTabTitle(const QString& title, const QString& url) {
     if (m_currentIndex < 0 || m_currentIndex >= m_tabs.size()) return;
@@ -799,19 +782,17 @@ void TabBarWidget::showTabContextMenu(int index, const QPoint& globalPos) {
         if (i != index) {
             QAction* mergeAct = mergeMenu->addAction(m_tabs[i].title);
             connect(mergeAct, &QAction::triggered, this, [this, index, i]() {
-                mergeTab(index, i);
+                emit mergeRequested(index, i);
             });
         }
     }
     mergeMenu->setEnabled(m_tabs.size() > 1);
 
-    int paneCount = (index < m_tabs.size() && m_tabs[index].splitState.isSplit && !m_tabs[index].splitState.panePaths.isEmpty())
-        ? m_tabs[index].splitState.panePaths.size()
-        : 1;
+    int paneCount = (index >= 0 && index < m_tabs.size()) ? paneCountForTab(m_tabs[index]) : 1;
     QAction* actSplit = menu.addAction(UiHelper::getIcon("grid_filled", QColor("#EEEEEE"), 16), "拆分标签页");
     actSplit->setEnabled(paneCount > 1);
     connect(actSplit, &QAction::triggered, this, [this, index]() {
-        splitTab(index);
+        emit splitRequested(index);
     });
 
     menu.addSeparator();

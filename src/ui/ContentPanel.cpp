@@ -484,8 +484,14 @@ void ContentPanel::dragEnterEvent(QDragEnterEvent* event) {
 void ContentPanel::dragMoveEvent(QDragMoveEvent* event) {
     if (event->mimeData() && event->mimeData()->hasFormat("application/x-quarkmeta-taburl")) {
         if (paneCount() < kMaxPanes) {
-            event->acceptProposedAction();
-            updateDragOverlay(event->position().toPoint());
+            ContentPaneSplitManager::SplitEvaluationResult eval = ContentPaneSplitManager::evaluateSplitDrop(event->position().toPoint(), size());
+            if (eval.isValid) {
+                updateDragOverlay(event->position().toPoint());
+                event->acceptProposedAction();
+            } else {
+                hideDragOverlay();
+                event->ignore();
+            }
             return;
         }
     }
@@ -521,9 +527,20 @@ void ContentPanel::dropEvent(QDropEvent* event) {
     QFrame::dropEvent(event);
 }
 
+void ContentPanel::setCurrentPath(const QString& path) {
+    m_currentPath = path;
+    if (m_model) {
+        m_model->setCurrentPath(path);
+    }
+    ContentPanel* root = rootPane();
+    if (root && root->splitManager()) {
+        emit root->splitManager()->layoutChanged();
+    }
+}
+
 void ContentPanel::loadDirectory(const QString& path, bool recursive) {
     if (m_currentViewMode == ColumnView) {
-        m_currentPath = path;
+        setCurrentPath(path);
         m_isRecursive = recursive;
         if (m_columnView) {
             if (m_columnView->containsPath(path)) {
@@ -639,9 +656,6 @@ void ContentPanel::setViewMode(ViewMode mode) {
     }
 
     setMinimumWidth(kMinPaneWidth);
-    if (parentWidget()) {
-        parentWidget()->setMinimumWidth(kMinPaneWidth);
-    }
 
     // 2. 消费 SelectionState 真理源同步恢复选区
     restoreSelections();

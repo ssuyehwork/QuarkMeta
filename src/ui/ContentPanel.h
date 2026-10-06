@@ -108,12 +108,7 @@ public:
     const FilterState& currentFilter() const { return m_currentFilter; }
 
     // 2. 状态与配置高阶方法
-    void setCurrentPath(const QString& path) {
-        m_currentPath = path;
-        if (m_model) {
-            m_model->setCurrentPath(path);
-        }
-    }
+    void setCurrentPath(const QString& path);
     void setIsRecursive(bool recursive);
     void setLoading(bool loading) { m_isLoading = loading; }
     void ensureSourceModelIsDiskModel();
