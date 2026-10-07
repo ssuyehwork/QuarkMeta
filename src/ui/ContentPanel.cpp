@@ -1066,7 +1066,7 @@ void ContentPanel::wheelEvent(QWheelEvent* event) {
         int iconDrawHeight = qRound(m_zoomLevel * 0.82);
         QSize iconSize(iconDrawWidth, iconDrawHeight);
 
-        LOG_INFO(QString("[ZoomDebug] Ctrl+Wheel Zoom -> oldZoom=%1, newZoom=%2, cardContainerSize=(%3x%4), iconDrawSize=(%5x%6)")
+        Logger::log(QString("[ZoomDebug] Ctrl+Wheel Zoom -> oldZoom=%1, newZoom=%2, cardContainerSize=(%3x%4), iconDrawSize=(%5x%6)")
                  .arg(oldZoom).arg(m_zoomLevel)
                  .arg(cardSize.width()).arg(cardSize.height())
                  .arg(iconSize.width()).arg(iconSize.height()));
