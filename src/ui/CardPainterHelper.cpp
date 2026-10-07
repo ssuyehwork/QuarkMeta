@@ -203,35 +203,16 @@ void CardPainterHelper::drawCategoryBackground(QPainter* painter, const QRect& c
     painter->restore();
 }
 
-int CardPainterHelper::drawInlinePinIcon(QPainter* painter, const QRect& textRect,
-                                        const QString& nameText, const QFontMetrics& fontMetrics,
-                                        bool isPinned, bool rightAlign) {
+int CardPainterHelper::drawInlinePinIcon(QPainter* painter, int rightX, int topY, int height, bool isPinned) {
     if (!isPinned) return 0;
 
-    const int iconSize = 16;
-    const int spacing = 4;
-    const int totalReserved = iconSize + spacing;
+    int iconX = rightX - kPinIconSize;
+    int iconY = topY + (height - kPinIconSize) / 2;
+    QRect iconRect(iconX, iconY, kPinIconSize, kPinIconSize);
 
-    int iconX;
-    if (rightAlign) {
-        // 右对齐模式（分栏视图）：置顶图标右边缘紧贴 textRect.right()，使得与右侧星级图标间隔精准为 0px
-        iconX = textRect.right() - iconSize;
-    } else {
-        // 列表视图：短文本紧跟文字末尾，长文本固定在右侧
-        int textWidth = fontMetrics.horizontalAdvance(nameText);
-        if (textWidth + totalReserved <= textRect.width()) {
-            iconX = textRect.left() + textWidth + spacing;
-        } else {
-            iconX = textRect.right() - iconSize;
-        }
-    }
+    UiHelper::getIcon("pin_vertical", QColor("#FF551C"), kPinIconSize).paint(painter, iconRect);
 
-    int iconY = textRect.top() + (textRect.height() - iconSize) / 2;
-    QRect iconRect(iconX, iconY, iconSize, iconSize);
-
-    UiHelper::getIcon("pin_vertical", QColor("#FF551C"), iconSize).paint(painter, iconRect);
-
-    return totalReserved;
+    return kPinIconSize;
 }
 
 } // namespace QuarkMeta

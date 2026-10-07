@@ -226,9 +226,11 @@ public:
             painter->setFont(option.font);
 
             bool isPinned = index.data(PinnedRole).toBool();
-            int pinReservedW = CardPainterHelper::drawInlinePinIcon(painter, textRect, name, option.fontMetrics, isPinned);
+            int pinRightX = textRect.right() - CardPainterHelper::kPinRightPadding;
+            int pinW = CardPainterHelper::drawInlinePinIcon(painter, pinRightX, textRect.top(), textRect.height(), isPinned);
 
-            QRect actualTextRect = textRect.adjusted(0, 0, -pinReservedW, 0);
+            int reservedW = (pinW > 0) ? (pinW + CardPainterHelper::kPinToRatingGap) : 0;
+            QRect actualTextRect = textRect.adjusted(0, 0, -reservedW, 0);
             QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideMiddle, actualTextRect.width() - 10);
             painter->drawText(actualTextRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
 
