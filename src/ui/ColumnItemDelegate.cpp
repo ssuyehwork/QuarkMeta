@@ -133,7 +133,7 @@ void ColumnItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& op
     QRect textRect = option.rect.adjusted(32, 0, -rightMargin, 0);
 
     bool isPinned = index.data(PinnedRole).toBool();
-    int pinReservedW = CardPainterHelper::drawInlinePinIcon(painter, textRect, name, option.fontMetrics, isPinned);
+    int pinReservedW = CardPainterHelper::drawInlinePinIcon(painter, textRect, name, option.fontMetrics, isPinned, true);
 
     QRect actualTextRect = textRect.adjusted(0, 0, -pinReservedW, 0);
 

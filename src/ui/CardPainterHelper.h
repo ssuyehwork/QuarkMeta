@@ -41,7 +41,7 @@ public:
     // 8. 绘制名称文本区域内联置顶图标
     static int drawInlinePinIcon(QPainter* painter, const QRect& textRect,
                                  const QString& nameText, const QFontMetrics& fontMetrics,
-                                 bool isPinned);
+                                 bool isPinned, bool rightAlign = false);
 };
 
 } // namespace QuarkMeta

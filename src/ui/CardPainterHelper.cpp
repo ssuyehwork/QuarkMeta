@@ -205,20 +205,25 @@ void CardPainterHelper::drawCategoryBackground(QPainter* painter, const QRect& c
 
 int CardPainterHelper::drawInlinePinIcon(QPainter* painter, const QRect& textRect,
                                         const QString& nameText, const QFontMetrics& fontMetrics,
-                                        bool isPinned) {
+                                        bool isPinned, bool rightAlign) {
     if (!isPinned) return 0;
 
     const int iconSize = 16;
     const int spacing = 4;
     const int totalReserved = iconSize + spacing;
 
-    int textWidth = fontMetrics.horizontalAdvance(nameText);
     int iconX;
-
-    if (textWidth + totalReserved <= textRect.width()) {
-        iconX = textRect.left() + textWidth + spacing;
-    } else {
+    if (rightAlign) {
+        // 右对齐模式（分栏视图）：置顶图标右边缘紧贴 textRect.right()，使得与右侧星级图标间隔精准为 0px
         iconX = textRect.right() - iconSize;
+    } else {
+        // 列表视图：短文本紧跟文字末尾，长文本固定在右侧
+        int textWidth = fontMetrics.horizontalAdvance(nameText);
+        if (textWidth + totalReserved <= textRect.width()) {
+            iconX = textRect.left() + textWidth + spacing;
+        } else {
+            iconX = textRect.right() - iconSize;
+        }
     }
 
     int iconY = textRect.top() + (textRect.height() - iconSize) / 2;
