@@ -3,6 +3,7 @@
 #include <QPainterPath>
 #include <QFont>
 #include <QtMath>
+#include <algorithm>
 
 namespace QuarkMeta {
 
@@ -40,11 +41,11 @@ void CardPainterHelper::drawCardCover(QPainter* painter, const QRect& cardRect, 
         painter->drawPixmap(targetRect, thumb);
     } else if (!defaultIcon.isNull()) {
         int iconSize = qMin(cardRect.width(), cardRect.height()) * 0.65;
+        if (cardRect.width() > 70 || cardRect.height() > 69) {
+            iconSize = std::min(iconSize, 52);
+        }
 
-        QList<QSize> availSizes = defaultIcon.availableSizes();
-        QSize nativeSize = availSizes.isEmpty() ? QSize(32, 32) : availSizes.last();
-        QPixmap iconPixmap = defaultIcon.pixmap(nativeSize);
-
+        QPixmap iconPixmap = defaultIcon.pixmap(52, 52);
         if (iconPixmap.isNull()) {
             iconPixmap = defaultIcon.pixmap(iconSize, iconSize);
         }
