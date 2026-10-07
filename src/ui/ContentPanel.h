@@ -82,6 +82,7 @@ public:
      * @note 无论在主窗格还是副窗格上调用，均返回整个窗格组的统一分屏状态。禁止调用方对此类方法执行递归调用！
      */
     bool isSplitMode() const;
+    Qt::Orientation splitOrientation() const;
     bool isSecondaryPane() const;
     void setIsSecondaryPane(bool secondary);
     ContentPanel* secondaryContentPanel() const;

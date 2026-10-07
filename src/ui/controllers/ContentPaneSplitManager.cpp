@@ -28,6 +28,13 @@ bool ContentPaneSplitManager::isSplitMode() const {
     return m_isSplit;
 }
 
+Qt::Orientation ContentPaneSplitManager::splitOrientation() const {
+    if (rootPane() != m_panel) {
+        return rootPane()->m_splitManager->splitOrientation();
+    }
+    return m_splitOrientation;
+}
+
 ContentPaneSplitManager::SplitEvaluationResult ContentPaneSplitManager::evaluateSplitDrop(const QPoint& pos, const QSize& refSize) {
     SplitEvaluationResult res;
     int w = refSize.width();

@@ -422,6 +422,12 @@ bool ContentPanel::isSplitMode() const {
     return m_splitManager ? m_splitManager->isSplitMode() : false;
 }
 
+Qt::Orientation ContentPanel::splitOrientation() const {
+    ContentPanel* root = rootPane();
+    if (root && root != this) return root->splitOrientation();
+    return m_splitManager ? m_splitManager->splitOrientation() : Qt::Horizontal;
+}
+
 bool ContentPanel::isSecondaryPane() const {
     return m_splitManager ? m_splitManager->isSecondaryPane() : false;
 }

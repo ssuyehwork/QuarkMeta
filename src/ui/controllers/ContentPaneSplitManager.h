@@ -18,6 +18,7 @@ public:
     ~ContentPaneSplitManager() override = default;
 
     bool isSplitMode() const;
+    Qt::Orientation splitOrientation() const;
     bool isSecondaryPane() const { return m_isSecondaryPane; }
     void setIsSecondaryPane(bool secondary) { m_isSecondaryPane = secondary; }
 

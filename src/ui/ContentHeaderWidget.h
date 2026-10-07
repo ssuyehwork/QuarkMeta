@@ -43,6 +43,8 @@ signals:
 
 private:
     void initUi();
+    class ContentPanel* owningPanel() const;
+    bool evaluateOrientationToggle(const QPoint& currentPos, Qt::Orientation& targetOri) const;
 
     QHBoxLayout* m_layout = nullptr;
     QLabel* m_iconLabel = nullptr;
