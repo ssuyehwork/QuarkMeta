@@ -2,6 +2,7 @@
 #include "../ContentPanel.h"
 #include "../CardLayoutEngine.h"
 #include "../RatingBarLayout.h"
+#include "../Logger.h"
 #include "../ToolTipOverlay.h"
 #include "../ShellIconManager.h"
 #include "../UiHelper.h"
@@ -197,6 +198,30 @@ bool ContentKeyHandler::handleWheel(QObject* obj, QEvent* event) {
         int deltaY = wEvent->angleDelta().y();
         int newZoom = m_panel->zoomLevel() + (deltaY > 0 ? 8 : -8);
         m_panel->setZoomLevel(newZoom);
+
+        int zoomLevel = m_panel->zoomLevel();
+        int cellW = zoomLevel + CardLayoutEngine::totalPaddingHorizontal();
+        int cellH = zoomLevel + CardLayoutEngine::extraHeight();
+        CardLayout layout = CardLayoutEngine::calculate(QRect(0, 0, cellW, cellH), zoomLevel);
+
+        ContentPanel::ViewMode mode = m_panel->currentViewMode();
+        QString modeName = "Unknown";
+        if (mode == ContentPanel::GridView) modeName = "GridView";
+        else if (mode == ContentPanel::JustifiedViewMode) modeName = "JustifiedViewMode";
+        else if (mode == ContentPanel::ListView) modeName = "ListView";
+        else if (mode == ContentPanel::ColumnView) modeName = "ColumnView";
+
+        QString msg = QString("[Zoom] Ctrl+Wheel trigger - mode: %1, zoomLevel: %2, cellWidth: %3, cellHeight: %4, coverRect: (%5x%6)")
+                      .arg(modeName)
+                      .arg(zoomLevel)
+                      .arg(cellW)
+                      .arg(cellH)
+                      .arg(layout.coverRect.width())
+                      .arg(layout.coverRect.height());
+
+        qDebug().noquote() << msg;
+        Logger::log(msg);
+
         wEvent->accept();
         return true;
     }
