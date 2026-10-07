@@ -21,6 +21,7 @@
 #include "CardLayoutEngine.h"
 #include "UiHelper.h"
 #include "ToolTipOverlay.h"
+#include "Logger.h"
 
 #include "../core/AppConfig.h"
 #include "../core/CoreEngine.h"
@@ -1054,7 +1055,22 @@ ContentPanel::DataSourceType ContentPanel::dataSourceType() const {
 
 void ContentPanel::wheelEvent(QWheelEvent* event) {
     if (event->modifiers() & Qt::ControlModifier) {
+        int oldZoom = m_zoomLevel;
         setZoomLevel(m_zoomLevel + (event->angleDelta().y() > 0 ? 8 : -8));
+
+        int itemWidth = m_zoomLevel + CardLayoutEngine::totalPaddingHorizontal();
+        int itemHeight = m_zoomLevel + CardLayoutEngine::extraHeight();
+        QSize cardSize(itemWidth, itemHeight);
+
+        int iconDrawWidth = qRound(m_zoomLevel * 0.82);
+        int iconDrawHeight = qRound(m_zoomLevel * 0.82);
+        QSize iconSize(iconDrawWidth, iconDrawHeight);
+
+        LOG_INFO(QString("[ZoomDebug] Ctrl+Wheel Zoom -> oldZoom=%1, newZoom=%2, cardContainerSize=(%3x%4), iconDrawSize=(%5x%6)")
+                 .arg(oldZoom).arg(m_zoomLevel)
+                 .arg(cardSize.width()).arg(cardSize.height())
+                 .arg(iconSize.width()).arg(iconSize.height()));
+
         event->accept();
         return;
     }
