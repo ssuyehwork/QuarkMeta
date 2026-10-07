@@ -125,17 +125,23 @@ void ColumnItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& op
         }
     }
 
-    // 4. 绘制文字与右侧元数据 (动态调整星级与箭头宽度)
+    // 4. 绘制文字与右侧元数据 (动态调整星级与箭头宽度，并排布内联置顶图标)
     int rightMargin = isDir ? 22 : 6;
     if (rating > 0) rightMargin += 32;
 
     QString name = index.data(Qt::DisplayRole).toString();
     QRect textRect = option.rect.adjusted(32, 0, -rightMargin, 0);
+
+    bool isPinned = index.data(PinnedRole).toBool();
+    int pinReservedW = CardPainterHelper::drawInlinePinIcon(painter, textRect, name, option.fontMetrics, isPinned);
+
+    QRect actualTextRect = textRect.adjusted(0, 0, -pinReservedW, 0);
+
     QColor textColor = selected ? QColor("#FFFFFF") : QColor("#EEEEEE");
     painter->setPen(textColor);
     painter->setFont(option.font);
-    QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideRight, textRect.width());
-    painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
+    QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideRight, actualTextRect.width());
+    painter->drawText(actualTextRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
 
     // 5. 绘制星级标示 (若 rating > 0)
     if (rating > 0) {

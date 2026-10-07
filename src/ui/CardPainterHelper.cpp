@@ -203,4 +203,30 @@ void CardPainterHelper::drawCategoryBackground(QPainter* painter, const QRect& c
     painter->restore();
 }
 
+int CardPainterHelper::drawInlinePinIcon(QPainter* painter, const QRect& textRect,
+                                        const QString& nameText, const QFontMetrics& fontMetrics,
+                                        bool isPinned) {
+    if (!isPinned) return 0;
+
+    const int iconSize = 16;
+    const int spacing = 4;
+    const int totalReserved = iconSize + spacing;
+
+    int textWidth = fontMetrics.horizontalAdvance(nameText);
+    int iconX;
+
+    if (textWidth + totalReserved <= textRect.width()) {
+        iconX = textRect.left() + textWidth + spacing;
+    } else {
+        iconX = textRect.right() - iconSize;
+    }
+
+    int iconY = textRect.top() + (textRect.height() - iconSize) / 2;
+    QRect iconRect(iconX, iconY, iconSize, iconSize);
+
+    UiHelper::getIcon("pin_vertical", QColor("#FF551C"), iconSize).paint(painter, iconRect);
+
+    return totalReserved;
+}
+
 } // namespace QuarkMeta

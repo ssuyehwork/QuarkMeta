@@ -6,6 +6,7 @@
 #include <QIcon>
 #include <QString>
 #include <QColor>
+#include <QFontMetrics>
 
 namespace QuarkMeta {
 
@@ -36,6 +37,11 @@ public:
 
     // 7. 绘制分类侧边栏节点的高亮/彩色背景底色
     static void drawCategoryBackground(QPainter* painter, const QRect& contentRect, bool isSelected, bool isHover, const QString& colorHex);
+
+    // 8. 绘制名称文本区域内联置顶图标
+    static int drawInlinePinIcon(QPainter* painter, const QRect& textRect,
+                                 const QString& nameText, const QFontMetrics& fontMetrics,
+                                 bool isPinned);
 };
 
 } // namespace QuarkMeta
