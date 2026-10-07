@@ -125,9 +125,9 @@ void ColumnItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& op
         }
     }
 
-    // 4. 绘制文字与右侧元数据 (动态调整星级与箭头宽度，并排布内联置顶图标)
+    // 4. 绘制文字与右侧元数据 (动态调整星级与箭头宽度，预留 24px 供星级使用，使置顶图标与星级图标间距为 0px)
     int rightMargin = isDir ? 22 : 6;
-    if (rating > 0) rightMargin += 32;
+    if (rating > 0) rightMargin += 24;
 
     QString name = index.data(Qt::DisplayRole).toString();
     QRect textRect = option.rect.adjusted(32, 0, -rightMargin, 0);
