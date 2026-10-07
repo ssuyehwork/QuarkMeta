@@ -28,6 +28,9 @@ public:
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
 signals:
     void filterStateChanged(const FilterState& state);
@@ -37,12 +40,6 @@ signals:
     void orientationDragStarted(Qt::Orientation target);
     void orientationDragUpdated(const QPoint& globalPos);
     void orientationDragEnded(bool apply);
-
-protected:
-    bool eventFilter(QObject* watched, QEvent* event) override;
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseMoveEvent(QMouseEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
     void initUi();

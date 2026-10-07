@@ -8,6 +8,7 @@
 #include <QMouseEvent>
 #include <QApplication>
 #include "ContentPanel.h"
+#include "TabBarWidget.h"
 #include "controllers/ContentPaneSplitManager.h"
 
 namespace QuarkMeta {
