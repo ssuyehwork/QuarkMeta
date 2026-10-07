@@ -73,6 +73,7 @@ public:
     ~ContentPanel() override = default;
 
     static constexpr int kMinPaneWidth = 230;
+    static constexpr int kMinPaneHeight = 230;
     static constexpr int kMaxPanes = 4;
 
     // Dual-pane state inspection & split controls

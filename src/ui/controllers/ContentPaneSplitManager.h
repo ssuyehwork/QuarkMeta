@@ -47,9 +47,12 @@ public:
     void refreshActiveIndicators();
 
     struct TabSplitState exportSplitState() const;
+    void setSplitOrientation(Qt::Orientation target);
     void restoreSplitState(const struct TabSplitState& state);
     void updateDragOverlay(const QPoint& pos);
     void hideDragOverlay();
+    void updateOrientationPreviewOverlay(Qt::Orientation target);
+    void hideOrientationPreviewOverlay();
     void updateContainerMinimumWidth();
     void notifyLayoutChanged();
 
@@ -68,6 +71,7 @@ private:
     ContentPanel* m_rootPane = nullptr;
     ContentPanel* m_activePaneForSplit = nullptr;
     QWidget* m_dragOverlayWidget = nullptr;
+    QWidget* m_orientationPreviewWidget = nullptr;
     Qt::Orientation m_splitOrientation = Qt::Horizontal;
     bool m_isSplit = false;
     bool m_isSecondaryPane = false;

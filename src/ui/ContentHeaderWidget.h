@@ -33,6 +33,16 @@ signals:
     void filterStateChanged(const FilterState& state);
     void recursiveToggled(bool recursive);
     void splitViewRequested();
+    void orientationToggleRequested(Qt::Orientation target);
+    void orientationDragStarted(Qt::Orientation target);
+    void orientationDragUpdated(const QPoint& globalPos);
+    void orientationDragEnded(bool apply);
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
     void initUi();
@@ -46,6 +56,8 @@ private:
     QPushButton* m_btnLayers = nullptr;
 
     FilterState m_filterState;
+    QPoint m_dragStartPos;
+    bool m_isDraggingHeader = false;
 };
 
 } // namespace QuarkMeta
