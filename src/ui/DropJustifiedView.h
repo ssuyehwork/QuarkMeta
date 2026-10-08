@@ -13,7 +13,7 @@ public:
     explicit DropJustifiedView(QWidget* parent = nullptr);
 
 signals:
-    void pathsDropped(const QStringList& paths, const QModelIndex& targetIndex);
+    void pathsDropped(const QStringList& paths, const QModelIndex& targetIndex, Qt::DropAction action);
 
 protected:
     void startDrag(Qt::DropActions supportedActions) override;

@@ -65,7 +65,7 @@ bool ContentFileOpsHandler::resolvePasteDestination() {
     return true;
 }
 
-void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QModelIndex& targetIndex, const QString& targetDirOverride) {
+void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QModelIndex& targetIndex, const QString& targetDirOverride, Qt::DropAction action) {
     if (!m_panel || paths.isEmpty()) return;
     
     QString baseDir = !targetDirOverride.isEmpty() ? targetDirOverride : m_panel->currentPath();
@@ -82,9 +82,11 @@ void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QMode
 
     qDebug() << "[ColumnView DragDrop Debug] Sources:" << paths 
              << "| TargetDirOverride:" << targetDirOverride 
-             << "| Final DestDir:" << destDir;
+             << "| Final DestDir:" << destDir
+             << "| DropAction:" << action;
 
-    bool isMove = !(QApplication::keyboardModifiers() & Qt::ControlModifier);
+    bool isCopyOperation = (action == Qt::CopyAction) || (QApplication::keyboardModifiers() & Qt::ControlModifier);
+    bool isMove = !isCopyOperation;
 
     if (!destDir.isEmpty() && destDir != "computer://") {
         NavigationHistoryService::recordRecentVisitedFolder(QDir::toNativeSeparators(destDir).toStdWString());
@@ -96,7 +98,6 @@ void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QMode
     }
 
     // 0. 原地/同目录拖放保护与 Ctrl+Drag 副本创建门禁
-    bool isCtrlPressed = (QApplication::keyboardModifiers() & Qt::ControlModifier);
     QStringList externalPaths;
     bool isDuplicateCopy = false;
 
@@ -105,11 +106,11 @@ void ContentFileOpsHandler::onPathsDropped(const QStringList& paths, const QMode
         bool isSameDirectory = (QDir::cleanPath(srcInfo.absolutePath()) == QDir::cleanPath(QDir(destDir).absolutePath()));
 
         if (isSameDirectory) {
-            if (isCtrlPressed) {
-                // 判断 Ctrl+Drag 拖拽物理距离（使用全局坐标），防止 Ctrl+Click 多选误触（门禁设为 50px）
+            if (isCopyOperation) {
+                // 判断 Ctrl+Drag 拖拽物理距离（全物理坐标对比），防止 Ctrl+Click 多选误触（门禁设为 50px）
                 QPoint dragStartPos = ViewDragDropHelper::lastDragStartPos();
                 QPoint dropPos = QCursor::pos();
-                int dragDistance = (dropPos - dragStartPos).manhattanLength();
+                int dragDistance = (dragStartPos.isNull()) ? 100 : (dropPos - dragStartPos).manhattanLength();
 
                 if (dragDistance >= 50) {
                     externalPaths.append(src);
