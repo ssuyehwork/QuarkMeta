@@ -1,5 +1,7 @@
 #include "FileTypeGroup.h"
+#include "UiHelper.h"
 #include <QHBoxLayout>
+#include <QAction>
 
 namespace QuarkMeta {
 
@@ -20,7 +22,12 @@ QLineEdit* FileTypeGroup::populate(QObject* owner,
     lType->setSpacing(0);
 
     QLineEdit* editType = new QLineEdit(wType);
-    editType->setClearButtonEnabled(true);
+    QAction* clearAct = editType->addAction(UiHelper::getIcon("close", QColor("#888888")), QLineEdit::TrailingPosition);
+    clearAct->setVisible(!currentState.typeFilterText.isEmpty());
+    QObject::connect(clearAct, &QAction::triggered, editType, &QLineEdit::clear);
+    QObject::connect(editType, &QLineEdit::textChanged, owner, [clearAct](const QString& text) {
+        clearAct->setVisible(!text.isEmpty());
+    });
     editType->setPlaceholderText("例： png / 文件夹...");
     editType->setText(currentState.typeFilterText);
     editType->setObjectName("FilterSearchEdit");

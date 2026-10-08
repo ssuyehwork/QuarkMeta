@@ -1,4 +1,5 @@
 #include "FileSizeGroup.h"
+#include "UiHelper.h"
 #include <QHBoxLayout>
 #include <QLineEdit>
 #include <QComboBox>
@@ -18,9 +19,20 @@ void FileSizeGroup::populate(QWidget* parentWidget,
     hs->setSpacing(8);
     
     QLineEdit* minEdit = new QLineEdit(parentWidget);
-    minEdit->setClearButtonEnabled(true);
+    QAction* clearMinAct = minEdit->addAction(UiHelper::getIcon("close", QColor("#888888")), QLineEdit::TrailingPosition);
+    clearMinAct->setVisible(false);
+    QObject::connect(clearMinAct, &QAction::triggered, minEdit, &QLineEdit::clear);
+    QObject::connect(minEdit, &QLineEdit::textChanged, contextObj, [clearMinAct](const QString& text) {
+        clearMinAct->setVisible(!text.isEmpty());
+    });
+
     QLineEdit* maxEdit = new QLineEdit(parentWidget);
-    maxEdit->setClearButtonEnabled(true);
+    QAction* clearMaxAct = maxEdit->addAction(UiHelper::getIcon("close", QColor("#888888")), QLineEdit::TrailingPosition);
+    clearMaxAct->setVisible(false);
+    QObject::connect(clearMaxAct, &QAction::triggered, maxEdit, &QLineEdit::clear);
+    QObject::connect(maxEdit, &QLineEdit::textChanged, contextObj, [clearMaxAct](const QString& text) {
+        clearMaxAct->setVisible(!text.isEmpty());
+    });
     QComboBox* unitCombo = new QComboBox(parentWidget);
     unitCombo->addItems({"KB", "MB", "GB"});
     unitCombo->setCurrentIndex(1);

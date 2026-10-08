@@ -35,7 +35,12 @@ QLineEdit* CreateDateGroup::populate(QObject* owner,
     lCreateDate->setSpacing(0);
 
     QLineEdit* editCreateDate = new QLineEdit(wCreateDate);
-    editCreateDate->setClearButtonEnabled(true);
+    QAction* clearAct = editCreateDate->addAction(UiHelper::getIcon("close", QColor("#888888")), QLineEdit::TrailingPosition);
+    clearAct->setVisible(!currentState.createDateFilterText.isEmpty());
+    QObject::connect(clearAct, &QAction::triggered, editCreateDate, &QLineEdit::clear);
+    QObject::connect(editCreateDate, &QLineEdit::textChanged, owner, [clearAct](const QString& text) {
+        clearAct->setVisible(!text.isEmpty());
+    });
     editCreateDate->setPlaceholderText("例： 2025 / 03-2025...");
     editCreateDate->setText(currentState.createDateFilterText);
     editCreateDate->setObjectName("FilterSearchEdit");
