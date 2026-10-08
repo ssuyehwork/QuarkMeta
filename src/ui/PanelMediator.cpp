@@ -425,13 +425,14 @@ void PanelMediator::setupConnections() {
                 metaPanel->setPalettes(qPalettes);
 
                 QVariant decData = idx.data(Qt::DecorationRole);
+                bool hasThumb = idx.data(HasThumbnailRole).toBool();
                 QPixmap previewPixmap;
                 if (decData.canConvert<QIcon>()) {
                     previewPixmap = decData.value<QIcon>().pixmap(128, 128);
                 } else if (decData.canConvert<QPixmap>()) {
                     previewPixmap = decData.value<QPixmap>();
                 }
-                metaPanel->setImagePreview(previewPixmap);
+                metaPanel->setImagePreview(previewPixmap, !hasThumb);
             } else {
                 metaPanel->setRating(meta.rating, false);
                 metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);

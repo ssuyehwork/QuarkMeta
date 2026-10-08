@@ -1,13 +1,13 @@
-# MetaPanel Implementation Plan (Iterative Version 2)
+# MetaPanel Implementation Plan (Iterative Version 5)
 
-> **Note**: As per AGENTS.md Protocol 3.1 (Immutable Plan Files), this is an iterative update (`MetaPanel-1.md`) incorporating the non-graphics file preview container rules:
+> **Note**: As per AGENTS.md Protocol 3.1 (Immutable Plan Files), this is an iterative update (`MetaPanel-1.md`) addressing the latest origin/main sync and incorporating the 220x220px preview canvas and 35x45px icon scaling rules:
 > - Preview box bounding area for non-graphics item = **220x220px**.
-> - File icon drawn inside = **35x45px** (max width 35px, max height 45px).
+> - File icon scaled to fit **35x45px** (`QSize(35, 45)` with `Qt::KeepAspectRatio` & `Qt::SmoothTransformation`) and centered inside the **220x220px** preview canvas.
 
 ## 1. Overview
 This implementation plan addresses two specific user requirements for `MetaPanel` and its wiring in `PanelMediator`:
 1. **Dimension Display Restoration**: Restore the display of image/media dimensions (e.g. `1920 x 1080 像素`) in `MetaPanel`'s "基础属性" (Basic Attributes) section by passing real cached `meta.width` and `meta.height` values from `MetadataManager` in `PanelMediator.cpp`, instead of passing hardcoded `0, 0`.
-2. **Preview Area & File Icon Size Sizing**:
+2. **Preview Area & File Icon Sizing**:
    - For real image/media thumbnails: Keep proportional scaling up to max width (120~230px) and max height (220px).
    - For non-graphics items / default file icons: The top preview container/label maintains a **220x220px** canvas, inside which the default file icon is scaled to **35x45px** (max width 35px, max height 45px) and centered.
 
@@ -37,7 +37,7 @@ Add `isDefaultIcon` parameter to `setImagePreview` so `MetaPanel` knows when a n
 
 ### Change 2: `src/ui/MetaPanel.cpp`
 Update `MetaPanel::setImagePreview` implementation:
-- If `isDefaultIcon` is true: Create a 220x220px canvas, draw the default icon scaled to max width 35px and max height 45px centered within the 220x220px canvas.
+- If `isDefaultIcon` is true: Create a 220x220px canvas, draw the default icon scaled to `QSize(35, 45)` centered within the 220x220px canvas.
 - If `isDefaultIcon` is false: Maintain normal image thumbnail scaling behavior.
 
 ```
@@ -92,13 +92,8 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
             QPixmap canvas(canvasSize);
             canvas.fill(Qt::transparent);
 
-            QSize iconSize = pixmap.size();
-            int targetW = std::min(iconSize.width(), 35);
-            int targetH = std::min(iconSize.height(), 45);
-
-            QPixmap iconScaled = (iconSize.width() > 35 || iconSize.height() > 45)
-                ? pixmap.scaled(QSize(targetW, targetH), Qt::KeepAspectRatio, Qt::SmoothTransformation)
-                : pixmap;
+            // 强制将默认 OS 图标等比例缩放到 35x45 目标范围
+            QPixmap iconScaled = pixmap.scaled(QSize(35, 45), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
             {
                 QPainter painter(&canvas);
@@ -204,7 +199,7 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
    `cmake --build build --config Release`
 2. Verify:
    - Select an image file (e.g. `.png` / `.jpg`). The "基础属性" section in `MetaPanel` should display the actual dimensions `W x H 像素`.
-   - Select a non-graphics item or folder without thumbnail. The top preview area canvas is 220x220px, and the centered file icon size is restricted to at most 35x45px.
+   - Select a non-graphics item or folder without thumbnail. The top preview area canvas is 220x220px, and the centered file icon size is scaled up/down to strictly fill 35x45px without becoming tiny.
 
 ---
 
