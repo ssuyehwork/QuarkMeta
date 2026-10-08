@@ -100,12 +100,12 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
     // =========================================================================
     if (isTrashView) {
         if (onItem) {
-            menu.addAction(UiHelper::getIcon("sync", QColor("#EEEEEE"), 18), "还原")->setData(ContentPanel::ActionRestore);
+            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "还原")->setData(ContentPanel::ActionRestore);
             menu.addAction(UiHelper::getIcon("cut", QColor("#EEEEEE"), 18), "剪切")->setData(ContentPanel::ActionCut);
             menu.addAction(UiHelper::getIcon("trash", QColor("#EEEEEE"), 18), "永久删除")->setData(ContentPanel::ActionSecureDelete);
             menu.addSeparator();
         }
-        menu.addAction(UiHelper::getIcon("sync", QColor("#EEEEEE"), 18), "还原全部")->setData(ContentPanel::ActionRestoreAll);
+        menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "还原全部")->setData(ContentPanel::ActionRestoreAll);
         menu.addAction(UiHelper::getIcon("trash", QColor("#EEEEEE"), 18), "清空回收站")->setData(ContentPanel::ActionEmptyTrash);
 
         m_panel->setContextMenuActive(true);
@@ -459,7 +459,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新")->setData(ContentPanel::ActionRefresh);
 
             if (!isFolder) {
-                menu.addAction(UiHelper::getIcon("sync", QColor("#EEEEEE"), 18), "重新提取缩略图")->setData(ContentPanel::ActionReextractThumbnail);
+                menu.addAction(UiHelper::getIcon("repeat", QColor("#EEEEEE"), 18), "重新提取缩略图")->setData(ContentPanel::ActionReextractThumbnail);
 
                 QMenu* cryptoMenu = menu.addMenu(UiHelper::getIcon("shield", QColor("#EEEEEE"), 18), "外壳保护");
                 UiHelper::applyMenuStyle(cryptoMenu);
@@ -516,7 +516,9 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
     menu.addSeparator();
 
     // 排序二级子菜单
-    QMenu* sortMenu = menu.addMenu(UiHelper::getIcon("sort", QColor("#EEEEEE"), 18), "排序");
+    bool isAscending = (m_panel->currentSortOrder() == Qt::AscendingOrder);
+    QString sortIconKey = isAscending ? "arrow_up_long" : "arrow_down_long";
+    QMenu* sortMenu = menu.addMenu(UiHelper::getIcon(sortIconKey, QColor("#EEEEEE"), 18), "排序");
     UiHelper::applyMenuStyle(sortMenu);
 
     QActionGroup* typeGroup = new QActionGroup(this);
