@@ -210,23 +210,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             QMenu* moreMenuDrive = menu.addMenu(UiHelper::getIcon("more_horizontal", QColor("#EEEEEE"), 18), "更多");
             UiHelper::applyMenuStyle(moreMenuDrive);
 
-            QString driveExt = QFileInfo(path).suffix().toLower();
-            bool canExtractDrive = UiHelper::isTextFile(driveExt);
-            if (canExtractDrive) {
-                QAction* actExtract = moreMenuDrive->addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "支持提取内容");
-                connect(actExtract, &QAction::triggered, this, [path]() {
-                    QString content;
-                    if (UiHelper::extractTextContent(path, content)) {
-                        QApplication::clipboard()->setText(content);
-                        ToolTipOverlay::instance()->showText(QCursor::pos(), QString("已成功提取内容并存入剪贴板 (共 %1 字符)").arg(content.length()), 1500, QColor("#2ecc71"));
-                    } else {
-                        ToolTipOverlay::instance()->showText(QCursor::pos(), "提取失败：文件超过限制或无法作为纯文本解析", 1500, QColor("#e81123"));
-                    }
-                });
-            } else {
-                QAction* actDisabled = moreMenuDrive->addAction(UiHelper::getIcon("prohibit", QColor("#888888"), 18), "不支持提取内容");
-                actDisabled->setEnabled(false);
-            }
+            ContextMenuFactory::buildExtractContentAction(moreMenuDrive, path, m_panel);
 
             QString nativePath = QDir::toNativeSeparators(path);
             QStringList itemTags;
@@ -410,23 +394,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             QMenu* moreMenu = menu.addMenu(UiHelper::getIcon("more_horizontal", QColor("#EEEEEE"), 18), "更多");
             UiHelper::applyMenuStyle(moreMenu);
 
-            QString fileExt = QFileInfo(path).suffix().toLower();
-            bool canExtract = !isFolder && UiHelper::isTextFile(fileExt);
-            if (canExtract) {
-                QAction* actExtract = moreMenu->addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "支持提取内容");
-                connect(actExtract, &QAction::triggered, this, [path]() {
-                    QString content;
-                    if (UiHelper::extractTextContent(path, content)) {
-                        QApplication::clipboard()->setText(content);
-                        ToolTipOverlay::instance()->showText(QCursor::pos(), QString("已成功提取内容并存入剪贴板 (共 %1 字符)").arg(content.length()), 1500, QColor("#2ecc71"));
-                    } else {
-                        ToolTipOverlay::instance()->showText(QCursor::pos(), "提取失败：文件超过限制或无法作为纯文本解析", 1500, QColor("#e81123"));
-                    }
-                });
-            } else {
-                QAction* actDisabled = moreMenu->addAction(UiHelper::getIcon("prohibit", QColor("#888888"), 18), "不支持提取内容");
-                actDisabled->setEnabled(false);
-            }
+            ContextMenuFactory::buildExtractContentAction(moreMenu, path, m_panel);
 
             QString nativePath = QDir::toNativeSeparators(path);
             QStringList itemTags;
