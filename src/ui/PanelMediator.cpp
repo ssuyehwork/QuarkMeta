@@ -184,6 +184,18 @@ void PanelMediator::setupConnections() {
                 target->createNewItem("folder");
             }
         });
+
+        connect(shortcutController, &AppShortcutController::extractContentRequested, this, [this, contentPanel]() {
+            ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+            if (target) {
+                QStringList selectedPaths = target->getSelectedPaths();
+                if (!selectedPaths.isEmpty()) {
+                    ContextMenuFactory::extractContentToClipboard(selectedPaths.first());
+                } else {
+                    ToolTipOverlay::instance()->showText(QCursor::pos(), "未选择任何可提取内容的文件", 1200, QColor("#e81123"));
+                }
+            }
+        });
     }
 
     // 搜索控制器与 ContentPanel 绑定及状态更新

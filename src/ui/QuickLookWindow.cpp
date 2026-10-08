@@ -500,6 +500,7 @@ void QuickLookWindow::showContextMenu(const QPoint& globalPos) {
 
     ContextMenuFactory::buildCopyNameAction(&menu, QStringList{m_currentPath}, this);
     ContextMenuFactory::buildCopyPathAction(&menu, QStringList{m_currentPath}, this);
+    ContextMenuFactory::buildExtractContentAction(&menu, m_currentPath, this);
     FavoriteService::instance().buildFavoriteAction(&menu, m_currentPath, this);
     menu.addSeparator();
 
