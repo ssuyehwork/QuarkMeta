@@ -392,34 +392,57 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
         m_lblImagePreview->hide();
         if (m_topPreviewBox) m_topPreviewBox->hide();
     } else {
-        int maxW = m_container ? (m_container->width() - 16) : 214;
-        maxW = qBound(120, maxW, 230);
-        int maxH = 220;
-
         if (isDefaultIcon) {
-            maxW = 45;
-            maxH = 35;
+            // 非图形图像（默认文件/文件夹图标）：预览视口 Canvas 设定为 220x220px，中间绘制 35x45px 图标
+            QSize canvasSize(220, 220);
+            QPixmap canvas(canvasSize);
+            canvas.fill(Qt::transparent);
+
+            QSize iconSize = pixmap.size();
+            int targetW = std::min(iconSize.width(), 35);
+            int targetH = std::min(iconSize.height(), 45);
+
+            QPixmap iconScaled = (iconSize.width() > 35 || iconSize.height() > 45)
+                ? pixmap.scaled(QSize(targetW, targetH), Qt::KeepAspectRatio, Qt::SmoothTransformation)
+                : pixmap;
+
+            {
+                QPainter painter(&canvas);
+                painter.setRenderHint(QPainter::Antialiasing);
+                painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+                int x = (220 - iconScaled.width()) / 2;
+                int y = (220 - iconScaled.height()) / 2;
+                painter.drawPixmap(x, y, iconScaled);
+            }
+
+            m_lblImagePreview->setPixmap(canvas);
+            m_lblImagePreview->setFixedSize(canvasSize);
+        } else {
+            int maxW = m_container ? (m_container->width() - 16) : 214;
+            maxW = qBound(120, maxW, 230);
+            int maxH = 220;
+
+            QPixmap scaled = (pixmap.width() > maxW || pixmap.height() > maxH)
+                ? pixmap.scaled(QSize(maxW, maxH), Qt::KeepAspectRatio, Qt::SmoothTransformation)
+                : pixmap;
+
+            QImage roundedImg(scaled.size(), QImage::Format_ARGB32_Premultiplied);
+            roundedImg.fill(Qt::transparent);
+            {
+                QPainter painter(&roundedImg);
+                painter.setRenderHint(QPainter::Antialiasing);
+                painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+                QPainterPath path;
+                path.addRoundedRect(QRectF(0, 0, scaled.width(), scaled.height()), 4.0, 4.0);
+                painter.setClipPath(path);
+                painter.drawPixmap(0, 0, scaled);
+            }
+
+            m_lblImagePreview->setPixmap(QPixmap::fromImage(roundedImg));
+            m_lblImagePreview->setFixedSize(scaled.size());
         }
-
-        QPixmap scaled = (pixmap.width() > maxW || pixmap.height() > maxH)
-            ? pixmap.scaled(QSize(maxW, maxH), Qt::KeepAspectRatio, Qt::SmoothTransformation)
-            : pixmap;
-
-        QImage roundedImg(scaled.size(), QImage::Format_ARGB32_Premultiplied);
-        roundedImg.fill(Qt::transparent);
-        {
-            QPainter painter(&roundedImg);
-            painter.setRenderHint(QPainter::Antialiasing);
-            painter.setRenderHint(QPainter::SmoothPixmapTransform);
-
-            QPainterPath path;
-            path.addRoundedRect(QRectF(0, 0, scaled.width(), scaled.height()), 4.0, 4.0);
-            painter.setClipPath(path);
-            painter.drawPixmap(0, 0, scaled);
-        }
-
-        m_lblImagePreview->setPixmap(QPixmap::fromImage(roundedImg));
-        m_lblImagePreview->setFixedSize(scaled.size());
 
         m_lblImagePreview->show();
         if (m_topPreviewBox) m_topPreviewBox->show();
