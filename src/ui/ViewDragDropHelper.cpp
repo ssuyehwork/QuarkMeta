@@ -155,11 +155,7 @@ bool ViewDragDropHelper::handleDrop(QAbstractItemView* view, QDropEvent* event, 
 }
 
 void ViewDragDropHelper::executeStartDrag(QAbstractItemView* view, Qt::DropActions supportedActions) {
-    if (view && view->viewport()) {
-        s_lastDragStartPos = view->viewport()->mapFromGlobal(QCursor::pos());
-    } else {
-        s_lastDragStartPos = QCursor::pos();
-    }
+    s_lastDragStartPos = QCursor::pos();
     if (!view || !view->selectionModel()) return;
     QModelIndexList indexes = view->selectionModel()->selectedIndexes();
     if (indexes.isEmpty()) return;
