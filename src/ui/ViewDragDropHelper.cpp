@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QUrl>
 #include <QItemSelectionModel>
+#include <QApplication>
 
 namespace QuarkMeta {
 
