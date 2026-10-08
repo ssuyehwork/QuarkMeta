@@ -377,32 +377,8 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         return true;
     }
 
-    // 4. Ctrl + Shift + C / V / E / R
+    // 4. Ctrl + Shift + C / V / R
     if ((keyEvent->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier)) == (Qt::ControlModifier | Qt::ShiftModifier)) {
-        if (keyEvent->key() == Qt::Key_E) {
-            QString targetPath;
-            QStringList selectedPaths = m_panel->getSelectedPaths();
-            if (!selectedPaths.isEmpty()) {
-                targetPath = selectedPaths.first();
-            } else if (view) {
-                QModelIndex idx = view->currentIndex();
-                if (!idx.isValid() && view->selectionModel()) {
-                    auto selected = view->selectionModel()->selectedIndexes();
-                    if (!selected.isEmpty()) idx = selected.first();
-                }
-                if (idx.isValid()) {
-                    QModelIndex nameIdx = idx.sibling(idx.row(), static_cast<int>(FileListColumn::Name));
-                    targetPath = nameIdx.data(PathRole).toString();
-                }
-            }
-
-            if (!targetPath.isEmpty()) {
-                ContextMenuFactory::extractContentToClipboard(targetPath);
-            } else {
-                ToolTipOverlay::instance()->showText(QCursor::pos(), "未选择任何可提取内容的文件", 1200, QColor("#e81123"));
-            }
-            return true;
-        }
         if (keyEvent->key() == Qt::Key_C) {
             // 优先检查选中项目是否有标签，有标签则复制标签；若无标签，则保留原有的复制路径逻辑
             QModelIndex idx = view->currentIndex();

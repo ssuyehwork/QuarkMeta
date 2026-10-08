@@ -6,6 +6,7 @@
 #include "ColumnViewWidget.h"
 #include "controllers/ContentPaneSplitManager.h"
 #include "controllers/PaneActivationTracker.h"
+#include "controllers/ContextMenuFactory.h"
 #include "MetaPanel.h"
 #include "FilterPanel.h"
 #include "AddressBar.h"
