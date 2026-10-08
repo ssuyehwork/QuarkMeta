@@ -393,18 +393,13 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
         if (m_topPreviewBox) m_topPreviewBox->hide();
     } else {
         if (isDefaultIcon) {
-            // 非图形图像（默认文件/文件夹图标）：预览视口 Canvas 设定为 220x220px，中间绘制 35x45px 图标
+            // 非图形图像（默认文件/文件夹图标）：预览画布 220x220px，图标强缩放至 35x45px 并居中
             QSize canvasSize(220, 220);
             QPixmap canvas(canvasSize);
             canvas.fill(Qt::transparent);
 
-            QSize iconSize = pixmap.size();
-            int targetW = std::min(iconSize.width(), 35);
-            int targetH = std::min(iconSize.height(), 45);
-
-            QPixmap iconScaled = (iconSize.width() > 35 || iconSize.height() > 45)
-                ? pixmap.scaled(QSize(targetW, targetH), Qt::KeepAspectRatio, Qt::SmoothTransformation)
-                : pixmap;
+            // 强制将默认 OS 图标（通常为 16x16 / 32x32）等比例缩放到 35x45 目标范围
+            QPixmap iconScaled = pixmap.scaled(QSize(35, 45), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
             {
                 QPainter painter(&canvas);
