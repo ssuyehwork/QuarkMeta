@@ -385,7 +385,7 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     });
 }
 
-void MetaPanel::setImagePreview(const QPixmap& pixmap) {
+void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
     if (!m_lblImagePreview) return;
     if (pixmap.isNull()) {
         m_lblImagePreview->clear();
@@ -395,6 +395,11 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
         int maxW = m_container ? (m_container->width() - 16) : 214;
         maxW = qBound(120, maxW, 230);
         int maxH = 220;
+
+        if (isDefaultIcon) {
+            maxW = 45;
+            maxH = 35;
+        }
 
         QPixmap scaled = (pixmap.width() > maxW || pixmap.height() > maxH)
             ? pixmap.scaled(QSize(maxW, maxH), Qt::KeepAspectRatio, Qt::SmoothTransformation)
