@@ -112,7 +112,7 @@ void MetaPanel::initUi() {
     // 1. 顶部预览与色板区
     m_topPreviewBox = new QWidget(m_container);
     m_topPreviewBox->setObjectName("TopPreviewBox");
-    m_topPreviewBox->setFixedSize(220, 220);
+    m_topPreviewBox->setFixedSize(210, 210);
     // TopPreviewBox style in style.qss
     QVBoxLayout* previewLayout = new QVBoxLayout(m_topPreviewBox);
     previewLayout->setContentsMargins(0, 0, 0, 0);
@@ -120,7 +120,7 @@ void MetaPanel::initUi() {
 
     m_lblImagePreview = new QLabel(m_topPreviewBox);
     m_lblImagePreview->setAlignment(Qt::AlignCenter);
-    m_lblImagePreview->setFixedSize(220, 220);
+    m_lblImagePreview->setFixedSize(210, 210);
     m_lblImagePreview->setObjectName("MetaImagePreview");
     // MetaImagePreview style in style.qss
     m_lblImagePreview->hide();
@@ -394,11 +394,11 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
         m_lblImagePreview->hide();
         if (m_topPreviewBox) m_topPreviewBox->hide();
     } else {
-        QSize canvasSize(220, 220);
+        QSize canvasSize(210, 210);
         QPixmap canvas(canvasSize);
         canvas.fill(Qt::transparent);
 
-        QSize targetSize = isDefaultIcon ? QSize(35, 45) : QSize(220, 220);
+        QSize targetSize = isDefaultIcon ? QSize(35, 45) : QSize(210, 210);
         QPixmap scaled = pixmap.scaled(targetSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
         {
@@ -406,8 +406,8 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
             painter.setRenderHint(QPainter::Antialiasing);
             painter.setRenderHint(QPainter::SmoothPixmapTransform);
 
-            int x = (220 - scaled.width()) / 2;
-            int y = (220 - scaled.height()) / 2;
+            int x = (210 - scaled.width()) / 2;
+            int y = (210 - scaled.height()) / 2;
 
             if (!isDefaultIcon) {
                 QPainterPath path;
@@ -569,7 +569,7 @@ void MetaPanel::adjustFlowHeights() {
         bool hasPreview = (m_lblImagePreview && !m_lblImagePreview->pixmap().isNull());
         if (hasPreview) {
             m_topPreviewBox->show();
-            m_topPreviewBox->setFixedSize(220, 220);
+            m_topPreviewBox->setFixedSize(210, 210);
         } else {
             m_topPreviewBox->hide();
             m_topPreviewBox->setFixedHeight(0);
