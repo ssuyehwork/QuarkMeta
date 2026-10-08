@@ -112,17 +112,19 @@ void MetaPanel::initUi() {
     // 1. 顶部预览与色板区
     m_topPreviewBox = new QWidget(m_container);
     m_topPreviewBox->setObjectName("TopPreviewBox");
+    m_topPreviewBox->setFixedSize(220, 220);
     // TopPreviewBox style in style.qss
     QVBoxLayout* previewLayout = new QVBoxLayout(m_topPreviewBox);
     previewLayout->setContentsMargins(0, 0, 0, 0);
-    previewLayout->setSpacing(6);
+    previewLayout->setSpacing(0);
 
     m_lblImagePreview = new QLabel(m_topPreviewBox);
     m_lblImagePreview->setAlignment(Qt::AlignCenter);
+    m_lblImagePreview->setFixedSize(220, 220);
     m_lblImagePreview->setObjectName("MetaImagePreview");
     // MetaImagePreview style in style.qss
     m_lblImagePreview->hide();
-    previewLayout->addWidget(m_lblImagePreview, 0, Qt::AlignHCenter);
+    previewLayout->addWidget(m_lblImagePreview, 0, Qt::AlignCenter);
 
     m_paletteContainer = new QWidget(m_topPreviewBox);
     m_paletteFlowLayout = new FlowLayout(m_paletteContainer, 0, 4, 4);
@@ -385,62 +387,43 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
     });
 }
 
-void MetaPanel::setImagePreview(const QPixmap& pixmap, bool isDefaultIcon) {
+void MetaPanel::setImagePreview(const QPixmap& pixmap) {
     if (!m_lblImagePreview) return;
     if (pixmap.isNull()) {
         m_lblImagePreview->clear();
         m_lblImagePreview->hide();
         if (m_topPreviewBox) m_topPreviewBox->hide();
     } else {
-        if (isDefaultIcon) {
-            // 非图形图像（默认文件/文件夹图标）：预览画布 220x220px，图标强缩放至 35x45px 并居中
-            QSize canvasSize(220, 220);
-            QPixmap canvas(canvasSize);
-            canvas.fill(Qt::transparent);
+        QSize canvasSize(220, 220);
+        QPixmap canvas(canvasSize);
+        canvas.fill(Qt::transparent);
 
-            // 强制将默认 OS 图标（通常为 16x16 / 32x32）等比例缩放到 35x45 目标范围
-            QPixmap iconScaled = pixmap.scaled(QSize(35, 45), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        QPixmap scaled = (pixmap.width() > 220 || pixmap.height() > 220)
+            ? pixmap.scaled(QSize(220, 220), Qt::KeepAspectRatio, Qt::SmoothTransformation)
+            : pixmap;
 
-            {
-                QPainter painter(&canvas);
-                painter.setRenderHint(QPainter::Antialiasing);
-                painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        {
+            QPainter painter(&canvas);
+            painter.setRenderHint(QPainter::Antialiasing);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform);
 
-                int x = (220 - iconScaled.width()) / 2;
-                int y = (220 - iconScaled.height()) / 2;
-                painter.drawPixmap(x, y, iconScaled);
-            }
+            int x = (220 - scaled.width()) / 2;
+            int y = (220 - scaled.height()) / 2;
 
-            m_lblImagePreview->setPixmap(canvas);
-            m_lblImagePreview->setFixedSize(canvasSize);
-        } else {
-            int maxW = m_container ? (m_container->width() - 16) : 214;
-            maxW = qBound(120, maxW, 230);
-            int maxH = 220;
-
-            QPixmap scaled = (pixmap.width() > maxW || pixmap.height() > maxH)
-                ? pixmap.scaled(QSize(maxW, maxH), Qt::KeepAspectRatio, Qt::SmoothTransformation)
-                : pixmap;
-
-            QImage roundedImg(scaled.size(), QImage::Format_ARGB32_Premultiplied);
-            roundedImg.fill(Qt::transparent);
-            {
-                QPainter painter(&roundedImg);
-                painter.setRenderHint(QPainter::Antialiasing);
-                painter.setRenderHint(QPainter::SmoothPixmapTransform);
-
-                QPainterPath path;
-                path.addRoundedRect(QRectF(0, 0, scaled.width(), scaled.height()), 4.0, 4.0);
-                painter.setClipPath(path);
-                painter.drawPixmap(0, 0, scaled);
-            }
-
-            m_lblImagePreview->setPixmap(QPixmap::fromImage(roundedImg));
-            m_lblImagePreview->setFixedSize(scaled.size());
+            QPainterPath path;
+            path.addRoundedRect(QRectF(x, y, scaled.width(), scaled.height()), 4.0, 4.0);
+            painter.setClipPath(path);
+            painter.drawPixmap(x, y, scaled);
         }
 
+        m_lblImagePreview->setPixmap(canvas);
+        m_lblImagePreview->setFixedSize(canvasSize);
+
         m_lblImagePreview->show();
-        if (m_topPreviewBox) m_topPreviewBox->show();
+        if (m_topPreviewBox) {
+            m_topPreviewBox->setFixedSize(canvasSize);
+            m_topPreviewBox->show();
+        }
     }
     m_adjustTimer->start();
 }
@@ -581,20 +564,15 @@ void MetaPanel::resizeEvent(QResizeEvent* event) {
 }
 
 void MetaPanel::adjustFlowHeights() {
-    if (m_topPreviewBox && m_paletteFlowLayout) {
-        int contentH = m_paletteFlowLayout->heightForWidth(m_topPreviewBox->width());
+    if (m_topPreviewBox) {
         bool hasPreview = (m_lblImagePreview && !m_lblImagePreview->pixmap().isNull());
-        bool hasPalette = (m_paletteFlowLayout->count() > 0);
-        if (hasPreview || hasPalette) {
+        if (hasPreview) {
             m_topPreviewBox->show();
-            int previewH = hasPreview ? m_lblImagePreview->pixmap().height() : 0;
-            int totalSpacing = (hasPreview && hasPalette) ? 6 : 0;
-            m_topPreviewBox->setFixedHeight(contentH + previewH + totalSpacing);
+            m_topPreviewBox->setFixedSize(220, 220);
         } else {
             m_topPreviewBox->hide();
             m_topPreviewBox->setFixedHeight(0);
         }
-        m_paletteFlowLayout->activate();
     }
     if (m_tagContainer && m_tagFlowLayout) {
         bool hasTags = (m_tagFlowLayout->count() > (m_btnAddTagSmall ? 1 : 0));
