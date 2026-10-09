@@ -283,6 +283,8 @@ void MetadataManager::updateExtractedMediaFeaturesBatch(const std::vector<Extrac
                 meta.palettes.push_back({p.first, p.second});
             }
         });
+
+        notifyUI(RefreshLevel::PathUpdate, QString::fromStdWString(nPath));
     }
 }
 
