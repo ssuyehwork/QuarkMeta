@@ -164,8 +164,11 @@ void MediaExtractorPipeline::dispatchWorkerLoop() {
                         item.height = sz.height(); 
                     } 
  
-                    // 内存 128 像素内快速测色 
+                    // 内存 128 像素内快速测色，若缩略图 QImage 为空则退回直读文件测色
                     auto pal = ColorPaletteEngine::extractPaletteFromImage(res.thumbnail512); 
+                    if (pal.isEmpty()) {
+                        pal = ColorPaletteEngine::extractPalette(qPath);
+                    }
                     if (!pal.isEmpty()) { 
                         QColor dominant = ColorPaletteEngine::quantizeToStandardColor(pal.first().first); 
                         item.autoColor = dominant.name().toUpper().toStdWString(); 
