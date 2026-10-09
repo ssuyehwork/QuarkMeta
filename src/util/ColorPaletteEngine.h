@@ -45,6 +45,7 @@ private:
     };
 
     static LabColor rgbToLab(const QColor& rgb);
+    static double deltaE76(const QColor& c1, const QColor& c2);
     static double degToRad(double deg);
     static double radToDeg(double rad);
 };

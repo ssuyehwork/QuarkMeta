@@ -15,7 +15,7 @@ void MetaCacheDecorator::decorate(std::vector<ItemRecord>& records) {
     auto driveMetas = DriveMetaDao::getAllDriveMeta();
  
     // 按父目录路径建立统一 Store 内存视图缓存，读取尚未刷盘的最新内容
-    std::unordered_map<std::wstring, std::unordered_map<std::wstring, ItemMeta>> folderCacheMap;
+    std::unordered_map<std::wstring, QuarkMetaJson::ItemMap> folderCacheMap;
  
     for (auto& itemRec : records) { 
         // 【盘符特殊处理】：如果是驱动器根目录（如 C:\、D:\）
@@ -37,8 +37,8 @@ void MetaCacheDecorator::decorate(std::vector<ItemRecord>& records) {
  
         auto cacheIt = folderCacheMap.find(dirPath);
         if (cacheIt == folderCacheMap.end()) {
-            auto folderMeta = QuarkMetaJsonStore::instance().readFolderMeta(dirPath);
-            cacheIt = folderCacheMap.emplace(dirPath, std::move(folderMeta)).first;
+            folderCacheMap[dirPath] = QuarkMetaJsonStore::instance().readFolderMeta(dirPath);
+            cacheIt = folderCacheMap.find(dirPath);
         } 
  
         const auto& cachedItems = cacheIt->second;

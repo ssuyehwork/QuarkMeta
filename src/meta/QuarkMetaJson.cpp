@@ -24,6 +24,10 @@ QuarkMetaJson::QuarkMetaJson(const std::wstring& folderPath)
     m_filePath = path + L".QuarkMeta.json";
 }
 
+static std::wstring normalizeItemKey(const std::wstring& name) {
+    return QString::fromStdWString(name).toLower().toStdWString();
+}
+
 bool QuarkMetaJson::load() {
     m_loadFailed = false;
     QFile file(toQString(m_filePath));
@@ -55,7 +59,7 @@ bool QuarkMetaJson::load() {
     if (root.contains("items") && root.value("items").isObject()) {
         QJsonObject itemsObj = root.value("items").toObject();
         for (auto it = itemsObj.begin(); it != itemsObj.end(); ++it) {
-            std::wstring key = toStdWString(it.key());
+            std::wstring key = normalizeItemKey(toStdWString(it.key()));
             ItemMeta item = entryToItem(it.value().toObject());
             auto existingIt = m_items.find(key);
             if (existingIt != m_items.end()) {

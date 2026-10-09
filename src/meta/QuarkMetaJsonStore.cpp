@@ -15,7 +15,9 @@ QuarkMetaJsonStore::QuarkMetaJsonStore(QObject* parent)
     : QObject(parent) {
     if (auto* app = QCoreApplication::instance()) {
         this->moveToThread(app->thread());
-        connect(app, &QCoreApplication::aboutToQuit, this, &QuarkMetaJsonStore::flushAllDirtyBuffers);
+        connect(app, &QCoreApplication::aboutToQuit, this, [this]() {
+            flushAllDirtyBuffers(true);
+        });
     }
 
     m_flushTimer = new QTimer(this);
@@ -25,7 +27,7 @@ QuarkMetaJsonStore::QuarkMetaJsonStore(QObject* parent)
 }
 
 QuarkMetaJsonStore::~QuarkMetaJsonStore() {
-    flushAllDirtyBuffers();
+    flushAllDirtyBuffers(true);
 }
 
 std::wstring QuarkMetaJsonStore::normalizeFolderPath(const std::wstring& path) {
@@ -40,7 +42,7 @@ void QuarkMetaJsonStore::updateItemMeta(const std::wstring& filePath, std::funct
 
     QFileInfo info(QString::fromStdWString(filePath));
     std::wstring folderPath = info.absolutePath().toStdWString();
-    std::wstring fileName = info.fileName().toStdWString();
+    std::wstring fileName = info.fileName().toLower().toStdWString();
     std::wstring normFolder = normalizeFolderPath(folderPath);
 
     {
@@ -126,7 +128,7 @@ QuarkMetaJson::ItemMap QuarkMetaJsonStore::readFolderMeta(const std::wstring& fo
 bool QuarkMetaJsonStore::readItemMeta(const std::wstring& filePath, ItemMeta& outMeta) {
     QFileInfo info(QString::fromStdWString(filePath));
     std::wstring folderPath = info.absolutePath().toStdWString();
-    std::wstring fileName = info.fileName().toStdWString();
+    std::wstring fileName = info.fileName().toLower().toStdWString();
 
     auto folderMetaMap = readFolderMeta(folderPath);
     auto it = folderMetaMap.find(fileName);
@@ -141,7 +143,7 @@ void QuarkMetaJsonStore::onFlushTimeout() {
     flushAllDirtyBuffers();
 }
 
-void QuarkMetaJsonStore::flushAllDirtyBuffers() {
+void QuarkMetaJsonStore::flushAllDirtyBuffers(bool sync) {
     std::vector<QuarkMetaJson> snapshotsToSave;
     {
         std::lock_guard<std::mutex> lock(m_storeMutex);
@@ -158,9 +160,8 @@ void QuarkMetaJsonStore::flushAllDirtyBuffers() {
 
     if (snapshotsToSave.empty()) return;
 
-    // 🚀 使用隔离的深拷贝快照在后台线程写盘，彻底解决 Data Race！
-    (void)QtConcurrent::run([snapshotsToSave = std::move(snapshotsToSave)]() {
-        for (const auto& jsonSnapshot : snapshotsToSave) {
+    auto doSave = [](std::vector<QuarkMetaJson> snapshots) {
+        for (auto& jsonSnapshot : snapshots) {
             if (jsonSnapshot.isLoadFailed()) {
                 qDebug() << "[AutoColor] [QuarkMetaJsonStore] Skipped flushing for folder due to load failure";
                 continue;
@@ -170,7 +171,15 @@ void QuarkMetaJsonStore::flushAllDirtyBuffers() {
             qDebug() << "[AutoColor] [QuarkMetaJsonStore] Flushed dirty buffer for folder, items count:"
                      << jsonSnapshot.items().size() << "status:" << ok;
         }
-    });
+    };
+
+    if (sync) {
+        doSave(std::move(snapshotsToSave));
+    } else {
+        (void)QtConcurrent::run([snapshotsToSave = std::move(snapshotsToSave), doSave]() mutable {
+            doSave(std::move(snapshotsToSave));
+        });
+    }
 }
 
 bool QuarkMetaJsonStore::migrateFolderCache(const QString& oldFolderPath, const QString& newFolderPath) {

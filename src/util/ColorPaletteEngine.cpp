@@ -140,9 +140,9 @@ QColor ColorPaletteEngine::extractDominantColorFromImage(const QImage& preScaled
     return QColor();
 }
 
-static double deltaE76(const QColor& c1, const QColor& c2) {
-    ColorPaletteEngine::LabColor l1 = ColorPaletteEngine::rgbToLab(c1);
-    ColorPaletteEngine::LabColor l2 = ColorPaletteEngine::rgbToLab(c2);
+double ColorPaletteEngine::deltaE76(const QColor& c1, const QColor& c2) {
+    LabColor l1 = rgbToLab(c1);
+    LabColor l2 = rgbToLab(c2);
     return std::sqrt(std::pow(l1.L - l2.L, 2) + std::pow(l1.a - l2.a, 2) + std::pow(l1.b - l2.b, 2));
 }
 

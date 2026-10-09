@@ -3,6 +3,7 @@
 
 #include "MetadataDefs.h"
 #include "MetaMemoryCache.h"
+#include "../core/ItemRecord.h"
 #include <QObject>
 #include <QString>
 #include <QTimer>

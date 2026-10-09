@@ -45,9 +45,9 @@ public:
     bool renameItem(const QString& folderPath, const QString& oldName, const QString& newName);
 
     /**
-     * @brief 强制立即将所有未落盘的脏目录 JSON 刷入物理磁盘
+     * @brief 强制立即将所有未落盘的脏目录 JSON 刷入物理磁盘 (sync 为 true 时在当前线程同步写入)
      */
-    void flushAllDirtyBuffers();
+    void flushAllDirtyBuffers(bool sync = false);
 
 private slots:
     void onFlushTimeout();
