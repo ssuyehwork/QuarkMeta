@@ -22,7 +22,7 @@ public:
     QSize sizeHint() const override;
     QLayoutItem *takeAt(int index) override;
 
-    void setFlowAlignment(Qt::Alignment align) { m_alignment = align; invalidate(); }
+    void setFlowAlignment(Qt::Alignment alignment) { m_alignment = alignment; invalidate(); }
     Qt::Alignment flowAlignment() const { return m_alignment; }
 
 private:
