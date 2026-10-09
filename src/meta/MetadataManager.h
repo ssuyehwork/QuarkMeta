@@ -108,6 +108,8 @@ public:
     );
 
     void updateExtractedMediaFeaturesBatch(const std::vector<ExtractedFeatureItem>& items);
+    void seedMemoryCacheBatch(const std::vector<ItemRecord>& records);
+    bool shouldExtractMediaFeatures(const std::wstring& path, long long pSize, long long pMtime);
 
     void renameTag(const QString& oldName, const QString& newName);
     void removeTag(const QString& tagName);
