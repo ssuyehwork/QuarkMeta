@@ -83,7 +83,11 @@ int FlowLayout::doLayout(const QRect &rect, bool testOnly) const {
         flushLine(currentLine, currentLineWidth - horizontalSpacing());
     }
 
-    return y - rect.y() + bottom;
+    int totalH = y - rect.y() + bottom;
+    if (y > effectiveRect.y()) {
+        totalH -= verticalSpacing();
+    }
+    return totalH;
 }
 
 } // namespace QuarkMeta
