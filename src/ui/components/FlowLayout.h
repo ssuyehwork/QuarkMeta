@@ -20,11 +20,16 @@ public:
     void setGeometry(const QRect &rect) override;
     QSize sizeHint() const override;
     QLayoutItem *takeAt(int index) override;
+
+    void setAlignment(Qt::Alignment align) { m_alignment = align; invalidate(); }
+    Qt::Alignment alignment() const { return m_alignment; }
+
 private:
     int doLayout(const QRect &rect, bool testOnly) const;
     QList<QLayoutItem *> itemList;
     int m_hSpace;
     int m_vSpace;
+    Qt::Alignment m_alignment = Qt::AlignLeft;
 };
 
 } // namespace QuarkMeta
