@@ -12,6 +12,7 @@
 #include <limits>
 #include <QThreadPool>
 #include "../../meta/QuarkMetaJson.h"
+#include "../../meta/QuarkMetaJsonStore.h"
 #include "../../meta/MetadataDefs.h"
 #include "CoreController.h"
 #include "DiskMediaExtractor.h"
