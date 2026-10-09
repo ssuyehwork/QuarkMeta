@@ -132,7 +132,7 @@ void MetaPanel::initUi() {
     previewLayout->addWidget(m_paletteContainer);
 
     m_topPreviewBox->hide();
-    m_containerLayout->addWidget(m_topPreviewBox);
+    m_containerLayout->addWidget(m_topPreviewBox, 0, Qt::AlignHCenter);
 
     // 2. 文件名编辑区
     m_nameEdit = new ElasticEdit(m_container);
