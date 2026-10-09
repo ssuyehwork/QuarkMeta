@@ -8,7 +8,6 @@
 namespace QuarkMeta {
 
 class ColorDot : public QWidget {
-    Q_OBJECT
 public:
     explicit ColorDot(const QColor& color, QWidget* parent = nullptr)
         : QWidget(parent), m_color(color) {
