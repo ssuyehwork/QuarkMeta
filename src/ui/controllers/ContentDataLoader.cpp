@@ -12,6 +12,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QCoreApplication>
 #include <QPointer>
+#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -106,6 +107,7 @@ void ContentDataLoader::loadDirectory(const QString& path, bool recursive) {
                     }
                 }
                 if (!filePaths.isEmpty()) {
+                    qDebug() << "[ContentDataLoader] Enqueueing" << filePaths.size() << "scanned files for media feature & auto-color extraction.";
                     MetadataManager::instance().registerItemsAsync(filePaths);
                 }
             }

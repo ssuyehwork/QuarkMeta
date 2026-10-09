@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QCoreApplication>
+#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -106,7 +107,9 @@ void QuarkMetaJsonStore::flushAllDirtyBuffers() {
 
     // 在无锁环境下执行磁盘临时文件写入与 MoveFileExW 原子替换
     for (const auto& [folderPath, json] : toFlush) {
-        json.save();
+        bool ok = json.save();
+        qDebug() << "[QuarkMetaJsonStore] Flushed dirty buffer for folder:" << QString::fromStdWString(folderPath)
+                 << "items count:" << json.items().size() << "save status:" << ok;
     }
 }
 

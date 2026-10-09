@@ -259,6 +259,8 @@ void MetadataManager::setSha256(const std::wstring& path, const std::string& sha
 void MetadataManager::updateExtractedMediaFeaturesBatch(const std::vector<ExtractedFeatureItem>& items) {
     if (items.empty()) return;
 
+    qDebug() << "[MetadataManager] Updating extracted media features batch for" << items.size() << "items.";
+
     for (const auto& item : items) {
         std::wstring nPath = normalizePath(item.path);
         MetaMemoryCache::instance().update(nPath, [&item](RuntimeMeta& meta) {
@@ -283,6 +285,9 @@ void MetadataManager::updateExtractedMediaFeaturesBatch(const std::vector<Extrac
                 meta.palettes.push_back({p.first, p.second});
             }
         });
+
+        qDebug() << "[MetadataManager] Feature updated & persisted to QuarkMetaJsonStore for:" << QString::fromStdWString(nPath)
+                 << "autoColor:" << QString::fromStdWString(item.autoColor);
 
         notifyUI(RefreshLevel::PathUpdate, QString::fromStdWString(nPath));
     }

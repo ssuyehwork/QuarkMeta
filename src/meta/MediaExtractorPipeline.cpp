@@ -170,7 +170,11 @@ void MediaExtractorPipeline::dispatchWorkerLoop() {
                         QColor dominant = ColorPaletteEngine::quantizeToStandardColor(pal.first().first); 
                         item.autoColor = dominant.name().toUpper().toStdWString(); 
                         item.palettes.assign(pal.begin(), pal.end()); 
-                    } 
+                        qDebug() << "[MediaExtractorPipeline] Extracted autoColor:" << QString::fromStdWString(item.autoColor)
+                                 << "palettes count:" << pal.size() << "for file:" << qPath;
+                    } else {
+                        qDebug() << "[MediaExtractorPipeline] Palette extraction returned empty for image:" << qPath;
+                    }
                 } 
             } 
  
