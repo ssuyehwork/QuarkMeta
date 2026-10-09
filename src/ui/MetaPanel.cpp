@@ -128,7 +128,7 @@ void MetaPanel::initUi() {
 
     m_paletteContainer = new QWidget(m_topPreviewBox);
     m_paletteFlowLayout = new FlowLayout(m_paletteContainer, 0, 4, 4);
-    m_paletteFlowLayout->setAlignment(Qt::AlignHCenter);
+    m_paletteFlowLayout->setFlowAlignment(Qt::AlignHCenter);
     previewLayout->addWidget(m_paletteContainer);
 
     m_topPreviewBox->hide();

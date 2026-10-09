@@ -31,23 +31,7 @@ int FlowLayout::doLayout(const QRect &rect, bool testOnly) const {
     int y = effectiveRect.y();
     int lineHeight = 0;
 
-    QList<QLayoutItem*> currentLineItems;
-
-    auto applyLineAlignment = [this, &effectiveRect](const QList<QLayoutItem*>& items, int lineWidth) {
-        if (items.isEmpty()) return;
-        int xOffset = 0;
-        if (m_alignment & Qt::AlignHCenter) {
-            xOffset = qMax(0, (effectiveRect.width() - lineWidth) / 2);
-        } else if (m_alignment & Qt::AlignRight) {
-            xOffset = qMax(0, effectiveRect.width() - lineWidth);
-        }
-        if (xOffset > 0) {
-            for (QLayoutItem* item : items) {
-                QRect g = item->geometry();
-                item->setGeometry(g.translated(xOffset, 0));
-            }
-        }
-    };
+    QList<QLayoutItem*> rowItems;
 
     for (QLayoutItem *item : itemList) {
         int spaceX = horizontalSpacing();
@@ -56,11 +40,22 @@ int FlowLayout::doLayout(const QRect &rect, bool testOnly) const {
         int nextX = x + itemW + spaceX;
 
         if (nextX - spaceX > effectiveRect.right() && lineHeight > 0) {
-            if (!testOnly) {
-                int lineWidth = x - spaceX - effectiveRect.x();
-                applyLineAlignment(currentLineItems, lineWidth);
+            if (!testOnly && !rowItems.isEmpty()) {
+                int rowW = x - spaceX - effectiveRect.x();
+                int xOffset = 0;
+                if (m_alignment & Qt::AlignHCenter) {
+                    xOffset = qMax(0, (effectiveRect.width() - rowW) / 2);
+                } else if (m_alignment & Qt::AlignRight) {
+                    xOffset = qMax(0, effectiveRect.width() - rowW);
+                }
+                if (xOffset > 0) {
+                    for (QLayoutItem* rowItem : rowItems) {
+                        QRect g = rowItem->geometry();
+                        rowItem->setGeometry(g.translated(xOffset, 0));
+                    }
+                }
             }
-            currentLineItems.clear();
+            rowItems.clear();
 
             x = effectiveRect.x();
             y = y + lineHeight + spaceY;
@@ -70,16 +65,27 @@ int FlowLayout::doLayout(const QRect &rect, bool testOnly) const {
 
         if (!testOnly) {
             item->setGeometry(QRect(QPoint(x, y), item->sizeHint()));
-            currentLineItems.append(item);
+            rowItems.append(item);
         }
 
         x = nextX;
         lineHeight = qMax(lineHeight, item->sizeHint().height());
     }
 
-    if (!testOnly && !currentLineItems.isEmpty()) {
-        int lineWidth = x - horizontalSpacing() - effectiveRect.x();
-        applyLineAlignment(currentLineItems, lineWidth);
+    if (!testOnly && !rowItems.isEmpty()) {
+        int rowW = x - horizontalSpacing() - effectiveRect.x();
+        int xOffset = 0;
+        if (m_alignment & Qt::AlignHCenter) {
+            xOffset = qMax(0, (effectiveRect.width() - rowW) / 2);
+        } else if (m_alignment & Qt::AlignRight) {
+            xOffset = qMax(0, effectiveRect.width() - rowW);
+        }
+        if (xOffset > 0) {
+            for (QLayoutItem* rowItem : rowItems) {
+                QRect g = rowItem->geometry();
+                rowItem->setGeometry(g.translated(xOffset, 0));
+            }
+        }
     }
 
     return y + lineHeight - rect.y() + bottom;

@@ -1,6 +1,7 @@
 #pragma once
 #include <QLayout>
 #include <QList>
+#include <Qt>
 
 namespace QuarkMeta {
 
@@ -21,8 +22,8 @@ public:
     QSize sizeHint() const override;
     QLayoutItem *takeAt(int index) override;
 
-    void setAlignment(Qt::Alignment align) { m_alignment = align; invalidate(); }
-    Qt::Alignment alignment() const { return m_alignment; }
+    void setFlowAlignment(Qt::Alignment align) { m_alignment = align; invalidate(); }
+    Qt::Alignment flowAlignment() const { return m_alignment; }
 
 private:
     int doLayout(const QRect &rect, bool testOnly) const;
