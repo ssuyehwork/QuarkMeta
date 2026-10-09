@@ -9,6 +9,7 @@
 namespace QuarkMeta {
 
 ElasticEdit::ElasticEdit(QWidget* parent) : QTextEdit(parent) {
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setLineWrapMode(QTextEdit::WidgetWidth);

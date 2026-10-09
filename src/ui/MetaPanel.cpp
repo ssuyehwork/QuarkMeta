@@ -48,6 +48,7 @@ MetaPanel::MetaPanel(QWidget* parent) : QFrame(parent) {
 
 QWidget* MetaPanel::createCollapsibleSection(const QString& title, QWidget* contentWidget, bool defaultExpanded) {
     QWidget* sectionWidget = new QWidget(m_container);
+    sectionWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     QVBoxLayout* sectionLayout = new QVBoxLayout(sectionWidget);
     sectionLayout->setContentsMargins(0, 0, 0, 0);
     sectionLayout->setSpacing(4);
@@ -112,6 +113,7 @@ void MetaPanel::initUi() {
     // 1. 顶部预览区
     m_topPreviewBox = new QWidget(m_container);
     m_topPreviewBox->setObjectName("TopPreviewBox");
+    m_topPreviewBox->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_topPreviewBox->setFixedWidth(200);
     // TopPreviewBox style in style.qss
     QVBoxLayout* previewLayout = new QVBoxLayout(m_topPreviewBox);
@@ -128,6 +130,7 @@ void MetaPanel::initUi() {
 
     m_paletteContainer = new QWidget(m_container);
     m_paletteContainer->setObjectName("MetaPaletteContainer");
+    m_paletteContainer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_paletteFlowLayout = new FlowLayout(m_paletteContainer, 0, 4, 4);
     m_paletteFlowLayout->setContentsMargins(0, 2, 0, 0); // 8px container layout spacing + 2px top margin = 10px total gap
     m_paletteFlowLayout->setFlowAlignment(Qt::AlignHCenter);
@@ -187,6 +190,7 @@ void MetaPanel::initUi() {
 
     // 5. 星级评级 + 颜色色标条
     m_ratingColorBox = new QWidget(m_container);
+    m_ratingColorBox->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     QVBoxLayout* ratingColorLayout = new QVBoxLayout(m_ratingColorBox);
     ratingColorLayout->setContentsMargins(0, 2, 0, 2);
     ratingColorLayout->setSpacing(6);
@@ -238,6 +242,7 @@ void MetaPanel::initUi() {
 
     // 6. 标签管理区
     m_tagBox = new QWidget(m_container);
+    m_tagBox->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     QVBoxLayout* tagL = new QVBoxLayout(m_tagBox);
     tagL->setContentsMargins(0, 0, 0, 0);
     tagL->setSpacing(6);
@@ -268,6 +273,7 @@ void MetaPanel::initUi() {
 
     // 7. 基础物理属性区
     m_infoSectionWidget = new QWidget(m_container);
+    m_infoSectionWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     QVBoxLayout* infoL = new QVBoxLayout(m_infoSectionWidget);
     infoL->setContentsMargins(0, 0, 0, 0);
     infoL->setSpacing(4);
