@@ -307,7 +307,7 @@ void MetadataManager::seedMemoryCacheBatch(const std::vector<ItemRecord>& record
             m.added_at = rec.added_at;
             m.palettes.clear();
             for (const auto& pe : rec.palettes) {
-                m.palettes.emplace_back(pe.color, pe.ratio);
+                m.palettes.push_back(PaletteEntry(pe.first, pe.second));
             }
         });
     }
@@ -372,7 +372,7 @@ void MetadataManager::updateExtractedMediaFeaturesBatch(const std::vector<Extrac
             jsonMeta.modificationTime = item.mtime;
             jsonMeta.palettes.clear();
             for (const auto& p : item.palettes) {
-                jsonMeta.palettes.push_back({p.first, p.second});
+                jsonMeta.palettes.push_back(PaletteEntry(p.first, p.second));
             }
         });
 
