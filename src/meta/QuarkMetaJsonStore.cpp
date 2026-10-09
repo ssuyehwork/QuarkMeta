@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QCoreApplication>
+#include <QtConcurrent/QtConcurrent>
 #include <QDebug>
 
 namespace QuarkMeta {

@@ -359,7 +359,7 @@ void MetadataManager::updateExtractedMediaFeaturesBatch(const std::vector<Extrac
             if (item.mtime > 0) rMeta.mtime = item.mtime;
             rMeta.palettes.clear();
             for (const auto& p : item.palettes) {
-                rMeta.palettes.emplace_back(p.first, p.second);
+                rMeta.palettes.push_back(PaletteEntry(p.first, p.second));
             }
         });
 
