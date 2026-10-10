@@ -319,20 +319,45 @@ bool LibraryDao::addPathsToCategory(int id, const QStringList& paths) {
 
     std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
 
-    const char* sql = "INSERT OR IGNORE INTO library_category_paths (category_id, path) VALUES (?, ?);";
-    sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return false;
+    // 1. 先清除被操作路径已有的所有旧分类关联与旧索引记录
+    const char* delPathsSql = "DELETE FROM library_category_paths WHERE path = ?;";
+    const char* delIndexSql = "DELETE FROM library_item_index WHERE file_path = ?;";
 
-    for (const QString& p : paths) {
-        QString cleanP = QDir::toNativeSeparators(QDir::cleanPath(p));
-        std::string pStd = cleanP.toStdString();
-        sqlite3_bind_int(stmt, 1, id);
-        sqlite3_bind_text(stmt, 2, pStd.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_step(stmt);
-        sqlite3_reset(stmt);
+    sqlite3_stmt* stmtDelP = nullptr;
+    sqlite3_stmt* stmtDelI = nullptr;
+    if (sqlite3_prepare_v2(db, delPathsSql, -1, &stmtDelP, nullptr) == SQLITE_OK &&
+        sqlite3_prepare_v2(db, delIndexSql, -1, &stmtDelI, nullptr) == SQLITE_OK) {
+        for (const QString& p : paths) {
+            std::string pStd = QDir::toNativeSeparators(QDir::cleanPath(p)).toStdString();
+
+            sqlite3_bind_text(stmtDelP, 1, pStd.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_step(stmtDelP);
+            sqlite3_reset(stmtDelP);
+
+            sqlite3_bind_text(stmtDelI, 1, pStd.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_step(stmtDelI);
+            sqlite3_reset(stmtDelI);
+        }
+    }
+    if (stmtDelP) sqlite3_finalize(stmtDelP);
+    if (stmtDelI) sqlite3_finalize(stmtDelI);
+
+    // 2. 如果目标分类大于 0（即具体分类 B，而非“未分类” -2），插入新分类关联
+    if (id > 0) {
+        const char* sql = "INSERT OR IGNORE INTO library_category_paths (category_id, path) VALUES (?, ?);";
+        sqlite3_stmt* stmt = nullptr;
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+            for (const QString& p : paths) {
+                std::string pStd = QDir::toNativeSeparators(QDir::cleanPath(p)).toStdString();
+                sqlite3_bind_int(stmt, 1, id);
+                sqlite3_bind_text(stmt, 2, pStd.c_str(), -1, SQLITE_TRANSIENT);
+                sqlite3_step(stmt);
+                sqlite3_reset(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
     }
 
-    sqlite3_finalize(stmt);
     sqlite3_wal_checkpoint_v2(db, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
     return true;
 }
