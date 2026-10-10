@@ -116,7 +116,7 @@ void LibraryPanel::initUi() {
         m_treeView->header()->setStretchLastSection(true);
         m_treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     }
-    m_treeView->setIndentation(0);
+    m_treeView->setIndentation(16);
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_treeView->setDragEnabled(true);
