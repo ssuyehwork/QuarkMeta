@@ -2071,6 +2071,7 @@ QListView#ColumnViewPaneListView::item:selected, QListView#ColumnViewFolderList:
 QTabBar#SidebarTabBar {
     background: transparent;
     border: none;
+    qproperty-drawBase: false;
 }
 
 QTabBar#SidebarTabBar::tab {
