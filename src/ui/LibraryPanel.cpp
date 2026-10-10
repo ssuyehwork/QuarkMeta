@@ -286,14 +286,23 @@ void LibraryPanel::onPathsDroppedToCategory(const QStringList& paths, const QMod
             }
         }
 
-        // 自动将预设标签批量加至入库文件
+        // 自动将当前分类及其所有祖先分类的预设标签递归合并加至入库文件
         auto categories = LibraryDao::getAllCategories();
-        QStringList presetTags;
+        QMap<int, LibraryCategoryRecord> catMap;
         for (const auto& cat : categories) {
-            if (cat.id == nodeId) {
-                presetTags = cat.presetTags;
-                break;
+            catMap.insert(cat.id, cat);
+        }
+
+        QStringList presetTags;
+        int currentId = nodeId;
+        while (currentId > 0 && catMap.contains(currentId)) {
+            const auto& curCat = catMap.value(currentId);
+            for (const QString& tag : curCat.presetTags) {
+                if (!presetTags.contains(tag)) {
+                    presetTags.append(tag);
+                }
             }
+            currentId = curCat.parentId;
         }
 
         if (!presetTags.isEmpty()) {
