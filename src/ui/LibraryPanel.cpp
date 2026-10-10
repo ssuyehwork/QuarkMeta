@@ -371,17 +371,35 @@ void LibraryPanel::loadLibrary() {
 
     if (m_pendingEditNodeId > 0 && m_treeView) {
         int targetNodeId = m_pendingEditNodeId;
-        m_pendingEditNodeId = 0;
+        QTimer::singleShot(0, this, [this, targetNodeId]() {
+            if (m_pendingEditNodeId != targetNodeId) return;
+            m_pendingEditNodeId = 0;
 
-        for (int i = 0; i < m_model->rowCount(); ++i) {
-            QStandardItem* item = m_model->item(i);
-            if (item && item->data(Qt::UserRole + 1).toInt() == targetNodeId) {
-                m_treeView->setCurrentIndex(item->index());
-                m_treeView->edit(item->index());
-                break;
+            QStandardItem* targetItem = findItemByNodeId(m_model->invisibleRootItem(), targetNodeId);
+            if (targetItem && m_treeView) {
+                QModelIndex parentIdx = targetItem->parent() ? targetItem->parent()->index() : QModelIndex();
+                if (parentIdx.isValid()) {
+                    m_treeView->expand(parentIdx);
+                }
+                m_treeView->setCurrentIndex(targetItem->index());
+                m_treeView->edit(targetItem->index());
             }
-        }
+        });
     }
+}
+
+QStandardItem* LibraryPanel::findItemByNodeId(QStandardItem* parent, int nodeId) {
+    if (!parent) return nullptr;
+    for (int i = 0; i < parent->rowCount(); ++i) {
+        QStandardItem* child = parent->child(i);
+        if (!child) continue;
+        if (child->data(Qt::UserRole + 1).toInt() == nodeId) {
+            return child;
+        }
+        QStandardItem* found = findItemByNodeId(child, nodeId);
+        if (found) return found;
+    }
+    return nullptr;
 }
 
 void LibraryPanel::createAndEditCategory(int parentId) {
