@@ -344,7 +344,6 @@ void LibraryPanel::loadLibrary() {
 
     addSystemItem("全部数据", "all_data", "#3498db", -1);
     addSystemItem("未分类", "uncategorized", "#95a5a6", -2);
-    addSystemItem("未标签", "untagged", "#7f8c8d", -3);
 
     // 2. 加载用户自定义分类 (带动态计数与完整树构建)
     auto list = LibraryDao::getAllCategories();
