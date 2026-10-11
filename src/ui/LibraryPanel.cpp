@@ -257,7 +257,7 @@ void LibraryPanel::onCategoryClicked(const QModelIndex& index) {
         // 点击 Header 其它区域，切换展开/折叠状态并持久化记录
         bool isExpanded = m_treeView->isExpanded(index);
         m_treeView->setExpanded(index, !isExpanded);
-        AppConfig::instance().setBool("Library/CustomSectionCollapsed", isExpanded);
+        AppConfig::instance().setValue("Library/CustomSectionCollapsed", isExpanded);
         return;
     }
 
@@ -534,7 +534,7 @@ void LibraryPanel::loadLibrary() {
     }
 
     // 恢复 "文件夹(N)" 节点折叠/展开持久化状态
-    bool sectionCollapsed = AppConfig::instance().getBool("Library/CustomSectionCollapsed", false);
+    bool sectionCollapsed = AppConfig::instance().getValue("Library/CustomSectionCollapsed", false).toBool();
     if (m_treeView) {
         m_treeView->setExpanded(sectionItem->index(), !sectionCollapsed);
     }
