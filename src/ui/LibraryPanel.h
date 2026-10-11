@@ -56,6 +56,8 @@ public:
     ~LibraryPanel() override = default;
 
     void loadLibrary();
+    void saveLibraryOrder();
+    void sortCategoriesByName(bool ascending);
 
 signals:
     void categoryPathsSelected(const QStringList& paths);

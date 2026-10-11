@@ -326,6 +326,13 @@ void LibraryPanel::initUi() {
     connect(m_treeView, &QWidget::customContextMenuRequested, this, &LibraryPanel::onCategoryContextMenu);
     connect(m_treeView, &DropTreeView::pathsDropped, this, &LibraryPanel::onPathsDroppedToCategory);
 
+    auto updateLibAndSave = [this]() {
+        if (!m_isLoading) saveLibraryOrder();
+    };
+    connect(m_model, &QStandardItemModel::rowsMoved, this, updateLibAndSave, Qt::QueuedConnection);
+    connect(m_model, &QStandardItemModel::rowsInserted, this, updateLibAndSave, Qt::QueuedConnection);
+    connect(m_model, &QStandardItemModel::rowsRemoved, this, updateLibAndSave, Qt::QueuedConnection);
+
     connect(&LibraryService::instance(), &LibraryService::libraryChanged, this, [this]() {
         QTimer::singleShot(0, this, [this]() {
             loadLibrary();
@@ -345,6 +352,60 @@ void LibraryPanel::initUi() {
             });
         }
     });
+}
+
+void LibraryPanel::saveLibraryOrder() {
+    if (!m_model || m_isLoading) return;
+
+    QStandardItem* sectionItem = findItemByNodeId(m_model->invisibleRootItem(), 0);
+    if (!sectionItem) return;
+
+    int orderCounter = 1;
+    std::function<void(QStandardItem*, int)> traverseAndSave = [&](QStandardItem* parentItem, int parentId) {
+        int rowCount = parentItem->rowCount();
+        for (int i = 0; i < rowCount; ++i) {
+            QStandardItem* child = parentItem->child(i);
+            if (!child) continue;
+            int nodeId = child->data(Qt::UserRole + 1).toInt();
+            if (nodeId > 0) {
+                LibraryDao::updateNodeParentAndOrder(nodeId, parentId, orderCounter++);
+                traverseAndSave(child, nodeId);
+            }
+        }
+    };
+
+    traverseAndSave(sectionItem, 0);
+}
+
+void LibraryPanel::sortCategoriesByName(bool ascending) {
+    if (!m_model) return;
+
+    QStandardItem* sectionItem = findItemByNodeId(m_model->invisibleRootItem(), 0);
+    if (!sectionItem) return;
+
+    std::function<void(QStandardItem*)> sortChildren = [&](QStandardItem* parentItem) {
+        int rowCount = parentItem->rowCount();
+        if (rowCount <= 1) return;
+
+        QList<QStandardItem*> childItems;
+        for (int i = rowCount - 1; i >= 0; --i) {
+            QStandardItem* item = parentItem->takeRow(i).first();
+            if (item) childItems.prepend(item);
+        }
+
+        std::sort(childItems.begin(), childItems.end(), [ascending](QStandardItem* a, QStandardItem* b) {
+            return ascending ? (a->text().localeAwareCompare(b->text()) < 0)
+                              : (a->text().localeAwareCompare(b->text()) > 0);
+        });
+
+        for (QStandardItem* item : childItems) {
+            parentItem->appendRow(item);
+            sortChildren(item);
+        }
+    };
+
+    sortChildren(sectionItem);
+    saveLibraryOrder();
 }
 
 void LibraryPanel::toggleSection() {
@@ -432,6 +493,16 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
         connect(newCatAct, &QAction::triggered, this, [this]() {
             createAndEditCategory(0);
         });
+
+        auto* sortMenu = menu.addMenu(UiHelper::getIcon("list_ul", QColor("#AAAAAA")), "排列");
+        UiHelper::applyMenuStyle(sortMenu);
+        QAction* sortAsc = sortMenu->addAction("按名称 (A→Z)");
+        connect(sortAsc, &QAction::triggered, this, [this]() { sortCategoriesByName(true); });
+        QAction* sortDesc = sortMenu->addAction("按名称 (Z→A)");
+        connect(sortDesc, &QAction::triggered, this, [this]() { sortCategoriesByName(false); });
+        QAction* sortManual = sortMenu->addAction("手动");
+        connect(sortManual, &QAction::triggered, this, [this]() { loadLibrary(); });
+
         menu.exec(m_treeView->viewport()->mapToGlobal(pos));
         return;
     }
@@ -443,11 +514,21 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
     }
 
     if (nodeId == 0) {
-        // 右键标题行弹出与空白处相同的“新建库分类”菜单
+        // 右键标题行弹出与空白处相同的“新建库分类”与排列菜单
         QAction* newCatAct = menu.addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "新建库分类");
         connect(newCatAct, &QAction::triggered, this, [this]() {
             createAndEditCategory(0);
         });
+
+        auto* sortMenu = menu.addMenu(UiHelper::getIcon("list_ul", QColor("#AAAAAA")), "排列");
+        UiHelper::applyMenuStyle(sortMenu);
+        QAction* sortAsc = sortMenu->addAction("按名称 (A→Z)");
+        connect(sortAsc, &QAction::triggered, this, [this]() { sortCategoriesByName(true); });
+        QAction* sortDesc = sortMenu->addAction("按名称 (Z→A)");
+        connect(sortDesc, &QAction::triggered, this, [this]() { sortCategoriesByName(false); });
+        QAction* sortManual = sortMenu->addAction("手动");
+        connect(sortManual, &QAction::triggered, this, [this]() { loadLibrary(); });
+
         menu.exec(m_treeView->viewport()->mapToGlobal(pos));
         return;
     }
@@ -515,6 +596,17 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
     connect(removeAct, &QAction::triggered, this, [this, nodeId]() {
         LibraryService::instance().removeCategory(nodeId);
     });
+
+    menu.addSeparator();
+
+    auto* sortMenu = menu.addMenu(UiHelper::getIcon("list_ul", QColor("#AAAAAA")), "排列");
+    UiHelper::applyMenuStyle(sortMenu);
+    QAction* sortAsc = sortMenu->addAction("按名称 (A→Z)");
+    connect(sortAsc, &QAction::triggered, this, [this]() { sortCategoriesByName(true); });
+    QAction* sortDesc = sortMenu->addAction("按名称 (Z→A)");
+    connect(sortDesc, &QAction::triggered, this, [this]() { sortCategoriesByName(false); });
+    QAction* sortManual = sortMenu->addAction("手动");
+    connect(sortManual, &QAction::triggered, this, [this]() { loadLibrary(); });
 
     menu.exec(m_treeView->viewport()->mapToGlobal(pos));
 }
