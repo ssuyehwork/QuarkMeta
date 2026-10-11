@@ -24,14 +24,107 @@
 #include <QPainter>
 #include <QLineEdit>
 #include <QTimer>
+#include <QMouseEvent>
 #include <functional>
 
 namespace QuarkMeta {
+
+QRect LibraryItemDelegate::addBtnRect(const QRect& optionRect) {
+    int size = 16;
+    int top = optionRect.top() + (optionRect.height() - size) / 2;
+    int rightPadding = 12;
+    int left = optionRect.right() - rightPadding - size;
+    return QRect(left, top, size, size);
+}
 
 QSize LibraryItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
     QSize sz = QStyledItemDelegate::sizeHint(option, index);
     sz.setHeight(28);
     return sz;
+}
+
+bool LibraryItemDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, const QStyleOptionViewItem& option, const QModelIndex& index) {
+    if (!index.isValid()) {
+        return QStyledItemDelegate::editorEvent(event, model, option, index);
+    }
+
+    int nodeId = index.data(Qt::UserRole + 1).toInt();
+    if (nodeId == 0) {
+        if (event->type() == QEvent::MouseButtonDblClick) {
+            return true;
+        }
+        if (event->type() == QEvent::MouseButtonRelease) {
+            QMouseEvent* mouseEv = static_cast<QMouseEvent*>(event);
+            if (mouseEv && mouseEv->button() == Qt::LeftButton) {
+                QRect btnRect = addBtnRect(option.rect);
+                if (btnRect.contains(mouseEv->pos())) {
+                    emit requestAddCategory();
+                } else {
+                    emit requestToggleSection();
+                }
+                return true;
+            }
+        }
+    }
+
+    return QStyledItemDelegate::editorEvent(event, model, option, index);
+}
+
+void LibraryItemDelegate::paintHighlightedText(QPainter* painter, const QRect& rect, const QString& text, const QString& keyword, const QFont& font, const QColor& normalColor, const QColor& matchColor) const {
+    if (text.isEmpty()) return;
+
+    QFontMetrics fm(font);
+    painter->setFont(font);
+
+    if (keyword.isEmpty()) {
+        painter->setPen(normalColor);
+        painter->drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, fm.elidedText(text, Qt::ElideRight, rect.width()));
+        return;
+    }
+
+    int curX = rect.left();
+    int endX = rect.right();
+    int lastIdx = 0;
+    int kwLen = keyword.length();
+
+    while (lastIdx < text.length() && curX < endX) {
+        int foundIdx = text.indexOf(keyword, lastIdx, Qt::CaseInsensitive);
+        if (foundIdx == -1) {
+            QString remStr = text.mid(lastIdx);
+            QString elidedRem = fm.elidedText(remStr, Qt::ElideRight, endX - curX);
+            painter->setPen(normalColor);
+            painter->drawText(QRect(curX, rect.top(), endX - curX, rect.height()), Qt::AlignLeft | Qt::AlignVCenter, elidedRem);
+            break;
+        }
+
+        if (foundIdx > lastIdx) {
+            QString normalSegment = text.mid(lastIdx, foundIdx - lastIdx);
+            int segWidth = fm.horizontalAdvance(normalSegment);
+            if (curX + segWidth > endX) {
+                QString elidedSeg = fm.elidedText(normalSegment, Qt::ElideRight, endX - curX);
+                painter->setPen(normalColor);
+                painter->drawText(QRect(curX, rect.top(), endX - curX, rect.height()), Qt::AlignLeft | Qt::AlignVCenter, elidedSeg);
+                break;
+            }
+            painter->setPen(normalColor);
+            painter->drawText(QRect(curX, rect.top(), segWidth, rect.height()), Qt::AlignLeft | Qt::AlignVCenter, normalSegment);
+            curX += segWidth;
+        }
+
+        QString matchSegment = text.mid(foundIdx, kwLen);
+        int matchWidth = fm.horizontalAdvance(matchSegment);
+        if (curX + matchWidth > endX) {
+            QString elidedMatch = fm.elidedText(matchSegment, Qt::ElideRight, endX - curX);
+            painter->setPen(matchColor);
+            painter->drawText(QRect(curX, rect.top(), endX - curX, rect.height()), Qt::AlignLeft | Qt::AlignVCenter, elidedMatch);
+            break;
+        }
+        painter->setPen(matchColor);
+        painter->drawText(QRect(curX, rect.top(), matchWidth, rect.height()), Qt::AlignLeft | Qt::AlignVCenter, matchSegment);
+        curX += matchWidth;
+
+        lastIdx = foundIdx + kwLen;
+    }
 }
 
 void LibraryItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -43,6 +136,46 @@ void LibraryItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
 
     int nodeId = index.data(Qt::UserRole + 1).toInt();
 
+    // 1. 渲染自定义分类折叠分组 Header (nodeId == 0)，不得绘制选中/拖放背景
+    if (nodeId == 0) {
+        painter->fillRect(opt.rect, Qt::transparent);
+
+        const QTreeView* treeView = qobject_cast<const QTreeView*>(option.widget);
+        bool isExpanded = treeView ? treeView->isExpanded(index) : true;
+        int customCount = index.data(Qt::UserRole + 9).toInt();
+
+        // 绘制标题文字 "文件夹(N)"
+        QString sectionText = QString("文件夹(%1)").arg(customCount);
+        QFont hdrFont = opt.font;
+        hdrFont.setPointSize(11);
+        hdrFont.setBold(true);
+
+        QFontMetrics fm(hdrFont);
+        int textWidth = fm.horizontalAdvance(sectionText);
+        int textLeft = opt.rect.left() + 10;
+        QRect textRect(textLeft, opt.rect.top(), textWidth, opt.rect.height());
+
+        painter->setFont(hdrFont);
+        painter->setPen((opt.state & QStyle::State_MouseOver) ? QColor("#FFFFFF") : QColor("#888888"));
+        painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, sectionText);
+
+        // 绘制紧跟文字右侧的展开/折叠箭头 (chevron_down / chevron_right)
+        QString arrowKey = isExpanded ? "chevron_down" : "chevron_right";
+        QIcon arrowIcon = UiHelper::getIcon(arrowKey, QColor("#888888"), 14);
+        int arrowLeft = textRect.right() + 4;
+        QRect arrowRect(arrowLeft, opt.rect.top() + (opt.rect.height() - 14) / 2, 14, 14);
+        arrowIcon.paint(painter, arrowRect, Qt::AlignCenter, QIcon::Normal, QIcon::Off);
+
+        // 绘制右侧加号按钮 (+) 图标 ("add")
+        QRect addRect = addBtnRect(opt.rect);
+        QIcon addIcon = UiHelper::getIcon("add", (opt.state & QStyle::State_MouseOver) ? QColor("#FFFFFF") : QColor("#888888"), 16);
+        addIcon.paint(painter, addRect, Qt::AlignCenter, QIcon::Normal, QIcon::Off);
+
+        painter->restore();
+        return;
+    }
+
+    // 绘制普通节点背景
     bool isDropTarget = index.data(IsDropTargetRole).toBool() ||
                        ViewDragDropHelper::isDropTarget(option.widget, index);
 
@@ -56,38 +189,6 @@ void LibraryItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
         painter->fillRect(opt.rect, QColor("#2A2D2E"));
     } else {
         painter->fillRect(opt.rect, Qt::transparent);
-    }
-
-    // 1. 渲染自定义分类折叠分组 Header (nodeId == 0)
-    if (nodeId == 0) {
-        const QTreeView* treeView = qobject_cast<const QTreeView*>(option.widget);
-        bool isExpanded = treeView ? treeView->isExpanded(index) : true;
-        int customCount = index.data(Qt::UserRole + 9).toInt();
-
-        // 绘制折叠/展开箭头 (scroll-008: 展开向下, scroll-010: 折叠向右)
-        QString arrowKey = isExpanded ? "scroll-008" : "scroll-010";
-        QIcon arrowIcon = UiHelper::getIcon(arrowKey, QColor("#888888"), 14);
-        QRect arrowRect(opt.rect.left() + 6, opt.rect.top() + (opt.rect.height() - 14) / 2, 14, 14);
-        arrowIcon.paint(painter, arrowRect, Qt::AlignCenter, QIcon::Normal, QIcon::Off);
-
-        // 绘制 Header 文字 "文件夹(N)"
-        QString sectionText = QString("文件夹(%1)").arg(customCount);
-        QRect textRect(arrowRect.right() + 6, opt.rect.top(), opt.rect.width() - 50, opt.rect.height());
-
-        QFont hdrFont = opt.font;
-        hdrFont.setPointSize(11);
-        hdrFont.setBold(true);
-        painter->setFont(hdrFont);
-        painter->setPen((opt.state & QStyle::State_MouseOver) ? QColor("#FFFFFF") : QColor("#888888"));
-        painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, sectionText);
-
-        // 右侧加号按钮 (+) 图标 ("add")
-        QIcon addIcon = UiHelper::getIcon("add", (opt.state & QStyle::State_MouseOver) ? QColor("#FFFFFF") : QColor("#888888"), 16);
-        QRect addRect(opt.rect.right() - 24, opt.rect.top() + (opt.rect.height() - 16) / 2, 16, 16);
-        addIcon.paint(painter, addRect, Qt::AlignCenter, QIcon::Normal, QIcon::Off);
-
-        painter->restore();
-        return;
     }
 
     // 2. 渲染系统分类与普通自定义分类节点 (nodeId != 0)
@@ -112,16 +213,18 @@ void LibraryItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
     }
 
     QString text = index.data(Qt::DisplayRole).toString();
-    painter->setFont(opt.font);
+    QColor normalTextColor = (opt.state & QStyle::State_Selected) ? QColor("#FFFFFF") : QColor("#EEEEEE");
+    QColor matchTextColor("#3498db");
 
-    QString elidedText = opt.fontMetrics.elidedText(text, Qt::ElideRight, textRect.width() - 4);
-
-    if (!m_filterKeyword.isEmpty() && text.contains(m_filterKeyword, Qt::CaseInsensitive)) {
-        painter->setPen(QColor("#3498db"));
+    if (nodeId > 0) {
+        // 自定义分类节点绘制关键字匹配高亮
+        paintHighlightedText(painter, textRect, text, m_filterKeyword, opt.font, normalTextColor, matchTextColor);
     } else {
-        painter->setPen((opt.state & QStyle::State_Selected) ? QColor("#FFFFFF") : QColor("#EEEEEE"));
+        // 系统分类节点不高亮，正常绘制
+        painter->setFont(opt.font);
+        painter->setPen(normalTextColor);
+        painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, opt.fontMetrics.elidedText(text, Qt::ElideRight, textRect.width() - 4));
     }
-    painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
 
     // 绘制右对齐数字计数
     if (!countStr.isEmpty()) {
@@ -161,7 +264,7 @@ LibraryPanel::LibraryPanel(QWidget* parent) : QFrame(parent) {
 }
 
 void LibraryPanel::initUi() {
-    m_treeView = new DropTreeView(this);
+    m_treeView = new LibraryTreeView(this);
     m_treeView->setObjectName("LibraryTreeView");
     m_treeView->setHeaderHidden(true);
     if (m_treeView->header()) {
@@ -184,6 +287,11 @@ void LibraryPanel::initUi() {
     m_delegate = new LibraryItemDelegate(this);
     m_treeView->setItemDelegate(m_delegate);
 
+    connect(m_delegate, &LibraryItemDelegate::requestAddCategory, this, [this]() {
+        createAndEditCategory(0);
+    });
+    connect(m_delegate, &LibraryItemDelegate::requestToggleSection, this, &LibraryPanel::toggleSection);
+
     m_mainLayout->addWidget(m_treeView, 1);
 
     // 底部搜索过滤框部件创建与配置
@@ -195,10 +303,10 @@ void LibraryPanel::initUi() {
 
     m_filterEdit = new QLineEdit(filterContainer);
     m_filterEdit->setObjectName("LibraryFilterEdit");
-    m_filterEdit->setPlaceholderText("搜索文件夹...");
+    m_filterEdit->setPlaceholderText("筛选分类");
     m_filterEdit->setClearButtonEnabled(true);
-    m_filterEdit->setFixedHeight(28);
-    m_filterEdit->addAction(UiHelper::getIcon("seach-7", QColor("#888888"), 14), QLineEdit::LeadingPosition);
+    m_filterEdit->setFixedHeight(32);
+    m_filterEdit->addAction(UiHelper::getIcon("filter_funnel", QColor("#888888"), 14), QLineEdit::LeadingPosition);
     filterLayout->addWidget(m_filterEdit);
 
     m_mainLayout->addWidget(filterContainer, 0);
@@ -239,25 +347,23 @@ void LibraryPanel::initUi() {
     });
 }
 
+void LibraryPanel::toggleSection() {
+    if (!m_model || !m_treeView) return;
+    if (m_filterEdit && !m_filterEdit->text().trimmed().isEmpty()) {
+        return;
+    }
+    QStandardItem* sectionItem = findItemByNodeId(m_model->invisibleRootItem(), 0);
+    if (!sectionItem) return;
+    QModelIndex idx = sectionItem->index();
+    bool isExpanded = m_treeView->isExpanded(idx);
+    m_treeView->setExpanded(idx, !isExpanded);
+    AppConfig::instance().setValue("Library/CustomSectionCollapsed", isExpanded);
+}
+
 void LibraryPanel::onCategoryClicked(const QModelIndex& index) {
     if (!index.isValid()) return;
     int nodeId = index.data(Qt::UserRole + 1).toInt();
     if (nodeId == 0) {
-        // "文件夹(N)" Section 节点点击处理
-        QPoint clickPos = m_treeView->viewport()->mapFromGlobal(QCursor::pos());
-        QRect visualRect = m_treeView->visualRect(index);
-        QRect plusRect(visualRect.right() - 28, visualRect.top() + (visualRect.height() - 16) / 2, 20, 16);
-
-        if (plusRect.contains(clickPos)) {
-            // 点击右侧 '+' 图标，新建根级自定义分类
-            createAndEditCategory(0);
-            return;
-        }
-
-        // 点击 Header 其它区域，切换展开/折叠状态并持久化记录
-        bool isExpanded = m_treeView->isExpanded(index);
-        m_treeView->setExpanded(index, !isExpanded);
-        AppConfig::instance().setValue("Library/CustomSectionCollapsed", isExpanded);
         return;
     }
 
@@ -286,7 +392,7 @@ void LibraryPanel::filterTreeNodes(const QString& keyword) {
         }
 
         if (nodeId == 0) {
-            return anyChildMatches;
+            return true;
         }
 
         bool visible = matchesSelf || anyChildMatches;
@@ -301,13 +407,15 @@ void LibraryPanel::filterTreeNodes(const QString& keyword) {
         if (!topItem) continue;
         int nodeId = topItem->data(Qt::UserRole + 1).toInt();
         if (nodeId < 0) {
-            bool visible = keyword.isEmpty() || topItem->text().contains(keyword, Qt::CaseInsensitive);
-            m_treeView->setRowHidden(i, QModelIndex(), !visible);
+            m_treeView->setRowHidden(i, QModelIndex(), false);
         } else if (nodeId == 0) {
-            bool visible = filterRecursive(topItem);
-            m_treeView->setRowHidden(i, QModelIndex(), !visible);
-            if (!keyword.isEmpty() && visible) {
+            filterRecursive(topItem);
+            m_treeView->setRowHidden(i, QModelIndex(), false);
+            if (!keyword.isEmpty()) {
                 m_treeView->expand(topItem->index());
+            } else {
+                bool sectionCollapsed = AppConfig::instance().getValue("Library/CustomSectionCollapsed", false).toBool();
+                m_treeView->setExpanded(topItem->index(), !sectionCollapsed);
             }
         }
     }
@@ -331,6 +439,16 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
     int nodeId = index.data(Qt::UserRole + 1).toInt();
     if (nodeId < 0) {
         // 系统分类禁止弹出修改菜单
+        return;
+    }
+
+    if (nodeId == 0) {
+        // 右键标题行弹出与空白处相同的“新建库分类”菜单
+        QAction* newCatAct = menu.addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "新建库分类");
+        connect(newCatAct, &QAction::triggered, this, [this]() {
+            createAndEditCategory(0);
+        });
+        menu.exec(m_treeView->viewport()->mapToGlobal(pos));
         return;
     }
 
@@ -404,7 +522,6 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
 void LibraryPanel::onPathsDroppedToCategory(const QStringList& paths, const QModelIndex& target) {
     if (paths.isEmpty()) return;
 
-    // 拖拽到空白处时默认为“未分类” (-2)，拖到具体分类上则为对应的分类 ID
     int nodeId = -2;
     if (target.isValid()) {
         nodeId = target.data(Qt::UserRole + 1).toInt();
@@ -413,7 +530,6 @@ void LibraryPanel::onPathsDroppedToCategory(const QStringList& paths, const QMod
     if (nodeId > 0 || nodeId == -2) {
         LibraryService::instance().addPathsToCategory(nodeId, paths);
 
-        // 🚀【索引建库】：无损读取每个项目的 .QuarkMeta.json 并写入中心 library_item_index
         for (const QString& path : paths) {
             QFileInfo fi(path);
             if (fi.isDir()) {
@@ -435,7 +551,6 @@ void LibraryPanel::onPathsDroppedToCategory(const QStringList& paths, const QMod
             }
         }
 
-        // 自动将当前分类及其所有祖先分类的预设标签递归合并加至入库文件
         auto categories = LibraryDao::getAllCategories();
         QMap<int, LibraryCategoryRecord> catMap;
         for (const auto& cat : categories) {
@@ -476,7 +591,7 @@ void LibraryPanel::loadLibrary() {
 
     LibraryDao::initTable();
 
-    // 1. 注入 2 个固定系统分类 (全部数据, 未分类 - 未标签已物理移除)
+    // 1. 注入 2 个固定系统分类 (全部数据, 未分类)
     auto addSystemItem = [this](const QString& name, const QString& iconKey, const QString& colorHex, int sysId) {
         int count = LibraryDao::getCategoryPaths(sysId).size();
         QIcon icon = UiHelper::getIcon(iconKey, QColor(colorHex), 18);
@@ -494,7 +609,7 @@ void LibraryPanel::loadLibrary() {
     addSystemItem("全部数据", "all_data", "#3498db", -1);
     addSystemItem("未分类", "uncategorized", "#95a5a6", -2);
 
-    // 2. 构建 "文件夹(N)" 折叠分组 Header 节点
+    // 2. 构建 "文件夹(N)" 折叠分组 Header 节点 (不可选中、不可拖放)
     auto list = LibraryDao::getAllCategories();
     int customCount = list.size();
 
@@ -503,7 +618,7 @@ void LibraryPanel::loadLibrary() {
     sectionItem->setData(0, IdRole);
     sectionItem->setData(0, Qt::UserRole + 1);
     sectionItem->setData(customCount, Qt::UserRole + 9);
-    sectionItem->setEditable(false);
+    sectionItem->setFlags(Qt::ItemIsEnabled);
     m_model->appendRow(sectionItem);
 
     // 3. 加载用户自定义分类并挂载在 sectionItem 及其子节点下
@@ -533,9 +648,10 @@ void LibraryPanel::loadLibrary() {
         }
     }
 
-    // 恢复 "文件夹(N)" 节点折叠/展开持久化状态
-    bool sectionCollapsed = AppConfig::instance().getValue("Library/CustomSectionCollapsed", false).toBool();
+    // 重建树后先 expandAll()，再按保存的折叠状态设置标题行的展开/折叠
     if (m_treeView) {
+        m_treeView->expandAll();
+        bool sectionCollapsed = AppConfig::instance().getValue("Library/CustomSectionCollapsed", false).toBool();
         m_treeView->setExpanded(sectionItem->index(), !sectionCollapsed);
     }
 
@@ -580,6 +696,17 @@ QStandardItem* LibraryPanel::findItemByNodeId(QStandardItem* parent, int nodeId)
 }
 
 void LibraryPanel::createAndEditCategory(int parentId) {
+    if (m_filterEdit) {
+        m_filterEdit->clear();
+    }
+    if (m_treeView && m_model) {
+        QStandardItem* sectionItem = findItemByNodeId(m_model->invisibleRootItem(), 0);
+        if (sectionItem) {
+            m_treeView->setExpanded(sectionItem->index(), true);
+            AppConfig::instance().setValue("Library/CustomSectionCollapsed", false);
+        }
+    }
+
     int newId = LibraryService::instance().createCategory("新建分类", parentId);
     if (newId > 0) {
         m_pendingEditNodeId = newId;
