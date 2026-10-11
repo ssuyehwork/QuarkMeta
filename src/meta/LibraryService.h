@@ -23,7 +23,7 @@ public:
     bool unindexItem(int categoryId, const QString& filePath);
     QList<ItemMeta> getIndexedItems(int categoryId) const;
 
-    QMenu* buildLibraryMenu(QMenu* parentMenu, const QStringList& targetPaths, QObject* receiver = nullptr);
+    QAction* buildLibraryAction(QMenu* parentMenu, const QStringList& targetPaths, QObject* receiver = nullptr);
 
 signals:
     void libraryChanged();

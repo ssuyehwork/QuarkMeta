@@ -199,7 +199,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
 
             QStringList selPathsDrive = m_panel->getSelectedPaths();
             if (selPathsDrive.isEmpty() && !path.isEmpty()) selPathsDrive << path;
-            LibraryService::instance().buildLibraryMenu(&menu, selPathsDrive, m_panel);
+            LibraryService::instance().buildLibraryAction(&menu, selPathsDrive, m_panel);
 
             menu.addSeparator();
 
@@ -308,7 +308,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
 
             QStringList selPathsItem = m_panel->getSelectedPaths();
             if (selPathsItem.isEmpty() && !path.isEmpty()) selPathsItem << path;
-            LibraryService::instance().buildLibraryMenu(&menu, selPathsItem, m_panel);
+            LibraryService::instance().buildLibraryAction(&menu, selPathsItem, m_panel);
 
             menu.addSeparator();
 
