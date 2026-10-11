@@ -522,14 +522,32 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
 void LibraryPanel::onPathsDroppedToCategory(const QStringList& paths, const QModelIndex& target) {
     if (paths.isEmpty()) return;
 
+    // 拖拽到空白处时默认为“未分类” (-2)，拖到具体节点则判断其 nodeId
     int nodeId = -2;
     if (target.isValid()) {
         nodeId = target.data(Qt::UserRole + 1).toInt();
     }
 
-    if (nodeId > 0 || nodeId == -2) {
-        LibraryService::instance().addPathsToCategory(nodeId, paths);
+    // 拖到“全部数据”(-1) 或 “文件夹(N)”标题行(0) 时：静默返回，不做任何处理，也不弹任何提示
+    if (nodeId == -1 || nodeId == 0) {
+        return;
+    }
 
+    // 只接受 nodeId > 0 或 -2
+    if (nodeId > 0 || nodeId == -2) {
+        bool ok = LibraryService::instance().addPathsToCategory(nodeId, paths);
+        if (!ok) {
+            ToolTipOverlay::instance()->showText(QCursor::pos(), "归入失败", 1500, QColor("#e81123"));
+            return;
+        }
+
+        if (nodeId == -2) {
+            // 目标为 -2 时：不执行子项索引，直接显示成功提示
+            ToolTipOverlay::instance()->showText(QCursor::pos(), QString("已将 %1 个项目归入未分类").arg(paths.size()), 1500, QColor("#2ecc71"));
+            return;
+        }
+
+        // 目标为自定义分类 (nodeId > 0)：执行子项索引与预设标签逻辑
         for (const QString& path : paths) {
             QFileInfo fi(path);
             if (fi.isDir()) {
