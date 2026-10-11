@@ -430,21 +430,21 @@ void PanelMediator::setupConnections() {
 
                 QVariant decData = idx.data(Qt::DecorationRole);
                 bool hasThumb = idx.data(HasThumbnailRole).toBool();
-                QPixmap previewPixmap;
-                if (decData.canConvert<QIcon>()) {
-                    previewPixmap = decData.value<QIcon>().pixmap(128, 128);
-                } else if (decData.canConvert<QPixmap>()) {
-                    previewPixmap = decData.value<QPixmap>();
+                if (hasThumb) {
+                    QPixmap previewPixmap;
+                    if (decData.canConvert<QIcon>()) {
+                        previewPixmap = decData.value<QIcon>().pixmap(128, 128);
+                    } else if (decData.canConvert<QPixmap>()) {
+                        previewPixmap = decData.value<QPixmap>();
+                    }
+                    metaPanel->setImagePreview(previewPixmap);
+                } else {
+                    if (decData.canConvert<QIcon>()) {
+                        metaPanel->setDefaultIconPreview(decData.value<QIcon>());
+                    } else {
+                        metaPanel->setImagePreview(QPixmap());
+                    }
                 }
-                Logger::log(QString("[Diag] MetaPanel preview: path=%1 decType=%2 hasThumb=%3 pixSize=%4x%5 dpr=%6 isNull=%7")
-                    .arg(path)
-                    .arg(QString::fromLatin1(decData.typeName() ? decData.typeName() : "null"))
-                    .arg(hasThumb)
-                    .arg(previewPixmap.width())
-                    .arg(previewPixmap.height())
-                    .arg(previewPixmap.devicePixelRatio())
-                    .arg(previewPixmap.isNull()));
-                metaPanel->setImagePreview(previewPixmap, !hasThumb);
             } else {
                 metaPanel->setRating(meta.rating, false);
                 metaPanel->setColor(QString::fromStdWString(meta.manualColor), false);
