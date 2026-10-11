@@ -436,6 +436,14 @@ void PanelMediator::setupConnections() {
                 } else if (decData.canConvert<QPixmap>()) {
                     previewPixmap = decData.value<QPixmap>();
                 }
+                Logger::log(QString("[Diag] MetaPanel preview: path=%1 decType=%2 hasThumb=%3 pixSize=%4x%5 dpr=%6 isNull=%7")
+                    .arg(path)
+                    .arg(QString::fromLatin1(decData.typeName() ? decData.typeName() : "null"))
+                    .arg(hasThumb)
+                    .arg(previewPixmap.width())
+                    .arg(previewPixmap.height())
+                    .arg(previewPixmap.devicePixelRatio())
+                    .arg(previewPixmap.isNull()));
                 metaPanel->setImagePreview(previewPixmap, !hasThumb);
             } else {
                 metaPanel->setRating(meta.rating, false);
