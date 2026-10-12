@@ -267,21 +267,43 @@ void TagSelectorOverlay::populateGrid() {
     bool hasRec = (currentGrp == "全部" && kw.isEmpty() && !m_recommendedTags.isEmpty());
 
     if (hasRec) {
-        QLabel* lblRec = new QLabel("推荐", m_tagGridWidget);
+        QWidget* recRowWidget = new QWidget(m_tagGridWidget);
+        recRowWidget->setObjectName("TagOverlayRecRowWidget");
+        FlowLayout* recFlowLayout = new FlowLayout(recRowWidget, 0, 6, 6);
+
+        QLabel* lblRec = new QLabel("推荐", recRowWidget);
         lblRec->setObjectName("TagOverlayRecHeader");
         lblRec->setStyleSheet("color: #3498db; font-weight: bold; padding-right: 4px;");
-        m_gridFlowLayout->addWidget(lblRec);
-    }
+        recFlowLayout->addWidget(lblRec);
 
-    for (int i = 0; i < m_displayedTags.size(); ++i) {
-        if (hasRec && i == m_recommendedTags.size()) {
-            QLabel* lblAll = new QLabel("全部", m_tagGridWidget);
-            lblAll->setObjectName("TagOverlayAllHeader");
-            lblAll->setStyleSheet("color: #aaaaaa; font-weight: bold; padding-right: 4px;");
-            m_gridFlowLayout->addWidget(lblAll);
+        for (const QString& recTag : m_recommendedTags) {
+            QPushButton* btn = new QPushButton(recRowWidget);
+            btn->setObjectName("TagOverlayRecBtn");
+            btn->setCheckable(true);
+            btn->setCursor(Qt::PointingHandCursor);
+            btn->setFixedHeight(22);
+
+            m_tagButtons.append(btn);
+            recFlowLayout->addWidget(btn);
+
+            connect(btn, &QPushButton::clicked, this, [this, recTag]() {
+                toggleTagSelection(recTag);
+            });
         }
 
+        m_gridFlowLayout->addWidget(recRowWidget);
+    }
+
+    QWidget* allRowWidget = new QWidget(m_tagGridWidget);
+    allRowWidget->setObjectName("TagOverlayAllRowWidget");
+    FlowLayout* allFlowLayout = new FlowLayout(allRowWidget, 0, 6, 6);
+
+    for (int i = 0; i < m_displayedTags.size(); ++i) {
         QString tag = m_displayedTags[i];
+
+        if (hasRec && m_recommendedTags.contains(tag)) {
+            continue;
+        }
 
         QPushButton* btn = new QPushButton(m_tagGridWidget);
         btn->setObjectName("TagOverlayBtn");
@@ -290,12 +312,14 @@ void TagSelectorOverlay::populateGrid() {
         btn->setFixedHeight(22);
 
         m_tagButtons.append(btn);
-        m_gridFlowLayout->addWidget(btn);
+        allFlowLayout->addWidget(btn);
 
         connect(btn, &QPushButton::clicked, this, [this, tag]() {
             toggleTagSelection(tag);
         });
     }
+
+    m_gridFlowLayout->addWidget(allRowWidget);
 
     m_currentTagIndex = -1;
     updateSelectionHighlight();
@@ -319,6 +343,7 @@ void TagSelectorOverlay::toggleTagSelection(const QString& tag) {
 void TagSelectorOverlay::updateSelectionHighlight() {
     for (int i = 0; i < m_displayedTags.size(); ++i) {
         QString tag = m_displayedTags[i];
+        if (i >= m_tagButtons.size()) break;
         QPushButton* btn = m_tagButtons[i];
 
         bool isSelected = m_selectedTags.contains(tag);
@@ -329,7 +354,7 @@ void TagSelectorOverlay::updateSelectionHighlight() {
         if (isSelected) {
             btn->setIcon(UiHelper::getIcon("check", QColor("#FFFFFF"), 12));
         } else if (m_recommendedTags.contains(tag)) {
-            btn->setIcon(UiHelper::getIcon("star_filled", QColor("#3498db"), 12));
+            btn->setIcon(UiHelper::getIcon("sparkles", QColor("#3498db"), 12));
         } else {
             btn->setIcon(UiHelper::getIcon("clock", QColor("#888888"), 12));
         }
