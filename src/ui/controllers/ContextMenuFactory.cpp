@@ -201,7 +201,7 @@ bool ContextMenuFactory::copyNamesToClipboard(const QStringList& paths, NameDeli
             sep = "、";
             break;
         case NameDelimiter::Comma:
-            sep = ", ";
+            sep = ",";
             break;
     }
 

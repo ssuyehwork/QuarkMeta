@@ -25,7 +25,7 @@ public:
     enum class NameDelimiter {
         NewLine,       ///< 分行名称 (\r\n)
         Enumeration,   ///< 顿号分割名称 (、)
-        Comma          ///< 逗号分割名称 (, )
+        Comma          ///< 逗号分割名称 (,)
     };
 
     /**
