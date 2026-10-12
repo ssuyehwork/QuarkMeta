@@ -62,7 +62,7 @@ private:
     QScrollArea* m_scrollArea = nullptr;
     QWidget* m_tagGridWidget = nullptr;
     FlowLayout* m_gridFlowLayout = nullptr;
-    QList<QPushButton*> m_tagButtons;
+    QMap<QString, QPushButton*> m_tagButtonMap;
     int m_currentTagIndex = -1;
 
     bool m_isClosing = false;
