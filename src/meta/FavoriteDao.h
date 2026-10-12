@@ -6,6 +6,15 @@
 
 namespace QuarkMeta {
 
+#ifndef QUARKMETA_NODEORDERENTRY_DEFINED
+#define QUARKMETA_NODEORDERENTRY_DEFINED
+struct NodeOrderEntry {
+    int id = 0;
+    int parentId = 0;
+    int sortOrder = 0;
+};
+#endif
+
 enum class FavoriteNodeType {
     VirtualCategory = 0,
     RealPath = 1
@@ -21,12 +30,6 @@ struct FavoriteRecord {
     QString colorHex = "#888888";
     int sortOrder = 0;
     QStringList presetTags;
-};
-
-struct NodeOrderEntry {
-    int id = 0;
-    int parentId = 0;
-    int sortOrder = 0;
 };
 
 class FavoriteDao {
