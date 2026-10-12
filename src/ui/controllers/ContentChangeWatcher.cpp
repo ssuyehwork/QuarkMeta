@@ -11,7 +11,7 @@
 #include <QFileInfo>
 #include <QApplication>
 #include <QLineEdit>
-#include <QtConcurrent>
+#include <QThreadPool>
 
 namespace QuarkMeta {
 
@@ -204,7 +204,7 @@ void ContentChangeWatcher::processAccumulatedChanges() {
     int initialReqId = m_panel->loadRequestId();
     QString initialPath = m_panel->currentPath();
 
-    QtConcurrent::run([this, dirPath, names, initialReqId, initialPath]() {
+    QThreadPool::globalInstance()->start([this, dirPath, names, initialReqId, initialPath]() {
         std::vector<ItemRecord> records;
         QStringList removedPaths;
 
