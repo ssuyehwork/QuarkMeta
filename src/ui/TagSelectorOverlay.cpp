@@ -9,11 +9,13 @@
 #include <QApplication>
 #include <QScreen>
 #include <QScrollBar>
+#include <QFileInfo>
+#include <QRegularExpression>
 
 namespace QuarkMeta {
 
 
-TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidget* parent)
+TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, const QStringList& candidatePaths, QWidget* parent)
     : QFrame(parent, Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint), 
       m_selectedTags(initialSelected) 
 {
@@ -25,6 +27,7 @@ TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidg
 
     m_framelessHelper = FramelessWindowHelper::apply(this, nullptr);
 
+    extractRecommendedTags(candidatePaths);
     initUi();
     loadTagsAndGroups();
     
@@ -134,6 +137,35 @@ void TagSelectorOverlay::initUi() {
     resize(savedSize.expandedTo(QSize(250, 150)));
 }
 
+void TagSelectorOverlay::extractRecommendedTags(const QStringList& paths) {
+    m_recommendedTags.clear();
+    QSet<QString> seen;
+
+    static const QRegularExpression splitRegex("[_\\-\\s\\+\\.\\(\\)\\[\\]【】]+");
+
+    for (const QString& path : paths) {
+        if (path.isEmpty() || path.startsWith("trash://")) continue;
+        QFileInfo info(path);
+        QString baseName = info.completeBaseName();
+        if (baseName.isEmpty()) continue;
+
+        QStringList tokens = baseName.split(splitRegex, Qt::SkipEmptyParts);
+        for (QString token : tokens) {
+            token = token.trimmed();
+            if (token.isEmpty()) continue;
+
+            bool isPureNum = false;
+            token.toInt(&isPureNum);
+            if (isPureNum) continue;
+
+            if (!seen.contains(token)) {
+                seen.insert(token);
+                m_recommendedTags.append(token);
+            }
+        }
+    }
+}
+
 void TagSelectorOverlay::loadTagsAndGroups() {
     m_lexiconGroups = TagLexiconService::instance().getAllTagGroups();
     
@@ -194,6 +226,14 @@ void TagSelectorOverlay::filterTags() {
         }
     }
 
+    if (currentGrp == "全部" && kw.isEmpty() && !m_recommendedTags.isEmpty()) {
+        for (int i = m_recommendedTags.size() - 1; i >= 0; --i) {
+            QString recTag = m_recommendedTags[i];
+            m_displayedTags.removeAll(recTag);
+            m_displayedTags.prepend(recTag);
+        }
+    }
+
     if (!kw.isEmpty() && !m_displayedTags.contains(kw, Qt::CaseInsensitive)) {
         m_displayedTags.prepend(kw);
     }
@@ -211,7 +251,26 @@ void TagSelectorOverlay::populateGrid() {
     }
 
     m_tagButtons.clear();
+
+    QString kw = m_searchEdit->text().trimmed();
+    QString currentGrp = m_groupList->currentItem() ? m_groupList->currentItem()->text() : "全部";
+    bool hasRec = (currentGrp == "全部" && kw.isEmpty() && !m_recommendedTags.isEmpty());
+
+    if (hasRec) {
+        QLabel* lblRec = new QLabel("推荐", m_tagGridWidget);
+        lblRec->setObjectName("TagOverlayRecHeader");
+        lblRec->setStyleSheet("color: #3498db; font-weight: bold; padding-right: 4px;");
+        m_gridFlowLayout->addWidget(lblRec);
+    }
+
     for (int i = 0; i < m_displayedTags.size(); ++i) {
+        if (hasRec && i == m_recommendedTags.size()) {
+            QLabel* lblAll = new QLabel("全部", m_tagGridWidget);
+            lblAll->setObjectName("TagOverlayAllHeader");
+            lblAll->setStyleSheet("color: #aaaaaa; font-weight: bold; padding-right: 4px;");
+            m_gridFlowLayout->addWidget(lblAll);
+        }
+
         QString tag = m_displayedTags[i];
 
         QPushButton* btn = new QPushButton(m_tagGridWidget);
@@ -259,6 +318,8 @@ void TagSelectorOverlay::updateSelectionHighlight() {
 
         if (isSelected) {
             btn->setIcon(UiHelper::getIcon("check", QColor("#FFFFFF"), 12));
+        } else if (m_recommendedTags.contains(tag)) {
+            btn->setIcon(UiHelper::getIcon("star_filled", QColor("#3498db"), 12));
         } else {
             btn->setIcon(UiHelper::getIcon("clock", QColor("#888888"), 12));
         }
