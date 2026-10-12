@@ -201,6 +201,10 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             if (selPathsDrive.isEmpty() && !path.isEmpty()) selPathsDrive << path;
             LibraryService::instance().buildLibraryAction(&menu, selPathsDrive, m_panel);
 
+            QStringList selPathsDrive = m_panel->getSelectedPaths();
+            if (selPathsDrive.isEmpty() && !path.isEmpty()) selPathsDrive << path;
+            LibraryService::instance().buildLibraryAction(&menu, selPathsDrive, m_panel);
+
             menu.addSeparator();
 
             QAction* actItemPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴");
