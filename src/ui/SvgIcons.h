@@ -16,7 +16,6 @@ namespace SvgIcons {
         {"image", R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>)svg"},
         {"branch", R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"></circle><path d="M12 8v5"></path><path d="M12 13l-5 4"></path><path d="M12 13l5 4"></path><circle cx="7" cy="19" r="3"></circle><circle cx="17" cy="19" r="3"></circle></svg>)svg"},
         {"category", R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="6" rx="1"></rect><path d="M12 8 v3"></path><path d="M12 11 h-6"></path><path d="M12 11 h6"></path><rect x="2" y="13" width="8" height="5" rx="1"></rect><rect x="14" y="13" width="8" height="5" rx="1"></rect><circle cx="12" cy="5" r="1" fill="currentColor"></circle><circle cx="6" cy="15.5" r="1" fill="currentColor"></circle><circle cx="18" cy="15.5" r="1" fill="currentColor"></circle></svg>)svg"},
-        {"uncategorized", R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8 C5 4 10 4 10 8 C10 11 7 12 7 14" /><circle cx="7" cy="19" r="1" fill="currentColor" stroke="none"/><path d="M14 5 v14" /><path d="M14 6 h3" /> <circle cx="20" cy="6" r="2" /><path d="M14 12 h3" /> <circle cx="20" cy="12" r="2" /><path d="M14 18 h3" /> <circle cx="20" cy="18" r="2" /></svg>)svg"},
         {"trash", R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>)svg"},
         {"search", R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>)svg"},
         {"add", R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>)svg"},
@@ -2645,6 +2644,24 @@ namespace SvgIcons {
 </g>
 </svg>)svg"},
         {"Uncategorized-1.svg", R"svg(<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 999 871.6" style="enable-background:new 0 0 999 871.6;" xml:space="preserve">
+<title>未分类-1</title>
+<g>
+	<path d="M999,264.7v279.8h-80.1V294.6c0-19.8-16-35.8-35.8-35.8H722.8L531.3,748.9h104.4V829H86.1C38.5,829,0,790.5,0,743
+		c0,0,0,0,0,0V128.6c0-47.5,38.5-86,86-86c0,0,0,0,0,0h328.1c16.4,0,32.5,6.5,42.8,19.2l0.1,0.1l93.4,115.5l1.1,1.4H913
+		C960.5,178.7,999,217.2,999,264.7C999,264.7,999,264.7,999,264.7z"/>
+	<path d="M551.5,178.4l0,0.3l-1.1-1.4C550.8,177.7,551.2,178.1,551.5,178.4z"/>
+	<path d="M727.8,722.6c-3.6-9.7-5.4-20-5.4-30.4c0-25.5,12.1-48.5,36.2-68.9c15-12.7,25.1-23.3,30.4-31.7c5.2-8.2,8-17.7,7.9-27.4
+		c0-10.7-3.8-19.5-11.3-26.4c-7.6-6.9-17.3-10.3-29.2-10.3c-27.9,0-53.9,10.7-77.9,32.2v-70.2c25.2-15.1,53.9-22.7,86.1-22.7
+		c32.6,0,58.4,7.6,77.3,22.7c18.9,15.1,28.3,36.6,28.3,64.6c0,16.8-3.7,31.9-11.1,45.5c-7.4,13.6-21,28.5-40.8,44.6
+		c-15.9,13.3-25.7,23.6-29.5,31c-3.7,7.3-5.7,15.4-5.7,23.6c0,8.3,2.1,16.5,6.1,23.8L727.8,722.6z M718.5,790.1
+		c-0.2-10.7,4.5-20.9,12.7-27.8c8.5-7.3,18.7-11,30.8-11c11.6,0,21.6,3.7,30,11c8.2,6.9,12.8,17.1,12.6,27.8
+		c0.2,10.5-4.1,20.6-11.8,27.8c-7.6,7.4-17.8,11.4-28.3,11.2c-14,0-25.2-3.9-33.5-11.6C722.6,809.8,718.5,800.6,718.5,790.1z"/>
+</g>
+</svg>)svg"},
+        {"uncategorized-1", R"svg(<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 23.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 999 871.6" style="enable-background:new 0 0 999 871.6;" xml:space="preserve">
