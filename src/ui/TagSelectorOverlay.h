@@ -61,7 +61,7 @@ private:
     QListWidget* m_groupList = nullptr;
     QScrollArea* m_scrollArea = nullptr;
     QWidget* m_tagGridWidget = nullptr;
-    FlowLayout* m_gridFlowLayout = nullptr;
+    QVBoxLayout* m_gridMainLayout = nullptr;
     QMap<QString, QPushButton*> m_tagButtonMap;
     int m_currentTagIndex = -1;
 
