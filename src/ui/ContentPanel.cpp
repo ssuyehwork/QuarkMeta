@@ -799,7 +799,9 @@ void ContentPanel::setViewMode(ViewMode mode) {
 
     if (oldMode == ColumnView && mode != ColumnView) {
         if (!m_currentPath.isEmpty() && m_currentPath != "computer://") {
-            if (!m_diskModel || m_diskModel->rowCount() == 0) {
+            bool pathMismatch = (m_diskModel && QDir::cleanPath(m_diskModel->currentPath()) != QDir::cleanPath(m_currentPath));
+            bool modelEmpty = (!m_diskModel || m_diskModel->rowCount() == 0);
+            if (pathMismatch || modelEmpty) {
                 loadDirectory(m_currentPath, m_isRecursive);
             }
         }
