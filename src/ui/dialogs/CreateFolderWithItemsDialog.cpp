@@ -175,8 +175,8 @@ void CreateFolderWithItemsDialog::onCreateAndMigrate() {
         ioCtx.destination = targetFolderPath;
         ioCtx.isMove = true;
 
-        QPointer<QWidget> parentWidget(parentWidget());
-        DiskIoService::instance().executeAsync(ioCtx, [parentWidget, count = m_selectedPaths.size()](bool success) {
+        QPointer<QWidget> pWidget(this->parentWidget());
+        DiskIoService::instance().executeAsync(ioCtx, [pWidget, count = m_selectedPaths.size()](bool success) {
             QMetaObject::invokeMethod(QCoreApplication::instance(), [success, count]() {
                 if (success) {
                     ToolTipOverlay::instance()->showText(QCursor::pos(), QString("已创建文件夹并将 %1 个项目移动至新文件夹").arg(count), 2000, QColor("#2ecc71"));
