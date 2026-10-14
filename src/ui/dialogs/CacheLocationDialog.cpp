@@ -13,15 +13,14 @@
 namespace QuarkMeta {
 
 CacheLocationDialog::CacheLocationDialog(QWidget* parent)
-    : FramelessDialog(parent) {
-    setWindowTitle("缩略图与缓存位置设置");
+    : FramelessDialog("缩略图与缓存位置设置", parent) {
     resize(520, 240);
     setupUi();
     updatePathDisplay();
 }
 
 void CacheLocationDialog::setupUi() {
-    auto* mainLayout = new QVBoxLayout(contentArea());
+    auto* mainLayout = new QVBoxLayout(getContentArea());
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(15);
 
@@ -96,8 +95,23 @@ void CacheLocationDialog::onRestoreDefault() {
 }
 
 void CacheLocationDialog::onSaveAndAccept() {
+    QString oldDir = AppConfig::instance().getGlobalCacheDir();
     QString newDir = m_pathEdit->text().trimmed();
     QString defaultDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+
+    if (m_chkMigrateData && m_chkMigrateData->isChecked() && !oldDir.isEmpty() && !newDir.isEmpty() && QDir(oldDir).canonicalPath() != QDir(newDir).canonicalPath()) {
+        QDir().mkpath(newDir);
+        QDirIterator it(oldDir, QDir::Files | QDir::NoSymLinks, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            it.next();
+            QString relativePath = QDir(oldDir).relativeFilePath(it.filePath());
+            QString destPath = QDir(newDir).filePath(relativePath);
+            QDir().mkpath(QFileInfo(destPath).absolutePath());
+            if (!QFile::exists(destPath)) {
+                QFile::copy(it.filePath(), destPath);
+            }
+        }
+    }
 
     if (newDir != defaultDir && !newDir.isEmpty()) {
         AppConfig::instance().setValue("Cache/CustomLocation", newDir);
