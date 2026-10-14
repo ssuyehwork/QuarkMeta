@@ -187,7 +187,7 @@ QString DiskMediaExtractor::getDiskThumbCachePathByFileId(uint32_t volSerial, ui
     QString bucket = QString("%1").arg((fileId >> 8) & 0xFF, 2, 16, QChar('0')).toUpper(); 
     QString fileKey = QString("%1.png").arg(fileId, 16, 16, QChar('0')).toUpper(); 
  
-    QString cacheDir = QCoreApplication::applicationDirPath() + "/.QuarkMeta/disk_thumbs/" + volStr + "/" + bucket; 
+    QString cacheDir = QCoreApplication::applicationDirPath() + "/.QuarkMeta/cache/disk_thumbs/" + volStr + "/" + bucket;
     return cacheDir + "/" + fileKey; 
 } 
  
@@ -200,7 +200,7 @@ QString DiskMediaExtractor::getDiskThumbCachePath(const QString& filePath) {
     quint64 h = qHash(QDir::toNativeSeparators(filePath).toLower(), 0); 
     QString bucket = QString("%1").arg((h >> 32) & 0xFF, 2, 16, QChar('0')); 
     QString fileKey = QString("%1.png").arg(h, 16, 16, QChar('0')); 
-    return QCoreApplication::applicationDirPath() + "/.QuarkMeta/disk_thumbs/fallback/" + bucket + "/" + fileKey; 
+    return QCoreApplication::applicationDirPath() + "/.QuarkMeta/cache/disk_thumbs/fallback/" + bucket + "/" + fileKey;
 } 
  
 // ============================================================================ 
