@@ -415,6 +415,17 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
 
             ContextMenuFactory::buildExtractContentAction(moreMenu, path, m_panel);
 
+            if (!isFolder) {
+                moreMenu->addSeparator();
+                moreMenu->addAction(UiHelper::getIcon("repeat", QColor("#EEEEEE"), 18), "重新提取缩略图")->setData(ContentPanel::ActionReextractThumbnail);
+
+                QMenu* cryptoMenu = moreMenu->addMenu(UiHelper::getIcon("shield", QColor("#EEEEEE"), 18), "外壳保护");
+                UiHelper::applyMenuStyle(cryptoMenu);
+                cryptoMenu->addAction(UiHelper::getIcon("lock", QColor("#EEEEEE"), 18), "执行外壳保护")->setData(ContentPanel::ActionEncrypt);
+                cryptoMenu->addAction(UiHelper::getIcon("unlock", QColor("#EEEEEE"), 18), "解除保护")->setData(ContentPanel::ActionDecrypt);
+                cryptoMenu->addAction(UiHelper::getIcon("key", QColor("#EEEEEE"), 18), "修改保护密码")->setData(ContentPanel::ActionChangePwd);
+            }
+
             QString nativePath = QDir::toNativeSeparators(path);
             QStringList itemTags;
             if (!nativePath.isEmpty()) {
@@ -444,16 +455,6 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
 
             menu.addSeparator();
             menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新")->setData(ContentPanel::ActionRefresh);
-
-            if (!isFolder) {
-                menu.addAction(UiHelper::getIcon("repeat", QColor("#EEEEEE"), 18), "重新提取缩略图")->setData(ContentPanel::ActionReextractThumbnail);
-
-                QMenu* cryptoMenu = menu.addMenu(UiHelper::getIcon("shield", QColor("#EEEEEE"), 18), "外壳保护");
-                UiHelper::applyMenuStyle(cryptoMenu);
-                cryptoMenu->addAction(UiHelper::getIcon("lock", QColor("#EEEEEE"), 18), "执行外壳保护")->setData(ContentPanel::ActionEncrypt);
-                cryptoMenu->addAction(UiHelper::getIcon("unlock", QColor("#EEEEEE"), 18), "解除保护")->setData(ContentPanel::ActionDecrypt);
-                cryptoMenu->addAction(UiHelper::getIcon("key", QColor("#EEEEEE"), 18), "修改保护密码")->setData(ContentPanel::ActionChangePwd);
-            }
         }
     }
     // =========================================================================
