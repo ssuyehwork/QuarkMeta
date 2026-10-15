@@ -151,9 +151,9 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
 
         // 6. 粘贴到此文件夹
         QAction* actPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴到此文件夹");
-        actPaste->setEnabled(ClipboardService::instance().hasPaths());
-        connect(actPaste, &QAction::triggered, this, [nativePath]() {
-            ClipboardService::instance().pasteTo(nativePath);
+        actPaste->setEnabled(ClipboardService::instance().canPaste(nativePath));
+        connect(actPaste, &QAction::triggered, this, [this, nativePath]() {
+            ClipboardService::instance().executePaste(nativePath, this);
         });
 
         menu.exec(globalPos);
