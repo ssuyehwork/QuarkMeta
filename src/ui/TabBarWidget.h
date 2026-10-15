@@ -98,6 +98,10 @@ public:
         if (index >= 0 && index < m_tabs.size()) return m_tabs[index].url;
         return QString();
     }
+    QString tabTitle(int index) const {
+        if (index >= 0 && index < m_tabs.size()) return m_tabs[index].title;
+        return QString();
+    }
     TabSplitState tabSplitState(int index) const {
         if (index >= 0 && index < m_tabs.size()) return m_tabs[index].splitState;
         return TabSplitState();
