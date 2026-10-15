@@ -894,12 +894,12 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
 
     // 绘制置顶/取消置顶菜单项
     if (isPinned) {
-        QAction* unpinAct = menu.addAction(UiHelper::getIcon("star_filled", QColor("#F39C12")), "从“快速访问”移除");
+        QAction* unpinAct = menu.addAction(UiHelper::getIcon("pin_vertical", QColor("#F39C12")), "从“快速访问”移除");
         connect(unpinAct, &QAction::triggered, this, [this, nodeId]() {
             onPinCategoryTriggered(nodeId, false);
         });
     } else {
-        QAction* pinAct = menu.addAction(UiHelper::getIcon("star", QColor("#EEEEEE")), "添加至“快速访问”");
+        QAction* pinAct = menu.addAction(UiHelper::getIcon("pin_tilted", QColor("#EEEEEE")), "添加至“快速访问”");
         connect(pinAct, &QAction::triggered, this, [this, nodeId]() {
             onPinCategoryTriggered(nodeId, true);
         });
