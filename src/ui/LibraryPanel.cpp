@@ -348,8 +348,8 @@ void LibraryPanel::initUi() {
 
     connect(m_delegate, &LibraryItemDelegate::requestAddCategory, this, [this](int nodeId) {
         if (nodeId == -20) {
-            // 智能文件夹创建逻辑
-            createAndEditCategory(0);
+            // 智能文件夹创建逻辑：传入 parentId = -20
+            createAndEditCategory(-20);
         } else {
             createAndEditCategory(0);
         }
@@ -859,7 +859,7 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
         // 智能文件夹分组右键菜单
         QAction* newSmartAct = menu.addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "新建智能文件夹");
         connect(newSmartAct, &QAction::triggered, this, [this]() {
-            createAndEditCategory(0);
+            createAndEditCategory(-20);
         });
         menu.exec(m_treeView->viewport()->mapToGlobal(pos));
         return;
@@ -1156,7 +1156,9 @@ void LibraryPanel::loadLibrary() {
         if (!itemMap.contains(rec.id)) continue;
         QStandardItem* item = itemMap.value(rec.id);
 
-        if (rec.parentId > 0 && itemMap.contains(rec.parentId)) {
+        if (rec.parentId == -20) {
+            smartFolderHeader->appendRow(item);
+        } else if (rec.parentId > 0 && itemMap.contains(rec.parentId)) {
             itemMap.value(rec.parentId)->appendRow(item);
         } else {
             sectionItem->appendRow(item);
@@ -1226,15 +1228,20 @@ void LibraryPanel::createAndEditCategory(int parentId) {
     if (m_filterEdit) {
         m_filterEdit->clear();
     }
+
+    int targetHeaderId = (parentId == -20) ? -20 : 0;
+    QString targetConfigKey = (parentId == -20) ? "Library/SmartFolderSectionCollapsed" : "Library/CustomSectionCollapsed";
+
     if (m_treeView && m_model) {
-        QStandardItem* sectionItem = findItemByNodeId(m_model->invisibleRootItem(), 0);
-        if (sectionItem) {
-            m_treeView->setExpanded(sectionItem->index(), true);
-            AppConfig::instance().setValue("Library/CustomSectionCollapsed", false);
+        QStandardItem* targetHeaderItem = findItemByNodeId(m_model->invisibleRootItem(), targetHeaderId);
+        if (targetHeaderItem) {
+            m_treeView->setExpanded(targetHeaderItem->index(), true);
+            AppConfig::instance().setValue(targetConfigKey, false);
         }
     }
 
-    int newId = LibraryService::instance().createCategory("新建分类", parentId);
+    QString defaultName = (parentId == -20) ? "新建智能文件夹" : "新建分类";
+    int newId = LibraryService::instance().createCategory(defaultName, parentId);
     if (newId > 0) {
         m_pendingEditNodeId = newId;
         loadLibrary();
