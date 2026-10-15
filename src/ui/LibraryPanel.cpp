@@ -192,7 +192,14 @@ void LibraryItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
     }
 
     // 2. 渲染系统分类与普通自定义分类节点 (nodeId != 0)
-    int leftMargin = 10;
+    int depth = 0;
+    QModelIndex parentIdx = index.parent();
+    while (parentIdx.isValid()) {
+        depth++;
+        parentIdx = parentIdx.parent();
+    }
+
+    int leftMargin = 10 + depth * 14;
     int iconSize = 18;
     int spacing = 8;
     int rightMargin = 10;
@@ -271,7 +278,7 @@ void LibraryPanel::initUi() {
         m_treeView->header()->setStretchLastSection(true);
         m_treeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     }
-    m_treeView->setIndentation(16);
+    m_treeView->setIndentation(0);
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_treeView->setDragEnabled(true);
