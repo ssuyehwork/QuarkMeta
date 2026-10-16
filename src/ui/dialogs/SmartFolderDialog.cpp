@@ -71,11 +71,11 @@ void SmartFolderRuleRow::onTypeChanged(int index) {
 
         m_valueEdit->hide();
         m_valueCombo->clear();
-        m_valueCombo->addItem("1 星", "1");
-        m_valueCombo->addItem("2 星", "2");
-        m_valueCombo->addItem("3 星", "3");
-        m_valueCombo->addItem("4 星", "4");
-        m_valueCombo->addItem("5 星", "5");
+        m_valueCombo->addItem("★", "1");
+        m_valueCombo->addItem("★★", "2");
+        m_valueCombo->addItem("★★★", "3");
+        m_valueCombo->addItem("★★★★", "4");
+        m_valueCombo->addItem("★★★★★", "5");
         m_valueCombo->show();
         break;
 
