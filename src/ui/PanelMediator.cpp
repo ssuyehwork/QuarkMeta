@@ -552,12 +552,15 @@ void PanelMediator::setupConnections() {
                     itemUrl = QString::fromStdWString(meta.url);
 
                     if (multiPreviewPixmaps.size() < 5) {
-                        QIcon icon = UiHelper::getIconForPath(path);
-                        if (!icon.isNull()) {
-                            QPixmap px = icon.pixmap(128, 128);
-                            if (!px.isNull()) {
-                                multiPreviewPixmaps.append(px);
-                            }
+                        QFileInfo fi(path);
+                        QPixmap px;
+                        if (fi.isDir()) {
+                            px = UiHelper::getIcon("folder", QColor("#3498db"), 128).pixmap(128, 128);
+                        } else {
+                            px = UiHelper::getIcon("file_eps", QColor("#888888"), 128).pixmap(128, 128);
+                        }
+                        if (!px.isNull()) {
+                            multiPreviewPixmaps.append(px);
                         }
                     }
                 }
