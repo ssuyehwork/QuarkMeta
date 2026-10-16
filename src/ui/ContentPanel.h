@@ -67,9 +67,6 @@ public:
         ActionCopyName, ActionCopyPath, ActionAddToFavorites, ActionRefresh, ActionReextractThumbnail, ActionBatchCreate
     };
 
-    friend class ContentViewCoordinator;
-    friend class ContentPaneSplitManager;
-
     explicit ContentPanel(QWidget* parent = nullptr);
     ~ContentPanel() override = default;
 
@@ -151,6 +148,8 @@ public:
 
     // 4. 视图与控制器引用
     QAbstractItemView* activeItemView() const;
+    QVBoxLayout* mainLayout() const { return m_mainLayout; }
+    class ContentHeaderWidget* headerWidget() const { return m_headerWidget; }
     QStackedWidget* viewStack() const { return m_viewStack; }
     QAbstractItemView* gridView() const { return m_gridView; }
     QTreeView* treeView() const;
