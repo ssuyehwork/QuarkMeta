@@ -31,6 +31,7 @@
 #include "../meta/MetadataManager.h"
 #include "../meta/FavoriteService.h"
 #include "UiHelper.h"
+#include "ShellIconManager.h"
 #include <QDebug>
 #include <QFileInfo>
 #include <QFile>
@@ -540,6 +541,13 @@ void PanelMediator::setupConnections() {
                         } else if (decData.canConvert<QPixmap>()) {
                             px = decData.value<QPixmap>();
                         }
+                        if (px.isNull()) {
+                            QFileInfo fi(path);
+                            QIcon defaultIcon = ShellIconManager::getFileIconFast(path, fi.isDir(), fi.suffix().toLower());
+                            if (!defaultIcon.isNull()) {
+                                px = defaultIcon.pixmap(128, 128);
+                            }
+                        }
                         if (!px.isNull()) {
                             multiPreviewPixmaps.append(px);
                         }
@@ -553,14 +561,12 @@ void PanelMediator::setupConnections() {
 
                     if (multiPreviewPixmaps.size() < 5) {
                         QFileInfo fi(path);
-                        QPixmap px;
-                        if (fi.isDir()) {
-                            px = UiHelper::getIcon("folder", QColor("#3498db"), 128).pixmap(128, 128);
-                        } else {
-                            px = UiHelper::getIcon("file_eps", QColor("#888888"), 128).pixmap(128, 128);
-                        }
-                        if (!px.isNull()) {
-                            multiPreviewPixmaps.append(px);
+                        QIcon defaultIcon = ShellIconManager::getFileIconFast(path, fi.isDir(), fi.suffix().toLower());
+                        if (!defaultIcon.isNull()) {
+                            QPixmap px = defaultIcon.pixmap(128, 128);
+                            if (!px.isNull()) {
+                                multiPreviewPixmaps.append(px);
+                            }
                         }
                     }
                 }

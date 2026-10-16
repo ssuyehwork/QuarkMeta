@@ -485,8 +485,6 @@ void MetaPanel::setMultiSelectionPreview(const QList<QPixmap>& pixmaps) {
 
     for (int k = validPixmaps.size() - 1; k >= 0; --k) {
         const QPixmap& srcPx = validPixmaps[k];
-        QSize targetCardSize(kMultiPreviewCardSize, kMultiPreviewCardSize);
-        QPixmap scaled = srcPx.scaled(targetCardSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
         double angle = 0.0;
         if (k >= 1) {
@@ -499,15 +497,42 @@ void MetaPanel::setMultiSelectionPreview(const QList<QPixmap>& pixmaps) {
         painter.translate(100.0, 100.0);
         painter.rotate(angle);
 
-        double w = scaled.width();
-        double h = scaled.height();
-        QRectF cardRect(-w / 2.0, -h / 2.0, w, h);
+        // 统一固定 130x130 卡片物理底板
+        QRectF cardRect(-kMultiPreviewCardSize / 2.0, -kMultiPreviewCardSize / 2.0,
+                        kMultiPreviewCardSize, kMultiPreviewCardSize);
 
-        QPainterPath path;
-        path.addRoundedRect(cardRect, 4.0, 4.0);
-        painter.setClipPath(path);
-        painter.drawPixmap(cardRect.topLeft(), scaled);
+        // 1. 卡片背景与防溢出剪裁
+        QPainterPath clipPath;
+        clipPath.addRoundedRect(cardRect, 4.0, 4.0);
+        painter.setClipPath(clipPath);
 
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor("#252526"));
+        painter.drawRoundedRect(cardRect, 4.0, 4.0);
+
+        // 2. 将图片按比例居中在 130x130 卡片内部（若图片较小，居中显示；较长时适应卡片）
+        QSize cardSize(kMultiPreviewCardSize, kMultiPreviewCardSize);
+        QSizeF imgLogicalSize = srcPx.deviceIndependentSize();
+        QSize targetImgSize;
+        if (imgLogicalSize.width() <= kMultiPreviewCardSize && imgLogicalSize.height() <= kMultiPreviewCardSize) {
+            targetImgSize = imgLogicalSize.toSize();
+        } else {
+            targetImgSize = imgLogicalSize.toSize().scaled(cardSize, Qt::KeepAspectRatio);
+        }
+
+        QPixmap scaled = srcPx;
+        if (scaled.width() > targetImgSize.width() * dpr || scaled.height() > targetImgSize.height() * dpr) {
+            scaled = scaled.scaled(targetImgSize * dpr, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            scaled.setDevicePixelRatio(dpr);
+        }
+
+        QRectF imgRect(cardRect.center().x() - targetImgSize.width() / 2.0,
+                       cardRect.center().y() - targetImgSize.height() / 2.0,
+                       targetImgSize.width(), targetImgSize.height());
+
+        painter.drawPixmap(imgRect, scaled, QRectF(QPointF(0,0), scaled.size()));
+
+        // 3. 统一卡片描边
         painter.setClipping(false);
         QPen pen(QColor("#4a4a4a"), 1.0);
         painter.setPen(pen);
