@@ -122,6 +122,7 @@ public:
     bool isLoading() const { return m_isLoading.load(); }
 
     // 2. 状态与配置高阶方法
+    void updateHeaderTitle();
     void setCurrentPath(const QString& path);
     void setIsRecursive(bool recursive);
     void setLoading(bool loading);
@@ -268,8 +269,6 @@ private:
     std::atomic<int> m_loadRequestId{0};
 
     // UI 组件指针
-    void updateHeaderTitle();
-
     QVBoxLayout* m_mainLayout = nullptr;
     class ContentHeaderWidget* m_headerWidget = nullptr;
 

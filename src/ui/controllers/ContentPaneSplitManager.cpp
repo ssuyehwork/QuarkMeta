@@ -465,8 +465,8 @@ ContentPaneSplitManager::PaneNode* ContentPaneSplitManager::importNodeRecursive(
             ContentPanel* newPane = new ContentPanel(container);
             container->setMinimumWidth(ContentPanel::kMinPaneWidth);
             newPane->setIsSecondaryPane(true);
-            if (newPane->m_splitManager) {
-                newPane->m_splitManager->m_rootPane = m_panel;
+            if (newPane->splitManager()) {
+                newPane->splitManager()->m_rootPane = m_panel;
             }
             newPane->setViewMode(m_panel->currentViewMode());
 
@@ -556,8 +556,8 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
     ContentPanel* newPane = new ContentPanel(newContainer);
     newContainer->setMinimumWidth(ContentPanel::kMinPaneWidth);
     newPane->setIsSecondaryPane(true);
-    if (newPane->m_splitManager) {
-        newPane->m_splitManager->m_rootPane = m_panel;
+    if (newPane->splitManager()) {
+        newPane->splitManager()->m_rootPane = m_panel;
     }
     newPane->setViewMode(m_panel->currentViewMode());
 
