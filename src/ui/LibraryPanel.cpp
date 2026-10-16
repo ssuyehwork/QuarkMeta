@@ -855,10 +855,11 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
     }
 
     if (index.data(TypeRole).toString() == "smart_folder") {
+        int smartFolderId = index.data(Qt::UserRole + 1).toInt();
         // 右键具体的智能文件夹节点
         QAction* editRuleAct = menu.addAction(UiHelper::getIcon("edit", QColor("#EEEEEE")), "编辑规则");
-        connect(editRuleAct, &QAction::triggered, this, [this, nodeId]() {
-            SmartFolderRecord rec = SmartFolderDao::getSmartFolderById(nodeId);
+        connect(editRuleAct, &QAction::triggered, this, [this, smartFolderId]() {
+            SmartFolderRecord rec = SmartFolderDao::getSmartFolderById(smartFolderId);
             SmartFolderDialog dlg(rec, this);
             if (dlg.exec() == QDialog::Accepted) {
                 SmartFolderRecord updatedRec = dlg.getRecord();
@@ -869,8 +870,8 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
         });
 
         QAction* deleteSmartAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE")), "删除智能文件夹");
-        connect(deleteSmartAct, &QAction::triggered, this, [this, nodeId]() {
-            if (SmartFolderDao::removeSmartFolderById(nodeId)) {
+        connect(deleteSmartAct, &QAction::triggered, this, [this, smartFolderId]() {
+            if (SmartFolderDao::removeSmartFolderById(smartFolderId)) {
                 loadLibrary();
             }
         });

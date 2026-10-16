@@ -21,7 +21,6 @@ void SmartFolderRuleRow::setupUi() {
     layout->setSpacing(8);
 
     m_typeCombo = new QComboBox(this);
-    UiHelper::applyComboBoxStyle(m_typeCombo);
     m_typeCombo->addItem("星级", static_cast<int>(SmartRuleType::Rating));
     m_typeCombo->addItem("颜色", static_cast<int>(SmartRuleType::Color));
     m_typeCombo->addItem("标签", static_cast<int>(SmartRuleType::Tag));
@@ -30,21 +29,17 @@ void SmartFolderRuleRow::setupUi() {
     m_typeCombo->setFixedWidth(110);
 
     m_opCombo = new QComboBox(this);
-    UiHelper::applyComboBoxStyle(m_opCombo);
     m_opCombo->setFixedWidth(110);
 
     m_valueEdit = new QLineEdit(this);
-    UiHelper::applyLineEditStyle(m_valueEdit);
 
     m_valueCombo = new QComboBox(this);
-    UiHelper::applyComboBoxStyle(m_valueCombo);
     m_valueCombo->hide();
 
     m_btnDelete = new QPushButton(this);
     m_btnDelete->setFixedSize(28, 28);
     m_btnDelete->setCursor(Qt::PointingHandCursor);
     m_btnDelete->setIcon(UiHelper::getIcon("close", QColor("#888888"), 14));
-    UiHelper::applyGhostButtonStyle(m_btnDelete);
 
     layout->addWidget(m_typeCombo);
     layout->addWidget(m_opCombo);
@@ -142,21 +137,20 @@ void SmartFolderRuleRow::setRule(const SmartFolderRule& rule) {
 
 // --- SmartFolderDialog Implementation ---
 
-SmartFolderDialog::SmartFolderDialog(QWidget* parent) : FramelessDialog(parent) {
+SmartFolderDialog::SmartFolderDialog(QWidget* parent) : FramelessDialog("智能文件夹规则配置", parent) {
     m_record.name = "新智能文件夹";
     m_record.matchMode = "ALL";
     setupUi();
 }
 
-SmartFolderDialog::SmartFolderDialog(const SmartFolderRecord& record, QWidget* parent) : FramelessDialog(parent), m_record(record) {
+SmartFolderDialog::SmartFolderDialog(const SmartFolderRecord& record, QWidget* parent) : FramelessDialog("智能文件夹规则配置", parent), m_record(record) {
     setupUi();
 }
 
 void SmartFolderDialog::setupUi() {
-    setTitle("智能文件夹规则配置");
     resize(520, 420);
 
-    QWidget* bodyWidget = bodyContainer();
+    QWidget* bodyWidget = getContentArea();
     QVBoxLayout* bodyLayout = new QVBoxLayout(bodyWidget);
     bodyLayout->setContentsMargins(20, 15, 20, 20);
     bodyLayout->setSpacing(12);
@@ -169,14 +163,12 @@ void SmartFolderDialog::setupUi() {
     nameLabel->setStyleSheet("color: #CCCCCC; font-size: 13px;");
 
     m_nameEdit = new QLineEdit(bodyWidget);
-    UiHelper::applyLineEditStyle(m_nameEdit);
     m_nameEdit->setText(m_record.name);
 
     QLabel* modeLabel = new QLabel("匹配:", bodyWidget);
     modeLabel->setStyleSheet("color: #CCCCCC; font-size: 13px;");
 
     m_matchModeCombo = new QComboBox(bodyWidget);
-    UiHelper::applyComboBoxStyle(m_matchModeCombo);
     m_matchModeCombo->addItem("符合以下所有条件 (AND)", "ALL");
     m_matchModeCombo->addItem("符合以下任一条件 (OR)", "ANY");
     if (m_record.matchMode == "ANY") {
@@ -215,7 +207,6 @@ void SmartFolderDialog::setupUi() {
 
     // 添加规则按钮
     m_btnAddRule = new QPushButton("+ 添加新规则", bodyWidget);
-    UiHelper::applySecondaryButtonStyle(m_btnAddRule);
     m_btnAddRule->setFixedHeight(30);
 
     bodyLayout->addWidget(m_btnAddRule);
@@ -226,11 +217,9 @@ void SmartFolderDialog::setupUi() {
     btnLayout->addStretch(1);
 
     m_btnCancel = new QPushButton("取消", bodyWidget);
-    UiHelper::applySecondaryButtonStyle(m_btnCancel);
     m_btnCancel->setFixedSize(80, 32);
 
     m_btnSave = new QPushButton("保存", bodyWidget);
-    UiHelper::applyPrimaryButtonStyle(m_btnSave);
     m_btnSave->setFixedSize(80, 32);
 
     btnLayout->addWidget(m_btnCancel);
