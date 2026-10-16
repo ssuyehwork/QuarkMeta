@@ -517,7 +517,7 @@ void MetaPanel::setMultiSelectionPreview(const QList<QPixmap>& pixmaps) {
         if (srcLogicalSize.width() <= maxBoxSize.width() && srcLogicalSize.height() <= maxBoxSize.height()) {
             targetImgSize = srcLogicalSize.toSize();
         } else {
-            targetImgSize = srcLogicalSize.toSize().scaled(maxBoxSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            targetImgSize = srcLogicalSize.toSize().scaled(maxBoxSize.width(), maxBoxSize.height(), Qt::KeepAspectRatio);
         }
 
         QPixmap scaled = srcPx;
@@ -530,7 +530,7 @@ void MetaPanel::setMultiSelectionPreview(const QList<QPixmap>& pixmaps) {
                        -targetImgSize.height() / 2.0,
                        targetImgSize.width(), targetImgSize.height());
 
-        painter.drawPixmap(imgRect, scaled);
+        painter.drawPixmap(imgRect.x(), imgRect.y(), imgRect.width(), imgRect.height(), scaled);
 
         // 3. 统一绘制 130x130 卡片 1px 边框
         painter.setClipping(false);
