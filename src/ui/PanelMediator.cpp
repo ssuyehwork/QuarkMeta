@@ -32,6 +32,7 @@
 #include "../meta/FavoriteService.h"
 #include "UiHelper.h"
 #include "ShellIconManager.h"
+#include "CardPainterHelper.h"
 #include <QDebug>
 #include <QFileInfo>
 #include <QFile>
@@ -535,17 +536,25 @@ void PanelMediator::setupConnections() {
 
                     if (multiPreviewPixmaps.size() < 5) {
                         QVariant decData = idx.data(Qt::DecorationRole);
+                        bool hasThumb = idx.data(HasThumbnailRole).toBool();
                         QPixmap px;
-                        if (decData.canConvert<QIcon>()) {
-                            px = decData.value<QIcon>().pixmap(128, 128);
-                        } else if (decData.canConvert<QPixmap>()) {
-                            px = decData.value<QPixmap>();
+                        if (hasThumb) {
+                            if (decData.canConvert<QIcon>() && !decData.value<QIcon>().isNull()) {
+                                px = decData.value<QIcon>().pixmap(128, 128);
+                            } else if (decData.canConvert<QPixmap>() && !decData.value<QPixmap>().isNull()) {
+                                px = decData.value<QPixmap>();
+                            }
                         }
                         if (px.isNull()) {
                             QFileInfo fi(path);
-                            QIcon defaultIcon = ShellIconManager::getFileIconFast(path, fi.isDir(), fi.suffix().toLower());
+                            QIcon defaultIcon;
+                            if (decData.canConvert<QIcon>() && !decData.value<QIcon>().isNull()) {
+                                defaultIcon = decData.value<QIcon>();
+                            } else {
+                                defaultIcon = ShellIconManager::getFileIconFast(path, fi.isDir(), fi.suffix().toLower());
+                            }
                             if (!defaultIcon.isNull()) {
-                                px = defaultIcon.pixmap(128, 128);
+                                px = CardPainterHelper::renderDefaultIcon(defaultIcon, QSize(130, 130), 1.0);
                             }
                         }
                         if (!px.isNull()) {
@@ -563,7 +572,7 @@ void PanelMediator::setupConnections() {
                         QFileInfo fi(path);
                         QIcon defaultIcon = ShellIconManager::getFileIconFast(path, fi.isDir(), fi.suffix().toLower());
                         if (!defaultIcon.isNull()) {
-                            QPixmap px = defaultIcon.pixmap(128, 128);
+                            QPixmap px = CardPainterHelper::renderDefaultIcon(defaultIcon, QSize(130, 130), 1.0);
                             if (!px.isNull()) {
                                 multiPreviewPixmaps.append(px);
                             }
