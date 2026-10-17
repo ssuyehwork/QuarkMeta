@@ -6,6 +6,7 @@
 #include "ElidedTextUtility.h"
 #include "UiHelper.h"
 #include "../core/ModelContract.h"
+#include <QDebug>
 
 #include <QPainter>
 #include <QStyleOptionViewItem>
@@ -82,9 +83,17 @@ void ThumbnailDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         painter->restore();
     }
 
+    QIcon defaultIcon = qvariant_cast<QIcon>(decoData);
+    qDebug() << "[IconDebug] [ThumbnailDelegate::paint] Index row:" << index.row()
+             << "path:" << (m_pathRole != -1 ? index.data(m_pathRole).toString() : "")
+             << "hasThumb:" << hasThumb
+             << "thumbIsNull:" << thumb.isNull()
+             << "defaultIconIsNull:" << defaultIcon.isNull()
+             << "coverRect:" << l.coverRect;
+
     // ① 绘制缩略图 Cover
     CardPainterHelper::drawCardCover(painter, l.coverRect, isSelected, hasThumb, thumb, 
-                                     qvariant_cast<QIcon>(decoData), isGrid, isWaitingThumb);
+                                     defaultIcon, isGrid, isWaitingThumb);
 
     // ② 绘制卡片外边框
     CardPainterHelper::drawCardBorder(painter, l.coverRect, isDropTarget || isSelected);

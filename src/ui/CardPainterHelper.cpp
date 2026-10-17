@@ -4,6 +4,7 @@
 #include <QFont>
 #include <QtMath>
 #include <algorithm>
+#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -73,6 +74,10 @@ void CardPainterHelper::drawCardCover(QPainter* painter, const QRect& cardRect, 
     } else if (!defaultIcon.isNull()) {
         qreal dpr = painter->device() ? painter->device()->devicePixelRatioF() : 1.0;
         QPixmap iconPixmap = renderDefaultIcon(defaultIcon, cardRect.size(), dpr);
+        qDebug() << "[IconDebug] [CardPainterHelper::drawCardCover] defaultIcon is NOT null. dpr:" << dpr
+                 << "cardRect:" << cardRect
+                 << "iconPixmapIsNull:" << iconPixmap.isNull()
+                 << "iconPixmapPhysicalSize:" << (iconPixmap.isNull() ? QSize() : iconPixmap.size());
         if (!iconPixmap.isNull()) {
             QSizeF logicalSize = iconPixmap.deviceIndependentSize();
             int w = qRound(logicalSize.width());
@@ -83,6 +88,8 @@ void CardPainterHelper::drawCardCover(QPainter* painter, const QRect& cardRect, 
 
             painter->drawPixmap(iconRect, iconPixmap);
         }
+    } else {
+        qDebug() << "[IconDebug] [CardPainterHelper::drawCardCover] BOTH hasThumb/thumb AND defaultIcon are null/empty!";
     }
     painter->restore();
 }
