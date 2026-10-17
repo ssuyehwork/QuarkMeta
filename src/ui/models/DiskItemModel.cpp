@@ -46,8 +46,10 @@ DiskItemModel::DiskItemModel(QObject* parent) : ItemModelBase(parent) {
     connect(m_thumbBatchTimer, &QTimer::timeout, this, &DiskItemModel::flushPendingThumbDataChanged);
 
     connect(&IconLoadNotifier::instance(), &IconLoadNotifier::iconLoaded, this, [this]() {
+        qDebug() << "[IconDebug] [DiskItemModel] IconLoadNotifier::iconLoaded received. Clearing m_iconCache, size before clear:" << m_iconCache.count();
         m_iconCache.clear();
         if (!m_allRecords.empty()) {
+            qDebug() << "[IconDebug] [DiskItemModel] Emitting dataChanged for DecorationRole, records count:" << m_allRecords.size();
             emit dataChanged(index(0, 0), index(static_cast<int>(m_allRecords.size()) - 1, columnCount() - 1), {Qt::DecorationRole});
         }
     });
@@ -808,14 +810,27 @@ QVariant DiskItemModel::data(const QModelIndex& index, int role) const {
         if (!cached) {
             cached = m_iconCache.object(path);
         }
-        if (cached) return *cached;
+        if (cached) {
+            return *cached;
+        }
 
         QString ext = record.suffix.toLower();
         bool isGraphic = UiHelper::isGraphicsFile(ext);
         
-        if (isGraphic) return QIcon();
+        if (isGraphic) {
+            return QIcon();
+        }
+
+        bool isCachedInShell = ShellIconManager::isIconCached(path, record.isDir, ext);
         QIcon icon = ShellIconManager::getFileIconFast(path, record.isDir, ext);
-        if (ShellIconManager::isIconCached(path, record.isDir, ext)) {
+
+        qDebug() << "[IconDebug] [DiskItemModel::data] Path:" << path
+                 << "ext:" << ext
+                 << "isDir:" << record.isDir
+                 << "isCachedInShell:" << isCachedInShell
+                 << "isNull:" << icon.isNull();
+
+        if (isCachedInShell) {
             m_iconCache.insert(cleanKey, new QIcon(icon));
         }
         return icon;

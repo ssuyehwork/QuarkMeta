@@ -176,8 +176,11 @@ void WindowsShellThumbnailProvider::handleIconLoad(const QString& filePath, cons
         }
 #endif
 
+        qDebug() << "[IconDebug] [WindowsShellThumbnailProvider] Async icon fetched for key:" << key << "path:" << filePath << "isNull:" << icon.isNull();
+
         // 使用安全的信号槽在主线程中触发刷新
-        QMetaObject::invokeMethod(&IconLoadNotifier::instance(), []() {
+        QMetaObject::invokeMethod(&IconLoadNotifier::instance(), [key]() {
+            qDebug() << "[IconDebug] [WindowsShellThumbnailProvider] Emitting iconLoaded for key:" << key;
             emit IconLoadNotifier::instance().iconLoaded();
         }, Qt::QueuedConnection);
     });
