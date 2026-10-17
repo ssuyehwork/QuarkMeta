@@ -30,9 +30,7 @@ MetaIndexService& MetaIndexService::instance() {
 }
 
 MetaIndexService::MetaIndexService(QObject* parent) : QObject(parent) {
-    QString dbDir = DatabaseManager::getAppDir();
-    QDir().mkpath(dbDir);
-    m_dbPath = QDir::toNativeSeparators(dbDir + "/index.db").toStdWString();
+    m_dbPath = DatabaseManager::getGlobalDbPath().toStdWString();
 
     if (auto* app = QCoreApplication::instance()) {
         connect(app, &QCoreApplication::aboutToQuit, this, [this]() {
