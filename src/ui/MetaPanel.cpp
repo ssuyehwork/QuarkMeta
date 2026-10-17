@@ -32,7 +32,7 @@
 namespace QuarkMeta {
 
 namespace {
-constexpr double kMultiPreviewAngleStep = 6.0;
+constexpr double kMultiPreviewAngleStep = 4.0;
 
 QPixmap renderThumbnailLayer(const QPixmap& pixmap) {
     QSize canvasSize(200, 200);
