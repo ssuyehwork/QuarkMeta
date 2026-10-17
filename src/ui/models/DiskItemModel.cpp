@@ -2,6 +2,7 @@
 #include "../../core/ModelContract.h"
 #include "UiHelper.h"
 #include "ShellIconManager.h"
+#include "../WindowsShellThumbnailProvider.h"
 #include "MetaCacheDecorator.h"
 #include "ThumbnailPipelineService.h"
 #include "ModelContract.h"
@@ -43,6 +44,13 @@ DiskItemModel::DiskItemModel(QObject* parent) : ItemModelBase(parent) {
     m_thumbBatchTimer->setSingleShot(true);
     m_thumbBatchTimer->setInterval(35);
     connect(m_thumbBatchTimer, &QTimer::timeout, this, &DiskItemModel::flushPendingThumbDataChanged);
+
+    connect(&IconLoadNotifier::instance(), &IconLoadNotifier::iconLoaded, this, [this]() {
+        m_iconCache.clear();
+        if (!m_allRecords.empty()) {
+            emit dataChanged(index(0, 0), index(static_cast<int>(m_allRecords.size()) - 1, columnCount() - 1), {Qt::DecorationRole});
+        }
+    });
 }
 
 void DiskItemModel::flushPendingThumbDataChanged() {
