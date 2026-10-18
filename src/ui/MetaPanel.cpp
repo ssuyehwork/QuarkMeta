@@ -168,7 +168,7 @@ void MetaPanel::initUi() {
     // 1. 顶部预览区
     m_topPreviewBox = new QWidget(m_container);
     m_topPreviewBox->setObjectName("TopPreviewBox");
-    m_topPreviewBox->setFixedWidth(200);
+    m_topPreviewBox->setMaximumWidth(200);
     // TopPreviewBox style in style.qss
     QVBoxLayout* previewLayout = new QVBoxLayout(m_topPreviewBox);
     previewLayout->setContentsMargins(0, 0, 0, 0);
@@ -176,7 +176,7 @@ void MetaPanel::initUi() {
 
     m_lblImagePreview = new QLabel(m_topPreviewBox);
     m_lblImagePreview->setAlignment(Qt::AlignCenter);
-    m_lblImagePreview->setFixedSize(200, 200);
+    m_lblImagePreview->setMaximumSize(200, 200);
     m_lblImagePreview->setObjectName("MetaImagePreview");
     // MetaImagePreview style in style.qss
     m_lblImagePreview->hide();
@@ -471,7 +471,7 @@ void MetaPanel::setImagePreview(const QPixmap& pixmap) {
     } else {
         QPixmap canvas = renderThumbnailLayer(pixmap);
         m_lblImagePreview->setPixmap(canvas);
-        m_lblImagePreview->setFixedSize(QSize(200, 200));
+        m_lblImagePreview->setMaximumSize(QSize(200, 200));
 
         m_lblImagePreview->show();
         if (m_topPreviewBox) {
@@ -536,7 +536,7 @@ void MetaPanel::setMultiSelectionPreview(const QList<MetaPreviewItem>& items) {
     }
 
     m_lblImagePreview->setPixmap(canvas);
-    m_lblImagePreview->setFixedSize(logicalCanvasSize);
+    m_lblImagePreview->setMaximumSize(logicalCanvasSize);
 
     m_lblImagePreview->show();
     if (m_topPreviewBox) {
@@ -554,7 +554,7 @@ void MetaPanel::setDefaultIconPreview(const QIcon& icon) {
     } else {
         QPixmap canvas = renderIconLayer(icon, devicePixelRatioF());
         m_lblImagePreview->setPixmap(canvas);
-        m_lblImagePreview->setFixedSize(QSize(200, 200));
+        m_lblImagePreview->setMaximumSize(QSize(200, 200));
 
         m_lblImagePreview->show();
         if (m_topPreviewBox) {
