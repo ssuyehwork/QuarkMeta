@@ -154,9 +154,10 @@ void MetaPanel::initUi() {
     m_mainLayout->addWidget(header);
 
     m_scrollArea = new QScrollArea(this);
-    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_scrollArea->setWidgetResizable(true);
+    m_scrollArea->setFrameShape(QFrame::NoFrame);
+    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_scrollArea->setObjectName("MetaScrollArea");
     
     m_container = new QWidget(m_scrollArea);
