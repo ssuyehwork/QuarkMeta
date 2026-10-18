@@ -238,6 +238,20 @@ int SmartFolderDao::countMatchingItems(const SmartFolderRecord& rec) {
                 }
             } else if (rule.type == SmartRuleType::Color) {
                 rulePassed = (QString::fromStdWString(item.color).compare(rule.value, Qt::CaseInsensitive) == 0);
+            } else if (rule.type == SmartRuleType::Tag) {
+                for (const auto& t : item.tags) {
+                    if (QString::fromStdWString(t).compare(rule.value, Qt::CaseInsensitive) == 0) {
+                        rulePassed = true;
+                        break;
+                    }
+                }
+            } else if (rule.type == SmartRuleType::Keyword) {
+                QString name = QString::fromStdWString(item.originalName);
+                QString note = QString::fromStdWString(item.note);
+                QString url = QString::fromStdWString(item.url);
+                rulePassed = name.contains(rule.value, Qt::CaseInsensitive) ||
+                             note.contains(rule.value, Qt::CaseInsensitive) ||
+                             url.contains(rule.value, Qt::CaseInsensitive);
             }
 
             if (isAllMode) {
