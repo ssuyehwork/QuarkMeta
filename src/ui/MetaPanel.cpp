@@ -126,7 +126,6 @@ QWidget* MetaPanel::createCollapsibleSection(const QString& title, QWidget* cont
         contentWidget->setVisible(nowVisible);
         updateHeaderText(nowVisible);
         adjustFlowHeights();
-        if (m_container) m_container->adjustSize();
     });
 
     sectionLayout->addWidget(btnHeader);
@@ -345,7 +344,7 @@ void MetaPanel::initUi() {
     pathL->setContentsMargins(0, 0, 0, 0);
     pathL->setSpacing(6);
 
-    m_pathEdit = new QLineEdit(pathBox);
+    m_pathEdit = new ElasticEdit(pathBox);
     m_pathEdit->setReadOnly(true);
     m_pathEdit->setObjectName("MetaPathEdit");
     pathL->addWidget(m_pathEdit);
@@ -705,27 +704,18 @@ void MetaPanel::adjustFlowHeights() {
         bool hasPreview = (m_lblImagePreview && !m_lblImagePreview->pixmap().isNull());
         if (hasPreview) {
             m_topPreviewBox->show();
-            m_topPreviewBox->setFixedSize(200, 200);
         } else {
             m_topPreviewBox->hide();
-            m_topPreviewBox->setFixedHeight(0);
         }
     }
-    // 🚀【核心修复】：强制锁定以 200 宽度进行折行测算，杜绝首帧宽度未就绪导致的高度暴涨
-    if (m_paletteContainer && m_paletteFlowLayout) {
-        bool hasPalette = (m_paletteFlowLayout->count() > 0);
+
+    if (m_paletteContainer) {
+        bool hasPalette = (m_paletteFlowLayout && m_paletteFlowLayout->count() > 0);
         if (hasPalette) {
-            // 恒定以 200 像素的标准容器宽度做 heightForWidth 测试计算
-            int contentH = m_paletteFlowLayout->heightForWidth(200);
-            contentH = qMax(20, contentH);
-            m_paletteContainer->setFixedWidth(200);
-            m_paletteContainer->setFixedHeight(contentH);
             m_paletteContainer->show();
         } else {
-            m_paletteContainer->setFixedHeight(0);
             m_paletteContainer->hide();
         }
-        m_paletteFlowLayout->activate();
     }
 
     if (m_tagContainer && m_tagFlowLayout) {
@@ -733,23 +723,13 @@ void MetaPanel::adjustFlowHeights() {
         if (hasTags) {
             if (m_btnAddTagBig) m_btnAddTagBig->hide();
             if (m_btnAddTagSmall) m_btnAddTagSmall->show();
-            // 标签容器同样做保底处理，宽度如果还没布局就保底为 200
-            int tagW = m_tagContainer->width() > 0 ? m_tagContainer->width() : 200;
-            int contentH = m_tagFlowLayout->heightForWidth(tagW);
-            contentH = qMax(26, contentH);
             m_tagContainer->show();
-            m_tagContainer->setFixedHeight(contentH);
         } else {
             if (m_btnAddTagSmall) m_btnAddTagSmall->hide();
             if (m_btnAddTagBig) m_btnAddTagBig->show();
-            m_tagContainer->setFixedHeight(0);
             m_tagContainer->hide();
         }
         m_tagFlowLayout->activate();
-    }
-
-    if (m_container) {
-        m_container->adjustSize();
     }
 }
 
@@ -778,8 +758,8 @@ void MetaPanel::updateInfo(const QString& n, const QString& t, const QString& s,
         lblMtime->setText(mt);
         lblAtime->setText(at);
         
-        m_pathEdit->setText(p);
-        m_pathEdit->setCursorPosition(0);
+        m_pathEdit->setPlainText(p);
+        m_pathEdit->adjustHeight();
     }
 
     lblEncrypted->setText(e ? "已加密" : "未加密");
