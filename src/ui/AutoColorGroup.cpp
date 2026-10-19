@@ -129,7 +129,7 @@ void AutoColorGroup::populate(QWidget* parentWidget,
 
         int tol = accSlider->value();
         int area = areaSlider->value();
-        AppConfig::instance().setValue("Filter/ColorTolerance", tol);
+        AppConfig::instance().setValue("Filter/ColorSimilarity", tol);
         AppConfig::instance().setValue("Filter/MinColorArea", area);
 
         FilterState st = filterModel->state();
@@ -160,7 +160,7 @@ void AutoColorGroup::populate(QWidget* parentWidget,
     QObject::connect(debounceTimer, &QTimer::timeout, container, [filterModel, accSlider, areaSlider]() {
         int tol = accSlider->value();
         int area = areaSlider->value();
-        AppConfig::instance().setValue("Filter/ColorTolerance", tol);
+        AppConfig::instance().setValue("Filter/ColorSimilarity", tol);
         AppConfig::instance().setValue("Filter/MinColorArea", area);
 
         FilterState st = filterModel->state();
