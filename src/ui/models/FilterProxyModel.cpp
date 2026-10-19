@@ -77,23 +77,50 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         if (!matchManual) return false;
     }
 
-    // 3.5 🚨 物理隔离：自动提取色彩过滤 (只针对 record.autoColor & record.palettes)
+    // 3.5 🚨 物理隔离：自动提取色彩过滤 (色环邻近色判定 + 灰阶排除)
     if (!currentFilter.colors.isEmpty()) {
         bool matchAuto = false;
-        double maxDeltaE = (currentFilter.colorTolerance / 100.0) * FilterState::kMaxSimilarityDeltaE;
+        // 满格 100 对应色环正负 30 度角
+        const double maxAngleDiff = (currentFilter.colorTolerance / 100.0) * 30.0;
+
+        auto isAchromatic = [](const QColor& c) -> bool {
+            // 灰/黑/白判定：饱和度极低(<15%) 或 亮度极低(<15%) 或 接近纯白
+            return (c.hsvSaturation() < 38) || (c.value() < 38) || (c.hsvSaturation() < 25 && c.value() > 217);
+        };
+
+        auto matchColorByHue = [&](const QColor& target, const QColor& cand) -> bool {
+            if (!target.isValid() || !cand.isValid()) return false;
+
+            bool targetAchromatic = isAchromatic(target);
+            bool candAchromatic = isAchromatic(cand);
+
+            // 规则：点彩色时，严格排除灰/黑/白
+            if (!targetAchromatic) {
+                if (candAchromatic) return false;
+                int h1 = target.hsvHue();
+                int h2 = cand.hsvHue();
+                if (h1 < 0 || h2 < 0) return false;
+                int diff = std::abs(h1 - h2);
+                int angleDiff = std::min(diff, 360 - diff);
+                return angleDiff <= maxAngleDiff;
+            } else {
+                // target 属于灰黑白：只匹配同样属于灰黑白的颜色，且亮度差在 25% 以内
+                if (!candAchromatic) return false;
+                return std::abs(target.value() - cand.value()) <= (maxAngleDiff / 30.0) * 64;
+            }
+        };
 
         auto calculateMatchedArea = [&](const QColor& targetCol) -> float {
-            if (!targetCol.isValid()) return 0.0f;
             float totalArea = 0.0f;
             if (!record.palettes.empty()) {
                 for (const auto& pe : record.palettes) {
-                    if (UiHelper::calculateDeltaE(targetCol, pe.first) <= maxDeltaE) {
+                    if (matchColorByHue(targetCol, pe.first)) {
                         totalArea += pe.second;
                     }
                 }
             } else if (!record.autoColor.isEmpty()) {
                 QColor recordCol = UiHelper::parseColorName(record.autoColor);
-                if (UiHelper::calculateDeltaE(targetCol, recordCol) <= maxDeltaE) {
+                if (matchColorByHue(targetCol, recordCol)) {
                     totalArea = 1.0f;
                 }
             }
