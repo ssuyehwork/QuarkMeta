@@ -86,13 +86,13 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
             float totalArea = 0.0f;
             if (!record.palettes.empty()) {
                 for (const auto& pe : record.palettes) {
-                    if (UiHelper::calculateDeltaE(targetCol, pe.first) < currentFilter.colorTolerance) {
+                    if (UiHelper::calculateDeltaE(targetCol, pe.first) <= currentFilter.colorTolerance) {
                         totalArea += pe.second;
                     }
                 }
             } else if (!record.autoColor.isEmpty()) {
                 QColor recordCol = UiHelper::parseColorName(record.autoColor);
-                if (UiHelper::calculateDeltaE(targetCol, recordCol) < currentFilter.colorTolerance) {
+                if (UiHelper::calculateDeltaE(targetCol, recordCol) <= currentFilter.colorTolerance) {
                     totalArea = 1.0f;
                 }
             }
