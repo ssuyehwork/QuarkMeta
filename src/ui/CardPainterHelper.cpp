@@ -3,6 +3,7 @@
 #include <QPainterPath>
 #include <QFont>
 #include <QtMath>
+#include <QCache>
 #include <algorithm>
 
 namespace QuarkMeta {
@@ -22,6 +23,19 @@ QPixmap CardPainterHelper::renderDefaultIcon(const QIcon& icon, const QSize& are
     QSize target = defaultIconLogicalSize(areaSize);
     QSize physicalTarget = target * devicePixelRatio;
 
+    // 🔥【核心优化】：以 icon.cacheKey() + 目标物理尺寸建立复合缓存 Key
+    // 同类型的扩展名（如所有 .cpp 文件）图标完全相同，全屏只算 1 次，其余卡片 0 微秒直接命中内存缓存！
+    quint64 iconKey = static_cast<quint64>(icon.cacheKey());
+    quint64 compositeKey = (iconKey << 32) ^
+                           (static_cast<quint64>(physicalTarget.width()) << 16) ^
+                           static_cast<quint64>(physicalTarget.height());
+
+    static QCache<quint64, QPixmap> s_renderedIconCache(200);
+    QPixmap* cachedPx = s_renderedIconCache.object(compositeKey);
+    if (cachedPx) {
+        return *cachedPx; // 命中缓存，直接返回，0 毫秒！
+    }
+
     QPixmap px = icon.pixmap(physicalTarget);
     if (px.isNull()) {
         px = icon.pixmap(35, 45);
@@ -33,6 +47,7 @@ QPixmap CardPainterHelper::renderDefaultIcon(const QIcon& icon, const QSize& are
 
     if (!px.isNull()) {
         px.setDevicePixelRatio(devicePixelRatio);
+        s_renderedIconCache.insert(compositeKey, new QPixmap(px)); // 写入缓存
     }
 
     return px;
