@@ -1,5 +1,5 @@
 #include "AutoColorGroup.h"
-#include "components/InlineHueSlider.h"
+#include "components/ColorWheel.h"
 #include "components/ColorBlock.h"
 #include "components/FlowLayout.h"
 #include "ToolTipOverlay.h"
@@ -76,34 +76,18 @@ void AutoColorGroup::populate(QWidget* parentWidget,
 
     const FilterState currentState = filterModel->state();
 
-    // 1. 色相条 InlineHueSlider
-    QWidget* hueContainer = new QWidget(container);
-    QHBoxLayout* hueLayout = new QHBoxLayout(hueContainer);
-    hueLayout->setContentsMargins(5, 0, 5, 0);
-    hueLayout->setSpacing(0);
+    // 1. 色轮 ColorWheel 居中布局
+    QWidget* wheelContainer = new QWidget(container);
+    QHBoxLayout* wheelLayout = new QHBoxLayout(wheelContainer);
+    wheelLayout->setContentsMargins(8, 4, 8, 4);
+    wheelLayout->setSpacing(0);
 
-    InlineHueSlider* hueSlider = new InlineHueSlider(hueContainer);
-    hueLayout->addWidget(hueSlider);
-    groupLayout->addWidget(hueContainer);
+    ColorWheel* colorWheel = new ColorWheel(wheelContainer);
+    colorWheel->setValues(currentState.colorHue, currentState.colorPrecision);
+    wheelLayout->addWidget(colorWheel, 0, Qt::AlignCenter);
+    groupLayout->addWidget(wheelContainer);
 
-    // 2. "准确度:" 行
-    QWidget* accRow = new QWidget(container);
-    QHBoxLayout* accLayout = new QHBoxLayout(accRow);
-    accLayout->setContentsMargins(10, 4, 10, 4);
-    accLayout->setSpacing(8);
-
-    QLabel* accLabel = new QLabel("相似度:", accRow);
-    accLabel->setObjectName("FilterColorSliderLabel");
-    QSlider* accSlider = new QSlider(Qt::Horizontal, accRow);
-    accSlider->setObjectName("FilterColorSlider");
-    accSlider->setRange(0, 20);
-    accSlider->setValue(currentState.colorTolerance);
-
-    accLayout->addWidget(accLabel);
-    accLayout->addWidget(accSlider, 1);
-    groupLayout->addWidget(accRow);
-
-    // 3. "占比:" 行
+    // 2. "占比:" 行
     QWidget* areaRow = new QWidget(container);
     QHBoxLayout* areaLayout = new QHBoxLayout(areaRow);
     areaLayout->setContentsMargins(10, 4, 10, 4);
@@ -116,65 +100,54 @@ void AutoColorGroup::populate(QWidget* parentWidget,
     areaSlider->setRange(0, 100);
     areaSlider->setValue(currentState.minColorArea);
 
-    QObject::connect(hueSlider, &InlineHueSlider::sliderReleased, container, [filterModel, hueSlider, requestRebuild, accSlider, areaSlider]() {
-        int h = hueSlider->hue();
-        QColor col;
-        if (h == 1000) col = Qt::black;
-        else if (h == 1001) col = QColor("#808080");
-        else if (h == 1002) col = Qt::white;
-        else col = QColor::fromHsv(h, 220, 220);
+    areaLayout->addWidget(areaLabel);
+    areaLayout->addWidget(areaSlider, 1);
+    groupLayout->addWidget(areaRow);
 
+    // 色轮松手响应
+    QObject::connect(colorWheel, &ColorWheel::changed, container, [filterModel, colorWheel, areaSlider, requestRebuild](int hue, int precision) {
+        QColor col = QColor::fromHsv(hue, 255, 255);
         QString hex = col.name().toUpper();
         pushRecent(hex);
 
-        int tol = accSlider->value();
         int area = areaSlider->value();
-        AppConfig::instance().setValue("Filter/ColorSimilarity", tol);
+        AppConfig::instance().setValue("Filter/ColorHue", hue);
+        AppConfig::instance().setValue("Filter/ColorPrecision", precision);
         AppConfig::instance().setValue("Filter/MinColorArea", area);
 
         FilterState st = filterModel->state();
         st.colors = QStringList{ hex };
-        st.colorTolerance = tol;
+        st.colorHue = hue;
+        st.colorPrecision = precision;
         st.minColorArea = area;
         filterModel->setState(st);
 
         if (requestRebuild) requestRebuild();
     });
 
-    areaLayout->addWidget(areaLabel);
-    areaLayout->addWidget(areaSlider, 1);
-    groupLayout->addWidget(areaRow);
-
-    // 防抖 100ms 定时器
+    // 占比防抖 100ms 定时器
     QTimer* debounceTimer = new QTimer(container);
     debounceTimer->setSingleShot(true);
     debounceTimer->setInterval(100);
 
-    auto onSliderValueChanged = [debounceTimer]() {
+    QObject::connect(areaSlider, &QSlider::valueChanged, container, [debounceTimer]() {
         debounceTimer->start();
-    };
+    });
 
-    QObject::connect(accSlider, &QSlider::valueChanged, container, onSliderValueChanged);
-    QObject::connect(areaSlider, &QSlider::valueChanged, container, onSliderValueChanged);
-
-    QObject::connect(debounceTimer, &QTimer::timeout, container, [filterModel, accSlider, areaSlider]() {
-        int tol = accSlider->value();
+    QObject::connect(debounceTimer, &QTimer::timeout, container, [filterModel, areaSlider]() {
         int area = areaSlider->value();
-        AppConfig::instance().setValue("Filter/ColorSimilarity", tol);
         AppConfig::instance().setValue("Filter/MinColorArea", area);
 
         FilterState st = filterModel->state();
-        st.colorTolerance = tol;
         st.minColorArea = area;
         filterModel->setState(st);
     });
 
-    // 滑条事件过滤器：鼠标在上面移动、按下或拖动时显示 ToolTipOverlay 百分比，离开或释放隐去
+    // 占比滑条事件过滤器（ToolTip）
     SliderToolTipFilter* tipFilter = new SliderToolTipFilter(container);
-    accSlider->installEventFilter(tipFilter);
     areaSlider->installEventFilter(tipFilter);
 
-    // 4. 小标题 "标准色系" + 12 个色块
+    // 3. 小标题 "标准色系" + 12 个色块
     QLabel* lblStandard = new QLabel("标准色系", container);
     lblStandard->setObjectName("FilterColorSubTitle");
     groupLayout->addWidget(lblStandard);
@@ -188,8 +161,9 @@ void AutoColorGroup::populate(QWidget* parentWidget,
         "#7F77DD", "#E91E63", "#000000", "#808080", "#FFFFFF", "#795548"
     };
 
-    auto handleColorBlockClick = [filterModel, requestRebuild](const QString& hex) {
+    auto handleColorBlockClick = [filterModel, colorWheel, requestRebuild](const QString& hex) {
         QString hexUpper = hex.toUpper();
+        QColor col(hexUpper);
         FilterState st = filterModel->state();
         if (st.colors.contains(hexUpper)) {
             st.colors.removeAll(hexUpper);
@@ -197,6 +171,15 @@ void AutoColorGroup::populate(QWidget* parentWidget,
             st.colors = QStringList{ hexUpper };
             pushRecent(hexUpper);
         }
+
+        if (col.isValid()) {
+            int h = col.hsvHue();
+            if (h >= 0) {
+                st.colorHue = h;
+            }
+        }
+
+        colorWheel->setValues(st.colorHue, st.colorPrecision);
         filterModel->setState(st);
         if (requestRebuild) requestRebuild();
     };
@@ -212,7 +195,7 @@ void AutoColorGroup::populate(QWidget* parentWidget,
     }
     groupLayout->addWidget(stdColorWidget);
 
-    // 5. 小标题 "最近筛选" + 最近使用色块
+    // 4. 小标题 "最近筛选" + 最近使用色块
     QStringList recentColors = AppConfig::instance().getValue("Filter/RecentColors").toStringList();
     if (!recentColors.isEmpty()) {
         QLabel* lblRecent = new QLabel("最近筛选", container);
