@@ -7,6 +7,8 @@
 namespace QuarkMeta {
 
 struct FilterState {
+    static constexpr int kHueTolerance = 20;
+
     QList<int>   ratings;
     QStringList  colors;          // 自动提取色彩过滤色 (Hex 字符串，如 #E24B4A)
     QStringList  manualColors;    // 手动标注颜色过滤 (红、橙、黄、绿、青、蓝、紫、灰、无色标)
