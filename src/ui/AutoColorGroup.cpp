@@ -181,6 +181,7 @@ void AutoColorGroup::populate(QWidget* parentWidget,
 
     QWidget* stdColorWidget = new QWidget(container);
     FlowLayout* stdFlow = new FlowLayout(stdColorWidget, 0, 2, 2);
+    stdFlow->setContentsMargins(8, 0, 8, 0);
 
     static const QStringList standardHexes = {
         "#E24B4A", "#EF9F27", "#FECF0E", "#639922", "#1D9E75", "#378ADD",
@@ -220,6 +221,7 @@ void AutoColorGroup::populate(QWidget* parentWidget,
 
         QWidget* recentColorWidget = new QWidget(container);
         FlowLayout* recentFlow = new FlowLayout(recentColorWidget, 0, 2, 2);
+        recentFlow->setContentsMargins(8, 0, 8, 0);
 
         for (const QString& hex : recentColors) {
             ColorBlock* cb = new ColorBlock(QColor(hex), recentColorWidget);
