@@ -563,21 +563,47 @@ void MetaPanel::setDefaultIconPreview(const QIcon& icon) {
     m_adjustTimer->start();
 }
 
-void MetaPanel::setSelectedPaths(const QStringList& paths) {
-    // 1. 选区切换防漂移：若标签选择浮层处于打开状态，选区变更时强制关闭，消除上下文错位
-    if (m_tagSelectorOverlay) {
-        m_tagSelectorOverlay->close();
-    }
+void MetaPanel::submitPendingEdits() {
+    if (m_editingPathsSnapshot.isEmpty() || m_isReadOnlyMode) return;
 
-    // 2. 离焦竞态保护：选区切换前驱使当前焦点编辑框收回焦点，确保旧文件的编辑在路径快照更新前落盘
-    if (m_nameEdit && m_nameEdit->hasFocus()) {
-        m_nameEdit->clearFocus();
-    }
     if (m_noteEdit && m_noteEdit->hasFocus()) {
+        QString textCopy = m_noteEdit->toPlainText();
+        emit noteEdited(m_editingPathsSnapshot, textCopy);
         m_noteEdit->clearFocus();
     }
     if (m_linkEdit && m_linkEdit->hasFocus()) {
+        QString linkCopy = m_linkEdit->text().trimmed();
+        emit linkEdited(m_editingPathsSnapshot, linkCopy);
         m_linkEdit->clearFocus();
+    }
+    if (m_nameEdit && m_nameEdit->hasFocus() && m_editingPathsSnapshot.size() == 1) {
+        QString oldPath = m_nameEdit->property("oldPath").toString();
+        QString newName = m_nameEdit->toPlainText().trimmed();
+        static const QRegularExpression illegalRegex("[\\\\/:*?\"<>|\r\n]");
+        newName.remove(illegalRegex);
+
+        QString suffix = m_nameEdit->property("suffix").toString();
+        if (!oldPath.isEmpty() && !newName.isEmpty()) {
+            QFileInfo oldInfo(oldPath);
+            if (newName != oldInfo.completeBaseName()) {
+                QString newPath = oldInfo.absolutePath() + "/" + newName + (suffix.isEmpty() ? "" : "." + suffix);
+                newPath = QDir::toNativeSeparators(newPath);
+                if (!QFile::exists(newPath)) {
+                    emit renameRequested(oldPath, newPath);
+                }
+            }
+        }
+        m_nameEdit->clearFocus();
+    }
+}
+
+void MetaPanel::setSelectedPaths(const QStringList& paths) {
+    // 1. 同步提交当前焦点的未落盘修改，对旧文件完成精准落盘
+    submitPendingEdits();
+
+    // 2. 若标签选择浮层处于打开状态，选区切换时优雅关闭，消除选区漂移
+    if (m_tagSelectorOverlay) {
+        m_tagSelectorOverlay->close();
     }
 
     QElapsedTimer timer;

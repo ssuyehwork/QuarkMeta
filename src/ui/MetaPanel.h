@@ -83,6 +83,7 @@ protected:
 private:
     void initUi();
     void updateControlsState(bool hasSelection, bool isMultiSelection, bool isReadOnly);
+    void submitPendingEdits();
     void adjustFlowHeights();
     void addInfoRow(QVBoxLayout* layout, const QString& label, QLabel*& valueLabel);
     QWidget* createCollapsibleSection(const QString& title, QWidget* contentWidget, bool defaultExpanded = true);
