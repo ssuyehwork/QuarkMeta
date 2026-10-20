@@ -14,7 +14,7 @@ ElasticEdit::ElasticEdit(QWidget* parent) : QTextEdit(parent) {
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setLineWrapMode(QTextEdit::WidgetWidth);
     QTextOption opt = document()->defaultTextOption();
-    opt.setWrapMode(QTextOption::WrapAtWordBoundary);
+    opt.setWrapMode(QTextOption::WordWrap);
     document()->setDefaultTextOption(opt);
     document()->setDocumentMargin(2); // 留出 2px 文档内边距，保证字不贴顶且不切字
     connect(this, &QTextEdit::textChanged, this, &QWidget::updateGeometry);
