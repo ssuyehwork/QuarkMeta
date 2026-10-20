@@ -24,10 +24,29 @@ QSize ColorWheel::minimumSizeHint() const {
     return QSize(80, 80);
 }
 
-int ColorWheel::wheelRadius() const {
+double ColorWheel::wheelRadius() const {
     int side = qMin(width() - 16, 160);
     side = qMax(side, 40);
-    return side / 2 - 6; // 留 6px 描边与点 C 空间
+    return side / 2.0 - 12.0; // 留 12px 容纳手柄 A 的外半径与描边线
+}
+
+QPointF ColorWheel::getCenterPoint() const {
+    return QPointF(width() / 2.0, height() / 2.0);
+}
+
+QPointF ColorWheel::getHandleAPosition() const {
+    QPointF center = getCenterPoint();
+    double radius = wheelRadius();
+    double rad = qDegreesToRadians(double(m_hue));
+    return QPointF(center.x() + radius * qCos(rad), center.y() - radius * qSin(rad));
+}
+
+QPointF ColorWheel::getHandleCPosition() const {
+    QPointF center = getCenterPoint();
+    double radius = wheelRadius();
+    double r = (1.0 - double(m_precision) / 100.0) * radius;
+    double rad = qDegreesToRadians(double(m_hue));
+    return QPointF(center.x() + r * qCos(rad), center.y() - r * qSin(rad));
 }
 
 void ColorWheel::setValues(int hue, int precision) {
@@ -46,21 +65,17 @@ void ColorWheel::paintEvent(QPaintEvent* event) {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
 
-    int side = qMin(width() - 16, 160);
-    side = qMax(side, 40);
-
-    QPointF center(width() / 2.0, height() / 2.0);
-    double radius = side / 2.0 - 6.0;
+    QPointF center = getCenterPoint();
+    double radius = wheelRadius();
     if (radius <= 0) return;
 
-    // 1. 在圆形剪裁区域绘制色轮
+    // 1. 在圆形剪裁区域绘制色轮盘面
     QPainterPath clipPath;
     clipPath.addEllipse(center, radius, radius);
 
     p.save();
     p.setClipPath(clipPath);
 
-    // 使用 QConicalGradient 绘制色相 (0° 红色在右，逆时针递增)
     QConicalGradient conicalGrad(center, 0);
     conicalGrad.setColorAt(0.0,         QColor(255, 0, 0));
     conicalGrad.setColorAt(60.0 / 360,  QColor(255, 255, 0));
@@ -70,19 +85,15 @@ void ColorWheel::paintEvent(QPaintEvent* event) {
     conicalGrad.setColorAt(300.0 / 360, QColor(255, 0, 255));
     conicalGrad.setColorAt(1.0,         QColor(255, 0, 0));
 
-    // Qt 默认在屏坐标系 (Y向下) 下 QConicalGradient 顺时针旋转。
-    // 将原点平移到 center，翻转 Y 轴即可使角度变为物理逆时针！
     p.translate(center);
     p.scale(1, -1);
 
-    // 在变换后坐标系（原点在 (0,0)）下绘制色相环
     QConicalGradient localConical(QPointF(0, 0), 0);
     localConical.setStops(conicalGrad.stops());
     p.setPen(Qt::NoPen);
     p.setBrush(localConical);
     p.drawRect(QRectF(-radius, -radius, radius * 2, radius * 2));
 
-    // 叠加由中心灰(#B0B0B0)向边缘透明的径向渐变
     QRadialGradient radialGrad(QPointF(0, 0), radius);
     radialGrad.setColorAt(0.0, QColor("#B0B0B0"));
     radialGrad.setColorAt(1.0, QColor(176, 176, 176, 0));
@@ -91,39 +102,91 @@ void ColorWheel::paintEvent(QPaintEvent* event) {
 
     p.restore();
 
-    // 绘制色轮外圈细黑/灰保护边线
+    // 绘制色轮外圈细保护边线
     p.setPen(QPen(QColor(60, 60, 60), 1));
     p.setBrush(Qt::NoBrush);
     p.drawEllipse(center, radius, radius);
 
-    // 2. 绘制点 C
-    double r = (1.0 - double(m_precision) / 100.0) * radius;
-    double rad = qDegreesToRadians(double(m_hue));
-    double cx = center.x() + r * qCos(rad);
-    double cy = center.y() - r * qSin(rad); // 屏坐标系 Y 向下
+    // 计算手柄坐标：B (圆心), A (边缘), C (连线中间)
+    QPointF posB = center;
+    QPointF posA = getHandleAPosition();
+    QPointF posC = getHandleCPosition();
 
-    QPointF dotCenter(cx, cy);
+    // 2. 绘制连线：从 B 到 A 的白色连线 (宽 2px)
+    p.save();
+    QPen linePen(Qt::white, 2.0);
+    linePen.setCapStyle(Qt::RoundCap);
+    p.setPen(linePen);
+    p.drawLine(posB, posA);
+    p.restore();
 
-    // 计算点 C 的填充颜色 (中心灰色 #B0B0B0 向边缘纯色过渡)
-    double factor = (100.0 - double(m_precision)) / 100.0;
-    QColor pureCol = QColor::fromHsv(m_hue, 255, 255);
-    QColor grayCol = QColor("#B0B0B0");
-    QColor cFill(
-        grayCol.red() + qRound(factor * (pureCol.red() - grayCol.red())),
-        grayCol.green() + qRound(factor * (pureCol.green() - grayCol.green())),
-        grayCol.blue() + qRound(factor * (pureCol.blue() - grayCol.blue()))
-    );
-
-    // 绘制白色描边 + 实时色彩填充的小圆点
+    // 3. 绘制手柄 B (圆心，小空心圆，直径 8px，白色描边)
+    p.save();
     p.setPen(QPen(Qt::white, 1.5));
-    p.setBrush(cFill);
-    p.drawEllipse(dotCenter, 6.0, 6.0);
+    p.setBrush(Qt::NoBrush);
+    p.drawEllipse(posB, 4.0, 4.0);
+    p.restore();
+
+    // 辅助闭包：绘制手柄 A
+    auto drawHandleA = [&]() {
+        p.save();
+        // 蓝框外环 (直径 22px，半径 11px，线宽 2.5px)
+        p.setPen(QPen(QColor("#378ADD"), 2.5));
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(posA, 11.0, 11.0);
+
+        // 主体实心圆 (直径 18px，半径 9px，白色描边 1.5px，纯色色相填充)
+        QColor pureHueColor = QColor::fromHsv(m_hue, 255, 255);
+        p.setPen(QPen(Qt::white, 1.5));
+        p.setBrush(pureHueColor);
+        p.drawEllipse(posA, 9.0, 9.0);
+
+        // 中心小白点 (直径 3px，半径 1.5px)
+        p.setPen(Qt::NoPen);
+        p.setBrush(Qt::white);
+        p.drawEllipse(posA, 1.5, 1.5);
+        p.restore();
+    };
+
+    // 辅助闭包：绘制手柄 C (空心白圈，直径 24px，半径 12px，白色描边，无填充)
+    auto drawHandleC = [&]() {
+        p.save();
+        p.setPen(QPen(Qt::white, 2.0));
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(posC, 12.0, 12.0);
+        p.restore();
+    };
+
+    // 当精准度 == 0 时 C 与 A 重合，按要求“C 与 A 重合时让 A 绘制在上层”
+    if (m_precision == 0) {
+        drawHandleC();
+        drawHandleA();
+    } else {
+        drawHandleA();
+        drawHandleC();
+    }
 }
 
 void ColorWheel::mousePressEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
-        m_isDragging = true;
-        handleMousePosition(event->pos(), false);
+        QPointF pos = event->position();
+        QPointF posA = getHandleAPosition();
+        QPointF posC = getHandleCPosition();
+
+        double distToA = QLineF(pos, posA).length();
+        double distToC = QLineF(pos, posC).length();
+
+        // 判定手柄点击命中 (命中容差半径为手柄半径 + 6px 缓冲区)
+        bool hitA = (distToA <= 11.0 + 6.0);
+        bool hitC = (distToC <= 12.0 + 6.0);
+
+        if (hitC && (!hitA || distToC < distToA)) {
+            m_dragTarget = DragTarget::DragC;
+        } else {
+            m_dragTarget = DragTarget::DragA;
+        }
+
+        handleDragMove(pos);
         event->accept();
     } else {
         QWidget::mousePressEvent(event);
@@ -131,55 +194,76 @@ void ColorWheel::mousePressEvent(QMouseEvent* event) {
 }
 
 void ColorWheel::mouseMoveEvent(QMouseEvent* event) {
-    if (m_isDragging) {
-        handleMousePosition(event->pos(), false);
+    if (m_dragTarget != DragTarget::None) {
+        handleDragMove(event->position());
         event->accept();
     } else {
+        updateCursorShape(event->pos());
         QWidget::mouseMoveEvent(event);
     }
 }
 
 void ColorWheel::mouseReleaseEvent(QMouseEvent* event) {
-    if (event->button() == Qt::LeftButton && m_isDragging) {
-        m_isDragging = false;
+    if (event->button() == Qt::LeftButton && m_dragTarget != DragTarget::None) {
+        m_dragTarget = DragTarget::None;
         ToolTipOverlay::hideTip();
-        handleMousePosition(event->pos(), true);
+        updateCursorShape(event->pos());
+        emit changed(m_hue, m_precision);
         event->accept();
     } else {
         QWidget::mouseReleaseEvent(event);
     }
 }
 
-void ColorWheel::handleMousePosition(const QPoint& pos, bool isRelease) {
-    int side = qMin(width() - 16, 160);
-    side = qMax(side, 40);
-
-    QPointF center(width() / 2.0, height() / 2.0);
-    double radius = side / 2.0 - 6.0;
+void ColorWheel::handleDragMove(const QPointF& mousePos) {
+    QPointF center = getCenterPoint();
+    double radius = wheelRadius();
     if (radius <= 0) return;
 
-    double dx = pos.x() - center.x();
-    double dy = center.y() - pos.y(); // 笛卡尔坐标系 Y 向上
-    double dist = qSqrt(dx * dx + dy * dy);
+    if (m_dragTarget == DragTarget::DragA) {
+        double dx = mousePos.x() - center.x();
+        double dy = center.y() - mousePos.y(); // 笛卡尔坐标系 Y 向上
+        double dist = qSqrt(dx * dx + dy * dy);
 
-    if (dist > radius) {
-        dist = radius;
-    }
+        if (dist > 0.001) {
+            double rad = qAtan2(dy, dx);
+            double deg = qRadiansToDegrees(rad);
+            if (deg < 0) deg += 360.0;
+            m_hue = qRound(deg) % 360;
+        }
+        update();
+        ToolTipOverlay::instance()->showText(QCursor::pos(), QString("色相: %1°").arg(m_hue), 0);
+    } else if (m_dragTarget == DragTarget::DragC) {
+        QPointF posA = getHandleAPosition();
+        QPointF vecBA = posA - center;
+        double lenBA = QLineF(center, posA).length();
 
-    if (dist > 0.001) {
-        double rad = qAtan2(dy, dx);
-        double deg = qRadiansToDegrees(rad);
-        if (deg < 0) deg += 360.0;
-        m_hue = qRound(deg) % 360;
-    }
+        if (lenBA > 0.001) {
+            QPointF vecBM = mousePos - center;
+            // 鼠标点 M 在连线 BA 上的点积投影
+            double dot = (vecBM.x() * vecBA.x() + vecBM.y() * vecBA.y()) / lenBA;
+            double clampedDist = qBound(0.0, dot, lenBA);
 
-    m_precision = qBound(0, qRound(100.0 * (1.0 - dist / radius)), 100);
-    update();
-
-    if (!isRelease) {
+            // 比例：精准度 0 在边缘(A点)，100 在圆心(B点)
+            m_precision = qBound(0, qRound(100.0 * (1.0 - clampedDist / lenBA)), 100);
+        }
+        update();
         ToolTipOverlay::instance()->showText(QCursor::pos(), QString("精准度: %1").arg(m_precision), 0);
+    }
+}
+
+void ColorWheel::updateCursorShape(const QPoint& pos) {
+    QPointF posF(pos);
+    QPointF posA = getHandleAPosition();
+    QPointF posC = getHandleCPosition();
+
+    double distA = QLineF(posF, posA).length();
+    double distC = QLineF(posF, posC).length();
+
+    if (distA <= 11.0 + 4.0 || distC <= 12.0 + 4.0) {
+        setCursor(Qt::PointingHandCursor);
     } else {
-        emit changed(m_hue, m_precision);
+        unsetCursor();
     }
 }
 

@@ -29,12 +29,23 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
-    void handleMousePosition(const QPoint& pos, bool isRelease);
-    int wheelRadius() const;
+    enum class DragTarget {
+        None,
+        DragA,
+        DragC
+    };
+
+    double wheelRadius() const;
+    QPointF getCenterPoint() const;
+    QPointF getHandleAPosition() const;
+    QPointF getHandleCPosition() const;
+
+    void handleDragMove(const QPointF& mousePos);
+    void updateCursorShape(const QPoint& pos);
 
     int m_hue = 0;           // 0~359
-    int m_precision = 50;    // 0~100 (0在边缘, 100在中心)
-    bool m_isDragging = false;
+    int m_precision = 50;    // 0~100 (0在边缘, 100在圆心)
+    DragTarget m_dragTarget = DragTarget::None;
 };
 
 } // namespace QuarkMeta
