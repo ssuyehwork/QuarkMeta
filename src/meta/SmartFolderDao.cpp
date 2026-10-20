@@ -217,11 +217,11 @@ bool SmartFolderDao::updateSmartFolder(const SmartFolderRecord& rec) {
     return success;
 }
 
-static bool evaluateRuleForItem(const SmartFolderRule& rule,
-                                const QString& filePath,
-                                const QString& fileName,
-                                const QString& suffix,
-                                const ItemMeta& meta) {
+static bool evaluateRuleForRuntimeMeta(const SmartFolderRule& rule,
+                                       const QString& filePath,
+                                       const QString& fileName,
+                                       const QString& suffix,
+                                       const RuntimeMeta& meta) {
     if (rule.type == SmartRuleType::Rating) {
         int rVal = rule.value.toInt();
         if (rule.op == SmartRuleOperator::GreaterOrEqual) return (meta.rating >= rVal);
@@ -238,7 +238,57 @@ static bool evaluateRuleForItem(const SmartFolderRule& rule,
         return equals;
     } else if (rule.type == SmartRuleType::Color) {
         QString itemColor = QString::fromStdWString(meta.manualColor);
-        if (itemColor.isEmpty()) itemColor = QString::fromStdWString(meta.color);
+        if (itemColor.isEmpty()) itemColor = QString::fromStdWString(meta.autoColor);
+        bool matchColor = (itemColor.compare(rule.value.trimmed(), Qt::CaseInsensitive) == 0);
+        if (rule.op == SmartRuleOperator::NotContains) return !matchColor;
+        return matchColor;
+    } else if (rule.type == SmartRuleType::Tag) {
+        bool hasTag = false;
+        QString valTrimmed = rule.value.trimmed();
+        for (const QString& t : meta.tags) {
+            if (t.compare(valTrimmed, Qt::CaseInsensitive) == 0) {
+                hasTag = true;
+                break;
+            }
+        }
+        if (rule.op == SmartRuleOperator::NotContains) return !hasTag;
+        return hasTag;
+    } else if (rule.type == SmartRuleType::Keyword) {
+        QString note = QString::fromStdWString(meta.note);
+        QString url = QString::fromStdWString(meta.url);
+        QString kw = rule.value.trimmed();
+        bool matchKw = fileName.contains(kw, Qt::CaseInsensitive) ||
+                       filePath.contains(kw, Qt::CaseInsensitive) ||
+                       note.contains(kw, Qt::CaseInsensitive) ||
+                       url.contains(kw, Qt::CaseInsensitive);
+        if (rule.op == SmartRuleOperator::NotContains) return !matchKw;
+        return matchKw;
+    }
+    return false;
+}
+
+static bool evaluateRuleForItemMeta(const SmartFolderRule& rule,
+                                    const QString& filePath,
+                                    const QString& fileName,
+                                    const QString& suffix,
+                                    const ItemMeta& meta) {
+    if (rule.type == SmartRuleType::Rating) {
+        int rVal = rule.value.toInt();
+        if (rule.op == SmartRuleOperator::GreaterOrEqual) return (meta.rating >= rVal);
+        if (rule.op == SmartRuleOperator::Equals) return (meta.rating == rVal);
+        if (rule.op == SmartRuleOperator::LessOrEqual) return (meta.rating <= rVal);
+        if (rule.op == SmartRuleOperator::Contains) return (meta.rating == rVal);
+        if (rule.op == SmartRuleOperator::NotContains) return (meta.rating != rVal);
+    } else if (rule.type == SmartRuleType::Extension) {
+        QString targetExt = rule.value.trimmed();
+        if (targetExt.startsWith('.')) targetExt.remove(0, 1);
+        bool equals = (suffix.compare(targetExt, Qt::CaseInsensitive) == 0) ||
+                      (fileName.endsWith("." + targetExt, Qt::CaseInsensitive));
+        if (rule.op == SmartRuleOperator::NotContains) return !equals;
+        return equals;
+    } else if (rule.type == SmartRuleType::Color) {
+        QString itemColor = QString::fromStdWString(meta.color);
+        if (itemColor.isEmpty()) itemColor = QString::fromStdWString(meta.autoColor);
         bool matchColor = (itemColor.compare(rule.value.trimmed(), Qt::CaseInsensitive) == 0);
         if (rule.op == SmartRuleOperator::NotContains) return !matchColor;
         return matchColor;
@@ -295,11 +345,11 @@ int SmartFolderDao::countMatchingItems(const SmartFolderRecord& rec) {
             return;
         }
 
-        ItemMeta meta = MetadataManager::instance().getMeta(filePath.toStdWString());
+        RuntimeMeta meta = MetadataManager::instance().getMeta(filePath.toStdWString());
 
         bool itemMatches = isAllMode;
         for (const auto& rule : rec.rules) {
-            bool rulePassed = evaluateRuleForItem(rule, filePath, fileName, suffix, meta);
+            bool rulePassed = evaluateRuleForRuntimeMeta(rule, filePath, fileName, suffix, meta);
             if (isAllMode) {
                 if (!rulePassed) { itemMatches = false; break; }
             } else {
@@ -344,7 +394,7 @@ int SmartFolderDao::countMatchingItems(const SmartFolderRecord& rec) {
 
         bool itemMatches = isAllMode;
         for (const auto& rule : rec.rules) {
-            bool rulePassed = evaluateRuleForItem(rule, filePath, fileName, suffix, item);
+            bool rulePassed = evaluateRuleForItemMeta(rule, filePath, fileName, suffix, item);
             if (isAllMode) {
                 if (!rulePassed) { itemMatches = false; break; }
             } else {
