@@ -77,30 +77,22 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
         if (!matchManual) return false;
     }
 
-    // 3.5 🚨 物理隔离：自动提取色彩过滤 (RGB 各通道色值 ±Tolerance 刚性容差窗口匹配)
+    // 3.5 🚨 物理隔离：自动提取色彩过滤 (只针对 record.autoColor & record.palettes)
     if (!currentFilter.colors.isEmpty()) {
         bool matchAuto = false;
-        // 容差由滑条直接决定（例如滑条为 50，则 RGB 各色值均允许 ±50 浮动）
-        const int tolerance = currentFilter.colorTolerance;
-
-        auto isColorMatch = [tolerance](const QColor& target, const QColor& cand) -> bool {
-            if (!target.isValid() || !cand.isValid()) return false;
-            return (std::abs(target.red()   - cand.red())   <= tolerance) &&
-                   (std::abs(target.green() - cand.green()) <= tolerance) &&
-                   (std::abs(target.blue()  - cand.blue())  <= tolerance);
-        };
 
         auto calculateMatchedArea = [&](const QColor& targetCol) -> float {
+            if (!targetCol.isValid()) return 0.0f;
             float totalArea = 0.0f;
             if (!record.palettes.empty()) {
                 for (const auto& pe : record.palettes) {
-                    if (isColorMatch(targetCol, pe.first)) {
+                    if (UiHelper::calculateDeltaE(targetCol, pe.first) <= currentFilter.colorTolerance) {
                         totalArea += pe.second;
                     }
                 }
             } else if (!record.autoColor.isEmpty()) {
                 QColor recordCol = UiHelper::parseColorName(record.autoColor);
-                if (isColorMatch(targetCol, recordCol)) {
+                if (UiHelper::calculateDeltaE(targetCol, recordCol) <= currentFilter.colorTolerance) {
                     totalArea = 1.0f;
                 }
             }

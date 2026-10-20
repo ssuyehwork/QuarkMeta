@@ -4,7 +4,7 @@
 namespace QuarkMeta {
 
 FilterStateModel::FilterStateModel(QObject* parent) : QObject(parent) {
-    m_state.colorTolerance = AppConfig::instance().getValue("Filter/ColorSimilarity", 33).toInt();
+    m_state.colorTolerance = qBound(0, AppConfig::instance().getValue("Filter/ColorSimilarity", 10).toInt(), 20);
     m_state.minColorArea = AppConfig::instance().getValue("Filter/MinColorArea", 0).toInt();
 }
 
