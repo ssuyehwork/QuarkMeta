@@ -3,18 +3,126 @@
 #include "components/ColorBlock.h"
 #include "components/FlowLayout.h"
 #include "ToolTipOverlay.h"
+#include "UiHelper.h"
 #include "AppConfig.h"
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPushButton>
 #include <QSlider>
 #include <QTimer>
 #include <QEvent>
 #include <QMouseEvent>
+#include <QContextMenuEvent>
+#include <QMenu>
 #include <QCursor>
 
 namespace QuarkMeta {
 
 namespace {
+
+struct SavedColorItem {
+    QString hex;
+    int hue = 0;
+    int precision = 50;
+    int area = 0;
+
+    QString toString() const {
+        return QString("%1|%2|%3|%4").arg(hex.toUpper()).arg(hue).arg(precision).arg(area);
+    }
+
+    static SavedColorItem fromString(const QString& str) {
+        SavedColorItem item;
+        QStringList parts = str.split('|');
+        if (parts.size() >= 1) item.hex = parts[0].toUpper();
+        if (parts.size() >= 2) item.hue = parts[1].toInt();
+        if (parts.size() >= 3) item.precision = parts[2].toInt();
+        if (parts.size() >= 4) item.area = parts[3].toInt();
+        return item;
+    }
+
+    bool operator==(const SavedColorItem& other) const {
+        return hex.compare(other.hex, Qt::CaseInsensitive) == 0 &&
+               hue == other.hue &&
+               precision == other.precision &&
+               area == other.area;
+    }
+};
+
+QList<SavedColorItem> loadSavedColors() {
+    QList<SavedColorItem> list;
+    QStringList rawList = AppConfig::instance().getValue("Filter/SavedColors").toStringList();
+    for (const QString& str : rawList) {
+        if (!str.trimmed().isEmpty()) {
+            list.append(SavedColorItem::fromString(str));
+        }
+    }
+    return list;
+}
+
+void saveSavedColors(const QList<SavedColorItem>& list) {
+    QStringList rawList;
+    for (const auto& item : list) {
+        rawList.append(item.toString());
+    }
+    AppConfig::instance().setValue("Filter/SavedColors", rawList);
+}
+
+void addSavedColor(const SavedColorItem& item) {
+    QList<SavedColorItem> list = loadSavedColors();
+    for (const auto& existing : list) {
+        if (existing == item) return;
+    }
+    list.append(item);
+    saveSavedColors(list);
+}
+
+void removeSavedColor(int index) {
+    QList<SavedColorItem> list = loadSavedColors();
+    if (index >= 0 && index < list.size()) {
+        list.removeAt(index);
+        saveSavedColors(list);
+    }
+}
+
+class SavedColorFilter : public QObject {
+public:
+    SavedColorFilter(int index, const SavedColorItem& item, std::function<void(int)> onDelete, QObject* parent = nullptr)
+        : QObject(parent), m_index(index), m_item(item), m_onDelete(onDelete) {}
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override {
+        QWidget* widget = qobject_cast<QWidget*>(watched);
+        if (!widget) return false;
+
+        if (event->type() == QEvent::Enter || event->type() == QEvent::MouseMove) {
+            QString tip = QString("%1\n精准度: %2%\n占比: %3%")
+                              .arg(m_item.hex.toUpper())
+                              .arg(m_item.precision)
+                              .arg(m_item.area);
+            ToolTipOverlay::instance()->showText(QCursor::pos(), tip, 0);
+            return false;
+        } else if (event->type() == QEvent::Leave) {
+            ToolTipOverlay::hideTip();
+            return false;
+        } else if (event->type() == QEvent::ContextMenu) {
+            QContextMenuEvent* ce = static_cast<QContextMenuEvent*>(event);
+            QMenu menu(widget);
+            UiHelper::applyMenuStyle(&menu);
+            QAction* actDel = menu.addAction(UiHelper::getIcon("trash", QColor("#EEEEEE"), 16), "删除");
+            if (menu.exec(ce->globalPos()) == actDel) {
+                ToolTipOverlay::hideTip();
+                if (m_onDelete) m_onDelete(m_index);
+            }
+            return true;
+        }
+        return false;
+    }
+
+private:
+    int m_index;
+    SavedColorItem m_item;
+    std::function<void(int)> m_onDelete;
+};
 
 class SliderToolTipFilter : public QObject {
 public:
@@ -147,7 +255,89 @@ void AutoColorGroup::populate(QWidget* parentWidget,
     SliderToolTipFilter* tipFilter = new SliderToolTipFilter(container);
     areaSlider->installEventFilter(tipFilter);
 
-    // 3. 小标题 "标准色系" + 12 个色块
+    // 3. 小标题 "已保存" + 保存小按钮 "+"
+    QWidget* savedHeaderRow = new QWidget(container);
+    QHBoxLayout* savedHdrLayout = new QHBoxLayout(savedHeaderRow);
+    savedHdrLayout->setContentsMargins(8, 4, 8, 0);
+    savedHdrLayout->setSpacing(6);
+
+    QLabel* lblSaved = new QLabel("已保存", savedHeaderRow);
+    lblSaved->setObjectName("FilterColorSubTitle");
+    lblSaved->setStyleSheet("QLabel#FilterColorSubTitle { margin-left: 0px; margin-top: 0px; }");
+
+    QPushButton* btnAddSaved = new QPushButton("+", savedHeaderRow);
+    btnAddSaved->setFixedSize(16, 16);
+    btnAddSaved->setCursor(Qt::PointingHandCursor);
+    btnAddSaved->setToolTip("保存当前颜色筛选设置");
+    btnAddSaved->setStyleSheet("QPushButton { font-weight: bold; font-size: 12px; padding: 0px; border: 1px solid #444; border-radius: 3px; background: transparent; color: #BBB; }"
+                               "QPushButton:hover { background: #3E3E42; color: #FFF; }"
+                               "QPushButton:disabled { color: #555; border-color: #333; }");
+
+    bool hasSelectedColor = !currentState.colors.isEmpty();
+    btnAddSaved->setEnabled(hasSelectedColor);
+
+    savedHdrLayout->addWidget(lblSaved);
+    savedHdrLayout->addWidget(btnAddSaved);
+    savedHdrLayout->addStretch(1);
+    groupLayout->addWidget(savedHeaderRow);
+
+    QObject::connect(btnAddSaved, &QPushButton::clicked, container, [filterModel, requestRebuild]() {
+        FilterState st = filterModel->state();
+        if (!st.colors.isEmpty()) {
+            SavedColorItem item;
+            item.hex = st.colors.first().toUpper();
+            item.hue = st.colorHue;
+            item.precision = st.colorPrecision;
+            item.area = st.minColorArea;
+            addSavedColor(item);
+            if (requestRebuild) requestRebuild();
+        }
+    });
+
+    QList<SavedColorItem> savedItems = loadSavedColors();
+    if (!savedItems.isEmpty()) {
+        QWidget* savedColorWidget = new QWidget(container);
+        FlowLayout* savedFlow = new FlowLayout(savedColorWidget, 0, 2, 2);
+        savedFlow->setContentsMargins(8, 0, 8, 0);
+
+        for (int i = 0; i < savedItems.size(); ++i) {
+            const auto& sItem = savedItems[i];
+            ColorBlock* cb = new ColorBlock(QColor(sItem.hex), savedColorWidget);
+            cb->setCount(-1);
+            cb->setChecked(currentState.colors.contains(sItem.hex.toUpper()));
+
+            SavedColorFilter* filter = new SavedColorFilter(i, sItem, [requestRebuild](int idx) {
+                removeSavedColor(idx);
+                if (requestRebuild) requestRebuild();
+            }, savedColorWidget);
+            cb->installEventFilter(filter);
+
+            QObject::connect(cb, &ColorBlock::clicked, savedColorWidget, [filterModel, colorWheel, areaSlider, requestRebuild, sItem](const QColor&) {
+                pushRecent(sItem.hex);
+
+                AppConfig::instance().setValue("Filter/ColorHue", sItem.hue);
+                AppConfig::instance().setValue("Filter/ColorPrecision", sItem.precision);
+                AppConfig::instance().setValue("Filter/MinColorArea", sItem.area);
+
+                FilterState st = filterModel->state();
+                st.colors = QStringList{ sItem.hex.toUpper() };
+                st.colorHue = sItem.hue;
+                st.colorPrecision = sItem.precision;
+                st.minColorArea = sItem.area;
+
+                colorWheel->setValues(st.colorHue, st.colorPrecision);
+                areaSlider->setValue(st.minColorArea);
+
+                filterModel->setState(st);
+                if (requestRebuild) requestRebuild();
+            });
+
+            savedFlow->addWidget(cb);
+        }
+        groupLayout->addWidget(savedColorWidget);
+    }
+
+    // 4. 小标题 "标准色系" + 12 个色块
     QLabel* lblStandard = new QLabel("标准色系", container);
     lblStandard->setObjectName("FilterColorSubTitle");
     groupLayout->addWidget(lblStandard);
@@ -195,7 +385,7 @@ void AutoColorGroup::populate(QWidget* parentWidget,
     }
     groupLayout->addWidget(stdColorWidget);
 
-    // 4. 小标题 "最近筛选" + 最近使用色块
+    // 5. 小标题 "最近筛选" + 最近使用色块
     QStringList recentColors = AppConfig::instance().getValue("Filter/RecentColors").toStringList();
     if (!recentColors.isEmpty()) {
         QLabel* lblRecent = new QLabel("最近筛选", container);
