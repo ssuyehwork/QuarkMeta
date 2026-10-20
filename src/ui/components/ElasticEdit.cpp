@@ -14,7 +14,7 @@ ElasticEdit::ElasticEdit(QWidget* parent) : QTextEdit(parent) {
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setLineWrapMode(QTextEdit::WidgetWidth);
     QTextOption opt = document()->defaultTextOption();
-    opt.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+    opt.setWrapMode(QTextOption::WrapAtWordBoundary);
     document()->setDefaultTextOption(opt);
     document()->setDocumentMargin(2); // 留出 2px 文档内边距，保证字不贴顶且不切字
     connect(this, &QTextEdit::textChanged, this, &QWidget::updateGeometry);
@@ -27,28 +27,33 @@ bool ElasticEdit::hasHeightForWidth() const {
 int ElasticEdit::heightForWidth(int w) const {
     if (w <= 0) return 32;
 
-    QTextDocument* doc = document();
-    if (!doc) return 32;
+    const int padTop = 4;
+    const int padBottom = 4;
+    const int padLeft = 8;
+    const int padRight = 8;
+    const int border = 1;
+    const int chromeH = (padTop + padBottom) + border * 2;
+    const int chromeW = (padLeft + padRight) + border * 2;
 
-    if (toPlainText().trimmed().isEmpty()) {
+    QString text = toPlainText();
+    if (text.trimmed().isEmpty()) {
         return 32;
     }
 
-    int chromeHeight = 10;
-    int chromeWidth = 16 + 2;
+    int availableTextW = w - chromeW - static_cast<int>(document()->documentMargin() * 2);
+    if (availableTextW <= 10) availableTextW = 10;
 
-    int availableTextW = qMax(10, w - chromeWidth);
+    QTextDocument doc;
+    doc.setDefaultFont(font());
+    doc.setDocumentMargin(document()->documentMargin());
+    doc.setDefaultTextOption(document()->defaultTextOption());
+    doc.setPlainText(text);
+    doc.setTextWidth(availableTextW);
 
-    QTextDocument calcDoc;
-    calcDoc.setDefaultFont(font());
-    calcDoc.setDocumentMargin(2);
-    calcDoc.setDefaultTextOption(doc->defaultTextOption());
-    calcDoc.setPlainText(toPlainText());
-    calcDoc.setTextWidth(availableTextW);
+    int contentH = static_cast<int>(qCeil(doc.size().height()));
+    int finalH = contentH + chromeH;
 
-    int calculatedH = static_cast<int>(qCeil(calcDoc.size().height())) + chromeHeight;
-
-    return qMax(32, calculatedH);
+    return qMax(32, finalH);
 }
 
 QSize ElasticEdit::sizeHint() const {
