@@ -1927,11 +1927,21 @@ QComboBox::down-arrow {
 QComboBox QAbstractItemView {
     background-color: #252526;
     border: 1px solid #333333;
-    selection-background-color: #378ADD;
+    selection-background-color: #3E3E42;
     selection-color: #FFFFFF;
     color: #EEEEEE;
     outline: 0;
     padding: 2px;
+}
+QComboBox QAbstractItemView::item {
+    padding: 4px 8px;
+    border-radius: 3px;
+    background-color: transparent;
+}
+QComboBox QAbstractItemView::item:hover,
+QComboBox QAbstractItemView::item:selected {
+    background-color: #3E3E42;
+    color: #FFFFFF;
 }
 
 /* 全局 QGroupBox 分组框暗色规整 */
