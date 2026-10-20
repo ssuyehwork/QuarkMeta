@@ -25,32 +25,30 @@ bool ElasticEdit::hasHeightForWidth() const {
 }
 
 int ElasticEdit::heightForWidth(int w) const {
-    if (w <= 0) return 28;
+    if (w <= 0) return 32;
 
-    QMargins m = contentsMargins();
-    int fw = frameWidth();
-    qreal docMargin = document()->documentMargin();
+    QTextDocument* doc = document();
+    if (!doc) return 32;
 
-    int availableTextW = w - m.left() - m.right() - 2 * fw - static_cast<int>(docMargin * 2);
-    if (availableTextW <= 10) availableTextW = 10;
-
-    QTextDocument doc;
-    doc.setDefaultFont(font());
-    doc.setDefaultTextOption(document()->defaultTextOption());
-    doc.setDocumentMargin(docMargin);
-
-    QString htmlText = toHtml();
-    if (!htmlText.isEmpty()) {
-        doc.setHtml(htmlText);
-    } else {
-        doc.setPlainText(toPlainText());
+    if (toPlainText().trimmed().isEmpty()) {
+        return 32;
     }
-    doc.setTextWidth(availableTextW);
 
-    int vertMargin = m.top() + m.bottom() + 2 * fw;
-    int calculatedH = static_cast<int>(qCeil(doc.size().height() + vertMargin));
+    int chromeHeight = 10;
+    int chromeWidth = 16 + 2;
 
-    return qMax(28, calculatedH);
+    int availableTextW = qMax(10, w - chromeWidth);
+
+    QTextDocument calcDoc;
+    calcDoc.setDefaultFont(font());
+    calcDoc.setDocumentMargin(2);
+    calcDoc.setDefaultTextOption(doc->defaultTextOption());
+    calcDoc.setPlainText(toPlainText());
+    calcDoc.setTextWidth(availableTextW);
+
+    int calculatedH = static_cast<int>(qCeil(calcDoc.size().height())) + chromeHeight;
+
+    return qMax(32, calculatedH);
 }
 
 QSize ElasticEdit::sizeHint() const {

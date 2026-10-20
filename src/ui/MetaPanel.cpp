@@ -344,8 +344,9 @@ void MetaPanel::initUi() {
     pathL->setContentsMargins(0, 0, 0, 0);
     pathL->setSpacing(5);
 
-    m_pathEdit = new ElasticEdit(pathBox);
+    m_pathEdit = new QLineEdit(pathBox);
     m_pathEdit->setReadOnly(true);
+    m_pathEdit->setFixedHeight(28);
     m_pathEdit->setObjectName("MetaPathEdit");
     pathL->addWidget(m_pathEdit);
 
@@ -358,7 +359,7 @@ void MetaPanel::initUi() {
     m_btnCopyPath->setCursor(Qt::PointingHandCursor);
     m_btnCopyPath->setObjectName("BtnCopyPath");
     connect(m_btnCopyPath, &QPushButton::clicked, this, [this]() {
-        QString p = m_pathEdit->toPlainText().trimmed();
+        QString p = m_pathEdit->text().trimmed();
         if (!p.isEmpty() && !p.startsWith("已选中")) {
             QApplication::clipboard()->setText(QDir::toNativeSeparators(p));
             ToolTipOverlay::instance()->showText(QCursor::pos(), "已复制路径", 1200, QColor("#2ecc71"));
@@ -371,7 +372,7 @@ void MetaPanel::initUi() {
     m_btnOpenLocation->setCursor(Qt::PointingHandCursor);
     m_btnOpenLocation->setObjectName("BtnOpenLocation");
     connect(m_btnOpenLocation, &QPushButton::clicked, this, [this]() {
-        QString p = m_pathEdit->toPlainText().trimmed();
+        QString p = m_pathEdit->text().trimmed();
         if (!p.isEmpty() && !p.startsWith("已选中")) {
             ShellHelper::openInExplorer(p);
         }
@@ -754,7 +755,7 @@ void MetaPanel::updateInfo(const QString& n, const QString& t, const QString& s,
         lblMtime->setText(mt);
         lblAtime->setText(at);
         
-        m_pathEdit->setPlainText(p);
+        m_pathEdit->setText(p);
     }
 
     lblEncrypted->setText(e ? "已加密" : "未加密");
@@ -894,7 +895,7 @@ void MetaPanel::setPalettes(const QVector<QPair<QColor, float>>& palette) {
 }
 
 void MetaPanel::setAsPrimaryColor(const QColor& color) {
-    QString currentPath = m_pathEdit->toPlainText().trimmed();
+    QString currentPath = m_pathEdit->text().trimmed();
     if (!currentPath.isEmpty() && !currentPath.startsWith("已选中")) {
         emit primaryColorChanged(currentPath, color);
     }
