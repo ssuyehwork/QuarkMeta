@@ -70,10 +70,12 @@ bool ContentKeyHandler::executeRepeatLastOp(ContentPanel* panel, QAbstractItemVi
             cmd.targetPaths = selectedPaths;
             cmd.params["rating"] = LastOperationManager::instance().rating();
             CoreEngine::instance().executeCommand(cmd);
-            for (const QString& p : selectedPaths) {
-                m_panel->updateItemMetadata(p);
+                    if (panel) {
+                        for (const QString& p : selectedPaths) {
+                            panel->updateItemMetadata(p);
+                        }
+                        panel->recalculateAndEmitStats();
             }
-            m_panel->recalculateAndEmitStats();
             count = selectedPaths.size();
         }
     } else if (type == LastOperationType::SetColor) {
@@ -90,10 +92,12 @@ bool ContentKeyHandler::executeRepeatLastOp(ContentPanel* panel, QAbstractItemVi
             cmd.targetPaths = selectedPaths;
             cmd.params["color"] = LastOperationManager::instance().color();
             CoreEngine::instance().executeCommand(cmd);
-            for (const QString& p : selectedPaths) {
-                m_panel->updateItemMetadata(p);
+                    if (panel) {
+                        for (const QString& p : selectedPaths) {
+                            panel->updateItemMetadata(p);
+                        }
+                        panel->recalculateAndEmitStats();
             }
-            m_panel->recalculateAndEmitStats();
             count = selectedPaths.size();
         }
     } else if (type == LastOperationType::PasteTags) {
