@@ -6,7 +6,6 @@
 #include "../../meta/MediaExtractorPipeline.h"
 #include "../../meta/MetadataManager.h"
 #include "../../meta/LibraryItemDao.h"
-#include "../../meta/SmartFolderDao.h"
 #include "../../meta/LibrarySyncService.h"
 #include "../../meta/LibraryValidationService.h"
 #include "../../util/ThumbnailPipelineService.h"
@@ -190,59 +189,6 @@ void ContentDataLoader::loadPaths(const QStringList& paths, int reqId) {
     });
 }
 
-static void finalizePreparedLoad(QPointer<ContentPanel> weakPanel, const std::vector<ItemRecord>& records, int reqId) {
-    QMetaObject::invokeMethod(QCoreApplication::instance(), [weakPanel, records, reqId]() {
-        if (weakPanel && weakPanel->loadRequestId() == reqId) {
-            if (weakPanel->model()) {
-                weakPanel->model()->setRecords(records, RecordSource::Prepared);
-            }
-            weakPanel->applySort();
-            weakPanel->setLoading(false);
-            weakPanel->recalculateAndEmitStats();
-            weakPanel->applyFilters();
-            weakPanel->restoreSelections();
-
-            // 库模式媒体特征新鲜度检查（不读 JSON）
-            MetadataManager::instance().registerLibraryItemsAsync(records);
-
-            // 启动后台可取消增量对账校验
-            LibraryValidationService::instance().validateRecordsAsync(records, weakPanel.data(), reqId);
-        }
-    });
-}
-
-void ContentDataLoader::loadSmartFolder(const SmartFolderRecord& sfRec, int reqId) {
-    if (!m_panel) return;
-
-    if (m_panel->currentViewMode() == ContentPanel::ColumnView) {
-        m_panel->setViewMode(ContentPanel::GridView);
-    }
-
-    m_panel->restoreActiveView();
-    m_panel->ensureSourceModelIsDiskModel();
-
-    m_panel->setLoading(true);
-    if (reqId == 0) {
-        reqId = m_panel->incrementLoadRequestId();
-        m_loadRequestId = reqId;
-    }
-    m_panel->setCurrentSmartFolderRecord(sfRec);
-    m_panel->updateLayersButtonState();
-
-    QPointer<ContentPanel> weakPanel(m_panel);
-    (void)QtConcurrent::run([weakPanel, sfRec, reqId]() {
-        if (!weakPanel) return;
-
-        // 直接通过 SQLite 查询命中的记录，0 磁盘开销，0 冗余内存占用
-        QString whereSql = SmartFolderDao::buildWhereClause(sfRec);
-        std::vector<ItemRecord> matchedRecords = LibraryItemDao::getItemsByCustomWhere(whereSql);
-
-        if (!weakPanel) return;
-
-        finalizePreparedLoad(weakPanel, matchedRecords, reqId);
-    });
-}
-
 void ContentDataLoader::loadLibraryPaths(const QStringList& paths, int reqId) {
     if (!m_panel) return;
 
@@ -304,7 +250,24 @@ void ContentDataLoader::loadLibraryPaths(const QStringList& paths, int reqId) {
 
         if (!weakPanel) return;
 
-        finalizePreparedLoad(weakPanel, validRecords, reqId);
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [weakPanel, validRecords, reqId]() {
+            if (weakPanel && weakPanel->loadRequestId() == reqId) {
+                if (weakPanel->model()) {
+                    weakPanel->model()->setRecords(validRecords, RecordSource::Prepared);
+                }
+                weakPanel->applySort();
+                weakPanel->setLoading(false);
+                weakPanel->recalculateAndEmitStats();
+                weakPanel->applyFilters();
+                weakPanel->restoreSelections();
+
+                // 库模式媒体特征新鲜度检查（不读 JSON）
+                MetadataManager::instance().registerLibraryItemsAsync(validRecords);
+
+                // 启动后台可取消增量对账校验
+                LibraryValidationService::instance().validateRecordsAsync(validRecords, weakPanel.data(), reqId);
+            }
+        });
     });
 }
 

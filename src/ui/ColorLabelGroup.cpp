@@ -15,19 +15,14 @@ void ColorLabelGroup::populate(QWidget* parentWidget,
     const auto& colorsList = Style::getColorPalette();
 
     for (const auto& item : colorsList) {
-        QString itemNorm = Style::normalizeManualColor(item.hex.isEmpty() ? item.name : item.hex);
-        QString rowKey = QString("color:%1").arg(itemNorm);
+        QString itemNormHex = Style::normalizeManualColor(item.hex.isEmpty() ? item.name : item.hex);
+        QString rowKey = QString("color:%1").arg(itemNormHex);
 
-        int cnt = 0;
-        for (auto it = colorCounts.begin(); it != colorCounts.end(); ++it) {
-            if (Style::normalizeManualColor(it.key()) == itemNorm) {
-                cnt += it.value();
-            }
-        }
+        int cnt = colorCounts.value(itemNormHex, colorCounts.value(item.hex, colorCounts.value(item.name, 0)));
 
         bool isChecked = false;
         for (const QString& mc : currentState.manualColors) {
-            if (Style::normalizeManualColor(mc) == itemNorm) {
+            if (Style::normalizeManualColor(mc) == itemNormHex) {
                 isChecked = true;
                 break;
             }
@@ -39,25 +34,27 @@ void ColorLabelGroup::populate(QWidget* parentWidget,
 
         QCheckBox* cb = addFilterRow(contentLayout, item.name, cnt, item.color, rowKey);
         cb->setChecked(isChecked);
-        QObject::connect(cb, &QCheckBox::checkStateChanged, contextObj, [filterModel, name = item.name](Qt::CheckState state) {
+        QObject::connect(cb, &QCheckBox::checkStateChanged, contextObj, [filterModel, itemNormHex, name = item.name](Qt::CheckState state) {
             FilterState st = filterModel->state();
-            QString normTarget = Style::normalizeManualColor(name);
             if (state == Qt::Checked) {
-                bool found = false;
+                bool exists = false;
                 for (const QString& mc : st.manualColors) {
-                    if (Style::normalizeManualColor(mc) == normTarget) {
-                        found = true;
+                    if (Style::normalizeManualColor(mc) == itemNormHex) {
+                        exists = true;
                         break;
                     }
                 }
-                if (!found) st.manualColors.append(name);
+                if (!exists) {
+                    st.manualColors.append(name);
+                }
             } else {
-                QMutableStringListIterator it(st.manualColors);
-                while (it.hasNext()) {
-                    if (Style::normalizeManualColor(it.next()) == normTarget) {
-                        it.remove();
+                QStringList filtered;
+                for (const QString& mc : st.manualColors) {
+                    if (Style::normalizeManualColor(mc) != itemNormHex) {
+                        filtered.append(mc);
                     }
                 }
+                st.manualColors = filtered;
             }
             filterModel->setState(st);
         });

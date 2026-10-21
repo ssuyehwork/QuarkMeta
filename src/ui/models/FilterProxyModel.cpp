@@ -54,11 +54,11 @@ bool FilterProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& source
     // 3. 🚨 物理隔离：手动标注颜色过滤 (只针对 record.manualColor)
     if (!currentFilter.manualColors.isEmpty()) {
         bool matchManual = false;
-        QString normRecordColor = Style::normalizeManualColor(record.manualColor);
+        QString recNormColor = Style::normalizeManualColor(record.manualColor);
 
         for (const QString& mc : currentFilter.manualColors) {
-            QString normFilterColor = Style::normalizeManualColor(mc);
-            if (normRecordColor == normFilterColor) {
+            QString mcNormColor = Style::normalizeManualColor(mc);
+            if (recNormColor == mcNormColor) {
                 matchManual = true;
                 break;
             }
