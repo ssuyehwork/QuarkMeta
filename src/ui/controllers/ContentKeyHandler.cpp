@@ -55,20 +55,53 @@ bool ContentKeyHandler::executeRepeatLastOp(ContentPanel* panel, QAbstractItemVi
 
     auto indexes = view->selectionModel()->selectedIndexes();
     int count = 0;
-    for (const auto& idx : indexes) {
-        if (idx.column() == static_cast<int>(FileListColumn::Name) && !idx.data(SectionHeaderRole).toBool()) {
-            if (type == LastOperationType::SetRating) {
-                model->setData(idx, LastOperationManager::instance().rating(), RatingRole);
-            } else if (type == LastOperationType::SetColor) {
-                QString colorVal = LastOperationManager::instance().color();
-                model->setData(idx, colorVal, ColorRole);
-                QString itemPath = idx.data(PathRole).toString();
-                QIcon coloredIcon = ShellIconManager::getFileIcon(itemPath, 128);
-                model->setData(idx, coloredIcon, Qt::DecorationRole);
-            } else if (type == LastOperationType::PasteTags) {
-                model->setData(idx, LastOperationManager::instance().tags(), TagsRole);
+
+    if (type == LastOperationType::SetRating) {
+        QStringList selectedPaths;
+        for (const auto& selIdx : indexes) {
+            if (selIdx.column() == 0 && !selIdx.data(SectionHeaderRole).toBool()) {
+                QString p = selIdx.data(PathRole).toString();
+                if (!p.isEmpty()) selectedPaths.append(p);
             }
-            count++;
+        }
+        if (!selectedPaths.isEmpty()) {
+            AppCommand cmd;
+            cmd.type = AppCommandType::SetRating;
+            cmd.targetPaths = selectedPaths;
+            cmd.params["rating"] = LastOperationManager::instance().rating();
+            CoreEngine::instance().executeCommand(cmd);
+            for (const QString& p : selectedPaths) {
+                m_panel->updateItemMetadata(p);
+            }
+            m_panel->recalculateAndEmitStats();
+            count = selectedPaths.size();
+        }
+    } else if (type == LastOperationType::SetColor) {
+        QStringList selectedPaths;
+        for (const auto& selIdx : indexes) {
+            if (selIdx.column() == 0 && !selIdx.data(SectionHeaderRole).toBool()) {
+                QString p = selIdx.data(PathRole).toString();
+                if (!p.isEmpty()) selectedPaths.append(p);
+            }
+        }
+        if (!selectedPaths.isEmpty()) {
+            AppCommand cmd;
+            cmd.type = AppCommandType::SetColor;
+            cmd.targetPaths = selectedPaths;
+            cmd.params["color"] = LastOperationManager::instance().color();
+            CoreEngine::instance().executeCommand(cmd);
+            for (const QString& p : selectedPaths) {
+                m_panel->updateItemMetadata(p);
+            }
+            m_panel->recalculateAndEmitStats();
+            count = selectedPaths.size();
+        }
+    } else if (type == LastOperationType::PasteTags) {
+        for (const auto& idx : indexes) {
+            if (idx.column() == static_cast<int>(FileListColumn::Name) && !idx.data(SectionHeaderRole).toBool()) {
+                model->setData(idx, LastOperationManager::instance().tags(), TagsRole);
+                count++;
+            }
         }
     }
 
@@ -425,7 +458,7 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         return true;
     }
 
-    // 3. Alt + 1~9: 色标快速赋予
+    // 3. Alt + 1~9: 色标快速赋予（归一化提交至 CoreEngine）
     if ((keyEvent->modifiers() & Qt::AltModifier) && (keyEvent->key() >= Qt::Key_1 && keyEvent->key() <= Qt::Key_9)) {
         static const QString colors[] = {
             "#E24B4A", "#EF9F27", "#FECF0E", "#639922",
@@ -434,15 +467,30 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         QString colorValue = colors[keyEvent->key() - Qt::Key_1];
 
         QAbstractItemModel* model = view->model();
-        if (!model) return true;
+        if (!model || !view->selectionModel()) return true;
+
         auto indexes = view->selectionModel()->selectedIndexes();
+        QStringList selectedPaths;
         for (const auto& idx : indexes) {
             if (idx.column() == 0 && !idx.data(SectionHeaderRole).toBool()) {
-                model->setData(idx, colorValue, ColorRole);
-                QString path = idx.data(PathRole).toString();
-                QIcon coloredIcon = ShellIconManager::getFileIcon(path, 128);
-                model->setData(idx, coloredIcon, Qt::DecorationRole);
+                QString p = idx.data(PathRole).toString();
+                if (!p.isEmpty()) {
+                    selectedPaths.append(p);
+                }
             }
+        }
+
+        if (!selectedPaths.isEmpty()) {
+            AppCommand cmd;
+            cmd.type = AppCommandType::SetColor;
+            cmd.targetPaths = selectedPaths;
+            cmd.params["color"] = colorValue;
+            CoreEngine::instance().executeCommand(cmd);
+
+            for (const QString& p : selectedPaths) {
+                m_panel->updateItemMetadata(p);
+            }
+            m_panel->recalculateAndEmitStats();
         }
         return true;
     }
