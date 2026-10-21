@@ -1307,7 +1307,7 @@ void LibraryPanel::updateSmartFolderCountsAsync() {
     (void)QtConcurrent::run([weakThis]() {
         if (!weakThis) return;
 
-        std::vector<ItemRecord> allItems = LibraryItemDao::getAllItems();
+        std::vector<ItemRecord> allItems = LibraryItemDao::getAllLibraryItems();
         QList<SmartFolderRecord> smartFolders = SmartFolderDao::getAllSmartFolders();
 
         QMap<int, int> counts;

@@ -233,7 +233,7 @@ void ContentDataLoader::loadSmartFolder(const SmartFolderRecord& sfRec, int reqI
         if (!weakPanel) return;
 
         // 从 LibraryItemDao 纯数据库读取全库成员记录 (sync_state != 2)
-        std::vector<ItemRecord> allDbItems = LibraryItemDao::getAllItems();
+        std::vector<ItemRecord> allDbItems = LibraryItemDao::getAllLibraryItems();
 
         std::vector<ItemRecord> matchedRecords;
         matchedRecords.reserve(allDbItems.size());
