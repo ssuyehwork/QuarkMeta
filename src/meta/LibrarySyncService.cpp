@@ -6,6 +6,7 @@
 #include "MetadataManager.h"
 #include <QtConcurrent/QtConcurrent>
 #include <QDir>
+#include <QDirIterator>
 #include <QTimer>
 #include <QDebug>
 
@@ -154,10 +155,28 @@ void LibrarySyncService::removePaths(const QStringList& paths) {
 }
 
 void LibrarySyncService::processSyncBatch(const QStringList& batch) {
+    QStringList allFilesToSync;
+
     for (const QString& path : batch) {
-        ItemRecord rec = ItemRecord::create(path);
+        QFileInfo fi(path);
+        if (!fi.exists()) continue;
+
+        if (fi.isDir()) {
+            allFilesToSync.append(path);
+
+            QDirIterator it(path, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+            while (it.hasNext()) {
+                allFilesToSync.append(it.next());
+            }
+        } else {
+            allFilesToSync.append(path);
+        }
+    }
+
+    for (const QString& filePath : allFilesToSync) {
+        ItemRecord rec = ItemRecord::create(filePath);
         ItemMeta meta;
-        if (QuarkMetaJsonStore::instance().readItemMeta(path.toStdWString(), meta)) {
+        if (QuarkMetaJsonStore::instance().readItemMeta(filePath.toStdWString(), meta)) {
             ItemMetaMapper::apply(meta, rec);
         }
         LibraryItemDao::upsertItem(rec);

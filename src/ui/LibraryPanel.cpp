@@ -1307,17 +1307,11 @@ void LibraryPanel::updateSmartFolderCountsAsync() {
     (void)QtConcurrent::run([weakThis]() {
         if (!weakThis) return;
 
-        std::vector<ItemRecord> allItems = LibraryItemDao::getAllLibraryItems();
         QList<SmartFolderRecord> smartFolders = SmartFolderDao::getAllSmartFolders();
 
         QMap<int, int> counts;
         for (const auto& sfRec : smartFolders) {
-            int cnt = 0;
-            for (const auto& item : allItems) {
-                if (SmartFolderMatcher::matches(item, sfRec)) {
-                    cnt++;
-                }
-            }
+            int cnt = SmartFolderDao::countMatchingItems(sfRec);
             counts.insert(sfRec.id, cnt);
         }
 

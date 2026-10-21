@@ -2,6 +2,7 @@
 #include "DatabaseManager.h"
 #include "LibraryDao.h"
 #include "MetadataManager.h"
+#include "../ui/StyleLibrary.h"
 #include <sqlite3.h>
 #include <QJsonDocument>
 #include <QDateTime>
@@ -256,7 +257,9 @@ QString SmartFolderDao::buildWhereClause(const SmartFolderRecord& sfRec) {
                     QStringList quotedExts;
                     for (QString e : exts) {
                         if (e.startsWith('.')) e.remove(0, 1);
-                        quotedExts << QString("'%1'").arg(e.trimmed().toLower());
+                        QString safeExt = e.trimmed().toLower();
+                        safeExt.replace("'", "''");
+                        quotedExts << QString("'%1'").arg(safeExt);
                     }
                     if (rule.op == SmartRuleOperator::NotContains) {
                         conditions << QString("LOWER(extension) NOT IN (%1)").arg(quotedExts.join(","));
@@ -267,7 +270,11 @@ QString SmartFolderDao::buildWhereClause(const SmartFolderRecord& sfRec) {
                 break;
             }
             case SmartRuleType::Color: {
-                QString hex = rule.value.trimmed().toUpper();
+                QString hex = Style::normalizeManualColor(rule.value);
+                if (hex.isEmpty()) {
+                    hex = rule.value.trimmed().toUpper();
+                }
+                hex.replace("'", "''");
                 if (rule.op == SmartRuleOperator::NotContains) {
                     conditions << QString("(UPPER(color_hex) != '%1' AND UPPER(auto_color) != '%1')").arg(hex);
                 } else {
@@ -277,6 +284,7 @@ QString SmartFolderDao::buildWhereClause(const SmartFolderRecord& sfRec) {
             }
             case SmartRuleType::Tag: {
                 QString tag = rule.value.trimmed();
+                tag.replace("'", "''");
                 if (rule.op == SmartRuleOperator::NotContains) {
                     conditions << QString("file_id NOT IN (SELECT file_id FROM file_tags WHERE tag_name = '%1' COLLATE NOCASE)").arg(tag);
                 } else {
@@ -286,7 +294,10 @@ QString SmartFolderDao::buildWhereClause(const SmartFolderRecord& sfRec) {
             }
             case SmartRuleType::Keyword: {
                 QString kw = rule.value.trimmed();
-                QString kwCondition = QString("(file_name LIKE '%%1%' OR file_path LIKE '%%1%' OR note LIKE '%%1%' OR url LIKE '%%1%')").arg(kw);
+                kw.replace("'", "''");
+                kw.replace("%", "\\%");
+                kw.replace("_", "\\_");
+                QString kwCondition = QString("(file_name LIKE '%%1%' ESCAPE '\\' OR file_path LIKE '%%1%' ESCAPE '\\' OR note LIKE '%%1%' ESCAPE '\\' OR url LIKE '%%1%' ESCAPE '\\')").arg(kw);
                 if (rule.op == SmartRuleOperator::NotContains) {
                     conditions << QString("NOT %1").arg(kwCondition);
                 } else {
