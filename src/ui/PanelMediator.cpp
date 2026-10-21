@@ -336,7 +336,7 @@ void PanelMediator::setupConnections() {
                     target->loadLibraryPaths(matchingPaths);
                 }
                 if (filterPanel) {
-                    filterPanel->resetFilter();
+                    filterPanel->clearAllFilters(false);
                 }
             });
         }
