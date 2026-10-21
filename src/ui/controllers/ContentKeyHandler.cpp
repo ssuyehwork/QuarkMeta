@@ -101,11 +101,26 @@ bool ContentKeyHandler::executeRepeatLastOp(ContentPanel* panel, QAbstractItemVi
             count = selectedPaths.size();
         }
     } else if (type == LastOperationType::PasteTags) {
-        for (const auto& idx : indexes) {
-            if (idx.column() == static_cast<int>(FileListColumn::Name) && !idx.data(SectionHeaderRole).toBool()) {
-                model->setData(idx, LastOperationManager::instance().tags(), TagsRole);
-                count++;
+        QStringList selectedPaths;
+        for (const auto& selIdx : indexes) {
+            if (selIdx.column() == 0 && !selIdx.data(SectionHeaderRole).toBool()) {
+                QString p = selIdx.data(PathRole).toString();
+                if (!p.isEmpty()) selectedPaths.append(p);
             }
+        }
+        if (!selectedPaths.isEmpty()) {
+            AppCommand cmd;
+            cmd.type = AppCommandType::SetTags;
+            cmd.targetPaths = selectedPaths;
+            cmd.params["tags"] = LastOperationManager::instance().tags();
+            CoreEngine::instance().executeCommand(cmd);
+            if (panel) {
+                for (const QString& p : selectedPaths) {
+                    panel->updateItemMetadata(p);
+                }
+                panel->recalculateAndEmitStats();
+            }
+            count = selectedPaths.size();
         }
     }
 
