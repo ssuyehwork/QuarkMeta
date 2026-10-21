@@ -16,6 +16,9 @@ public:
     // 查询当前库表中存储的所有成员路径对应的 ItemRecord 记录
     static std::vector<ItemRecord> getAllLibraryItems();
 
+    // 按自定义 WHERE 语句过滤库条目（智能文件夹专用，0 磁盘 I/O）
+    static std::vector<ItemRecord> getItemsByCustomWhere(const QString& whereClause);
+
 private:
     friend class LibrarySyncService;
     friend class LibraryValidationService;

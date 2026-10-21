@@ -6,6 +6,7 @@
 #include "../../meta/MediaExtractorPipeline.h"
 #include "../../meta/MetadataManager.h"
 #include "../../meta/LibraryItemDao.h"
+#include "../../meta/SmartFolderDao.h"
 #include "../../meta/LibrarySyncService.h"
 #include "../../meta/LibraryValidationService.h"
 #include "../../util/ThumbnailPipelineService.h"
@@ -232,17 +233,9 @@ void ContentDataLoader::loadSmartFolder(const SmartFolderRecord& sfRec, int reqI
     (void)QtConcurrent::run([weakPanel, sfRec, reqId]() {
         if (!weakPanel) return;
 
-        // 从 LibraryItemDao 纯数据库读取全库成员记录 (sync_state != 2)
-        std::vector<ItemRecord> allDbItems = LibraryItemDao::getAllLibraryItems();
-
-        std::vector<ItemRecord> matchedRecords;
-        matchedRecords.reserve(allDbItems.size());
-
-        for (auto& item : allDbItems) {
-            if (SmartFolderMatcher::matches(item, sfRec)) {
-                matchedRecords.push_back(std::move(item));
-            }
-        }
+        // 直接通过 SQLite 查询命中的记录，0 磁盘开销，0 冗余内存占用
+        QString whereSql = SmartFolderDao::buildWhereClause(sfRec);
+        std::vector<ItemRecord> matchedRecords = LibraryItemDao::getItemsByCustomWhere(whereSql);
 
         if (!weakPanel) return;
 

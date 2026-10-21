@@ -105,6 +105,32 @@ std::vector<ItemRecord> LibraryItemDao::getAllLibraryItems() {
     return getItemsByPaths(paths);
 }
 
+std::vector<ItemRecord> LibraryItemDao::getItemsByCustomWhere(const QString& whereClause) {
+    std::vector<ItemRecord> result;
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return result;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    QString sql = "SELECT file_path FROM library_items WHERE sync_state != 2";
+    if (!whereClause.trimmed().isEmpty()) {
+        sql += " AND (" + whereClause + ")";
+    }
+    sql += ";";
+
+    sqlite3_stmt* stmt = nullptr;
+    QStringList paths;
+    if (sqlite3_prepare_v2(db, sql.toUtf8().constData(), -1, &stmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            paths.append(QString::fromUtf8(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0))));
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (paths.isEmpty()) return result;
+    return getItemsByPaths(paths);
+}
+
 bool LibraryItemDao::upsertItem(const ItemRecord& record) {
     sqlite3* db = DatabaseManager::instance().getGlobalDb();
     if (!db) return false;
