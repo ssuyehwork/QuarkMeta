@@ -79,8 +79,19 @@ void FilterPanel::syncUIFromFilterState() {
         else if (text == "无评级") shouldCheck = currentSt.ratings.contains(0);
         else if (text.contains("★")) shouldCheck = currentSt.ratings.contains(text.count("★"));
         
-        else if (text == "无色标") shouldCheck = (currentSt.manualColors.contains("无色标") || currentSt.manualColors.contains(""));
-        else if (currentSt.manualColors.contains(text)) shouldCheck = true;
+        else {
+            QString normText = Style::normalizeManualColor(text);
+            if (!normText.isEmpty() || text == "无色标") {
+                for (const QString& mc : currentSt.manualColors) {
+                    if (Style::normalizeManualColor(mc) == normText) {
+                        shouldCheck = true;
+                        break;
+                    }
+                }
+            } else if (currentSt.manualColors.contains(text)) {
+                shouldCheck = true;
+            }
+        }
 
         else if (currentSt.types.contains(text)) shouldCheck = true;
         else if (currentSt.createDates.contains(text)) shouldCheck = true;
@@ -384,10 +395,12 @@ void FilterPanel::populate(
                  else if (name == "有缩略图") count = m_currentStats.hasThumbnailCount;
                  else if (name == "无缩略图 (提取失败)" || name == "无缩略图 (失败/跳过)") count = m_currentStats.noThumbnailCount;
                  else {
-                     for (const auto& item : Style::getColorPalette()) {
-                         if (item.name == name || item.hex == name) {
-                             count = m_colorCounts.value(item.hex, m_colorCounts.value(item.name, 0));
-                             break;
+                     QString normName = Style::normalizeManualColor(name);
+                     if (!normName.isEmpty()) {
+                         for (auto it = m_colorCounts.begin(); it != m_colorCounts.end(); ++it) {
+                             if (Style::normalizeManualColor(it.key()) == normName) {
+                                 count += it.value();
+                             }
                          }
                      }
                  }
@@ -719,11 +732,9 @@ bool FilterPanel::isRowKeyChecked(const QString& key, const FilterState& st) con
     if (prefix == "rating") {
         return st.ratings.contains(value.toInt());
     } else if (prefix == "color") {
-        if (st.manualColors.contains(value)) return true;
-        QString valUpper = value.toUpper();
-        if (!valUpper.isEmpty() && st.manualColors.contains(valUpper)) return true;
-        for (const auto& item : Style::getColorPalette()) {
-            if ((item.hex.toUpper() == valUpper || item.hex == value) && st.manualColors.contains(item.name)) return true;
+        QString normVal = Style::normalizeManualColor(value);
+        for (const QString& mc : st.manualColors) {
+            if (Style::normalizeManualColor(mc) == normVal) return true;
         }
         return false;
     } else if (prefix == "type") {
@@ -766,14 +777,14 @@ int FilterPanel::countForRowKey(const QString& key) const {
     if (prefix == "rating") {
         return m_ratingCounts.value(value.toInt(), 0);
     } else if (prefix == "color") {
-        QString name;
-        for (const auto& item : Style::getColorPalette()) {
-            if (item.hex == value) {
-                name = item.name;
-                break;
+        QString normVal = Style::normalizeManualColor(value);
+        int totalCount = 0;
+        for (auto it = m_colorCounts.begin(); it != m_colorCounts.end(); ++it) {
+            if (Style::normalizeManualColor(it.key()) == normVal) {
+                totalCount += it.value();
             }
         }
-        return m_colorCounts.value(value, m_colorCounts.value(name, 0));
+        return totalCount;
     } else if (prefix == "type") {
         if (value == "空文件夹") return m_emptyFolderCount;
         return m_typeCounts.value(value, 0);
