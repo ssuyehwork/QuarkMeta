@@ -6,6 +6,9 @@
 #include "ElidedTextUtility.h"
 #include "UiHelper.h"
 #include "../core/ModelContract.h"
+#include "../core/CoreEngine.h"
+#include <QAbstractItemView>
+#include <QItemSelectionModel>
 
 #include <QPainter>
 #include <QStyleOptionViewItem>
@@ -186,6 +189,47 @@ bool ThumbnailDelegate::editorEvent(QEvent* event, QAbstractItemModel* model,
                 if (hitVal != -1) {
                     bool isSelected = (option.state & QStyle::State_Selected);
                     if (CardPainterHelper::canModifyRatingOnPress(isSelected, mouseEvent->modifiers())) {
+                        // 检查当前视图是否有多选集合
+                        const QAbstractItemView* view = qobject_cast<const QAbstractItemView*>(option.widget);
+                        if (view && view->selectionModel()) {
+                            QModelIndexList selectedIndexes = view->selectionModel()->selectedIndexes();
+                            // 过滤去重，确保每个选中的 row 只取 column 0
+                            QList<int> selectedRows;
+                            for (const QModelIndex& selIdx : selectedIndexes) {
+                                if (!selectedRows.contains(selIdx.row())) {
+                                    selectedRows.append(selIdx.row());
+                                }
+                            }
+
+                            if (selectedRows.size() > 1 && selectedRows.contains(index.row())) {
+                                // 多选模式：收集所有选中项路径批量更新
+                                QStringList selectedPaths;
+                                for (int r : selectedRows) {
+                                    QModelIndex rowIdx = model->index(r, 0);
+                                    QString p = rowIdx.data(m_pathRole).toString();
+                                    if (!p.isEmpty()) {
+                                        selectedPaths.append(p);
+                                    }
+                                }
+
+                                if (!selectedPaths.isEmpty()) {
+                                    AppCommand cmd;
+                                    cmd.type = AppCommandType::SetRating;
+                                    cmd.targetPaths = selectedPaths;
+                                    cmd.params["rating"] = hitVal;
+                                    CoreEngine::instance().executeCommand(cmd);
+
+                                    // 批量发送 dataChanged 刷新模型数据与 UI
+                                    for (int r : selectedRows) {
+                                        QModelIndex targetIdx = model->index(r, 0);
+                                        model->setData(targetIdx, hitVal, m_ratingRole);
+                                    }
+                                    return true;
+                                }
+                            }
+                        }
+
+                        // 单选或回退场景：保持原有单条 setData 修改
                         model->setData(index, hitVal, m_ratingRole);
                         return true; // 已选中且无组合键，修改评分并消费事件
                     }
