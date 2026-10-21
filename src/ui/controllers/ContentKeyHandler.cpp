@@ -13,6 +13,7 @@
 #include "../../core/ModelContract.h"
 #include "../../util/DiskIoService.h"
 #include "../../core/LastOperationManager.h"
+#include "../../core/CoreEngine.h"
 #include "ContextMenuFactory.h"
 #include "../CardPainterHelper.h"
 #include <QPointer>
@@ -246,7 +247,43 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
 
             QAbstractItemModel* model = view->model();
             if (model) {
-                model->setData(index, hitVal, RatingRole);
+                // 1. 获取选中的路径集合（多选/单选统一处理）
+                QStringList targetPaths;
+                if (isSelected && view->selectionModel()) {
+                    QModelIndexList selectedIndexes = view->selectionModel()->selectedIndexes();
+                    QList<int> selectedRows;
+                    for (const QModelIndex& selIdx : selectedIndexes) {
+                        if (!selectedRows.contains(selIdx.row())) {
+                            selectedRows.append(selIdx.row());
+                        }
+                    }
+                    for (int r : selectedRows) {
+                        QModelIndex rowIdx = model->index(r, 0, index.parent());
+                        QString p = rowIdx.data(PathRole).toString();
+                        if (!p.isEmpty() && !rowIdx.data(SectionHeaderRole).toBool()) {
+                            targetPaths.append(p);
+                        }
+                    }
+                }
+                if (targetPaths.isEmpty()) {
+                    QString p = index.data(PathRole).toString();
+                    if (!p.isEmpty()) targetPaths.append(p);
+                }
+
+                // 2. 统一分发归一化命令给 CoreEngine
+                if (!targetPaths.isEmpty()) {
+                    AppCommand cmd;
+                    cmd.type = AppCommandType::SetRating;
+                    cmd.targetPaths = targetPaths;
+                    cmd.params["rating"] = hitVal;
+                    CoreEngine::instance().executeCommand(cmd);
+
+                    // 刷新视图上受影响行的 UI 展现
+                    for (const QString& p : targetPaths) {
+                        m_panel->updateItemMetadata(p);
+                    }
+                    m_panel->recalculateAndEmitStats();
+                }
             }
 
             QAbstractItemView::EditTriggers cur = view->editTriggers();
@@ -281,9 +318,45 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
 
             QAbstractItemModel* model = treeView->model();
             if (model) {
-                QModelIndex targetIdx = treeView->model()->index(index.row(), 0, index.parent());
-                if (!targetIdx.data(SectionHeaderRole).toBool()) {
-                    model->setData(targetIdx, hitStar, RatingRole);
+                // 1. 获取选中的路径集合（多选/单选统一处理）
+                QStringList targetPaths;
+                if (isRowSelected && treeView->selectionModel()) {
+                    QModelIndexList selectedIndexes = treeView->selectionModel()->selectedIndexes();
+                    QList<int> selectedRows;
+                    for (const QModelIndex& selIdx : selectedIndexes) {
+                        if (!selectedRows.contains(selIdx.row())) {
+                            selectedRows.append(selIdx.row());
+                        }
+                    }
+                    for (int r : selectedRows) {
+                        QModelIndex rowIdx = model->index(r, 0, index.parent());
+                        QString p = rowIdx.data(PathRole).toString();
+                        if (!p.isEmpty() && !rowIdx.data(SectionHeaderRole).toBool()) {
+                            targetPaths.append(p);
+                        }
+                    }
+                }
+                if (targetPaths.isEmpty()) {
+                    QModelIndex targetIdx = model->index(index.row(), 0, index.parent());
+                    QString p = targetIdx.data(PathRole).toString();
+                    if (!p.isEmpty() && !targetIdx.data(SectionHeaderRole).toBool()) {
+                        targetPaths.append(p);
+                    }
+                }
+
+                // 2. 统一分发归一化命令给 CoreEngine
+                if (!targetPaths.isEmpty()) {
+                    AppCommand cmd;
+                    cmd.type = AppCommandType::SetRating;
+                    cmd.targetPaths = targetPaths;
+                    cmd.params["rating"] = hitStar;
+                    CoreEngine::instance().executeCommand(cmd);
+
+                    // 刷新视图上受影响行的 UI 展现
+                    for (const QString& p : targetPaths) {
+                        m_panel->updateItemMetadata(p);
+                    }
+                    m_panel->recalculateAndEmitStats();
                 }
             }
 

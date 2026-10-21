@@ -189,47 +189,51 @@ bool ThumbnailDelegate::editorEvent(QEvent* event, QAbstractItemModel* model,
                 if (hitVal != -1) {
                     bool isSelected = (option.state & QStyle::State_Selected);
                     if (CardPainterHelper::canModifyRatingOnPress(isSelected, mouseEvent->modifiers())) {
-                        // 检查当前视图是否有多选集合
+                        // 1. 提取多选集合或当前被点击项目路径
+                        QStringList targetPaths;
                         const QAbstractItemView* view = qobject_cast<const QAbstractItemView*>(option.widget);
-                        if (view && view->selectionModel()) {
+                        if (isSelected && view && view->selectionModel()) {
                             QModelIndexList selectedIndexes = view->selectionModel()->selectedIndexes();
-                            // 过滤去重，确保每个选中的 row 只取 column 0
                             QList<int> selectedRows;
                             for (const QModelIndex& selIdx : selectedIndexes) {
                                 if (!selectedRows.contains(selIdx.row())) {
                                     selectedRows.append(selIdx.row());
                                 }
                             }
-
-                            if (selectedRows.size() > 1 && selectedRows.contains(index.row())) {
-                                // 多选模式：收集所有选中项路径批量更新
-                                QStringList selectedPaths;
-                                for (int r : selectedRows) {
-                                    QModelIndex rowIdx = model->index(r, 0);
-                                    QString p = rowIdx.data(m_pathRole).toString();
-                                    if (!p.isEmpty()) {
-                                        selectedPaths.append(p);
-                                    }
-                                }
-
-                                if (!selectedPaths.isEmpty()) {
-                                    AppCommand cmd;
-                                    cmd.type = AppCommandType::SetRating;
-                                    cmd.targetPaths = selectedPaths;
-                                    cmd.params["rating"] = hitVal;
-                                    CoreEngine::instance().executeCommand(cmd);
-
-                                    // 批量发送 dataChanged 刷新模型数据与 UI
-                                    for (int r : selectedRows) {
-                                        QModelIndex targetIdx = model->index(r, 0);
-                                        model->setData(targetIdx, hitVal, m_ratingRole);
-                                    }
-                                    return true;
+                            for (int r : selectedRows) {
+                                QModelIndex rowIdx = model->index(r, 0);
+                                QString p = rowIdx.data(m_pathRole).toString();
+                                if (!p.isEmpty()) {
+                                    targetPaths.append(p);
                                 }
                             }
                         }
+                        if (targetPaths.isEmpty()) {
+                            QString p = index.data(m_pathRole).toString();
+                            if (!p.isEmpty()) targetPaths.append(p);
+                        }
 
-                        // 单选或回退场景：保持原有单条 setData 修改
+                        // 2. 统一发送归一化命令给 CoreEngine
+                        if (!targetPaths.isEmpty()) {
+                            AppCommand cmd;
+                            cmd.type = AppCommandType::SetRating;
+                            cmd.targetPaths = targetPaths;
+                            cmd.params["rating"] = hitVal;
+                            CoreEngine::instance().executeCommand(cmd);
+
+                            for (const QString& p : targetPaths) {
+                                for (int r = 0; r < model->rowCount(); ++r) {
+                                    QModelIndex rowIdx = model->index(r, 0);
+                                    if (rowIdx.data(m_pathRole).toString() == p) {
+                                        model->setData(rowIdx, hitVal, m_ratingRole);
+                                        break;
+                                    }
+                                }
+                            }
+                            return true;
+                        }
+
+                        // 回退场景：直接设置 model
                         model->setData(index, hitVal, m_ratingRole);
                         return true; // 已选中且无组合键，修改评分并消费事件
                     }
