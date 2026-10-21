@@ -187,7 +187,10 @@ bool ContextMenuFactory::copyNamesToClipboard(const QStringList& paths, NameDeli
     QStringList names;
     for (const auto& p : paths) {
         if (!p.isEmpty()) {
-            names << QFileInfo(p).fileName();
+            QString name = QFileInfo(p).fileName();
+            if (!name.isEmpty() && !names.contains(name)) {
+                names << name;
+            }
         }
     }
     if (names.isEmpty()) return false;
