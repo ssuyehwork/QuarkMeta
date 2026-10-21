@@ -79,17 +79,13 @@ void FilterPanel::syncUIFromFilterState() {
         else if (text == "无评级") shouldCheck = currentSt.ratings.contains(0);
         else if (text.contains("★")) shouldCheck = currentSt.ratings.contains(text.count("★"));
         
-        else {
+        else if (!Style::normalizeManualColor(text).isEmpty() || text == "无色标") {
             QString normText = Style::normalizeManualColor(text);
-            if (!normText.isEmpty() || text == "无色标") {
-                for (const QString& mc : currentSt.manualColors) {
-                    if (Style::normalizeManualColor(mc) == normText) {
-                        shouldCheck = true;
-                        break;
-                    }
+            for (const QString& mc : currentSt.manualColors) {
+                if (Style::normalizeManualColor(mc) == normText) {
+                    shouldCheck = true;
+                    break;
                 }
-            } else if (currentSt.manualColors.contains(text)) {
-                shouldCheck = true;
             }
         }
 
