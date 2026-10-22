@@ -249,7 +249,7 @@ void DatabaseManager::closeDb(DbConnection& conn) {
 static FILE* s_dbgFileDm = nullptr;
 static void dbgLogDm(const char* msg) {
     if (!s_dbgFileDm) {
-        s_dbgFileDm = fopen("G:/C++/QuarkMeta/QuarkMeta/QuarkMeta/startup_debug.log", "a");
+        s_dbgFileDm = fopen("startup_debug.log", "a");
     }
     if (s_dbgFileDm) {
         fputs(msg, s_dbgFileDm);
@@ -260,49 +260,46 @@ static void dbgLogDm(const char* msg) {
 // ======= [DEBUG END] =======
 
 bool DatabaseManager::initLocked() {
+    dbgLogDm("[DatabaseManager::initLocked] 进入函数");
     if (m_isInitialized && m_globalDb.diskDb) {
+        dbgLogDm("[DatabaseManager::initLocked] 已初始化，提前返回 true");
         return true;
     }
 
+    dbgLogDm("[DatabaseManager::initLocked] 即将 initializeStoragePath");
     AppDirectoryInitializer::initializeStoragePath(getAppDir());
+    dbgLogDm("[DatabaseManager::initLocked] initializeStoragePath 完成");
 
     std::wstring globalPath = getGlobalDbPath().toStdWString();
+    dbgLogDm("[DatabaseManager::initLocked] 即将 loadDb");
     if (!loadDb(globalPath, m_globalDb)) {
+        dbgLogDm("[DatabaseManager::initLocked] loadDb 失败，返回 false");
         return false;
     }
 
     m_isInitialized = true;
+    dbgLogDm("[DatabaseManager::initLocked] loadDb 成功，返回 true");
     return true;
 }
 
 bool DatabaseManager::init() {
     dbgLogDm("[DatabaseManager::init] 进入函数");
-    dbgLogDm("[DatabaseManager::init] 即将 lock(m_initMutex) ← 若卡在这里说明死锁在此");
-    std::lock_guard<std::mutex> lock(m_initMutex);
-    dbgLogDm("[DatabaseManager::init] lock(m_initMutex) 成功");
-    if (m_isInitialized && m_globalDb.diskDb) {
-        dbgLogDm("[DatabaseManager::init] 已初始化，提前返回 true");
-        return true;
+    bool ok = false;
+    {
+        dbgLogDm("[DatabaseManager::init] 即将 lock(m_initMutex)");
+        std::lock_guard<std::mutex> lock(m_initMutex);
+        dbgLogDm("[DatabaseManager::init] lock(m_initMutex) 成功，调用 initLocked");
+        ok = initLocked();
     }
-
-    dbgLogDm("[DatabaseManager::init] 即将 initializeStoragePath");
-    AppDirectoryInitializer::initializeStoragePath(getAppDir());
-    dbgLogDm("[DatabaseManager::init] initializeStoragePath 完成");
-
-    std::wstring globalPath = getGlobalDbPath().toStdWString();
-    dbgLogDm("[DatabaseManager::init] 即将 loadDb");
-    if (!loadDb(globalPath, m_globalDb)) {
-        dbgLogDm("[DatabaseManager::init] loadDb 失败，返回 false");
-        return false;
+    dbgLogDm("[DatabaseManager::init] 锁 m_initMutex 已释放");
+    if (ok) {
+        dbgLogDm("[DatabaseManager::init] 即将 std::call_once DriveMetaDao::initTable()");
+        std::call_once(m_driveMetaOnce, []() {
+            DriveMetaDao::initTable();
+        });
+        dbgLogDm("[DatabaseManager::init] DriveMetaDao::initTable() 完成");
     }
-    dbgLogDm("[DatabaseManager::init] loadDb 成功");
-
-    dbgLogDm("[DatabaseManager::init] 即将调用 DriveMetaDao::initTable()");
-    DriveMetaDao::initTable();
-    dbgLogDm("[DatabaseManager::init] DriveMetaDao::initTable() 返回");
-    m_isInitialized = true;
-    dbgLogDm("[DatabaseManager::init] 完成，返回 true");
-    return true;
+    return ok;
 }
 
 void DatabaseManager::shutdown() {
@@ -314,13 +311,25 @@ void DatabaseManager::shutdown() {
 
 sqlite3* DatabaseManager::getGlobalDb() {
     dbgLogDm("[DatabaseManager::getGlobalDb] 进入函数");
-    dbgLogDm("[DatabaseManager::getGlobalDb] 即将 lock(m_initMutex) ← 若卡在这里说明死锁在此");
-    std::lock_guard<std::mutex> lock(m_initMutex);
-    dbgLogDm("[DatabaseManager::getGlobalDb] lock(m_initMutex) 成功");
-    if (!m_isInitialized || !m_globalDb.diskDb) {
-        dbgLogDm("[DatabaseManager::getGlobalDb] 未初始化，即将调用 init() ← 若下一条不出现则死锁在 init()");
-        init();
-        dbgLogDm("[DatabaseManager::getGlobalDb] init() 返回");
+    bool ok = false;
+    {
+        dbgLogDm("[DatabaseManager::getGlobalDb] 即将 lock(m_initMutex)");
+        std::lock_guard<std::mutex> lock(m_initMutex);
+        dbgLogDm("[DatabaseManager::getGlobalDb] lock(m_initMutex) 成功");
+        if (!m_isInitialized || !m_globalDb.diskDb) {
+            dbgLogDm("[DatabaseManager::getGlobalDb] 未初始化，即将调用 initLocked()");
+            ok = initLocked();
+        } else {
+            ok = true;
+        }
+    }
+    dbgLogDm("[DatabaseManager::getGlobalDb] 锁 m_initMutex 已释放");
+    if (ok) {
+        dbgLogDm("[DatabaseManager::getGlobalDb] 即将 std::call_once DriveMetaDao::initTable()");
+        std::call_once(m_driveMetaOnce, []() {
+            DriveMetaDao::initTable();
+        });
+        dbgLogDm("[DatabaseManager::getGlobalDb] DriveMetaDao::initTable() 完成");
     }
     dbgLogDm("[DatabaseManager::getGlobalDb] 返回 db 指针");
     return m_globalDb.diskDb;

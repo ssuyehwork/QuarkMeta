@@ -29,7 +29,7 @@ CoreController& CoreController::instance() {
 static FILE* s_dbgFileCc = nullptr;
 static void dbgLogCc(const char* msg) {
     if (!s_dbgFileCc) {
-        s_dbgFileCc = fopen("G:/C++/QuarkMeta/QuarkMeta/QuarkMeta/startup_debug.log", "a");
+        s_dbgFileCc = fopen("startup_debug.log", "a");
     }
     if (s_dbgFileCc) {
         fputs(msg, s_dbgFileCc);

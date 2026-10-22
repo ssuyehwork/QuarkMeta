@@ -10,7 +10,7 @@ namespace QuarkMeta {
 static FILE* s_dbgFileDd = nullptr;
 static void dbgLogDd(const char* msg) {
     if (!s_dbgFileDd) {
-        s_dbgFileDd = fopen("G:/C++/QuarkMeta/QuarkMeta/QuarkMeta/startup_debug.log", "a");
+        s_dbgFileDd = fopen("startup_debug.log", "a");
     }
     if (s_dbgFileDd) {
         fputs(msg, s_dbgFileDd);

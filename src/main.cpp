@@ -82,7 +82,7 @@ void onApplicationAboutToQuit(HANDLE hMutex) {
 static FILE* s_dbgFile = nullptr;
 static void dbgLog(const char* msg) {
     if (!s_dbgFile) {
-        s_dbgFile = fopen("G:/C++/QuarkMeta/QuarkMeta/QuarkMeta/startup_debug.log", "a");
+        s_dbgFile = fopen("startup_debug.log", "a");
     }
     if (s_dbgFile) {
         fputs(msg, s_dbgFile);
