@@ -14,6 +14,7 @@
 #include <QPushButton>
 #include <QProcess>
 #include <QDesktopServices>
+#include <QUrl>
 
 namespace QuarkMeta {
 

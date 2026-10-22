@@ -7,6 +7,8 @@
 #include <QProcess>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QImage>
+#include <QPixmap>
 
 #ifdef Q_OS_WIN
 #include <windows.h>

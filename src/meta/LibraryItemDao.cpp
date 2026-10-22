@@ -6,6 +6,7 @@
 #include <QUuid>
 #include <QDateTime>
 #include <QDebug>
+#include <QMap>
 
 namespace QuarkMeta {
 
