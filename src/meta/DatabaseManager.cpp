@@ -284,22 +284,27 @@ bool DatabaseManager::initLocked() {
 
 bool DatabaseManager::init() {
     dbgLogDm("[DatabaseManager::init] 进入函数");
-    bool ok = false;
+    bool needTableInit = false;
     {
         dbgLogDm("[DatabaseManager::init] 即将 lock(m_initMutex)");
         std::lock_guard<std::mutex> lock(m_initMutex);
-        dbgLogDm("[DatabaseManager::init] lock(m_initMutex) 成功，调用 initLocked");
-        ok = initLocked();
+        dbgLogDm("[DatabaseManager::init] lock(m_initMutex) 成功");
+        if (!m_isInitialized || !m_globalDb.diskDb) {
+            if (initLocked()) {
+                needTableInit = true;
+            } else {
+                dbgLogDm("[DatabaseManager::init] initLocked 失败，返回 false");
+                return false;
+            }
+        }
     }
     dbgLogDm("[DatabaseManager::init] 锁 m_initMutex 已释放");
-    if (ok) {
-        dbgLogDm("[DatabaseManager::init] 即将 std::call_once DriveMetaDao::initTable()");
-        std::call_once(m_driveMetaOnce, []() {
-            DriveMetaDao::initTable();
-        });
+    if (needTableInit) {
+        dbgLogDm("[DatabaseManager::init] 即将调用 DriveMetaDao::initTable()");
+        DriveMetaDao::initTable();
         dbgLogDm("[DatabaseManager::init] DriveMetaDao::initTable() 完成");
     }
-    return ok;
+    return true;
 }
 
 void DatabaseManager::shutdown() {
@@ -311,28 +316,28 @@ void DatabaseManager::shutdown() {
 
 sqlite3* DatabaseManager::getGlobalDb() {
     dbgLogDm("[DatabaseManager::getGlobalDb] 进入函数");
-    bool ok = false;
+    bool needTableInit = false;
+    sqlite3* db = nullptr;
     {
         dbgLogDm("[DatabaseManager::getGlobalDb] 即将 lock(m_initMutex)");
         std::lock_guard<std::mutex> lock(m_initMutex);
         dbgLogDm("[DatabaseManager::getGlobalDb] lock(m_initMutex) 成功");
         if (!m_isInitialized || !m_globalDb.diskDb) {
             dbgLogDm("[DatabaseManager::getGlobalDb] 未初始化，即将调用 initLocked()");
-            ok = initLocked();
-        } else {
-            ok = true;
+            if (initLocked()) {
+                needTableInit = true;
+            }
         }
+        db = m_globalDb.diskDb;
     }
     dbgLogDm("[DatabaseManager::getGlobalDb] 锁 m_initMutex 已释放");
-    if (ok) {
-        dbgLogDm("[DatabaseManager::getGlobalDb] 即将 std::call_once DriveMetaDao::initTable()");
-        std::call_once(m_driveMetaOnce, []() {
-            DriveMetaDao::initTable();
-        });
+    if (needTableInit) {
+        dbgLogDm("[DatabaseManager::getGlobalDb] 即将调用 DriveMetaDao::initTable()");
+        DriveMetaDao::initTable();
         dbgLogDm("[DatabaseManager::getGlobalDb] DriveMetaDao::initTable() 完成");
     }
     dbgLogDm("[DatabaseManager::getGlobalDb] 返回 db 指针");
-    return m_globalDb.diskDb;
+    return db;
 }
 
 } // namespace QuarkMeta
