@@ -210,8 +210,6 @@ void MetadataManager::registerItemsAsync(const QStringList& paths) {
 
     (void)QtConcurrent::run([this, paths]() {
         std::vector<std::wstring> enqueuedPaths;
-        int pendingCount = paths.size();
-        int skippedFreshCount = 0;
 
         for (const auto& qp : paths) {
             std::wstring nPath = normalizePath(qp.toStdWString());
@@ -222,8 +220,6 @@ void MetadataManager::registerItemsAsync(const QStringList& paths) {
 
             if (shouldExtractMediaFeatures(nPath, pSize, pMtime)) {
                 enqueuedPaths.push_back(nPath);
-            } else {
-                skippedFreshCount++;
             }
         }
 
