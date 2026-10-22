@@ -78,7 +78,22 @@ void onApplicationAboutToQuit(HANDLE hMutex) {
 #endif
 }
 
+// ======= [DEBUG] 临时启动调试辅助 — 定位后删除 =======
+static FILE* s_dbgFile = nullptr;
+static void dbgLog(const char* msg) {
+    if (!s_dbgFile) {
+        s_dbgFile = fopen("G:/C++/QuarkMeta/QuarkMeta/QuarkMeta/startup_debug.log", "a");
+    }
+    if (s_dbgFile) {
+        fputs(msg, s_dbgFile);
+        fputs("\n", s_dbgFile);
+        fflush(s_dbgFile);
+    }
+}
+// ======= [DEBUG END] =======
+
 int main(int argc, char *argv[]) {
+    dbgLog("[main] ===== 启动开始 =====");
     // -------------------------------------------------------------
     // 重构 2：启动安全。最顶端优先执行单实例互斥量哨兵检测
     // -------------------------------------------------------------
@@ -86,10 +101,12 @@ int main(int argc, char *argv[]) {
 #ifdef Q_OS_WIN
     hMutex = CreateMutexA(NULL, TRUE, "QuarkMeta_SingleInstance_Mutex");
     if (hMutex == NULL || GetLastError() == ERROR_ALREADY_EXISTS) {
+        dbgLog("[main] 单实例检测失败 → 静默退出");
         if (hMutex) CloseHandle(hMutex);
         // 单实例检测失败，由于尚未影响任何运行状态及日志，直接优雅退出
         return 0;
     }
+    dbgLog("[main] 单实例检测通过");
 #else
     QString lockPath = QDir::tempPath() + "/QuarkMeta_SingleInstance.lock";
     static QLockFile lockFile(lockPath);
@@ -102,9 +119,11 @@ int main(int argc, char *argv[]) {
     // 1. 安装自定义日志处理器（使用超高吞吐无阻塞的内存队列异步写入）
     qInstallMessageHandler(customMessageHandler);
 
+    dbgLog("[main] 即将构造 QApplication");
     // 设置高 DPI 支持：Qt 6 默认行为，此处显式设置 PassThrough 以防旧设备缩放模糊
     QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
     QuarkMeta::QuarkApplication a(argc, argv);
+    dbgLog("[main] QApplication 构造完成");
 
     // 全局统一设置深色 QPalette，防止原生 Windows 调色板在斑马纹/Base/AlternateBase 露底纯白
     QPalette p;
@@ -135,15 +154,22 @@ int main(int argc, char *argv[]) {
 #ifdef Q_OS_WIN
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 #endif
+    dbgLog("[main] CoInitializeEx 完成");
 
     // -------------------------------------------------------------
     // 重构 3：生命期。引入 AppCoreController 统一拓扑预热
     // -------------------------------------------------------------
+    dbgLog("[main] 即将调用 CoreController::initializeCoreComponents()");
     QuarkMeta::CoreController::initializeCoreComponents();
+    dbgLog("[main] CoreController::initializeCoreComponents() 返回");
 
+    dbgLog("[main] 即将初始化 ThemeManager");
     QuarkMeta::ThemeManager::instance().initialize(&a);
+    dbgLog("[main] ThemeManager 初始化完成");
 
+    dbgLog("[main] 即将构造 MainWindow");
     QuarkMeta::MainWindow w;
+    dbgLog("[main] MainWindow 构造完成");
     
     // 启动异步系统扫描与监控监听
     QuarkMeta::CoreController::instance().startSystem();
