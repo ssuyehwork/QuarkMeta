@@ -127,7 +127,7 @@ QList<ShellHelper::AssocAppInfo> ShellHelper::getAssociatedApps(const QString& f
     QString ext = "." + info.suffix().toLower();
     if (ext == ".") return result;
 
-    IEnumAssocItems* pEnum = nullptr;
+    IEnumAssocHandlers* pEnum = nullptr;
     HRESULT hr = SHAssocEnumHandlers(ext.toStdWString().c_str(), ASSOC_FILTER_RECOMMENDED, &pEnum);
     if (SUCCEEDED(hr) && pEnum) {
         IAssocHandler* pHandler = nullptr;

@@ -13,6 +13,7 @@
 #include <QGridLayout>
 #include <QPushButton>
 #include <QProcess>
+#include <QDesktopServices>
 
 namespace QuarkMeta {
 
