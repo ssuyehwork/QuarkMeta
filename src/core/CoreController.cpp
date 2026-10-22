@@ -25,26 +25,52 @@ CoreController& CoreController::instance() {
     return inst;
 }
 
+// ======= [DEBUG] 临时调试辅助声明 =======
+static FILE* s_dbgFileCc = nullptr;
+static void dbgLogCc(const char* msg) {
+    if (!s_dbgFileCc) {
+        s_dbgFileCc = fopen("G:/C++/QuarkMeta/QuarkMeta/QuarkMeta/startup_debug.log", "a");
+    }
+    if (s_dbgFileCc) {
+        fputs(msg, s_dbgFileCc);
+        fputs("\n", s_dbgFileCc);
+        fflush(s_dbgFileCc);
+    }
+}
+// ======= [DEBUG END] =======
+
 void CoreController::initializeCoreComponents() {
+    dbgLogCc("[CoreController] initializeCoreComponents 进入");
+
     // 0. 全局设备监听器启动
+    dbgLogCc("[CoreController] Step0: DeviceWatcher::startListening() 前");
     DeviceWatcher::instance().startListening();
+    dbgLogCc("[CoreController] Step0: DeviceWatcher::startListening() 后");
 
     // 1. 底层持久化 SQLite 连接启动与定时机制保障
+    dbgLogCc("[CoreController] Step1: DatabaseManager::instance() 前");
     QuarkMeta::DatabaseManager::instance();
-    
+    dbgLogCc("[CoreController] Step1: DatabaseManager::instance() 后");
+
     // 2. 元数据内存索引结构预热
+    dbgLogCc("[CoreController] Step2: MetadataManager::instance() 前");
     QuarkMeta::MetadataManager::instance();
-    
+    dbgLogCc("[CoreController] Step2: MetadataManager::instance() 后");
+
     // 3. 后台提取特征管道、定时器及事件队列预热
+    dbgLogCc("[CoreController] Step3: MediaExtractorPipeline::instance() 前");
     QuarkMeta::MediaExtractorPipeline::instance();
-    
+    dbgLogCc("[CoreController] Step3: MediaExtractorPipeline::instance() 后");
+
     // 4. 定时合并刷新缩略图提取失败标记落盘
+    dbgLogCc("[CoreController] Step4: failureFlushTimer 启动前");
     QTimer* failureFlushTimer = new QTimer(QCoreApplication::instance());
     failureFlushTimer->setInterval(1000);
     QObject::connect(failureFlushTimer, &QTimer::timeout, []() {
         (void)QtConcurrent::run(DiskMediaExtractor::flushPendingUpdates);
     });
     failureFlushTimer->start();
+    dbgLogCc("[CoreController] initializeCoreComponents 完成");
 }
 
 void CoreController::requestShutdown() { s_isShuttingDown.store(true); }
