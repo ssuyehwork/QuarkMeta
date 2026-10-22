@@ -20,7 +20,8 @@ TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidg
 
 TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, const QStringList& candidatePaths, QWidget* parent)
     : QFrame(parent, Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint), 
-      m_selectedTags(initialSelected) 
+      m_selectedTags(initialSelected),
+      m_initialTags(initialSelected)
 {
     setObjectName("TagSelectorOverlay");
     setFrameShape(QFrame::StyledPanel);
@@ -59,6 +60,10 @@ TagSelectorOverlay::~TagSelectorOverlay() {
 void TagSelectorOverlay::closeOverlay() {
     if (m_isClosing) return;
     m_isClosing = true;
+    if (!m_hasCommitted) {
+        m_hasCommitted = true;
+        emit tagsCommitted(m_selectedTags);
+    }
     emit overlayClosed();
     close();
     deleteLater();
@@ -271,7 +276,7 @@ void TagSelectorOverlay::toggleTagSelection(const QString& tag) {
     }
 
     filterAndPopulate();
-    emit selectionChanged(m_selectedTags);
+    // 内存局状态更新，取消实时刷盘发号，延迟至离场失焦/关闭时统一批量提交
 }
 
 void TagSelectorOverlay::recordRecentTag(const QString& tag) {
