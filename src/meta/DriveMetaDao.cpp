@@ -6,25 +6,8 @@
 
 namespace QuarkMeta {
 
-// ======= [DEBUG] 临时调试辅助 =======
-static FILE* s_dbgFileDd = nullptr;
-static void dbgLogDd(const char* msg) {
-    if (!s_dbgFileDd) {
-        s_dbgFileDd = fopen("startup_debug.log", "a");
-    }
-    if (s_dbgFileDd) {
-        fputs(msg, s_dbgFileDd);
-        fputs("\n", s_dbgFileDd);
-        fflush(s_dbgFileDd);
-    }
-}
-// ======= [DEBUG END] =======
-
 bool DriveMetaDao::initTable() {
-    dbgLogDd("[DriveMetaDao::initTable] 进入函数");
-    dbgLogDd("[DriveMetaDao::initTable] 即将调用 getGlobalDb() ← 若卡在这里是第3层嵌套锁");
     sqlite3* db = DatabaseManager::instance().getGlobalDb();
-    dbgLogDd("[DriveMetaDao::initTable] getGlobalDb() 返回");
     if (!db) return false;
 
     std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());

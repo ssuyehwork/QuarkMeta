@@ -245,64 +245,36 @@ void DatabaseManager::closeDb(DbConnection& conn) {
     }
 }
 
-// ======= [DEBUG] 临时调试辅助 =======
-static FILE* s_dbgFileDm = nullptr;
-static void dbgLogDm(const char* msg) {
-    if (!s_dbgFileDm) {
-        s_dbgFileDm = fopen("startup_debug.log", "a");
-    }
-    if (s_dbgFileDm) {
-        fputs(msg, s_dbgFileDm);
-        fputs("\n", s_dbgFileDm);
-        fflush(s_dbgFileDm);
-    }
-}
-// ======= [DEBUG END] =======
-
 bool DatabaseManager::initLocked() {
-    dbgLogDm("[DatabaseManager::initLocked] 进入函数");
     if (m_isInitialized && m_globalDb.diskDb) {
-        dbgLogDm("[DatabaseManager::initLocked] 已初始化，提前返回 true");
         return true;
     }
 
-    dbgLogDm("[DatabaseManager::initLocked] 即将 initializeStoragePath");
     AppDirectoryInitializer::initializeStoragePath(getAppDir());
-    dbgLogDm("[DatabaseManager::initLocked] initializeStoragePath 完成");
 
     std::wstring globalPath = getGlobalDbPath().toStdWString();
-    dbgLogDm("[DatabaseManager::initLocked] 即将 loadDb");
     if (!loadDb(globalPath, m_globalDb)) {
-        dbgLogDm("[DatabaseManager::initLocked] loadDb 失败，返回 false");
         return false;
     }
 
     m_isInitialized = true;
-    dbgLogDm("[DatabaseManager::initLocked] loadDb 成功，返回 true");
     return true;
 }
 
 bool DatabaseManager::init() {
-    dbgLogDm("[DatabaseManager::init] 进入函数");
     bool needTableInit = false;
     {
-        dbgLogDm("[DatabaseManager::init] 即将 lock(m_initMutex)");
         std::lock_guard<std::mutex> lock(m_initMutex);
-        dbgLogDm("[DatabaseManager::init] lock(m_initMutex) 成功");
         if (!m_isInitialized || !m_globalDb.diskDb) {
             if (initLocked()) {
                 needTableInit = true;
             } else {
-                dbgLogDm("[DatabaseManager::init] initLocked 失败，返回 false");
                 return false;
             }
         }
     }
-    dbgLogDm("[DatabaseManager::init] 锁 m_initMutex 已释放");
     if (needTableInit) {
-        dbgLogDm("[DatabaseManager::init] 即将调用 DriveMetaDao::initTable()");
         DriveMetaDao::initTable();
-        dbgLogDm("[DatabaseManager::init] DriveMetaDao::initTable() 完成");
     }
     return true;
 }
@@ -315,28 +287,20 @@ void DatabaseManager::shutdown() {
 }
 
 sqlite3* DatabaseManager::getGlobalDb() {
-    dbgLogDm("[DatabaseManager::getGlobalDb] 进入函数");
     bool needTableInit = false;
     sqlite3* db = nullptr;
     {
-        dbgLogDm("[DatabaseManager::getGlobalDb] 即将 lock(m_initMutex)");
         std::lock_guard<std::mutex> lock(m_initMutex);
-        dbgLogDm("[DatabaseManager::getGlobalDb] lock(m_initMutex) 成功");
         if (!m_isInitialized || !m_globalDb.diskDb) {
-            dbgLogDm("[DatabaseManager::getGlobalDb] 未初始化，即将调用 initLocked()");
             if (initLocked()) {
                 needTableInit = true;
             }
         }
         db = m_globalDb.diskDb;
     }
-    dbgLogDm("[DatabaseManager::getGlobalDb] 锁 m_initMutex 已释放");
     if (needTableInit) {
-        dbgLogDm("[DatabaseManager::getGlobalDb] 即将调用 DriveMetaDao::initTable()");
         DriveMetaDao::initTable();
-        dbgLogDm("[DatabaseManager::getGlobalDb] DriveMetaDao::initTable() 完成");
     }
-    dbgLogDm("[DatabaseManager::getGlobalDb] 返回 db 指针");
     return db;
 }
 
