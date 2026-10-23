@@ -12,14 +12,14 @@
 
 namespace QuarkMeta {
 
-
-TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidget* parent)
-    : TagSelectorOverlay(initialSelected, QStringList{}, parent)
+TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, QWidget* parent, TagTriggerSource source)
+    : TagSelectorOverlay(initialSelected, QStringList{}, parent, source)
 {
 }
 
-TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, const QStringList& candidatePaths, QWidget* parent)
+TagSelectorOverlay::TagSelectorOverlay(const QStringList& initialSelected, const QStringList& candidatePaths, QWidget* parent, TagTriggerSource source)
     : QFrame(parent, Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint), 
+      m_triggerSource(source),
       m_selectedTags(initialSelected),
       m_initialTags(initialSelected)
 {
@@ -60,10 +60,23 @@ TagSelectorOverlay::~TagSelectorOverlay() {
 void TagSelectorOverlay::closeOverlay() {
     if (m_isClosing) return;
     m_isClosing = true;
+
     if (!m_hasCommitted) {
         m_hasCommitted = true;
-        emit tagsCommitted(m_selectedTags);
+
+        // 仅在来源为 MetaPanel 时，失焦关闭才承担落盘责任
+        if (m_triggerSource == TagTriggerSource::MetaPanel) {
+            // 批量记录真正新增的有效标签到“最近使用”
+            for (const QString& tag : m_selectedTags) {
+                if (!m_initialTags.contains(tag)) {
+                    recordRecentTag(tag);
+                }
+            }
+            // 向外部发射原子提交落盘信号
+            emit tagsCommitted(m_selectedTags);
+        }
     }
+
     emit overlayClosed();
     close();
     deleteLater();
@@ -154,10 +167,8 @@ void TagSelectorOverlay::initUi() {
 }
 
 void TagSelectorOverlay::loadRecentAndRecommendedTags(const QStringList& candidatePaths) {
-    // 1. 从 AppConfig 读取最近使用标签 (最多 50 个)
     m_recentTags = AppConfig::instance().getValue("TagSelectorOverlay/RecentTags", QStringList()).toStringList();
 
-    // 2. 解析推荐标签 (仅纯内存管理)
     m_recommendedTags.clear();
     QSet<QString> seen;
     static const QRegularExpression splitRegex("[_\\-\\s\\+\\.\\(\\)\\[\\]【】]+");
@@ -189,7 +200,6 @@ void TagSelectorOverlay::loadRecentAndRecommendedTags(const QStringList& candida
 void TagSelectorOverlay::filterAndPopulate() {
     QString kw = m_searchEdit ? m_searchEdit->text().trimmed().toLower() : "";
 
-    // 1. 清理现有 FlowLayout Widgets
     auto clearLayout = [](FlowLayout* layout) {
         if (!layout) return;
         QLayoutItem* item;
@@ -201,7 +211,7 @@ void TagSelectorOverlay::filterAndPopulate() {
     clearLayout(m_recFlowLayout);
     clearLayout(m_recentFlowLayout);
 
-    // 2. 渲染【第一组：推荐】
+    // 1. 渲染【第一组：推荐】
     QStringList filteredRec;
     for (const QString& t : m_recommendedTags) {
         if (kw.isEmpty() || t.toLower().contains(kw)) {
@@ -232,7 +242,7 @@ void TagSelectorOverlay::filterAndPopulate() {
         });
     }
 
-    // 3. 渲染【第二组：最近使用 (限制 50 个)】
+    // 2. 渲染【第二组：最近使用 (限制 50 个)】
     QStringList filteredRecent;
     for (const QString& t : m_recentTags) {
         if (kw.isEmpty() || t.toLower().contains(kw)) {
@@ -266,17 +276,17 @@ void TagSelectorOverlay::toggleTagSelection(const QString& tag) {
     QString cleanTag = tag.trimmed();
     if (cleanTag.isEmpty()) return;
 
+    // 纯内存维护：严禁在此执行任何 SQLite 写入或磁盘落盘
     if (m_selectedTags.contains(cleanTag)) {
         m_selectedTags.removeAll(cleanTag);
     } else {
-        // 🔒【点选绑定契约】：只有点选时才写入 SQLite 标签词库，并记录至 RecentTags (上限 50 个)
-        TagLexiconService::instance().addTag(cleanTag);
-        recordRecentTag(cleanTag);
         m_selectedTags.append(cleanTag);
     }
 
     filterAndPopulate();
-    // 内存局状态更新，取消实时刷盘发号，延迟至离场失焦/关闭时统一批量提交
+
+    // 实时通知前端界面同步刷新标签胶囊 (零 I/O 纯内存)
+    emit selectionChanged(m_selectedTags);
 }
 
 void TagSelectorOverlay::recordRecentTag(const QString& tag) {

@@ -5,6 +5,7 @@
 #include "../meta/LibraryDao.h"
 #include "../meta/MetadataManager.h"
 #include "../core/CoreEngine.h"
+#include "../core/PresetTagService.h"
 #include "ToolTipOverlay.h"
 #include <QCursor>
 #include <QVBoxLayout>
@@ -86,14 +87,11 @@ void PresetTagsDialog::initUi() {
 
 void PresetTagsDialog::loadTags() {
     if (m_isLibrary) {
-        auto list = LibraryDao::getAllCategories();
-        for (const auto& rec : list) {
-            if (rec.id == m_categoryId) {
-                m_categoryName = rec.name;
-                m_presetTags = rec.presetTags;
-                m_initialPresetTags = rec.presetTags;
-                break;
-            }
+        LibraryCategoryRecord rec = LibraryDao::getCategoryById(m_categoryId);
+        if (rec.id == m_categoryId) {
+            m_categoryName = rec.name;
+            m_presetTags = rec.presetTags;
+            m_initialPresetTags = rec.presetTags;
         }
     } else {
         auto list = FavoriteDao::getAllFavorites();
@@ -150,7 +148,8 @@ void PresetTagsDialog::onTagContainerClicked() {
         return;
     }
 
-    m_selectorOverlay = new TagSelectorOverlay(m_presetTags, window());
+    // 显式声明来源为 PresetTagsDialog：浮层关闭时绝对不执行任何写盘动作
+    m_selectorOverlay = new TagSelectorOverlay(m_presetTags, window(), TagTriggerSource::PresetTagsDialog);
     
     QPoint globalPos = m_tagContainer->mapToGlobal(QPoint(0, m_tagContainer->height() + 4));
     m_selectorOverlay->move(globalPos);
@@ -158,6 +157,7 @@ void PresetTagsDialog::onTagContainerClicked() {
     m_selectorOverlay->raise();
     m_selectorOverlay->activateWindow();
 
+    // 核心联通：点选标签时实时在 PresetTagsDialog 刷新胶囊 UI，纯内存零写盘
     connect(m_selectorOverlay, &TagSelectorOverlay::selectionChanged, this, [this](const QStringList& selected) {
         m_presetTags = selected;
         populateTagPills();
@@ -181,27 +181,25 @@ void PresetTagsDialog::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void PresetTagsDialog::onSaveClicked() {
-    QStringList newlyAddedTags;
-    for (const QString& tag : m_presetTags) {
-        if (!m_initialPresetTags.contains(tag)) {
-            newlyAddedTags.append(tag);
-        }
-    }
-
+    // 独占落盘：所有物理写盘与数据库更新，仅在点击“保存设置”时一次性提交
     if (m_isLibrary) {
-        LibraryDao::updatePresetTags(m_categoryId, m_presetTags);
-        if (!newlyAddedTags.isEmpty()) {
-            QStringList associatedPaths = LibraryDao::getCategoryPaths(m_categoryId);
-            if (!associatedPaths.isEmpty()) {
-                for (const QString& tag : newlyAddedTags) {
-                    AppCommand cmd;
-                    cmd.type = AppCommandType::AddTag;
-                    cmd.targetPaths = associatedPaths;
-                    cmd.params["tag"] = tag;
-                    CoreEngine::instance().executeCommand(cmd);
-                }
-                ToolTipOverlay::instance()->showText(QCursor::pos(), QString("已自动追溯将 %1 个新预设标签绑定至既有 %2 个项目").arg(newlyAddedTags.size()).arg(associatedPaths.size()), 2000, QColor("#2ecc71"));
+        bool ok = PresetTagService::instance().saveLibraryPresetTags(
+            m_categoryId,
+            m_presetTags,
+            m_initialPresetTags,
+            [](int newlyAddedCount, int associatedPathsCount) {
+                ToolTipOverlay::instance()->showText(
+                    QCursor::pos(),
+                    QString("已自动追溯将 %1 个新预设标签绑定至既有 %2 个项目").arg(newlyAddedCount).arg(associatedPathsCount),
+                    2000,
+                    QColor("#2ecc71")
+                );
             }
+        );
+
+        if (!ok) {
+            ToolTipOverlay::instance()->showText(QCursor::pos(), "保存设置失败", 1500, QColor("#e81123"));
+            return;
         }
     } else {
         FavoriteDao::updatePresetTags(m_categoryId, m_presetTags);
@@ -210,6 +208,7 @@ void PresetTagsDialog::onSaveClicked() {
 }
 
 void PresetTagsDialog::onCancelClicked() {
+    // 点击取消：纯内存放弃本次全部改动，绝不触碰任何数据库和文件
     reject();
 }
 
@@ -217,7 +216,6 @@ bool PresetTagsDialog::eventFilter(QObject* obj, QEvent* event) {
     if ((obj == m_tagContainer || (m_tagContainer && m_tagContainer->isAncestorOf(qobject_cast<QWidget*>(obj)))) &&
         (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease)) {
         
-        // 如果点击发生在 TagPill（胶囊项）及其子控件上，不响应调起弹窗
         QWidget* targetWidget = qobject_cast<QWidget*>(obj);
         while (targetWidget && targetWidget != m_tagContainer) {
             if (qobject_cast<TagPill*>(targetWidget)) {
