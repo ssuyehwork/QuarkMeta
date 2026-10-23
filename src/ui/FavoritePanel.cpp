@@ -513,7 +513,7 @@ void FavoritePanel::onFavoriteContextMenu(const QPoint& pos) {
         if (!path.isEmpty() && !isVirtual) {
             QAction* actOpenFolder = menu.addAction(UiHelper::getIcon("folder", QColor("#EEEEEE"), 18), "打开文件夹");
             connect(actOpenFolder, &QAction::triggered, this, [this, path]() {
-                emit directorySelected(path);
+                emit directorySelected(path, false);
             });
         }
 
