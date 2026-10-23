@@ -466,8 +466,7 @@ void FavoritePanel::onFavoriteClicked(const QModelIndex& index) {
 
     if (fi.isDir()) {
         bool isAutoRec = index.data(Qt::UserRole + 9).toBool();
-        emit directorySelectedWithRecursive(path, isAutoRec);
-        emit directorySelected(path);
+        emit directorySelected(path, isAutoRec);
     } else {
         emit requestLocateFile(path);
     }
