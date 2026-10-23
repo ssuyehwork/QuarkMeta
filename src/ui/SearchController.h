@@ -6,6 +6,7 @@
 #include <QTimer>
 #include <QWidget>
 #include <QEvent>
+#include <QPointer>
 
 namespace QuarkMeta {
 
@@ -55,7 +56,7 @@ private:
     bool m_isInternalClearing = false;
     QTimer* m_searchTimer = nullptr;
     SearchHistoryPanel* m_searchHistoryPanel = nullptr;
-    ContentPanel* m_contentPanel = nullptr;
+    QPointer<ContentPanel> m_contentPanel;
     SearchScope m_searchScope = SearchScope::CurrentFolder;
 };
 
