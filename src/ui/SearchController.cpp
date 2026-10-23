@@ -57,6 +57,10 @@ SearchController::SearchController(QWidget* parent)
     m_searchTimer->setInterval(300);
 }
 
+void SearchController::setActiveContentPanel(ContentPanel* panel) {
+    m_contentPanel = panel;
+}
+
 void SearchController::bindContentPanel(ContentPanel* contentPanel) {
     setActiveContentPanel(contentPanel);
     if (!m_contentPanel) return;
