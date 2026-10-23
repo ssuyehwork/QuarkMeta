@@ -252,7 +252,7 @@ QMap<QString, QStringList> QuarkMetaJsonStore::addTagsBatch(const QStringList& p
             const auto& itemsInFolder = pair.second;
             if (itemsInFolder.empty()) continue;
 
-            auto jsonPtr = getOrLoadFolderLocked(normFolder, itemsInFolder.first().folderPath);
+            auto jsonPtr = getOrLoadFolderLocked(normFolder, itemsInFolder.front().folderPath);
 
             for (const auto& item : itemsInFolder) {
                 ItemMeta& meta = jsonPtr->items()[item.fileNameKey];
@@ -335,7 +335,7 @@ QMap<QString, QStringList> QuarkMetaJsonStore::removeTagsBatch(const QStringList
             const auto& itemsInFolder = pair.second;
             if (itemsInFolder.empty()) continue;
 
-            auto jsonPtr = getOrLoadFolderLocked(normFolder, itemsInFolder.first().folderPath);
+            auto jsonPtr = getOrLoadFolderLocked(normFolder, itemsInFolder.front().folderPath);
 
             for (const auto& item : itemsInFolder) {
                 ItemMeta& meta = jsonPtr->items()[item.fileNameKey];
