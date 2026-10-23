@@ -2,7 +2,8 @@
 #include "../ui/QuickLookWindow.h"
 #include "../ui/UiHelper.h"
 #include "../ui/ToolTipOverlay.h"
-#include "../core/TaskProgressService.h"
+#include "../ui/BatchProgressDialog.h"
+#include <QPointer>
 #include "../core/AppConfig.h"
 #include <QtConcurrent>
 #include <QThreadPool>
@@ -114,8 +115,13 @@ void BatchQuickLookService::extractBatchAsync(const QStringList& rootPaths) {
 
         // 2. 将真正的“缺失/过期增量文件列表”打包提交批量渲染
         int total = targetFiles.size();
-        int jobId = TaskProgressService::instance().createJob("正在批量生成大图预览...", total);
         int processedCount = 0;
+
+        QPointer<BatchProgressDialog> dlg;
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [&dlg]() {
+            dlg = new BatchProgressDialog("批量生成大图预览");
+            dlg->show();
+        }, Qt::BlockingQueuedConnection);
 
         for (const QString& filePath : targetFiles) {
             if (token->isCanceled()) break;
@@ -124,15 +130,16 @@ void BatchQuickLookService::extractBatchAsync(const QStringList& rootPaths) {
             (void)QuickLookWindow::loadOrExtractQuickLookImage(filePath, 2048, token);
 
             processedCount++;
-            TaskProgressService::instance().updateProgress(
-                jobId,
-                processedCount,
-                total,
-                QString("已生成 %1 / %2 项").arg(processedCount).arg(total)
-            );
+            if (dlg) {
+                QMetaObject::invokeMethod(dlg.data(), "updateProgress", Qt::QueuedConnection,
+                                          Q_ARG(int, processedCount), Q_ARG(int, total), Q_ARG(QString, QFileInfo(filePath).fileName()));
+            }
         }
 
-        TaskProgressService::instance().finishJob(jobId);
+        if (dlg) {
+            QMetaObject::invokeMethod(dlg.data(), "close", Qt::QueuedConnection);
+            QMetaObject::invokeMethod(dlg.data(), "deleteLater", Qt::QueuedConnection);
+        }
 
         if (!token->isCanceled()) {
             QMetaObject::invokeMethod(QCoreApplication::instance(), [processedCount]() {

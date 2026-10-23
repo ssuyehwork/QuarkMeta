@@ -25,7 +25,6 @@
 #include "PanelLayoutManager.h"
 #include "AddressBar.h"
 #include "ToolTipOverlay.h"
-#include "TaskProgressToolBar.h"
 #include "../core/AppConfig.h"
 #include "../core/NavigationService.h"
 #include "../core/CoreController.h"
@@ -231,11 +230,6 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     m_statusLeft = new QLabel("就绪中...", m_statusBarWidget);
     m_statusLeft->setObjectName("StatusBarLeft");
     statusL->addWidget(m_statusLeft);
-
-    m_taskProgressToolBar = new TaskProgressToolBar(m_statusBarWidget);
-    m_taskProgressToolBar->hide();
-    statusL->addWidget(m_taskProgressToolBar);
-
     statusL->addStretch(1);
 
     connect(m_contentPanel, &ContentPanel::statusBarMessageReady, this, [this](const QString& msg) {

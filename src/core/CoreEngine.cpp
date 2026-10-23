@@ -4,7 +4,9 @@
 #include "../meta/FavoriteDao.h"
 #include "../meta/FavoriteService.h"
 #include "TagLexiconService.h"
-#include "TaskProgressService.h"
+#include "../ui/BatchProgressDialog.h"
+#include <QPointer>
+#include <QFileInfo>
 #include <QCoreApplication>
 
 namespace QuarkMeta {
@@ -216,7 +218,12 @@ void CoreEngine::addTagsToPathsAsync(const QStringList& paths, const QStringList
 
     m_asyncTagPool.start([paths, tags, onFinished]() {
         int totalPaths = paths.size();
-        int jobId = TaskProgressService::instance().createJob("正在应用预设标签...", totalPaths);
+
+        QPointer<BatchProgressDialog> dlg;
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [&dlg]() {
+            dlg = new BatchProgressDialog("正在应用预设标签");
+            dlg->show();
+        }, Qt::BlockingQueuedConnection);
 
         TagLexiconService::instance().addTags(tags);
 
@@ -226,10 +233,16 @@ void CoreEngine::addTagsToPathsAsync(const QStringList& paths, const QStringList
             QStringList batch = paths.mid(i, kBatchSize);
             MetadataManager::instance().addTagsBatch(batch, tags);
             processed += batch.size();
-            TaskProgressService::instance().updateProgress(jobId, processed, totalPaths);
+            if (dlg) {
+                QMetaObject::invokeMethod(dlg.data(), "updateProgress", Qt::QueuedConnection,
+                                          Q_ARG(int, processed), Q_ARG(int, totalPaths), Q_ARG(QString, QString("%1/%2 项").arg(processed).arg(totalPaths)));
+            }
         }
 
-        TaskProgressService::instance().finishJob(jobId);
+        if (dlg) {
+            QMetaObject::invokeMethod(dlg.data(), "close", Qt::QueuedConnection);
+            QMetaObject::invokeMethod(dlg.data(), "deleteLater", Qt::QueuedConnection);
+        }
 
         QMetaObject::invokeMethod(qApp, [paths, onFinished]() {
             AppEvent ev;

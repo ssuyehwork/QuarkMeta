@@ -3,7 +3,8 @@
 #include "QuarkMetaJson.h"
 #include "QuarkMetaJsonStore.h"
 #include "LibraryService.h"
-#include "../core/TaskProgressService.h"
+#include "../ui/BatchProgressDialog.h"
+#include <QPointer>
 #include <QDir>
 #include <QFileInfo>
 #include <QCoreApplication>
@@ -227,18 +228,30 @@ void MetaIndexService::workerThreadLoop() {
             for (const auto& task : categoryBatch) {
                 totalPaths += task.paths.size();
             }
-            int jobId = TaskProgressService::instance().createJob("正在归入库分类...", totalPaths);
             int processedPaths = 0;
+
+            QPointer<BatchProgressDialog> dlg;
+            QMetaObject::invokeMethod(QCoreApplication::instance(), [&dlg]() {
+                dlg = new BatchProgressDialog("正在归入库分类");
+                dlg->show();
+            }, Qt::BlockingQueuedConnection);
 
             for (const auto& task : categoryBatch) {
                 if (m_stopping.load()) break;
                 if (!task.paths.isEmpty()) {
                     LibraryService::instance().addPathsToCategory(task.categoryId, task.paths);
                     processedPaths += task.paths.size();
-                    TaskProgressService::instance().updateProgress(jobId, processedPaths, totalPaths, QString("已归入 %1 / %2 项").arg(processedPaths).arg(totalPaths));
+                    if (dlg) {
+                        QMetaObject::invokeMethod(dlg.data(), "updateProgress", Qt::QueuedConnection,
+                                                  Q_ARG(int, processedPaths), Q_ARG(int, totalPaths), Q_ARG(QString, QString("%1/%2 项").arg(processedPaths).arg(totalPaths)));
+                    }
                 }
             }
-            TaskProgressService::instance().finishJob(jobId);
+
+            if (dlg) {
+                QMetaObject::invokeMethod(dlg.data(), "close", Qt::QueuedConnection);
+                QMetaObject::invokeMethod(dlg.data(), "deleteLater", Qt::QueuedConnection);
+            }
         }
 
         if (currentBatch.empty() || !m_writeDb) {

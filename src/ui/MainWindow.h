@@ -23,7 +23,6 @@ namespace QuarkMeta {
 class TrayController;
 class HoverEventFilter;
 class AddressBar;
-class TaskProgressToolBar;
 class SearchController; 
 class TitleBarWidget;
 class DriveBarWidget;
@@ -104,7 +103,6 @@ private:
     // 底部状态栏
     QLabel* m_statusLeft = nullptr;
     QWidget* m_statusBarWidget = nullptr;
-    TaskProgressToolBar* m_taskProgressToolBar = nullptr;
 
     QPushButton* m_btnToggleFilter = nullptr;
     QPushButton* m_btnToggleMeta = nullptr;
