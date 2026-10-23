@@ -116,7 +116,6 @@ void MainWindow::initUi() {
     mainL->addWidget(m_navBarWidget);
     mainL->addWidget(bodyWrapper, 1);
     mainL->addWidget(m_statusBarWidget);
-    mainL->addWidget(m_taskProgressToolBar);
 
     setCentralWidget(centralC);
 }
@@ -232,6 +231,11 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     m_statusLeft = new QLabel("就绪中...", m_statusBarWidget);
     m_statusLeft->setObjectName("StatusBarLeft");
     statusL->addWidget(m_statusLeft);
+
+    m_taskProgressToolBar = new TaskProgressToolBar(m_statusBarWidget);
+    m_taskProgressToolBar->hide();
+    statusL->addWidget(m_taskProgressToolBar);
+
     statusL->addStretch(1);
 
     connect(m_contentPanel, &ContentPanel::statusBarMessageReady, this, [this](const QString& msg) {
@@ -247,9 +251,6 @@ void MainWindow::setupStatusBar(QWidget* parentWidget) {
     connect(&CoreController::instance(), &CoreController::statusTextChanged, this, updateStatus);
     connect(&CoreController::instance(), &CoreController::isIndexingChanged, this, updateStatus);
     updateStatus();
-
-    m_taskProgressToolBar = new TaskProgressToolBar(parentWidget);
-    m_taskProgressToolBar->hide();
 
     auto createStatusBtn = [this](const QString& iconKey, const QString& tip) -> QPushButton* {
         QPushButton* btn = new QPushButton(m_statusBarWidget);
