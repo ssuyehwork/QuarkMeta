@@ -22,6 +22,7 @@
 #include "CardLayoutEngine.h"
 #include "UiHelper.h"
 #include "Logger.h"
+#include <QElapsedTimer>
 
 #include "../core/AppConfig.h"
 #include "../core/CoreEngine.h"
