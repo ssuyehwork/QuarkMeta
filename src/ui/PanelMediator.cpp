@@ -222,6 +222,12 @@ void PanelMediator::setupConnections() {
                 target->loadDirectory(target->currentPath(), nextState);
             }
         });
+
+        if (filterPanel) {
+            connect(shortcutController, &AppShortcutController::resetFilterRequested, filterPanel, [filterPanel]() {
+                filterPanel->clearAllFilters(true);
+            });
+        }
     }
 
     // 搜索控制器与 ContentPanel 绑定及状态更新
