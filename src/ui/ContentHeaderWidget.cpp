@@ -116,6 +116,11 @@ void ContentHeaderWidget::setLayersEnabled(bool enabled, const QString& tooltip)
 
 void ContentHeaderWidget::setActive(bool active) {
     setProperty("activePane", active ? "true" : "false");
+    if (m_titleLabel) {
+        m_titleLabel->setProperty("activePane", active ? "true" : "false");
+        m_titleLabel->style()->unpolish(m_titleLabel);
+        m_titleLabel->style()->polish(m_titleLabel);
+    }
     style()->unpolish(this);
     style()->polish(this);
 }
