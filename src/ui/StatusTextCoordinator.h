@@ -23,6 +23,7 @@ private:
     void onSnapshotChanged(const TaskProgressSnapshot& snapshot);
     void reevaluate();
     QString formatSegmentsToHtml(const QList<TextSegment>& segments);
+    QString formatNormalTextToHtml(const QString& text);
 
     QString m_normalText;
     QList<TextSegment> m_activeSegments;
