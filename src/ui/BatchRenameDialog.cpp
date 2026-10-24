@@ -11,7 +11,6 @@
 #include <QPainterPath>
 #include "FramelessFileDialog.h"
 #include "FramelessDialog.h"
-#include "ToolTipOverlay.h"
 #include <QFileInfo>
 #include <QTimer>
 #include <QDir>
@@ -335,7 +334,6 @@ void BatchRenameDialog::onExportPreset() {
     }
 
     if (PresetManager::exportToFile(path, rules)) {
-        ToolTipOverlay::instance()->showText(QCursor::pos(), "预设导出成功", 1500, QColor("#2ecc71"));
     }
 }
 
@@ -343,7 +341,6 @@ void BatchRenameDialog::onDeleteCurrentPreset() {
     if (m_presetCombo->count() > 0) {
         int index = m_presetCombo->currentIndex();
         m_presetCombo->removeItem(index);
-        ToolTipOverlay::instance()->showText(QCursor::pos(), "预设已删除", 1000);
     }
 }
 
