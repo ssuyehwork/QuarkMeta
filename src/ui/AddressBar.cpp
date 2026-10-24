@@ -104,7 +104,7 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
         if (!conflictingPaths.isEmpty()) {
             int remainingConflicts = conflictingPaths.size();
             bool applyToAll = false;
-            CollisionResolveAction globalAction = CollisionResolveAction::KeepBoth;
+            CollisionResolveAction globalAction = CollisionResolveAction::AutoResolve;
 
             for (const QString& srcFile : paths) {
                 QFileInfo srcInfo(srcFile);
@@ -127,7 +127,7 @@ AddressBar::AddressBar(QWidget* parent) : QWidget(parent) {
 
                     if (action == CollisionResolveAction::Skip) {
                         continue; // 跳过此文件
-                    } else if (action == CollisionResolveAction::KeepBoth) {
+                    } else if (action == CollisionResolveAction::AutoResolve) {
                         ioCtx.autoRenameFiles.insert(srcFile);
                         ioCtx.sources.append(srcFile);
                     } else if (action == CollisionResolveAction::Replace) {
