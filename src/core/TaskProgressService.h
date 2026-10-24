@@ -58,7 +58,7 @@ public:
     void setDetail(const QString& detail);
     bool isComplete() const;
     bool isValid() const;
-    void finish();
+    void finish(bool showFinishText = true);
 
     std::shared_ptr<CancellationToken> cancellationToken() const { return m_token; }
 
@@ -94,7 +94,7 @@ private:
     void jobSetDetail(int id, const QString& detail);
     bool jobIsComplete(int id) const;
     bool jobIsValid(int id) const;
-    void jobFinish(int id);
+    void jobFinish(int id, bool showFinishText = true);
 
     void scheduleSnapshotEmit();
     void emitSnapshotNow();

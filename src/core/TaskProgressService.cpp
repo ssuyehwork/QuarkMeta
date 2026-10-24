@@ -61,9 +61,9 @@ bool TaskProgressJob::isValid() const {
     return false;
 }
 
-void TaskProgressJob::finish() {
+void TaskProgressJob::finish(bool showFinishText) {
     if (m_id != -1) {
-        TaskProgressService::instance().jobFinish(m_id);
+        TaskProgressService::instance().jobFinish(m_id, showFinishText);
         m_id = -1;
     }
 }
@@ -202,7 +202,7 @@ static QList<TextSegment> parseTemplateToSegments(const QString& tmpl, int curre
     return segments;
 }
 
-void TaskProgressService::jobFinish(int id) {
+void TaskProgressService::jobFinish(int id, bool showFinishText) {
     TaskProgressSnapshot finishSnapshot;
     bool shouldEmitFinish = false;
 
@@ -211,7 +211,7 @@ void TaskProgressService::jobFinish(int id) {
         if (!m_jobs.contains(id)) return;
         InternalJobInfo info = m_jobs.take(id);
 
-        if (!info.options.finishTextTemplate.isEmpty()) {
+        if (showFinishText && !info.options.finishTextTemplate.isEmpty()) {
             qint64 elapsedMs = QDateTime::currentMSecsSinceEpoch() - info.startTimeMs;
             finishSnapshot.active = false;
             finishSnapshot.finished = true;

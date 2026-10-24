@@ -45,6 +45,7 @@ private:
     std::mutex m_queueMutex; 
     std::mutex m_jobMutex;
     TaskProgressJob m_job;
+    bool m_hasRealWork = false;
 
     std::atomic<int> m_activeWorkers{0}; // 活跃工作线程数 
     std::shared_ptr<CancellationToken> m_token = std::make_shared<CancellationToken>(); // 当前代取消令牌，受 m_queueMutex 保护 

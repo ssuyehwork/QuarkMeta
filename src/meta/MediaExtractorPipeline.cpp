@@ -57,6 +57,7 @@ void MediaExtractorPipeline::addWork(int n) {
             cancelAll();
         };
         m_job = TaskProgressService::instance().createJobHandle(opts);
+        m_hasRealWork = false;
     }
     m_job.addTotal(n);
 }
@@ -67,7 +68,8 @@ void MediaExtractorPipeline::reportDone(int n) {
     if (m_job.isValid()) {
         m_job.advance(n);
         if (m_job.isComplete()) {
-            m_job.finish();
+            m_job.finish(m_hasRealWork);
+            m_hasRealWork = false;
         }
     }
 }
@@ -233,6 +235,10 @@ void MediaExtractorPipeline::dispatchWorkerLoop() {
                 item.palettes.assign(pal.begin(), pal.end());
 
                 results.push_back(item);
+                {
+                    std::lock_guard<std::mutex> lock(m_jobMutex);
+                    m_hasRealWork = true;
+                }
             }
 
             processedInBatch++;
