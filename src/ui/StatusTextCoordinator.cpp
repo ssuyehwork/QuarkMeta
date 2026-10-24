@@ -1,5 +1,6 @@
 #include "StatusTextCoordinator.h"
 #include <QTextDocument>
+#include <QRegularExpression>
 
 namespace QuarkMeta {
 
@@ -56,6 +57,38 @@ QString StatusTextCoordinator::formatSegmentsToHtml(const QList<TextSegment>& se
     return html;
 }
 
+QString StatusTextCoordinator::formatNormalTextToHtml(const QString& text) {
+    if (text.isEmpty()) return QString();
+
+    // 若原字符串本身已包含 html 标签，先剥离标签取纯文本
+    QString plainText = text;
+    if (plainText.contains('<') && plainText.contains('>')) {
+        QTextDocument doc;
+        doc.setHtml(plainText);
+        plainText = doc.toPlainText();
+    }
+
+    QString html;
+    static const QRegularExpression numReg("([0-9]+(?:[/:.][0-9]+)*%?)");
+    int lastPos = 0;
+    auto it = numReg.globalMatch(plainText);
+    while (it.hasNext()) {
+        auto match = it.next();
+        int start = match.capturedStart();
+        int len = match.capturedLength();
+        if (start > lastPos) {
+            html += plainText.mid(lastPos, start - lastPos).toHtmlEscaped();
+        }
+        html += QString("<span style=\"color:%1; font-weight:bold;\">%2</span>")
+                    .arg(kHighlightColorHex, match.captured(1).toHtmlEscaped());
+        lastPos = start + len;
+    }
+    if (lastPos < plainText.length()) {
+        html += plainText.mid(lastPos).toHtmlEscaped();
+    }
+    return html;
+}
+
 void StatusTextCoordinator::reevaluate() {
     // 优先级 1：完成提示（显示 3 秒）
     if (m_showingFinishMessage) {
@@ -69,8 +102,8 @@ void StatusTextCoordinator::reevaluate() {
         return;
     }
 
-    // 优先级 3：常规文字
-    emit finalTextChanged(m_normalText, false);
+    // 优先级 3：常规文字（自动转为 HTML 高亮数字，避免显示原始代码）
+    emit finalTextChanged(formatNormalTextToHtml(m_normalText), true);
 }
 
 } // namespace QuarkMeta
