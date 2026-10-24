@@ -49,7 +49,7 @@ std::vector<ItemRecord> DiskScanService::scanDirectory(const QString& path,
     }; 
  
     scanDir(path, recursive, 0); 
-    Logger::log(QString("[PerfTrace] DiskScanService::scanDirectory(%1) scanned %2 items in %3ms").arg(path).arg(allItems.size()).arg(scanTimer.elapsed()));
+    QuarkMeta::Logger::log(QString("[PerfTrace] DiskScanService::scanDirectory(%1) scanned %2 items in %3ms").arg(path).arg(allItems.size()).arg(scanTimer.elapsed()));
     return allItems; 
 }
 

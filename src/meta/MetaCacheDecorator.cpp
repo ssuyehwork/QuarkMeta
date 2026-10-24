@@ -5,13 +5,12 @@
 #include "ItemMetaMapper.h"
 #include "../ui/Logger.h"
 #include <QFileInfo> 
-#include <QDir>
 #include <QElapsedTimer>
+#include <QDir>
 #include <unordered_map> 
 #include <memory> 
  
 namespace QuarkMeta { 
-
 void MetaCacheDecorator::decorate(std::vector<ItemRecord>& records) { 
     if (records.empty()) return; 
     QElapsedTimer decTimer;
@@ -55,6 +54,6 @@ void MetaCacheDecorator::decorate(std::vector<ItemRecord>& records) {
             ItemMetaMapper::apply(it->second, itemRec);
         } 
     } 
-    Logger::log(QString("[PerfTrace] MetaCacheDecorator::decorate(%1 items) took %2ms").arg(records.size()).arg(decTimer.elapsed()));
+    QuarkMeta::Logger::log(QString("[PerfTrace] MetaCacheDecorator::decorate(%1 items) took %2ms").arg(records.size()).arg(decTimer.elapsed()));
 } 
 } 
