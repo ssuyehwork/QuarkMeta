@@ -2,8 +2,7 @@
 #include "../ui/QuickLookWindow.h"
 #include "../ui/UiHelper.h"
 #include "../ui/ToolTipOverlay.h"
-#include "../ui/BatchProgressDialog.h"
-#include <QPointer>
+#include "../core/TaskProgressService.h"
 #include "../core/AppConfig.h"
 #include <QtConcurrent>
 #include <QThreadPool>
@@ -115,37 +114,33 @@ void BatchQuickLookService::extractBatchAsync(const QStringList& rootPaths) {
 
         // 2. 将真正的“缺失/过期增量文件列表”打包提交批量渲染
         int total = targetFiles.size();
-        int processedCount = 0;
 
-        QPointer<BatchProgressDialog> dlg;
-        QMetaObject::invokeMethod(QCoreApplication::instance(), [&dlg]() {
-            dlg = new BatchProgressDialog("批量生成大图预览");
-            dlg->show();
-        }, Qt::BlockingQueuedConnection);
+        TaskJobOptions opts;
+        opts.title = "正在批量生成大图预览";
+        opts.total = total;
+        opts.showCount = true;
+        opts.showEta = true;
+        opts.finishTextTemplate = "批量生成大图预览完成  数量：{total}  |  实际耗时：{elapsed}";
+        opts.onTrip = [token]() {
+            if (token) token->cancel();
+        };
+
+        TaskProgressJob job = TaskProgressService::instance().createJobHandle(opts);
 
         for (const QString& filePath : targetFiles) {
             if (token->isCanceled()) break;
 
-            // 调用 QuickLookWindow 统一高清缓存落地接口 (2048px, SHA256 2级分桶)
             (void)QuickLookWindow::loadOrExtractQuickLookImage(filePath, 2048, token);
-
-            processedCount++;
-            if (dlg) {
-                QMetaObject::invokeMethod(dlg.data(), "updateProgress", Qt::QueuedConnection,
-                                          Q_ARG(int, processedCount), Q_ARG(int, total), Q_ARG(QString, QFileInfo(filePath).fileName()));
-            }
+            job.advance(1);
         }
 
-        if (dlg) {
-            QMetaObject::invokeMethod(dlg.data(), "close", Qt::QueuedConnection);
-            QMetaObject::invokeMethod(dlg.data(), "deleteLater", Qt::QueuedConnection);
-        }
+        job.finish();
 
         if (!token->isCanceled()) {
-            QMetaObject::invokeMethod(QCoreApplication::instance(), [processedCount]() {
+            QMetaObject::invokeMethod(QCoreApplication::instance(), [total]() {
                 ToolTipOverlay::instance()->showText(
                     QCursor::pos(),
-                    QString("大图预览批量生成完成，共计 %1 项").arg(processedCount),
+                    QString("大图预览批量生成完成，共计 %1 项").arg(total),
                     2000,
                     QColor("#2ecc71")
                 );

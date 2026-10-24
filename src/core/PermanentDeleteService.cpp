@@ -3,7 +3,7 @@
 #endif
 #include "PermanentDeleteService.h"
 #include "../ui/dialogs/FramelessMessageBox.h"
-#include "../ui/BatchProgressDialog.h"
+#include "TaskProgressService.h"
 #include "../ui/ToolTipOverlay.h"
 #include "../util/SecureFileEraser.h"
 #include "../core/UndoManager.h"
@@ -38,21 +38,24 @@ bool PermanentDeleteService::execute(const QStringList& paths, QWidget* parentWi
         return false;
     }
 
-    QPointer<BatchProgressDialog> dlg;
-    QMetaObject::invokeMethod(QCoreApplication::instance(), [&dlg]() {
-        dlg = new BatchProgressDialog("永久删除");
-        dlg->show();
-    }, Qt::BlockingQueuedConnection);
+    TaskJobOptions opts;
+    opts.title = "正在执行永久删除（深层抹除）";
+    opts.total = paths.size();
+    opts.showCount = true;
+    opts.showEta = true;
+    opts.finishTextTemplate = "永久删除完成  数量：{total}  |  实际耗时：{elapsed}";
+
+    TaskProgressJob job = TaskProgressService::instance().createJobHandle(opts);
+    std::shared_ptr<CancellationToken> token = job.cancellationToken();
 
     QPointer<PermanentDeleteService> weakThis(this);
 
     MetadataManager::instance().beginInternalOperation();
 
-    (void)QtConcurrent::run([paths, isSecureShred, dlg, weakThis]() {
-        int total = paths.size();
-        int count = 0;
-
+    (void)QtConcurrent::run([paths, isSecureShred, token, weakThis, job = std::move(job)]() mutable {
         for (const QString& p : paths) {
+            if (token->isCanceled()) break;
+
             std::wstring wp = QDir::toNativeSeparators(p).toStdWString();
             
             int trashId = -1;
@@ -89,17 +92,10 @@ bool PermanentDeleteService::execute(const QStringList& paths, QWidget* parentWi
                 }
             }
 
-            count++;
-            if (dlg) {
-                QMetaObject::invokeMethod(dlg.data(), "updateProgress", Qt::QueuedConnection,
-                                          Q_ARG(int, count), Q_ARG(int, total), Q_ARG(QString, QFileInfo(p).fileName()));
-            }
+            job.advance(1);
         }
 
-        if (dlg) {
-            QMetaObject::invokeMethod(dlg.data(), "close", Qt::QueuedConnection);
-            QMetaObject::invokeMethod(dlg.data(), "deleteLater", Qt::QueuedConnection);
-        }
+        job.finish();
 
         QMetaObject::invokeMethod(QCoreApplication::instance(), [weakThis]() {
             MetadataManager::instance().endInternalOperation();
@@ -120,35 +116,31 @@ bool PermanentDeleteService::executeTrashItems(const std::vector<std::pair<int, 
         return false;
     }
 
-    QPointer<BatchProgressDialog> dlg;
-    QMetaObject::invokeMethod(QCoreApplication::instance(), [&dlg]() {
-        dlg = new BatchProgressDialog("销毁回收站项目");
-        dlg->show();
-    }, Qt::BlockingQueuedConnection);
+    TaskJobOptions opts;
+    opts.title = "正在销毁回收站项目";
+    opts.total = static_cast<int>(trashItems.size());
+    opts.showCount = true;
+    opts.showEta = true;
+    opts.finishTextTemplate = "销毁回收站项目完成  数量：{total}  |  实际耗时：{elapsed}";
+
+    TaskProgressJob job = TaskProgressService::instance().createJobHandle(opts);
+    std::shared_ptr<CancellationToken> token = job.cancellationToken();
 
     QPointer<PermanentDeleteService> weakThis(this);
 
     MetadataManager::instance().beginInternalOperation();
 
-    (void)QtConcurrent::run([trashItems, dlg, weakThis]() {
-        int total = static_cast<int>(trashItems.size());
-        int count = 0;
-
+    (void)QtConcurrent::run([trashItems, token, weakThis, job = std::move(job)]() mutable {
         for (const auto& item : trashItems) {
+            if (token->isCanceled()) break;
+
             SecureFileEraser::shredFile(item.second);
             DiskTrashService::permanentlyDeleteDiskTrash(item.first, item.second);
             UndoManager::instance().removeCommandsForPath(item.second);
-            count++;
-            if (dlg) {
-                QMetaObject::invokeMethod(dlg.data(), "updateProgress", Qt::QueuedConnection,
-                                          Q_ARG(int, count), Q_ARG(int, total), Q_ARG(QString, QFileInfo(item.second).fileName()));
-            }
+            job.advance(1);
         }
 
-        if (dlg) {
-            QMetaObject::invokeMethod(dlg.data(), "close", Qt::QueuedConnection);
-            QMetaObject::invokeMethod(dlg.data(), "deleteLater", Qt::QueuedConnection);
-        }
+        job.finish();
 
         QMetaObject::invokeMethod(QCoreApplication::instance(), [weakThis]() {
             MetadataManager::instance().endInternalOperation();
@@ -173,21 +165,24 @@ bool PermanentDeleteService::executeEmptyTrash(QWidget* parentWidget, bool isSec
         return false;
     }
 
-    QPointer<BatchProgressDialog> dlg;
-    QMetaObject::invokeMethod(QCoreApplication::instance(), [&dlg]() {
-        dlg = new BatchProgressDialog("清空回收站");
-        dlg->show();
-    }, Qt::BlockingQueuedConnection);
+    TaskJobOptions opts;
+    opts.title = "正在清空回收站（深层物理抹除）";
+    opts.total = static_cast<int>(allTrash.size());
+    opts.showCount = true;
+    opts.showEta = true;
+    opts.finishTextTemplate = "清空回收站完成  数量：{total}  |  实际耗时：{elapsed}";
+
+    TaskProgressJob job = TaskProgressService::instance().createJobHandle(opts);
+    std::shared_ptr<CancellationToken> token = job.cancellationToken();
 
     QPointer<PermanentDeleteService> weakThis(this);
 
     MetadataManager::instance().beginInternalOperation();
 
-    (void)QtConcurrent::run([allTrash, isSecureShred, dlg, weakThis]() {
-        int total = static_cast<int>(allTrash.size());
-        int count = 0;
-
+    (void)QtConcurrent::run([allTrash, isSecureShred, token, weakThis, job = std::move(job)]() mutable {
         for (const auto& item : allTrash) {
+            if (token->isCanceled()) break;
+
             QString path = QString::fromStdWString(item.trashPath);
             if (isSecureShred) {
                 SecureFileEraser::shredFile(path);
@@ -195,17 +190,10 @@ bool PermanentDeleteService::executeEmptyTrash(QWidget* parentWidget, bool isSec
             DiskTrashService::permanentlyDeleteDiskTrash(item.id, path);
             UndoManager::instance().removeCommandsForPath(QString::fromStdWString(item.originalPath));
 
-            count++;
-            if (dlg) {
-                QMetaObject::invokeMethod(dlg.data(), "updateProgress", Qt::QueuedConnection,
-                                          Q_ARG(int, count), Q_ARG(int, total), Q_ARG(QString, QFileInfo(path).fileName()));
-            }
+            job.advance(1);
         }
 
-        if (dlg) {
-            QMetaObject::invokeMethod(dlg.data(), "close", Qt::QueuedConnection);
-            QMetaObject::invokeMethod(dlg.data(), "deleteLater", Qt::QueuedConnection);
-        }
+        job.finish();
 
         QMetaObject::invokeMethod(QCoreApplication::instance(), [weakThis]() {
             MetadataManager::instance().endInternalOperation();
