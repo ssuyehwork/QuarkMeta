@@ -528,7 +528,7 @@ QFrame#MenuSeparatorLine {
 }
 
 QLabel#FilterPanelTitleLabel {
-    color: #FFD700;
+    color: #888888;
 }
 
 /* 预设标签弹窗 PresetTagsDialog 无损收拢 */
@@ -1403,7 +1403,7 @@ QPushButton#ViewModeToolBtn:hover, QPushButton#ViewModeToolBtn:checked {
 }
 
 QLabel#NavPanelTitleLabel {
-    color: #2ecc71;
+    color: #888888;
     font-size: 13px;
     font-weight: bold;
     background: transparent;
@@ -1584,7 +1584,7 @@ QLabel#FilterTitleLabel {
 QLabel#MetaPanelTitleLabel {
     font-size: 12px;
     font-weight: bold;
-    color: #4a90e2;
+    color: #888888;
     background: transparent;
     border: none;
 }

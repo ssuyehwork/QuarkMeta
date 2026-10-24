@@ -141,7 +141,7 @@ void MetaPanel::initUi() {
     headerLayout->setSpacing(6);
     
     QLabel* iconLabel = new QLabel(header);
-    iconLabel->setPixmap(UiHelper::getIcon("all_data", QColor("#4a90e2"), 16).pixmap(16, 16));
+    iconLabel->setPixmap(UiHelper::getIcon("all_data", QColor("#888888"), 16).pixmap(16, 16));
     headerLayout->addWidget(iconLabel);
     
     QLabel* titleLabel = new QLabel("元数据属性", header);

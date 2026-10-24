@@ -28,7 +28,7 @@ void ContentHeaderWidget::initUi() {
 
     m_iconLabel = new QLabel(this);
     m_iconLabel->setFixedSize(18, 18);
-    m_iconLabel->setPixmap(UiHelper::getIcon("image_picture", QColor("#41F2F2"), 18).pixmap(18, 18));
+    m_iconLabel->setPixmap(UiHelper::getIcon("image_picture", QColor("#888888"), 18).pixmap(18, 18));
 
     m_titleLabel = new QLabel("内容", this);
     m_titleLabel->setObjectName("ContentHeaderTitle");
