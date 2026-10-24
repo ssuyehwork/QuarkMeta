@@ -44,13 +44,20 @@ static std::vector<ItemRecord> loadTrashItemsDirect() {
     return records;
 }
 
+#include "../Logger.h"
+
 void ContentDataLoader::loadDirectory(const QString& path, bool recursive) {
     if (!m_panel) return;
+    QElapsedTimer mainTimer;
+    mainTimer.start();
+    Logger::log(QString("[PerfTrace] loadDirectory START for: %1").arg(path));
+
     m_panel->restoreActiveView();
     MediaExtractorPipeline::instance().cancelAll();
     m_panel->incrementModelGeneration();
     m_panel->ensureSourceModelIsDiskModel();
     ThumbnailPipelineService::instance().cancelAll();
+    Logger::log(QString("[PerfTrace] loadDirectory cancelAll took %1ms").arg(mainTimer.elapsed()));
 
     m_panel->setLoading(true);
     int reqId = m_panel->incrementLoadRequestId();
@@ -92,16 +99,22 @@ void ContentDataLoader::loadDirectory(const QString& path, bool recursive) {
 
         QMetaObject::invokeMethod(QCoreApplication::instance(), [panelPtr, allItems, reqId]() {
             if (panelPtr && panelPtr->loadRequestId() == reqId) {
+                QElapsedTimer uiApplyTimer;
+                uiApplyTimer.start();
                 if (panelPtr->model()) {
                     panelPtr->model()->setRecords(allItems);
                 }
+                Logger::log(QString("[PerfTrace] model()->setRecords(%1 items) took %2ms").arg(allItems.size()).arg(uiApplyTimer.elapsed()));
+
+                QElapsedTimer sortFilterTimer;
+                sortFilterTimer.start();
                 panelPtr->applySort();
                 panelPtr->setLoading(false);
                 panelPtr->recalculateAndEmitStats();
                 panelPtr->applyFilters();
                 panelPtr->restoreSelections();
                 panelPtr->startVisibleTimer();
-
+                Logger::log(QString("[PerfTrace] applySort & applyFilters took %1ms").arg(sortFilterTimer.elapsed()));
             }
         }, Qt::QueuedConnection);
     });

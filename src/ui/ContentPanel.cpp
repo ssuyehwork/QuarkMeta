@@ -22,6 +22,7 @@
 #include "CardLayoutEngine.h"
 #include "UiHelper.h"
 #include "ToolTipOverlay.h"
+#include "Logger.h"
 
 #include "../core/AppConfig.h"
 #include "../core/CoreEngine.h"
@@ -759,7 +760,11 @@ void ContentPanel::activateIndex(const QModelIndex& index) {
     QString path = index.data(PathRole).toString();
     if (path.isEmpty()) return;
 
+    QElapsedTimer timer;
+    timer.start();
+
     if (QFileInfo(path).isDir()) {
+        Logger::log(QString("[PerfTrace] activateIndex (Folder double-click/open trigger): %1").arg(path));
         if (m_currentViewMode == ColumnView && m_columnView) {
             ColumnViewPane* pane = m_columnView->activePane();
             int paneIdx = pane ? pane->property("paneIndex").toInt() : 0;
@@ -770,6 +775,7 @@ void ContentPanel::activateIndex(const QModelIndex& index) {
     } else {
         emit fileActivated(path);
     }
+    Logger::log(QString("[PerfTrace] activateIndex took %1ms").arg(timer.elapsed()));
 }
 
 void ContentPanel::toggleFolderSectionCollapse() {

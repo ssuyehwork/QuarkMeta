@@ -3,14 +3,19 @@
 #include "DriveMetaDao.h"
 #include "MetadataManager.h"
 #include "ItemMetaMapper.h"
+#include "../ui/Logger.h"
 #include <QFileInfo> 
 #include <QDir>
+#include <QElapsedTimer>
 #include <unordered_map> 
 #include <memory> 
  
 namespace QuarkMeta { 
+
 void MetaCacheDecorator::decorate(std::vector<ItemRecord>& records) { 
     if (records.empty()) return; 
+    QElapsedTimer decTimer;
+    decTimer.start();
 
     // 预先批量拉取全局盘符元数据
     auto driveMetas = DriveMetaDao::getAllDriveMeta();
@@ -50,5 +55,6 @@ void MetaCacheDecorator::decorate(std::vector<ItemRecord>& records) {
             ItemMetaMapper::apply(it->second, itemRec);
         } 
     } 
+    Logger::log(QString("[PerfTrace] MetaCacheDecorator::decorate(%1 items) took %2ms").arg(records.size()).arg(decTimer.elapsed()));
 } 
 } 
