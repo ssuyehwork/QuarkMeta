@@ -108,6 +108,12 @@ void ToolTipOverlay::showToast(const QString& text, int timeout, const QColor& b
 
         int centerX = globalTopLeft.x() + (panelWidth - tipWidth) / 2;
         int topY = globalTopLeft.y() + 10;
+
+        QWidget* header = anchor->findChild<QWidget*>("ContentHeaderWidget");
+        if (header && header->isVisible()) {
+            topY = header->mapToGlobal(QPoint(0, header->height())).y() + 10;
+        }
+
         targetPos = QPoint(centerX, topY);
     } else {
         targetPos = QCursor::pos();
