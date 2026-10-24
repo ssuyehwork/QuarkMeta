@@ -9,6 +9,7 @@
 #include "../meta/MetadataManager.h"
 #include <QHeaderView>
 #include <QPainterPath>
+#include <QPainter>
 #include "FramelessFileDialog.h"
 #include "FramelessDialog.h"
 #include <QFileInfo>
