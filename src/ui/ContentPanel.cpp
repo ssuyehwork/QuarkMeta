@@ -768,6 +768,10 @@ void ContentPanel::activateIndex(const QModelIndex& index) {
             emit directorySelected(path);
         }
     } else {
+        // 🚀【防线一】：物理存在性校验，防止视图残余索引引发失效预览
+        if (!QFile::exists(path)) {
+            return;
+        }
         emit fileActivated(path);
     }
 }
@@ -1193,7 +1197,7 @@ void ContentPanel::setPendingSelectName(const QString& name, bool edit) {
 void ContentPanel::updateLayersButtonState() {
     if (!m_headerWidget) return;
     bool isComp = m_currentPath.isEmpty() || m_currentPath == "computer://";
-    m_headerWidget->setLayersEnabled(!isComp, isComp ? "“此电脑”不支持递归显示" : "显示子文件夹中的项目");
+    m_headerWidget->setLayersEnabled(!isComp, isComp ? "“此电脑”不支持递归显示" : "显示子文件夹中的项目（Ctrl + R）");
 }
 
 ContentPanel::DataSourceType ContentPanel::dataSourceType() const {
