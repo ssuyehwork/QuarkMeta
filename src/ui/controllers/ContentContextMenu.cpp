@@ -13,6 +13,7 @@
 #include "../BatchRenameDialog.h"
 #include "../BatchCreateDialog.h"
 #include "../FramelessDialog.h"
+#include "../QuickLookWindow.h"
 #include "../dialogs/FramelessInputDialog.h"
 #include "../dialogs/CreateFolderWithItemsDialog.h"
 #include "../../util/ShellHelper.h"
