@@ -369,6 +369,17 @@ QMap<QString, QStringList> QuarkMetaJsonStore::removeTagsBatch(const QStringList
     return resultMap;
 }
 
+QString QuarkMetaJsonStore::getMetaFileId(const std::wstring& folderPath) {
+    if (folderPath.empty()) return QString();
+    prefetchFolderJson(folderPath);
+
+    std::wstring normFolder = normalizeFolderPath(folderPath);
+    std::lock_guard<std::mutex> lock(m_storeMutex);
+
+    auto jsonPtr = getOrLoadFolderLocked(normFolder, folderPath);
+    return QString::fromStdString(jsonPtr->folder().metaFileId);
+}
+
 QuarkMetaJson::ItemMap QuarkMetaJsonStore::readFolderMeta(const std::wstring& folderPath) {
     if (folderPath.empty()) return {};
     prefetchFolderJson(folderPath);
