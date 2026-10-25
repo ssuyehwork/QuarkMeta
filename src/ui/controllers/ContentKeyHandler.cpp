@@ -70,11 +70,8 @@ bool ContentKeyHandler::executeRepeatLastOp(ContentPanel* panel, QAbstractItemVi
             cmd.targetPaths = selectedPaths;
             cmd.params["rating"] = LastOperationManager::instance().rating();
             CoreEngine::instance().executeCommand(cmd);
-                    if (panel) {
-                        for (const QString& p : selectedPaths) {
-                            panel->updateItemMetadata(p);
-                        }
-                        panel->recalculateAndEmitStats();
+            if (panel) {
+                panel->updateItemsMetadata(selectedPaths);
             }
             count = selectedPaths.size();
         }
@@ -92,11 +89,8 @@ bool ContentKeyHandler::executeRepeatLastOp(ContentPanel* panel, QAbstractItemVi
             cmd.targetPaths = selectedPaths;
             cmd.params["color"] = LastOperationManager::instance().color();
             CoreEngine::instance().executeCommand(cmd);
-                    if (panel) {
-                        for (const QString& p : selectedPaths) {
-                            panel->updateItemMetadata(p);
-                        }
-                        panel->recalculateAndEmitStats();
+            if (panel) {
+                panel->updateItemsMetadata(selectedPaths);
             }
             count = selectedPaths.size();
         }
@@ -316,10 +310,7 @@ bool ContentKeyHandler::handleMousePress(QObject* obj, QEvent* event) {
                     CoreEngine::instance().executeCommand(cmd);
 
                     // 刷新视图上受影响行的 UI 展现
-                    for (const QString& p : targetPaths) {
-                        m_panel->updateItemMetadata(p);
-                    }
-                    m_panel->recalculateAndEmitStats();
+                    m_panel->updateItemsMetadata(targetPaths);
                 }
             }
 
@@ -491,10 +482,7 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
             cmd.params["color"] = colorValue;
             CoreEngine::instance().executeCommand(cmd);
 
-            for (const QString& p : selectedPaths) {
-                m_panel->updateItemMetadata(p);
-            }
-            m_panel->recalculateAndEmitStats();
+            m_panel->updateItemsMetadata(selectedPaths);
         }
         return true;
     }

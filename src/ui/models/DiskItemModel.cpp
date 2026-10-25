@@ -351,70 +351,102 @@ void DiskItemModel::clear() {
 }
 
 void DiskItemModel::updateRecordMetadata(QString path) {
-    if (path.isEmpty()) return;
-    QString nPath = QDir::toNativeSeparators(path);
-    auto it = m_pathToIndex.find(nPath);
-    if (it == m_pathToIndex.end()) {
-        QString cleanP = QDir::cleanPath(path);
-        for (auto mapIt = m_pathToIndex.begin(); mapIt != m_pathToIndex.end(); ++mapIt) {
-            if (QString::compare(mapIt->first, nPath, Qt::CaseInsensitive) == 0 ||
-                QString::compare(QDir::cleanPath(mapIt->first), cleanP, Qt::CaseInsensitive) == 0) {
-                it = mapIt;
-                break;
+    updateRecordsMetadata(QStringList{path});
+}
+
+void DiskItemModel::updateRecordsMetadata(const QStringList& paths) {
+    if (m_allRecords.empty() || paths.isEmpty()) return;
+
+    std::vector<int> updatedRows;
+    updatedRows.reserve(paths.size());
+
+    for (const QString& path : paths) {
+        if (path.isEmpty()) continue;
+        QString nPath = QDir::toNativeSeparators(path);
+        auto it = m_pathToIndex.find(nPath);
+        if (it == m_pathToIndex.end()) {
+            QString cleanP = QDir::cleanPath(path);
+            for (auto mapIt = m_pathToIndex.begin(); mapIt != m_pathToIndex.end(); ++mapIt) {
+                if (QString::compare(mapIt->first, nPath, Qt::CaseInsensitive) == 0 ||
+                    QString::compare(QDir::cleanPath(mapIt->first), cleanP, Qt::CaseInsensitive) == 0) {
+                    it = mapIt;
+                    break;
+                }
+            }
+        }
+
+        if (it != m_pathToIndex.end()) {
+            int i = it->second;
+            if (i >= 0 && i < static_cast<int>(m_allRecords.size())) {
+                auto& record = m_allRecords[i];
+                QFileInfo fileInfo(nPath);
+
+                if (fileInfo.isRoot() || nPath.endsWith(":\\") || nPath.endsWith(":/") || (nPath.length() == 2 && nPath.endsWith(':'))) {
+                    std::wstring normWPath = MetadataManager::normalizePath(nPath.toStdWString());
+                    auto driveRec = DriveMetaDao::getDriveMeta(normWPath);
+                    record.rating = driveRec.rating;
+                    record.manualColor = QString::fromStdWString(driveRec.color);
+                    record.pinned = driveRec.pinned;
+                    record.note = QString::fromStdWString(driveRec.note);
+                    record.url = QString::fromStdWString(driveRec.url);
+                    updatedRows.push_back(i);
+                    continue;
+                }
+
+                RuntimeMeta meta = MetadataManager::instance().getMeta(nPath.toStdWString());
+                if (meta.rating == 0 && record.path != nPath) {
+                    RuntimeMeta fallbackMeta = MetadataManager::instance().getMeta(record.path.toStdWString());
+                    if (fallbackMeta.rating > 0) meta = fallbackMeta;
+                }
+
+                record.rating = meta.rating;
+                record.manualColor = QString::fromStdWString(meta.manualColor);
+                record.pinned = meta.pinned;
+                record.note = QString::fromStdWString(meta.note);
+                record.url = QString::fromStdWString(meta.url);
+                record.tags = meta.tags;
+                record.width = meta.width;
+                record.height = meta.height;
+                record.thumbStatus = meta.thumbStatus;
+                record.autoColor = QString::fromStdWString(meta.autoColor);
+
+                if (!record.isDir && ColorPaletteEngine::isGraphicsFile(record.suffix.toLower())) {
+                    if (record.thumbStatus == 1) {
+                        record.thumbnailState = ItemRecord::ThumbnailState::Failed;
+                    } else if (record.thumbnailState == ItemRecord::ThumbnailState::Failed) {
+                        record.thumbnailState = ItemRecord::ThumbnailState::Pending;
+                    }
+                }
+                record.added_at = meta.added_at;
+
+                record.palettes.clear();
+                for (const auto& pe : meta.palettes) {
+                    record.palettes.push_back({pe.color, pe.ratio});
+                }
+
+                updatedRows.push_back(i);
             }
         }
     }
 
-    if (it != m_pathToIndex.end()) {
-        int i = it->second;
-        if (i >= 0 && i < static_cast<int>(m_allRecords.size())) {
-            auto& record = m_allRecords[i];
-            QFileInfo fileInfo(nPath);
+    if (updatedRows.empty()) return;
 
-            if (fileInfo.isRoot() || nPath.endsWith(":\\") || nPath.endsWith(":/") || (nPath.length() == 2 && nPath.endsWith(':'))) {
-                std::wstring normWPath = MetadataManager::normalizePath(nPath.toStdWString());
-                auto driveRec = DriveMetaDao::getDriveMeta(normWPath);
-                record.rating = driveRec.rating;
-                record.manualColor = QString::fromStdWString(driveRec.color);
-                record.pinned = driveRec.pinned;
-                record.note = QString::fromStdWString(driveRec.note);
-                record.url = QString::fromStdWString(driveRec.url);
-                emit dataChanged(index(i, 0), index(i, columnCount() - 1));
-                return;
-            }
+    std::sort(updatedRows.begin(), updatedRows.end());
+    updatedRows.erase(std::unique(updatedRows.begin(), updatedRows.end()), updatedRows.end());
 
-            RuntimeMeta meta = MetadataManager::instance().getMeta(nPath.toStdWString());
-            if (meta.rating == 0 && record.path != nPath) {
-                RuntimeMeta fallbackMeta = MetadataManager::instance().getMeta(record.path.toStdWString());
-                if (fallbackMeta.rating > 0) meta = fallbackMeta;
-            }
+    const int lastCol = qMax(0, columnCount() - 1);
+    int start = updatedRows.front();
+    int prev = start;
 
-            record.rating = meta.rating;
-            record.manualColor = QString::fromStdWString(meta.manualColor);
-            record.pinned = meta.pinned;
-            record.note = QString::fromStdWString(meta.note);
-            record.url = QString::fromStdWString(meta.url);
-            record.tags = meta.tags;
-            record.width = meta.width;
-            record.height = meta.height;
-            record.thumbStatus = meta.thumbStatus;
-            record.autoColor = QString::fromStdWString(meta.autoColor);
-
-            if (!record.isDir && ColorPaletteEngine::isGraphicsFile(record.suffix.toLower())) {
-                if (record.thumbStatus == 1) {
-                    record.thumbnailState = ItemRecord::ThumbnailState::Failed;
-                } else if (record.thumbnailState == ItemRecord::ThumbnailState::Failed) {
-                    record.thumbnailState = ItemRecord::ThumbnailState::Pending;
-                }
-            }
-            record.added_at = meta.added_at;
-
-            record.palettes.clear();
-            for (const auto& pe : meta.palettes) {
-                record.palettes.push_back({pe.color, pe.ratio});
-            }
-
-            emit dataChanged(index(i, 0), index(i, columnCount() - 1), {Qt::DisplayRole, Qt::DecorationRole, RatingRole, ColorRole, HasThumbnailRole});
+    for (size_t i = 1; i <= updatedRows.size(); ++i) {
+        if (i < updatedRows.size() && updatedRows[i] == prev + 1) {
+            prev = updatedRows[i];
+            continue;
+        }
+        emit dataChanged(index(start, 0), index(prev, lastCol), {Qt::DisplayRole, Qt::DecorationRole, RatingRole, ColorRole, HasThumbnailRole});
+        if (i < updatedRows.size()) {
+            start = updatedRows[i];
+            prev = start;
         }
     }
 }

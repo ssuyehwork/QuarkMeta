@@ -942,12 +942,18 @@ void ContentPanel::refreshAll() {
 }
 
 void ContentPanel::updateItemMetadata(QString path) {
-    if (path.isEmpty()) return;
-    if (m_model) m_model->updateRecordMetadata(path);
+    updateItemsMetadata(QStringList{path});
+}
+
+void ContentPanel::updateItemsMetadata(const QStringList& paths) {
+    if (paths.isEmpty()) return;
+    if (m_model) m_model->updateRecordsMetadata(paths);
     if (m_gridView && m_gridView->viewport()) m_gridView->viewport()->update();
     if (m_treeView && m_treeView->viewport()) m_treeView->viewport()->update();
-    if (m_columnView) m_columnView->updateMetadataForPath(path);
-    recalculateAndEmitStats();
+    if (m_columnView && !paths.isEmpty()) m_columnView->updateMetadataForPath(paths.first());
+    if (m_statsDebounceTimer && !m_statsDebounceTimer->isActive()) {
+        m_statsDebounceTimer->start();
+    }
 }
 void ContentPanel::migrateModelCache(const QString& oldPath, const QString& newPath) { if (m_model) m_model->migrateCache(oldPath, newPath); }
 void ContentPanel::clearFolderCache(const QString& folderPath) { if (m_model) m_model->clearCacheForFolder(folderPath); }

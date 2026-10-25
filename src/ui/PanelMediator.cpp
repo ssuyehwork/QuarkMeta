@@ -976,10 +976,7 @@ void PanelMediator::setupConnections() {
             CoreEngine::instance().executeCommand(cmd);
             ContentPanel* target = activeOrRootPanel();
             if (target) {
-                for (const QString& p : safePaths) {
-                    target->updateItemMetadata(p);
-                }
-                target->recalculateAndEmitStats();
+                target->updateItemsMetadata(safePaths);
             }
         });
 
@@ -993,10 +990,7 @@ void PanelMediator::setupConnections() {
             CoreEngine::instance().executeCommand(cmd);
             ContentPanel* target = activeOrRootPanel();
             if (target) {
-                for (const QString& p : safePaths) {
-                    target->updateItemMetadata(p);
-                }
-                target->recalculateAndEmitStats();
+                target->updateItemsMetadata(safePaths);
             }
         });
 
@@ -1010,8 +1004,7 @@ void PanelMediator::setupConnections() {
             CoreEngine::instance().executeCommand(cmd);
             ContentPanel* target = activeOrRootPanel();
             if (target) {
-                target->updateItemMetadata(safePath);
-                target->recalculateAndEmitStats();
+                target->updateItemsMetadata({safePath});
             }
         });
 
@@ -1025,10 +1018,7 @@ void PanelMediator::setupConnections() {
                 CoreEngine::instance().executeCommand(cmd);
                 ContentPanel* target = activeOrRootPanel();
                 if (target) {
-                    for (const QString& p : safePaths) {
-                        target->updateItemMetadata(p);
-                    }
-                    target->recalculateAndEmitStats();
+                    target->updateItemsMetadata(safePaths);
                 }
             }
         });
@@ -1043,10 +1033,7 @@ void PanelMediator::setupConnections() {
                 CoreEngine::instance().executeCommand(cmd);
                 ContentPanel* target = activeOrRootPanel();
                 if (target) {
-                    for (const QString& p : safePaths) {
-                        target->updateItemMetadata(p);
-                    }
-                    target->recalculateAndEmitStats();
+                    target->updateItemsMetadata(safePaths);
                 }
             }
         });
@@ -1131,11 +1118,9 @@ void PanelMediator::setupConnections() {
                     }
                 }
             } else if (!event.paths.isEmpty()) {
-                for (const QString& p : event.paths) {
-                    activeOrRoot->updateItemMetadata(p);
-                    if (contentPanel && contentPanel != activeOrRoot) {
-                        contentPanel->updateItemMetadata(p);
-                    }
+                activeOrRoot->updateItemsMetadata(event.paths);
+                if (contentPanel && contentPanel != activeOrRoot) {
+                    contentPanel->updateItemsMetadata(event.paths);
                 }
             } else {
                 activeOrRoot->refreshAll();
