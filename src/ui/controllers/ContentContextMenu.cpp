@@ -35,6 +35,7 @@
 #include "../../crypto/EncryptionManager.h"
 #include "../../core/LastOperationManager.h"
 #include "../ShellIconManager.h"
+#include "../QuickLookWindow.h"
 
 #include <QMenu>
 #include <QWidgetAction>
