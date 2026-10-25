@@ -768,10 +768,6 @@ void ContentPanel::activateIndex(const QModelIndex& index) {
             emit directorySelected(path);
         }
     } else {
-        // 🚀【防线一】：物理存在性校验，防止视图残余索引引发失效预览
-        if (!QFile::exists(path)) {
-            return;
-        }
         emit fileActivated(path);
     }
 }
