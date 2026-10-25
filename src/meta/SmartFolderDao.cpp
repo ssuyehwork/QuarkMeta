@@ -63,7 +63,10 @@ QList<SmartFolderRecord> SmartFolderDao::getAllSmartFolders() {
     const char* sql = "SELECT id, name, match_mode, icon_key, color_hex, sort_order, rules_json "
                       "FROM smart_folders ORDER BY sort_order ASC, id ASC;";
     sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return list;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        DatabaseManager::logSqlError("SmartFolderDao::getAllSmartFolders prepare", db, sql);
+        return list;
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         SmartFolderRecord rec;
@@ -109,7 +112,10 @@ SmartFolderRecord SmartFolderDao::getSmartFolderById(int id) {
     const char* sql = "SELECT id, name, match_mode, icon_key, color_hex, sort_order, rules_json "
                       "FROM smart_folders WHERE id = ?;";
     sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return rec;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        DatabaseManager::logSqlError("SmartFolderDao::getSmartFolderById prepare", db, sql);
+        return rec;
+    }
 
     sqlite3_bind_int(stmt, 1, id);
     if (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -153,7 +159,10 @@ int SmartFolderDao::addSmartFolder(const SmartFolderRecord& rec) {
                       "VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM smart_folders), ?, ?);";
 
     sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return 0;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        DatabaseManager::logSqlError("SmartFolderDao::addSmartFolder prepare", db, sql);
+        return 0;
+    }
 
     QJsonArray rulesArray;
     for (const auto& rule : rec.rules) {
@@ -191,7 +200,10 @@ bool SmartFolderDao::updateSmartFolder(const SmartFolderRecord& rec) {
 
     const char* sql = "UPDATE smart_folders SET name = ?, match_mode = ?, icon_key = ?, color_hex = ?, rules_json = ? WHERE id = ?;";
     sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return false;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        DatabaseManager::logSqlError("SmartFolderDao::updateSmartFolder prepare", db, sql);
+        return false;
+    }
 
     QJsonArray rulesArray;
     for (const auto& rule : rec.rules) {
@@ -328,6 +340,8 @@ int SmartFolderDao::countMatchingItems(const SmartFolderRecord& rec) {
             count = sqlite3_column_int(stmt, 0);
         }
         sqlite3_finalize(stmt);
+    } else {
+        DatabaseManager::logSqlError("SmartFolderDao::countMatchingItems prepare", db, sql);
     }
     return count;
 }
@@ -356,6 +370,8 @@ QStringList SmartFolderDao::getMatchingPaths(const SmartFolderRecord& rec) {
             }
         }
         sqlite3_finalize(stmt);
+    } else {
+        DatabaseManager::logSqlError("SmartFolderDao::getMatchingPaths prepare", db, sql);
     }
     return paths;
 }
@@ -368,7 +384,10 @@ bool SmartFolderDao::removeSmartFolderById(int id) {
 
     const char* sql = "DELETE FROM smart_folders WHERE id = ?;";
     sqlite3_stmt* stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return false;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        DatabaseManager::logSqlError("SmartFolderDao::removeSmartFolderById prepare", db, sql);
+        return false;
+    }
 
     sqlite3_bind_int(stmt, 1, id);
     bool success = (sqlite3_step(stmt) == SQLITE_DONE);
