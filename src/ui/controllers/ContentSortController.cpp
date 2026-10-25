@@ -1,6 +1,7 @@
 #include "ContentSortController.h"
 #include "../models/FilterProxyModel.h"
 #include "../../core/AppConfig.h"
+#include "../../meta/MetadataManager.h"
 
 namespace QuarkMeta {
 
