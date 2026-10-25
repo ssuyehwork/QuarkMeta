@@ -54,8 +54,9 @@ void PresetTagService::processAsyncPresetTagsUpdate(int categoryId, const QStrin
     paths.removeDuplicates();
     if (paths.isEmpty()) {
         if (onTraceFinished) {
-            QMetaObject::invokeMethod(qApp, [onTraceFinished]() {
-                onTraceFinished(newlyAddedTags.size(), 0);
+            int newlyAddedCount = newlyAddedTags.size();
+            QMetaObject::invokeMethod(qApp, [onTraceFinished, newlyAddedCount]() {
+                onTraceFinished(newlyAddedCount, 0);
             }, Qt::QueuedConnection);
         }
         return;

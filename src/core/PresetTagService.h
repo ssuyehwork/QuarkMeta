@@ -12,10 +12,10 @@ public:
 
     bool saveLibraryPresetTags(int categoryId, const QStringList& newTags, const QStringList& initialTags, std::function<void(int tagCount, int itemCount)> onTraceFinished = nullptr);
 
+    int applyPresetTagsForDroppedItems(int categoryId, const QStringList& paths);
+
 private:
     void processAsyncPresetTagsUpdate(int categoryId, const QStringList& newTags, const QStringList& newlyAddedTags, std::function<void(int tagCount, int itemCount)> onTraceFinished);
-
-    int applyPresetTagsForDroppedItems(int categoryId, const QStringList& paths);
 
 private:
     PresetTagService() = default;
