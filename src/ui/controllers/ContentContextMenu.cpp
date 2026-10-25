@@ -368,9 +368,9 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                     if (selectedPaths.isEmpty()) return;
 
                     // 🚀【防线二】：若 QuickLook 当前正在预览被移动的文件，必须立即同步关闭预览
-                    QString currentPreview = QuickLookWindow::instance().currentPath();
+                    QString currentPreview = QuarkMeta::QuickLookWindow::instance().currentPath();
                     if (!currentPreview.isEmpty() && selectedPaths.contains(currentPreview)) {
-                        QuickLookWindow::instance().closePreview();
+                        QuarkMeta::QuickLookWindow::instance().closePreview();
                     }
 
                     LastOperationManager::instance().recordMoveToFolder(targetDir);
