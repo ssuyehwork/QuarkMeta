@@ -1,6 +1,7 @@
 #include "PresetTagService.h"
 #include "../meta/LibraryDao.h"
 #include "CoreEngine.h"
+#include "TaskProgressService.h"
 #include <QSet>
 #include <QtConcurrent>
 #include <QApplication>
