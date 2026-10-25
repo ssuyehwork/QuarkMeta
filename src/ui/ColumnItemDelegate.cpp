@@ -1,10 +1,10 @@
 #include "ColumnItemDelegate.h"
+#include "ColumnViewPane.h"
 #include "../core/ModelContract.h"
 #include "UiHelper.h"
 #include "StyleLibrary.h"
 #include "CardPainterHelper.h"
 #include "ViewDragDropHelper.h"
-#include "../core/ModelContract.h"
 
 #include <QPainter>
 #include <QPainterPath>
