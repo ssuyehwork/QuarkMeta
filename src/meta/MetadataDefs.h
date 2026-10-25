@@ -54,9 +54,9 @@ struct FolderMeta {
  * @brief 单个条目（文件或子文件夹）的元数据
  */
 struct ItemMeta {
+    std::string fileId; // 128-bit Item File ID (UUID / Base36 string)
     std::wstring type; // "file" | "folder"
     int rating;
-    std::wstring color;
     std::vector<std::wstring> tags;
     bool pinned;
     std::wstring note;
