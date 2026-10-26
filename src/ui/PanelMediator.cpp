@@ -42,6 +42,12 @@
 
 namespace QuarkMeta {
 
+static PanelMediator* s_panelMediatorInstance = nullptr;
+
+PanelMediator* PanelMediator::instance() {
+    return s_panelMediatorInstance;
+}
+
 PanelMediator::PanelMediator(const PanelMediatorComponents& components, QObject* parent)
     : QObject(parent),
       m_navPanel(components.navPanel),
@@ -55,6 +61,13 @@ PanelMediator::PanelMediator(const PanelMediatorComponents& components, QObject*
       m_titleBar(components.titleBar),
       m_layoutManager(components.layoutManager),
       m_shortcutController(components.shortcutController) {
+    s_panelMediatorInstance = this;
+}
+
+PanelMediator::~PanelMediator() {
+    if (s_panelMediatorInstance == this) {
+        s_panelMediatorInstance = nullptr;
+    }
 }
 
 void PanelMediator::setupConnections() {
@@ -714,26 +727,62 @@ void PanelMediator::setupConnections() {
 
             if (panel->model()) {
                 connect(panel->model(), &QAbstractItemModel::dataChanged, metaPanel,
-                        [this, panel, updateMetaPanelFromPanel](const QModelIndex& topLeft, const QModelIndex&, const QVector<int>& roles) {
-                    if (m_activeContentPanel != panel && (m_activeContentPanel || panel != m_contentPanel.data())) {
-                        return;
-                    }
+                        [this, panel, updateMetaPanelFromPanel](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
                     if (!roles.isEmpty() && !roles.contains(RatingRole) && !roles.contains(ColorRole) && !roles.contains(TagsRole) && !roles.contains(NoteRole) && !roles.contains(UrlRole)) {
                         return;
                     }
 
-                    QString changedPath = QDir::cleanPath(topLeft.data(PathRole).toString());
-                    QStringList selPaths = panel->getSelectedPaths();
-                    bool containsPath = false;
-                    for (const QString& sp : selPaths) {
-                        if (QString::compare(QDir::cleanPath(sp), changedPath, Qt::CaseInsensitive) == 0) {
-                            containsPath = true;
-                            break;
+                    auto& debounceState = m_panelMetaDebounceMap[panel];
+                    if (!debounceState.timer) {
+                        debounceState.timer = new QTimer(panel);
+                        debounceState.timer->setSingleShot(true);
+                        connect(panel, &QObject::destroyed, this, [this, panel]() {
+                            m_panelMetaDebounceMap.remove(panel);
+                        });
+                        connect(debounceState.timer, &QTimer::timeout, this, [this, panel, updateMetaPanelFromPanel]() {
+                            auto it = m_panelMetaDebounceMap.find(panel);
+                            if (it == m_panelMetaDebounceMap.end()) return;
+
+                            ContentPanel* activeP = m_activeContentPanel ? m_activeContentPanel.data() : m_contentPanel.data();
+                            if (activeP == panel) {
+                                QSet<QString> selSet;
+                                for (const QString& sp : panel->getSelectedPaths()) {
+                                    selSet.insert(QDir::cleanPath(sp).toLower());
+                                }
+
+                                bool hasOverlap = selSet.isEmpty();
+                                if (!hasOverlap) {
+                                    for (const QString& cp : it->pendingCleanPaths) {
+                                        if (selSet.contains(cp)) {
+                                            hasOverlap = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (hasOverlap) {
+                                    updateMetaPanelFromPanel(panel);
+                                }
+                            }
+                            it->pendingCleanPaths.clear();
+                        });
+                    }
+
+                    QAbstractItemModel* model = panel->model();
+                    int startRow = topLeft.row();
+                    int endRow = bottomRight.row();
+                    for (int r = startRow; r <= endRow; ++r) {
+                        QModelIndex idx = model->index(r, 0, topLeft.parent());
+                        if (idx.isValid()) {
+                            QString path = idx.data(PathRole).toString();
+                            if (!path.isEmpty()) {
+                                debounceState.pendingCleanPaths.insert(QDir::cleanPath(path).toLower());
+                            }
                         }
                     }
 
-                    if (containsPath || selPaths.isEmpty()) {
-                        updateMetaPanelFromPanel(panel);
+                    if (!debounceState.timer->isActive()) {
+                        debounceState.timer->start(30);
                     }
                 });
             }

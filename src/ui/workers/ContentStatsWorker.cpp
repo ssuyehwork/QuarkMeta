@@ -66,11 +66,18 @@ ScanStats ContentStatsWorker::calculateStats(const std::vector<ItemRecord>& reco
 
 void ContentStatsWorker::processAsync(std::vector<ItemRecord> records, bool showHidden) {
     uint64_t reqId = ++m_currentReqId;
+    m_pendingCount++;
 
     if (records.empty()) {
-        m_lastSignature.clear();
-        m_cachedDuplicatePaths.clear();
+        {
+            std::lock_guard<std::mutex> lock(m_cacheMutex);
+            m_lastSignature.clear();
+            m_cachedDuplicatePaths.clear();
+        }
         emit statsReady(ScanStats());
+        if (--m_pendingCount == 0) {
+            emit settled();
+        }
         return;
     }
 
@@ -85,10 +92,14 @@ void ContentStatsWorker::processAsync(std::vector<ItemRecord> records, bool show
         }
     }
 
-    bool signatureMatches = (!currentSignature.isEmpty() && currentSignature == m_lastSignature);
+    bool signatureMatches = false;
     QSet<QString> cachedDuplicates;
-    if (signatureMatches) {
-        cachedDuplicates = m_cachedDuplicatePaths;
+    {
+        std::lock_guard<std::mutex> lock(m_cacheMutex);
+        if (!currentSignature.isEmpty() && currentSignature == m_lastSignature) {
+            signatureMatches = true;
+            cachedDuplicates = m_cachedDuplicatePaths;
+        }
     }
 
     QPointer<ContentStatsWorker> weakThis(this);
@@ -104,12 +115,18 @@ void ContentStatsWorker::processAsync(std::vector<ItemRecord> records, bool show
         }
 
         QMetaObject::invokeMethod(QCoreApplication::instance(), [weakThis, stats = std::move(stats), reqId, currentSignature, signatureMatches]() mutable {
-            if (weakThis && weakThis->m_currentReqId == reqId) {
-                if (!signatureMatches) {
-                    weakThis->m_lastSignature = currentSignature;
-                    weakThis->m_cachedDuplicatePaths = stats.duplicatePaths;
+            if (weakThis) {
+                if (weakThis->m_currentReqId == reqId) {
+                    if (!signatureMatches) {
+                        std::lock_guard<std::mutex> lock(weakThis->m_cacheMutex);
+                        weakThis->m_lastSignature = currentSignature;
+                        weakThis->m_cachedDuplicatePaths = stats.duplicatePaths;
+                    }
+                    emit weakThis->statsReady(stats);
                 }
-                emit weakThis->statsReady(stats);
+                if (--weakThis->m_pendingCount == 0) {
+                    emit weakThis->settled();
+                }
             }
         });
     });

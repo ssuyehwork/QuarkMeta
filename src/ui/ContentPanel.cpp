@@ -1001,6 +1001,30 @@ void ContentPanel::updateStatusBarStats(int cachedSelectedCount) {
     emit statusBarMessageReady(statusText);
 }
 
+void ContentPanel::runWhenStatsSettled(std::function<void()> fn) {
+    if (!fn) return;
+    bool isTimerActive = (m_statsDebounceTimer && m_statsDebounceTimer->isActive());
+    bool isWorkerSettled = (m_statsWorker && m_statsWorker->isSettled());
+
+    if (!isTimerActive && isWorkerSettled) {
+        fn();
+        return;
+    }
+
+    if (!m_statsWorker) {
+        fn();
+        return;
+    }
+
+    auto conn = std::make_shared<QMetaObject::Connection>();
+    *conn = connect(m_statsWorker, &ContentStatsWorker::settled, this, [fn, conn]() {
+        if (*conn) {
+            QObject::disconnect(*conn);
+        }
+        fn();
+    });
+}
+
 void ContentPanel::recalculateAndEmitStats() {
     std::vector<ItemRecord> records;
     if (m_currentViewMode == ColumnView && m_columnView) {
