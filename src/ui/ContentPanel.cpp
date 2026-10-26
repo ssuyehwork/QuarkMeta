@@ -215,7 +215,7 @@ void ContentPanel::initUi() {
     connect(m_columnView, &ColumnViewWidget::selectionChanged, this, &ContentPanel::onSelectionChanged);
     connect(m_columnView, &ColumnViewWidget::activeColumnRecordsChanged, this, [this](const std::vector<QuarkMeta::ItemRecord>& records) {
         if (m_statsWorker && !records.empty()) {
-            m_statsWorker->processAsync(records, m_currentFilter.showHidden);
+            m_statsWorker->processAsync(std::move(records), m_currentFilter.showHidden);
         }
     });
 
@@ -946,8 +946,8 @@ void ContentPanel::updateItemMetadata(QString path) {
     if (m_model) m_model->updateRecordMetadata(path);
     if (m_gridView && m_gridView->viewport()) m_gridView->viewport()->update();
     if (m_treeView && m_treeView->viewport()) m_treeView->viewport()->update();
-    if (m_columnView) m_columnView->updateMetadataForPath(path);
-    recalculateAndEmitStats();
+    if (m_currentViewMode == ColumnView && m_columnView) m_columnView->updateMetadataForPath(path);
+    if (m_statsDebounceTimer) m_statsDebounceTimer->start();
 }
 
 void ContentPanel::updateItemsMetadata(const QStringList& paths) {
@@ -955,10 +955,10 @@ void ContentPanel::updateItemsMetadata(const QStringList& paths) {
     if (m_model) m_model->updateRecordMetadataBatch(paths);
     if (m_gridView && m_gridView->viewport()) m_gridView->viewport()->update();
     if (m_treeView && m_treeView->viewport()) m_treeView->viewport()->update();
-    if (m_columnView) {
+    if (m_currentViewMode == ColumnView && m_columnView) {
         for (const QString& p : paths) m_columnView->updateMetadataForPath(p);
     }
-    recalculateAndEmitStats();
+    if (m_statsDebounceTimer) m_statsDebounceTimer->start();
 }
 void ContentPanel::migrateModelCache(const QString& oldPath, const QString& newPath) { if (m_model) m_model->migrateCache(oldPath, newPath); }
 void ContentPanel::clearFolderCache(const QString& folderPath) { if (m_model) m_model->clearCacheForFolder(folderPath); }
@@ -1016,7 +1016,7 @@ void ContentPanel::recalculateAndEmitStats() {
     if (records.empty()) return;
 
     if (m_statsWorker) {
-        m_statsWorker->processAsync(records, m_currentFilter.showHidden);
+        m_statsWorker->processAsync(std::move(records), m_currentFilter.showHidden);
     }
 }
 
