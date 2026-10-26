@@ -990,10 +990,7 @@ void PanelMediator::setupConnections() {
             CoreEngine::instance().executeCommand(cmd);
             ContentPanel* target = activeOrRootPanel();
             if (target) {
-                for (const QString& p : safePaths) {
-                    target->updateItemMetadata(p);
-                }
-                target->recalculateAndEmitStats();
+                target->updateItemsMetadata(safePaths);
             }
         });
 
@@ -1008,7 +1005,6 @@ void PanelMediator::setupConnections() {
             ContentPanel* target = activeOrRootPanel();
             if (target) {
                 target->updateItemMetadata(safePath);
-                target->recalculateAndEmitStats();
             }
         });
 
@@ -1019,10 +1015,7 @@ void PanelMediator::setupConnections() {
                     CoreEngine::instance().addTagsToPathsAsync(safePaths, newTags, [activeOrRootPanel, safePaths](int) {
                         ContentPanel* target = activeOrRootPanel();
                         if (target) {
-                            for (const QString& p : safePaths) {
-                                target->updateItemMetadata(p);
-                            }
-                            target->recalculateAndEmitStats();
+                            target->updateItemsMetadata(safePaths);
                         }
                     });
                 } else {
@@ -1033,10 +1026,7 @@ void PanelMediator::setupConnections() {
                     CoreEngine::instance().executeCommand(cmd);
                     ContentPanel* target = activeOrRootPanel();
                     if (target) {
-                        for (const QString& p : safePaths) {
-                            target->updateItemMetadata(p);
-                        }
-                        target->recalculateAndEmitStats();
+                        target->updateItemsMetadata(safePaths);
                     }
                 }
             }
@@ -1052,10 +1042,7 @@ void PanelMediator::setupConnections() {
                 CoreEngine::instance().executeCommand(cmd);
                 ContentPanel* target = activeOrRootPanel();
                 if (target) {
-                    for (const QString& p : safePaths) {
-                        target->updateItemMetadata(p);
-                    }
-                    target->recalculateAndEmitStats();
+                    target->updateItemsMetadata(safePaths);
                 }
             }
         });

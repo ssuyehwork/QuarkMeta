@@ -147,7 +147,7 @@ private:
     void notifyListeners(const ChangeEvent& event);
 
     QTimer* m_flushTimer = nullptr;
-    static constexpr int kFlushDebounceMs = 50; // 50ms 防抖
+    static constexpr int kFlushDebounceMs = 500; // 500ms 滑动 Write-Behind 防抖
 };
 
 } // namespace QuarkMeta

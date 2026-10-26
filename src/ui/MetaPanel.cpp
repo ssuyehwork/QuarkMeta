@@ -572,6 +572,10 @@ void MetaPanel::setDefaultIconPreview(const QIcon& icon) {
 }
 
 void MetaPanel::setSelectedPaths(const QStringList& paths) {
+    if (m_tagRemoveDebounceTimer && m_tagRemoveDebounceTimer->isActive()) {
+        m_tagRemoveDebounceTimer->stop();
+        flushPendingTagDeletions();
+    }
     QElapsedTimer timer;
     timer.start();
     m_selectedPaths = paths;
@@ -692,6 +696,13 @@ void MetaPanel::addInfoRow(QVBoxLayout* layout, const QString& label, QLabel*& v
 void MetaPanel::onTagDeleted(const QString& text) {
     if (m_selectedPaths.isEmpty() || m_isReadOnlyMode || text.isEmpty()) return;
 
+    if (!m_tagRemovalTargetSnapshot.isEmpty() && m_tagRemovalTargetSnapshot != m_selectedPaths) {
+        if (m_tagRemoveDebounceTimer && m_tagRemoveDebounceTimer->isActive()) {
+            m_tagRemoveDebounceTimer->stop();
+        }
+        flushPendingTagDeletions();
+    }
+    m_tagRemovalTargetSnapshot = m_selectedPaths;
     m_pendingRemovedTags.insert(text);
 
     QStringList remainingTags = m_currentTagsSet.values();
@@ -707,12 +718,14 @@ void MetaPanel::onTagDeleted(const QString& text) {
 }
 
 void MetaPanel::flushPendingTagDeletions() {
-    if (m_pendingRemovedTags.isEmpty() || m_selectedPaths.isEmpty()) return;
+    if (m_pendingRemovedTags.isEmpty() || m_tagRemovalTargetSnapshot.isEmpty()) return;
 
     QStringList tagsToRemove = m_pendingRemovedTags.values();
+    QStringList targetPaths = m_tagRemovalTargetSnapshot;
     m_pendingRemovedTags.clear();
+    m_tagRemovalTargetSnapshot.clear();
 
-    emit tagsRemoveRequested(m_selectedPaths, tagsToRemove);
+    emit tagsRemoveRequested(targetPaths, tagsToRemove);
 }
 
 void MetaPanel::resizeEvent(QResizeEvent* event) {

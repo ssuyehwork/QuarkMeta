@@ -443,7 +443,7 @@ void QuarkMetaJsonStore::markDirtyLocked(const std::wstring& normFolder) {
 void QuarkMetaJsonStore::scheduleFlush() {
     QMetaObject::invokeMethod(this, [this]() {
         if (m_flushTimer) {
-            m_flushTimer->start(500);
+            m_flushTimer->start(kFlushDebounceMs);
         }
     }, Qt::QueuedConnection);
 }

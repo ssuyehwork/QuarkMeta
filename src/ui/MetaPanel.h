@@ -138,6 +138,7 @@ private:
     bool m_isReadOnlyMode = false;
 
     QSet<QString> m_pendingRemovedTags;
+    QStringList m_tagRemovalTargetSnapshot;
     QTimer* m_tagRemoveDebounceTimer = nullptr;
 
 private slots:
