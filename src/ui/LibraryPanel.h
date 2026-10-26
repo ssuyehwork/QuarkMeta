@@ -85,7 +85,6 @@ private slots:
 private:
     void initUi();
     void createAndEditCategory(int parentId = 0);
-    void filterTreeNodes(const QString& keyword);
     QStandardItem* findItemByNodeId(QStandardItem* parent, int nodeId);
     void toggleSectionByNodeId(int nodeId);
 
