@@ -1,8 +1,12 @@
 #include "CoreEngine.h"
 #include "LastOperationManager.h"
 #include "../meta/MetadataManager.h"
+#include "../meta/QuarkMetaJsonStore.h"
 #include "../meta/FavoriteDao.h"
 #include "../meta/FavoriteService.h"
+#include "../ui/PanelMediator.h"
+#include "../ui/ContentPanel.h"
+#include "../ui/ToolTipOverlay.h"
 #include "TagLexiconService.h"
 #include "TaskProgressService.h"
 #include <QCoreApplication>
