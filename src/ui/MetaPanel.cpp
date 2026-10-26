@@ -690,13 +690,32 @@ void MetaPanel::addInfoRow(QVBoxLayout* layout, const QString& label, QLabel*& v
 }
 
 void MetaPanel::onTagDeleted(const QString& text) {
-    if (m_selectedPaths.isEmpty() || m_isReadOnlyMode) return;
+    if (m_selectedPaths.isEmpty() || m_isReadOnlyMode || text.isEmpty()) return;
 
-    emit tagRemoveRequested(m_selectedPaths, text);
+    m_pendingRemovedTags.insert(text);
 
     QStringList remainingTags = m_currentTagsSet.values();
     remainingTags.removeAll(text);
     setTags(remainingTags);
+
+    if (!m_tagRemoveDebounceTimer) {
+        m_tagRemoveDebounceTimer = new QTimer(this);
+        m_tagRemoveDebounceTimer->setSingleShot(true);
+        connect(m_tagRemoveDebounceTimer, &QTimer::timeout, this, &MetaPanel::flushPendingTagDeletions);
+    }
+    m_tagRemoveDebounceTimer->start(500);
+}
+
+void MetaPanel::flushPendingTagDeletions() {
+    if (m_pendingRemovedTags.isEmpty() || m_selectedPaths.isEmpty()) return;
+
+    QStringList tagsToRemove = m_pendingRemovedTags.values();
+    m_pendingRemovedTags.clear();
+
+    emit tagsRemoveRequested(m_selectedPaths, tagsToRemove);
+    for (const QString& tag : tagsToRemove) {
+        emit tagRemoveRequested(m_selectedPaths, tag);
+    }
 }
 
 void MetaPanel::resizeEvent(QResizeEvent* event) {

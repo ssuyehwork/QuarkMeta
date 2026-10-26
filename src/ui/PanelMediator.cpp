@@ -976,10 +976,7 @@ void PanelMediator::setupConnections() {
             CoreEngine::instance().executeCommand(cmd);
             ContentPanel* target = activeOrRootPanel();
             if (target) {
-                for (const QString& p : safePaths) {
-                    target->updateItemMetadata(p);
-                }
-                target->recalculateAndEmitStats();
+                target->updateItemsMetadata(safePaths);
             }
         });
 

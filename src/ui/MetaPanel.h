@@ -137,8 +137,12 @@ private:
     bool m_isUserEditing = false;
     bool m_isReadOnlyMode = false;
 
+    QSet<QString> m_pendingRemovedTags;
+    QTimer* m_tagRemoveDebounceTimer = nullptr;
+
 private slots:
     void onTagDeleted(const QString& text);
+    void flushPendingTagDeletions();
     void openTagSelectorOverlay(QWidget* targetAnchor);
     void setAsPrimaryColor(const QColor& color);
 };
