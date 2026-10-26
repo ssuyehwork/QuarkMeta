@@ -1015,31 +1015,43 @@ void PanelMediator::setupConnections() {
             }
         });
 
-        connect(metaPanel, &MetaPanel::tagAddRequested, this, [activeOrRootPanel](const QStringList& paths, const QString& newTag) {
-            if (!paths.isEmpty() && !newTag.isEmpty()) {
+        connect(metaPanel, &MetaPanel::tagsAddRequested, this, [activeOrRootPanel](const QStringList& paths, const QStringList& newTags) {
+            if (!paths.isEmpty() && !newTags.isEmpty()) {
                 QStringList safePaths = paths;
-                AppCommand cmd;
-                cmd.type = AppCommandType::AddTag;
-                cmd.targetPaths = safePaths;
-                cmd.params["tag"] = newTag;
-                CoreEngine::instance().executeCommand(cmd);
-                ContentPanel* target = activeOrRootPanel();
-                if (target) {
-                    for (const QString& p : safePaths) {
-                        target->updateItemMetadata(p);
+                if (safePaths.size() > 50) {
+                    CoreEngine::instance().addTagsToPathsAsync(safePaths, newTags, [activeOrRootPanel, safePaths](int) {
+                        ContentPanel* target = activeOrRootPanel();
+                        if (target) {
+                            for (const QString& p : safePaths) {
+                                target->updateItemMetadata(p);
+                            }
+                            target->recalculateAndEmitStats();
+                        }
+                    });
+                } else {
+                    AppCommand cmd;
+                    cmd.type = AppCommandType::AddTag;
+                    cmd.targetPaths = safePaths;
+                    cmd.params["tags"] = newTags;
+                    CoreEngine::instance().executeCommand(cmd);
+                    ContentPanel* target = activeOrRootPanel();
+                    if (target) {
+                        for (const QString& p : safePaths) {
+                            target->updateItemMetadata(p);
+                        }
+                        target->recalculateAndEmitStats();
                     }
-                    target->recalculateAndEmitStats();
                 }
             }
         });
 
-        connect(metaPanel, &MetaPanel::tagRemoveRequested, this, [activeOrRootPanel](const QStringList& paths, const QString& removeTag) {
-            if (!paths.isEmpty() && !removeTag.isEmpty()) {
+        connect(metaPanel, &MetaPanel::tagsRemoveRequested, this, [activeOrRootPanel](const QStringList& paths, const QStringList& removeTags) {
+            if (!paths.isEmpty() && !removeTags.isEmpty()) {
                 QStringList safePaths = paths;
                 AppCommand cmd;
                 cmd.type = AppCommandType::RemoveTag;
                 cmd.targetPaths = safePaths;
-                cmd.params["tag"] = removeTag;
+                cmd.params["tags"] = removeTags;
                 CoreEngine::instance().executeCommand(cmd);
                 ContentPanel* target = activeOrRootPanel();
                 if (target) {

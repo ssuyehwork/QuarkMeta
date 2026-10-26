@@ -438,15 +438,28 @@ void MetaPanel::openTagSelectorOverlay(QWidget* targetAnchor) {
 
         QSet<QString> finalSet(finalSelectedTags.begin(), finalSelectedTags.end());
 
-        // 新增标签批次
+        QStringList addedTags;
         for (const QString& t : finalSet) {
             if (!appliedTagsSet->contains(t)) {
+                addedTags.append(t);
+            }
+        }
+        QStringList removedTags;
+        for (const QString& t : *appliedTagsSet) {
+            if (!finalSet.contains(t)) {
+                removedTags.append(t);
+            }
+        }
+
+        if (!addedTags.isEmpty()) {
+            emit tagsAddRequested(targetPathsSnapshot, addedTags);
+            for (const QString& t : addedTags) {
                 emit tagAddRequested(targetPathsSnapshot, t);
             }
         }
-        // 移除标签批次
-        for (const QString& t : *appliedTagsSet) {
-            if (!finalSet.contains(t)) {
+        if (!removedTags.isEmpty()) {
+            emit tagsRemoveRequested(targetPathsSnapshot, removedTags);
+            for (const QString& t : removedTags) {
                 emit tagRemoveRequested(targetPathsSnapshot, t);
             }
         }
