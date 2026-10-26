@@ -454,13 +454,13 @@ void QuarkMetaJsonStore::setRatingBatch(const QStringList& paths, int rating) {
     for (const QString& path : paths) {
         if (path.isEmpty()) continue;
         QFileInfo fi(path);
-        std::wstring normFolder = QuarkMetaJson::normalizePath(fi.absolutePath().toStdWString());
+        std::wstring normFolder = normalizeFolderPath(fi.absolutePath().toStdWString());
         folderGroups[normFolder].append(fi.fileName());
     }
 
     for (auto it = folderGroups.begin(); it != folderGroups.end(); ++it) {
         std::wstring normFolder = it.key();
-        QString folderPath = QString::fromStdWString(normFolder);
+        std::wstring folderPath = normFolder;
         const QStringList& fileNames = it.value();
 
         std::lock_guard<std::mutex> lock(m_storeMutex);
@@ -469,7 +469,7 @@ void QuarkMetaJsonStore::setRatingBatch(const QStringList& paths, int rating) {
 
         auto& items = jsonPtr->items();
         for (const QString& fileName : fileNames) {
-            std::wstring key = fileName.toStdWString();
+            std::wstring key = QuarkMetaJson::normalizeItemKey(fileName.toStdWString());
             items[key].rating = rating;
         }
         markDirtyLocked(normFolder);
@@ -487,13 +487,13 @@ void QuarkMetaJsonStore::setColorBatch(const QStringList& paths, const QString& 
     for (const QString& path : paths) {
         if (path.isEmpty()) continue;
         QFileInfo fi(path);
-        std::wstring normFolder = QuarkMetaJson::normalizePath(fi.absolutePath().toStdWString());
+        std::wstring normFolder = normalizeFolderPath(fi.absolutePath().toStdWString());
         folderGroups[normFolder].append(fi.fileName());
     }
 
     for (auto it = folderGroups.begin(); it != folderGroups.end(); ++it) {
         std::wstring normFolder = it.key();
-        QString folderPath = QString::fromStdWString(normFolder);
+        std::wstring folderPath = normFolder;
         const QStringList& fileNames = it.value();
 
         std::lock_guard<std::mutex> lock(m_storeMutex);
@@ -502,7 +502,7 @@ void QuarkMetaJsonStore::setColorBatch(const QStringList& paths, const QString& 
 
         auto& items = jsonPtr->items();
         for (const QString& fileName : fileNames) {
-            std::wstring key = fileName.toStdWString();
+            std::wstring key = QuarkMetaJson::normalizeItemKey(fileName.toStdWString());
             items[key].color = color.toStdWString();
         }
         markDirtyLocked(normFolder);
@@ -520,13 +520,13 @@ void QuarkMetaJsonStore::setNoteBatch(const QStringList& paths, const QString& n
     for (const QString& path : paths) {
         if (path.isEmpty()) continue;
         QFileInfo fi(path);
-        std::wstring normFolder = QuarkMetaJson::normalizePath(fi.absolutePath().toStdWString());
+        std::wstring normFolder = normalizeFolderPath(fi.absolutePath().toStdWString());
         folderGroups[normFolder].append(fi.fileName());
     }
 
     for (auto it = folderGroups.begin(); it != folderGroups.end(); ++it) {
         std::wstring normFolder = it.key();
-        QString folderPath = QString::fromStdWString(normFolder);
+        std::wstring folderPath = normFolder;
         const QStringList& fileNames = it.value();
 
         std::lock_guard<std::mutex> lock(m_storeMutex);
@@ -535,7 +535,7 @@ void QuarkMetaJsonStore::setNoteBatch(const QStringList& paths, const QString& n
 
         auto& items = jsonPtr->items();
         for (const QString& fileName : fileNames) {
-            std::wstring key = fileName.toStdWString();
+            std::wstring key = QuarkMetaJson::normalizeItemKey(fileName.toStdWString());
             items[key].note = note.toStdWString();
         }
         markDirtyLocked(normFolder);
@@ -553,13 +553,13 @@ void QuarkMetaJsonStore::setURLBatch(const QStringList& paths, const QString& ur
     for (const QString& path : paths) {
         if (path.isEmpty()) continue;
         QFileInfo fi(path);
-        std::wstring normFolder = QuarkMetaJson::normalizePath(fi.absolutePath().toStdWString());
+        std::wstring normFolder = normalizeFolderPath(fi.absolutePath().toStdWString());
         folderGroups[normFolder].append(fi.fileName());
     }
 
     for (auto it = folderGroups.begin(); it != folderGroups.end(); ++it) {
         std::wstring normFolder = it.key();
-        QString folderPath = QString::fromStdWString(normFolder);
+        std::wstring folderPath = normFolder;
         const QStringList& fileNames = it.value();
 
         std::lock_guard<std::mutex> lock(m_storeMutex);
@@ -568,7 +568,7 @@ void QuarkMetaJsonStore::setURLBatch(const QStringList& paths, const QString& ur
 
         auto& items = jsonPtr->items();
         for (const QString& fileName : fileNames) {
-            std::wstring key = fileName.toStdWString();
+            std::wstring key = QuarkMetaJson::normalizeItemKey(fileName.toStdWString());
             items[key].url = url.toStdWString();
         }
         markDirtyLocked(normFolder);
@@ -586,13 +586,13 @@ void QuarkMetaJsonStore::setPinnedBatch(const QStringList& paths, bool pinned) {
     for (const QString& path : paths) {
         if (path.isEmpty()) continue;
         QFileInfo fi(path);
-        std::wstring normFolder = QuarkMetaJson::normalizePath(fi.absolutePath().toStdWString());
+        std::wstring normFolder = normalizeFolderPath(fi.absolutePath().toStdWString());
         folderGroups[normFolder].append(fi.fileName());
     }
 
     for (auto it = folderGroups.begin(); it != folderGroups.end(); ++it) {
         std::wstring normFolder = it.key();
-        QString folderPath = QString::fromStdWString(normFolder);
+        std::wstring folderPath = normFolder;
         const QStringList& fileNames = it.value();
 
         std::lock_guard<std::mutex> lock(m_storeMutex);
@@ -601,7 +601,7 @@ void QuarkMetaJsonStore::setPinnedBatch(const QStringList& paths, bool pinned) {
 
         auto& items = jsonPtr->items();
         for (const QString& fileName : fileNames) {
-            std::wstring key = fileName.toStdWString();
+            std::wstring key = QuarkMetaJson::normalizeItemKey(fileName.toStdWString());
             items[key].pinned = pinned;
         }
         markDirtyLocked(normFolder);

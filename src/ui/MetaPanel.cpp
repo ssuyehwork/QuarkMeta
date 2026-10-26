@@ -713,9 +713,6 @@ void MetaPanel::flushPendingTagDeletions() {
     m_pendingRemovedTags.clear();
 
     emit tagsRemoveRequested(m_selectedPaths, tagsToRemove);
-    for (const QString& tag : tagsToRemove) {
-        emit tagRemoveRequested(m_selectedPaths, tag);
-    }
 }
 
 void MetaPanel::resizeEvent(QResizeEvent* event) {
