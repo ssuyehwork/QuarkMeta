@@ -235,7 +235,8 @@ public:
             painter->setFont(option.font);
 
             bool isPinned = index.data(PinnedRole).toBool();
-            bool isMarked = index.data(Qt::UserRole + 10).toBool();
+            QString itemPath = index.data(PathRole).toString();
+            bool isMarked = MarkedFolderService::instance().isMarked(itemPath);
             int pinRightX = textRect.right() - CardPainterHelper::kPinRightPadding;
             int pinW = CardPainterHelper::drawInlinePinIcon(painter, pinRightX, textRect.top(), textRect.height(), isPinned);
 

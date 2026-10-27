@@ -31,6 +31,7 @@
 #include "../util/ShellHelper.h"
 #include "../meta/MetadataManager.h"
 #include "../meta/FavoriteService.h"
+#include "../meta/MarkedFolderService.h"
 #include "../meta/LibraryDao.h"
 #include "../meta/SmartFolderDao.h"
 #include "UiHelper.h"
@@ -241,6 +242,26 @@ void PanelMediator::setupConnections() {
             connect(shortcutController, &AppShortcutController::resetFilterRequested, filterPanel, [filterPanel]() {
                 filterPanel->clearAllFilters(true);
             });
+
+    connect(m_shortcutController, &AppShortcutController::toggleMarkedRequested, this, [this]() {
+        if (m_contentPanel) {
+            QStringList sel = m_contentPanel->getSelectedPaths();
+            for (const QString& p : sel) {
+                if (QFileInfo(p).isDir()) {
+                    MarkedFolderService::instance().toggleMarked(p);
+                }
+            }
+        }
+    });
+
+    connect(m_shortcutController, &AppShortcutController::transferToMarkedRequested, this, [this]() {
+        if (m_contentPanel) {
+            QStringList sel = m_contentPanel->getSelectedPaths();
+            if (!sel.isEmpty()) {
+                MarkedFolderService::instance().executeTransferToMarked(sel);
+            }
+        }
+    });
         }
     }
 

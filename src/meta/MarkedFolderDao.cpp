@@ -73,24 +73,39 @@ bool MarkedFolderDao::addMarkedFolder(const QString& folderPath) {
     }
     if (countStmt) sqlite3_finalize(countStmt);
 
-    // 双级淘汰：如果总数达到 50，优先清理 is_marked = 0 的最旧记录；若无则清理最旧记录
-    const char* totalSql = "SELECT COUNT(*) FROM marked_folders;";
-    sqlite3_stmt* totalStmt = nullptr;
-    int totalCount = 0;
-    if (sqlite3_prepare_v2(db, totalSql, -1, &totalStmt, nullptr) == SQLITE_OK) {
-        if (sqlite3_step(totalStmt) == SQLITE_ROW) {
-            totalCount = sqlite3_column_int(totalStmt, 0);
+    // 检查当前路径是否已存在
+    const char* checkSql = "SELECT COUNT(*) FROM marked_folders WHERE folder_path = ?;";
+    sqlite3_stmt* checkStmt = nullptr;
+    bool existsInDb = false;
+    if (sqlite3_prepare_v2(db, checkSql, -1, &checkStmt, nullptr) == SQLITE_OK) {
+        QByteArray pathUtf8 = cleanPath.toUtf8();
+        sqlite3_bind_text(checkStmt, 1, pathUtf8.constData(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(checkStmt) == SQLITE_ROW) {
+            existsInDb = (sqlite3_column_int(checkStmt, 0) > 0);
         }
     }
-    if (totalStmt) sqlite3_finalize(totalStmt);
+    if (checkStmt) sqlite3_finalize(checkStmt);
 
-    if (totalCount >= 50) {
-        const char* evictSql = R"(
-            DELETE FROM marked_folders WHERE id IN (
-                SELECT id FROM marked_folders ORDER BY is_marked ASC, updated_at ASC LIMIT 1
-            );
-        )";
-        sqlite3_exec(db, evictSql, nullptr, nullptr, nullptr);
+    // 双级淘汰：若为插入全新路径且总数达到 50，优先清理 is_marked = 0 的最旧记录；若无则清理最旧记录
+    if (!existsInDb) {
+        const char* totalSql = "SELECT COUNT(*) FROM marked_folders;";
+        sqlite3_stmt* totalStmt = nullptr;
+        int totalCount = 0;
+        if (sqlite3_prepare_v2(db, totalSql, -1, &totalStmt, nullptr) == SQLITE_OK) {
+            if (sqlite3_step(totalStmt) == SQLITE_ROW) {
+                totalCount = sqlite3_column_int(totalStmt, 0);
+            }
+        }
+        if (totalStmt) sqlite3_finalize(totalStmt);
+
+        if (totalCount >= 50) {
+            const char* evictSql = R"(
+                DELETE FROM marked_folders WHERE id IN (
+                    SELECT id FROM marked_folders ORDER BY is_marked ASC, updated_at ASC LIMIT 1
+                );
+            )";
+            sqlite3_exec(db, evictSql, nullptr, nullptr, nullptr);
+        }
     }
 
     const char* upsertSql = R"(

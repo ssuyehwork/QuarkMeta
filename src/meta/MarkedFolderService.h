@@ -3,8 +3,25 @@
 #include <QObject>
 #include <QStringList>
 #include <QMenu>
+#include <QVector>
+#include "../core/UndoManager.h"
 
 namespace QuarkMeta {
+
+struct TransferPair {
+    QString originalPath;
+    QString copiedPath;
+    QString trashItemPath;
+};
+
+class TransferToMarkedCommand : public QuUndoCommand {
+public:
+    explicit TransferToMarkedCommand(const QVector<TransferPair>& pairs) : m_pairs(pairs) {}
+    void undo() override;
+    void redo() override;
+private:
+    QVector<TransferPair> m_pairs;
+};
 
 class MarkedFolderService : public QObject {
     Q_OBJECT
@@ -26,6 +43,7 @@ public:
     bool clearAll();
 
     QAction* buildMarkAction(QMenu* parentMenu, const QString& path, QObject* receiver);
+    void executeTransferToMarked(const QStringList& sourcePaths);
 
 signals:
     void markedFoldersChanged();

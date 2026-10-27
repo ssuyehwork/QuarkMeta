@@ -2,6 +2,7 @@
 #include "UiHelper.h"
 #include "../core/AppConfig.h"
 #include "../core/SearchHistoryService.h"
+#include "../core/NavigationService.h"
 #include <QMouseEvent>
 
 namespace QuarkMeta {
@@ -49,6 +50,12 @@ void SidebarContainerWidget::initUi() {
     m_stackedWidget->addWidget(m_favoritePanel);
     m_stackedWidget->addWidget(m_libraryPanel);
     m_stackedWidget->addWidget(m_markedPanel);
+
+    connect(m_markedPanel, &MarkedPanel::requestLocateFolder, this, [](const QString& path) {
+        if (!path.isEmpty()) {
+            NavigationService::instance().navigateToPath(path);
+        }
+    });
 
     m_mainLayout->addWidget(m_stackedWidget, 1);
 
@@ -112,6 +119,7 @@ void SidebarContainerWidget::initUi() {
             QString kw = m_filterEdit->text().trimmed();
             if (index == 0 && m_favoritePanel) m_favoritePanel->filterTreeNodes(kw);
             if (index == 1 && m_libraryPanel) m_libraryPanel->filterTreeNodes(kw);
+            if (index == 2 && m_markedPanel) m_markedPanel->filterTreeNodes(kw);
         }
         AppConfig::instance().setValue("Sidebar/CurrentTabIndex", index);
         AppConfig::instance().sync();

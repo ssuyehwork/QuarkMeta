@@ -118,7 +118,8 @@ void FavoriteItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& 
     paintHighlightedText(painter, adjustedTextRect, text, m_filterKeyword, opt.font, normalTextColor, matchTextColor);
 
     // 绘制开启自动递归右侧 layers 图标与标记 Destination 图标
-    bool isMarked = index.data(Qt::UserRole + 10).toBool();
+    QString itemPath = index.data(Qt::UserRole + 1).toString();
+    bool isMarked = MarkedFolderService::instance().isMarked(itemPath);
     int rightOffset = 22;
     if (isAutoRec) {
         QRect layersRect(opt.rect.right() - rightOffset, opt.rect.top() + (opt.rect.height() - 16) / 2, 16, 16);
