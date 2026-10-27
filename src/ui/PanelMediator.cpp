@@ -258,14 +258,11 @@ void PanelMediator::setupConnections() {
             ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
             if (target) {
                 QStringList sel = target->getSelectedPaths();
-                qDebug() << "[PanelMediator] transferToMarkedRequested (Alt+V) triggered. Selected items count:" << sel.size();
                 if (!sel.isEmpty()) {
                     QuarkMeta::MarkedFolderService::instance().executeTransferToMarked(sel);
                 } else {
                     ToolTipOverlay::instance()->showToast("未选择任何要迁移的文件或文件夹", 2000, QColor("#e81123"));
                 }
-            } else {
-                qDebug() << "[PanelMediator] transferToMarkedRequested (Alt+V) triggered but no active ContentPanel.";
             }
         });
     }

@@ -6,7 +6,6 @@
 #include <QDir>
 #include <QFile>
 #include <QAction>
-#include <QDebug>
 
 namespace QuarkMeta {
 
@@ -71,20 +70,14 @@ bool MarkedFolderService::addMarked(const QString& path) {
 }
 
 bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths) {
-    qDebug() << "[MarkedFolderService] executeTransferToMarked called with" << sourcePaths.size() << "sources:" << sourcePaths;
-
     if (sourcePaths.isEmpty()) {
         ToolTipOverlay::instance()->showToast("未选择任何要迁移的项目", 2000, QColor("#e81123"));
-        qDebug() << "[MarkedFolderService] executeTransferToMarked aborted: sourcePaths is empty.";
         return false;
     }
 
     QStringList activeTargets = getActiveMarked();
-    qDebug() << "[MarkedFolderService] Active marked destination targets count:" << activeTargets.size() << activeTargets;
-
     if (activeTargets.isEmpty()) {
         ToolTipOverlay::instance()->showToast("未激活任何标记目的地文件夹 (请先用 Alt+C 标记)", 2500, QColor("#e81123"));
-        qDebug() << "[MarkedFolderService] executeTransferToMarked aborted: No active marked target folders.";
         return false;
     }
 
@@ -94,7 +87,6 @@ bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
     for (const QString& srcPath : sourcePaths) {
         QFileInfo srcInfo(srcPath);
         if (!srcInfo.exists()) {
-            qDebug() << "[MarkedFolderService] Skipping non-existent source path:" << srcPath;
             continue;
         }
 
@@ -103,24 +95,20 @@ bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
         for (const QString& targetDir : activeTargets) {
             QFileInfo targetInfo(targetDir);
             if (!targetInfo.exists() || !targetInfo.isDir()) {
-                qDebug() << "[MarkedFolderService] Target dir does not exist or is not a dir:" << targetDir;
                 continue;
             }
 
             // 防自身/循环嵌套保护
             if (QDir(srcPath) == QDir(targetDir) || targetDir.startsWith(srcPath + "/")) {
-                qDebug() << "[MarkedFolderService] Skipping recursive target:" << targetDir << "for source:" << srcPath;
                 continue;
             }
 
             QString destPath = QDir(targetDir).filePath(itemName);
-            qDebug() << "[MarkedFolderService] Copying" << srcPath << "to" << destPath;
 
             if (copyRecursively(srcPath, destPath)) {
                 successCount++;
             } else {
                 failCount++;
-                qDebug() << "[MarkedFolderService] Failed to copy" << srcPath << "to" << destPath;
             }
         }
     }
@@ -128,11 +116,9 @@ bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
     if (successCount > 0) {
         QString msg = QString("已成功迁移分发到 %1 个目的地").arg(activeTargets.size());
         ToolTipOverlay::instance()->showToast(msg, 2000, QColor("#0078d4"));
-        qDebug() << "[MarkedFolderService] executeTransferToMarked complete." << msg << "Successes:" << successCount << "Failures:" << failCount;
         return true;
     } else {
         ToolTipOverlay::instance()->showToast("分发迁移失败，请检查文件权限或目标路径", 2500, QColor("#e81123"));
-        qDebug() << "[MarkedFolderService] executeTransferToMarked failed. Successes:" << successCount << "Failures:" << failCount;
         return false;
     }
 }
