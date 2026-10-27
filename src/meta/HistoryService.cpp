@@ -13,7 +13,7 @@ HistoryService& HistoryService::instance() {
 HistoryService::HistoryService(QObject* parent) : QObject(parent) {
     HistoryDao::initTable();
 
-    CentralEventHub::instance().subscribe(this, [this](const AppEvent& event) {
+    connect(&CentralEventHub::instance(), &CentralEventHub::eventOccurred, this, [this](const QuarkMeta::AppEvent& event) {
         if (event.type == AppEventType::ItemsDeleted) {
             for (const QString& path : event.paths) {
                 if (HistoryDao::removeHistory(path)) {
@@ -21,9 +21,16 @@ HistoryService::HistoryService(QObject* parent) : QObject(parent) {
                 }
             }
         } else if (event.type == AppEventType::ItemsRenamed) {
-            if (!event.paths.isEmpty() && !event.targetPaths.isEmpty()) {
-                HistoryDao::updateHistoryPaths(event.paths, event.targetPaths);
-                emit historyCleared(); // 级联更名刷新
+            QStringList oldPaths = event.paths;
+            QStringList newPaths;
+            if (event.payload.contains("newPaths")) {
+                newPaths = event.payload["newPaths"].toStringList();
+            } else if (!event.targetPath.isEmpty()) {
+                newPaths.append(event.targetPath);
+            }
+            if (!oldPaths.isEmpty() && !newPaths.isEmpty() && oldPaths.size() == newPaths.size()) {
+                HistoryDao::updateHistoryPaths(oldPaths, newPaths);
+                emit historyCleared();
             }
         }
     });

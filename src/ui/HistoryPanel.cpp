@@ -34,7 +34,6 @@ void HistoryPanel::initUi() {
     m_treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     m_treeWidget->setDragEnabled(true);
-    m_treeWidget->setViewportUpdateMode(QAbstractItemView::FullViewportUpdate);
 
     m_mainLayout->addWidget(m_treeWidget);
 
@@ -85,15 +84,11 @@ QTreeWidgetItem* HistoryPanel::createHistoryItem(const QString& path) {
 }
 
 void HistoryPanel::updateItemThumbnail(QTreeWidgetItem* item, const QString& path) {
-    ThumbnailPipelineService::instance().requestThumbnail(
-        path,
-        QSize(32, 32),
-        [this, item, path](const QPixmap& pix) {
-            if (!pix.isNull() && item && item->treeWidget()) {
-                item->setIcon(0, QIcon(pix));
-            }
+    ThumbnailPipelineService::instance().loadBatchAsync({path}, 32, [this, item](const QString&, const QPixmap& pix) {
+        if (!pix.isNull() && item && item->treeWidget()) {
+            item->setIcon(0, QIcon(pix));
         }
-    );
+    });
 }
 
 void HistoryPanel::onItemClicked(QTreeWidgetItem* item, int column) {
