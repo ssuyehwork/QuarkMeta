@@ -23,6 +23,7 @@
 #include <QElapsedTimer>
 #include "../core/NavigationService.h"
 #include "../core/TrashService.h"
+#include "../meta/MarkedFolderService.h"
 #include "../core/CoreEngine.h"
 #include "../core/CentralEventHub.h"
 #include "../core/VolumeOnlineManager.h"
@@ -245,18 +246,18 @@ void PanelMediator::setupConnections() {
 
         connect(shortcutController, &AppShortcutController::toggleMarkedRequested, this, [this, contentPanel]() {
             if (contentPanel) {
-                QStringList sel = contentPanel->getSelectedIndexesPaths();
+                QStringList sel = contentPanel->getSelectedPaths();
                 if (!sel.isEmpty()) {
-                    MarkedFolderService::instance().toggleMarked(sel.first());
+                    QuarkMeta::MarkedFolderService::instance().toggleMarked(sel.first());
                 }
             }
         });
 
         connect(shortcutController, &AppShortcutController::transferToMarkedRequested, this, [this, contentPanel]() {
             if (contentPanel) {
-                QStringList sel = contentPanel->getSelectedIndexesPaths();
+                QStringList sel = contentPanel->getSelectedPaths();
                 if (!sel.isEmpty()) {
-                    MarkedFolderService::instance().executeTransferToMarked(sel);
+                    QuarkMeta::MarkedFolderService::instance().executeTransferToMarked(sel);
                 }
             }
         });
