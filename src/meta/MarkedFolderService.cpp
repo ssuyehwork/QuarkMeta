@@ -69,6 +69,31 @@ bool MarkedFolderService::toggleMarked(const QString& path) {
     }
 }
 
+bool MarkedFolderService::toggleMarked(const QStringList& paths) {
+    if (paths.isEmpty()) return false;
+    bool allMarked = true;
+    for (const QString& p : paths) {
+        if (!isMarked(p)) {
+            allMarked = false;
+            break;
+        }
+    }
+
+    bool changed = false;
+    if (allMarked) {
+        for (const QString& p : paths) {
+            if (removeMarked(p)) changed = true;
+        }
+    } else {
+        for (const QString& p : paths) {
+            if (!isMarked(p)) {
+                if (addMarked(p)) changed = true;
+            }
+        }
+    }
+    return changed;
+}
+
 QStringList MarkedFolderService::getAllMarked() const {
     return MarkedFolderDao::getAllMarkedFolders();
 }
@@ -102,18 +127,36 @@ bool MarkedFolderService::clearAll() {
 }
 
 QAction* MarkedFolderService::buildMarkAction(QMenu* parentMenu, const QString& path, QObject* receiver) {
-    if (!parentMenu) return nullptr;
-    QFileInfo fi(path);
-    if (!fi.exists() || !fi.isDir()) return nullptr;
+    return buildMarkAction(parentMenu, QStringList{path}, receiver);
+}
 
-    bool marked = isMarked(path);
-    QString label = marked ? "取消标记" : "标记为目的地";
+QAction* MarkedFolderService::buildMarkAction(QMenu* parentMenu, const QStringList& paths, QObject* receiver) {
+    if (!parentMenu || paths.isEmpty()) return nullptr;
+
+    QStringList validDirs;
+    for (const QString& p : paths) {
+        QFileInfo fi(p);
+        if (fi.exists() && fi.isDir()) {
+            validDirs << p;
+        }
+    }
+    if (validDirs.isEmpty()) return nullptr;
+
+    bool allMarked = true;
+    for (const QString& p : validDirs) {
+        if (!isMarked(p)) {
+            allMarked = false;
+            break;
+        }
+    }
+
+    QString label = allMarked ? "取消标记" : "标记为目的地";
     QIcon icon = UiHelper::getIcon("Destination.svg", QColor("#ff551c"), 18);
 
     QAction* action = parentMenu->addAction(icon, label);
     if (receiver) {
-        connect(action, &QAction::triggered, receiver, [this, path]() {
-            toggleMarked(path);
+        connect(action, &QAction::triggered, receiver, [this, validDirs]() {
+            toggleMarked(validDirs);
         });
     }
     return action;

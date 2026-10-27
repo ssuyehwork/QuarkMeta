@@ -248,7 +248,7 @@ void PanelMediator::setupConnections() {
             if (contentPanel) {
                 QStringList sel = contentPanel->getSelectedPaths();
                 if (!sel.isEmpty()) {
-                    QuarkMeta::MarkedFolderService::instance().toggleMarked(sel.first());
+                    QuarkMeta::MarkedFolderService::instance().toggleMarked(sel);
                 }
             }
         });

@@ -31,6 +31,9 @@ public:
     bool executeTransferToMarked(const QStringList& sourcePaths);
 
     QAction* buildMarkAction(QMenu* parentMenu, const QString& path, QObject* receiver);
+    QAction* buildMarkAction(QMenu* parentMenu, const QStringList& paths, QObject* receiver);
+
+    bool toggleMarked(const QStringList& paths);
 
 signals:
     void markedFoldersChanged();
