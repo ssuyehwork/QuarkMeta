@@ -524,11 +524,7 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
                                 .arg(modeStr)
                                 .arg(validTargets.join("\n"));
 
-        FramelessConfirmDialog dlg(m_panel);
-        dlg.setTitle("确认发送至目的地");
-        dlg.setMessage(confirmMsg);
-        dlg.setConfirmText("确定发送");
-        dlg.setCancelText("取消");
+        FramelessConfirmDialog dlg("确认发送至目的地", confirmMsg, FramelessConfirmDialog::OkCancel, "", Qt::white, m_panel);
 
         if (dlg.exec() != QDialog::Accepted) {
             return true;
@@ -569,7 +565,7 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
                     state->allSuccess = false;
                 }
                 int done = ++state->completedTargets;
-                TaskProgressService::instance().reportProgress(state->jobId, "正在发送至目的地...", done, state->totalTargets);
+                TaskProgressService::instance().updateProgress(state->jobId, done, state->totalTargets, "正在发送至目的地...");
 
                 // 只有当所有目的地全部执行完毕后，主线程统一收口
                 if (done == state->totalTargets) {
