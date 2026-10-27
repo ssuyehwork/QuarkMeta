@@ -340,8 +340,9 @@ void BatchRenameDialog::onImportPreset() {
     QString path = FramelessFileDialog::getOpenFileName(this, "导入重命名预设", "", "JSON Files (*.json)");
     if (path.isEmpty()) return;
 
-    auto rules = PresetManager::importFromFile(path);
-    if (!rules.empty()) {
+    int unrecognizedCount = 0;
+    auto rules = PresetManager::importFromFile(path, &unrecognizedCount);
+    if (!rules.empty() || unrecognizedCount > 0) {
         // 清空现有规则
         while (m_ruleRows.size() > 0) {
             auto* row = m_ruleRows.takeAt(0);
@@ -351,6 +352,12 @@ void BatchRenameDialog::onImportPreset() {
         for (const auto& rule : rules) {
             onAddRow();
             m_ruleRows.last()->setRule(rule);
+        }
+        if (m_ruleRows.isEmpty()) {
+            onAddRow();
+        }
+        if (unrecognizedCount > 0) {
+            ToolTipOverlay::instance()->showToast(QString("有 %1 条规则无法识别，已跳过").arg(unrecognizedCount), 2000, QColor("#e81123"), this);
         }
         scheduleAutoSave();
         updatePreview();
@@ -366,7 +373,8 @@ void BatchRenameDialog::onExportPreset() {
         rules.push_back(row->getRule());
     }
 
-    if (PresetManager::exportToFile(path, rules)) {
+    if (!PresetManager::exportToFile(path, rules)) {
+        ToolTipOverlay::instance()->showToast("导出失败", 2000, QColor("#e81123"), this);
     }
 }
 
@@ -389,13 +397,17 @@ void BatchRenameDialog::applyRulesJson(const QString& jsonStr) {
         row->deleteLater();
     }
 
-    auto rules = PresetManager::deserializeRules(jsonStr);
+    int unrecognizedCount = 0;
+    auto rules = PresetManager::deserializeRules(jsonStr, &unrecognizedCount);
     for (const auto& rule : rules) {
         onAddRow();
         m_ruleRows.last()->setRule(rule);
     }
     if (m_ruleRows.isEmpty()) {
         onAddRow();
+    }
+    if (unrecognizedCount > 0) {
+        ToolTipOverlay::instance()->showToast(QString("有 %1 条规则无法识别，已跳过").arg(unrecognizedCount), 2000, QColor("#e81123"), this);
     }
     updatePreview();
 }
