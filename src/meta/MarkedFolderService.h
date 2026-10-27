@@ -5,6 +5,7 @@
 #include <QMenu>
 #include <QVector>
 #include "../core/UndoManager.h"
+#include "../core/ActionCommand.h"
 
 namespace QuarkMeta {
 
@@ -14,11 +15,17 @@ struct TransferPair {
     QString trashItemPath;
 };
 
-class TransferToMarkedCommand : public QuUndoCommand {
+class TransferToMarkedCommand : public ActionCommand {
 public:
     explicit TransferToMarkedCommand(const QVector<TransferPair>& pairs) : m_pairs(pairs) {}
     void undo() override;
     void redo() override;
+    bool affectsPath(const QString& path) const override {
+        for (const auto& pair : m_pairs) {
+            if (pair.originalPath == path || pair.copiedPath == path || pair.trashItemPath == path) return true;
+        }
+        return false;
+    }
 private:
     QVector<TransferPair> m_pairs;
 };

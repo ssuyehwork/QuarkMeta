@@ -5,9 +5,9 @@
 #include "../ui/dialogs/FramelessConfirmDialog.h"
 #include "../core/TaskProgressService.h"
 #include "../core/CentralEventHub.h"
-#include "../util/DiskTrashService.h"
+#include "../core/DiskTrashService.h"
 #include "../util/ShellHelper.h"
-#include "../util/ContentChangeWatcher.h"
+#include "../ui/controllers/ContentChangeWatcher.h"
 #include <QFileInfo>
 #include <QDir>
 #include <QAction>

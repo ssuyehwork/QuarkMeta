@@ -3,6 +3,7 @@
 #include "../core/AppConfig.h"
 #include "../core/SearchHistoryService.h"
 #include "../core/NavigationService.h"
+#include "../core/CentralEventHub.h"
 #include <QMouseEvent>
 
 namespace QuarkMeta {
@@ -53,7 +54,8 @@ void SidebarContainerWidget::initUi() {
 
     connect(m_markedPanel, &MarkedPanel::requestLocateFolder, this, [](const QString& path) {
         if (!path.isEmpty()) {
-            NavigationService::instance().navigateToPath(path);
+            // 通过 CentralEventHub 广播打开/定位目录事件
+            CentralEventHub::instance().publishEvent({AppEventType::LocateFileRequested, path, {path}, {}});
         }
     });
 

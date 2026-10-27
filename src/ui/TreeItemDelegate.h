@@ -16,6 +16,7 @@
 #include "RatingBarLayout.h"
 #include "RowLayoutEngine.h"
 #include "../meta/MetadataManager.h"
+#include "../meta/MarkedFolderService.h"
 #include "../core/ModelContract.h"
 #include "UiHelper.h"
 #include "CardPainterHelper.h"
