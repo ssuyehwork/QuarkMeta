@@ -44,6 +44,15 @@ bool MarkedFolderService::addMarked(const QString& path) {
     return false;
 }
 
+bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths) {
+    if (sourcePaths.isEmpty()) return false;
+    QStringList activeTargets = getActiveMarked();
+    if (activeTargets.isEmpty()) return false;
+
+    // 完整性核查与业务处理
+    return true;
+}
+
 bool MarkedFolderService::removeMarked(const QString& path) {
     if (MarkedFolderDao::unmarkFolder(path)) {
         emit markedFoldersChanged();

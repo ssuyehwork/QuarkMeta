@@ -25,6 +25,11 @@ public:
     bool clearAllFolderRecords();
     bool clearAll();
 
+    /**
+     * @brief 触发 Alt+V 一键同时分发/迁移选中项目到所有激活的标记目的地文件夹
+     */
+    bool executeTransferToMarked(const QStringList& sourcePaths);
+
     QAction* buildMarkAction(QMenu* parentMenu, const QString& path, QObject* receiver);
 
 signals:

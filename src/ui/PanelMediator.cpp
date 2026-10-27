@@ -242,6 +242,24 @@ void PanelMediator::setupConnections() {
                 filterPanel->clearAllFilters(true);
             });
         }
+
+        connect(shortcutController, &AppShortcutController::toggleMarkedRequested, this, [this, contentPanel]() {
+            if (contentPanel) {
+                QStringList sel = contentPanel->getSelectedIndexesPaths();
+                if (!sel.isEmpty()) {
+                    MarkedFolderService::instance().toggleMarked(sel.first());
+                }
+            }
+        });
+
+        connect(shortcutController, &AppShortcutController::transferToMarkedRequested, this, [this, contentPanel]() {
+            if (contentPanel) {
+                QStringList sel = contentPanel->getSelectedIndexesPaths();
+                if (!sel.isEmpty()) {
+                    MarkedFolderService::instance().executeTransferToMarked(sel);
+                }
+            }
+        });
     }
 
     // 搜索控制器与 ContentPanel 绑定及状态更新
