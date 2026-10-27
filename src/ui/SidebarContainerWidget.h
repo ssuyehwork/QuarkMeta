@@ -6,10 +6,16 @@
 #include <QVBoxLayout>
 #include "FavoritePanel.h"
 #include "LibraryPanel.h"
+#include "MarkedPanel.h"
 #include "SearchHistoryPanel.h"
 #include <QLineEdit>
 
 namespace QuarkMeta {
+
+class FavoritePanel;
+class LibraryPanel;
+class MarkedPanel;
+class SearchHistoryPanel;
 
 class SidebarContainerWidget : public QFrame {
     Q_OBJECT
