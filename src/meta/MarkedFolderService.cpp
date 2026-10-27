@@ -68,6 +68,22 @@ QStringList MarkedFolderService::getActiveMarked() const {
     return MarkedFolderDao::getActiveMarkedFolders();
 }
 
+bool MarkedFolderService::removeFolderRecord(const QString& path) {
+    if (MarkedFolderDao::removeFolderRecord(path)) {
+        emit markedFoldersChanged();
+        return true;
+    }
+    return false;
+}
+
+bool MarkedFolderService::clearAllFolderRecords() {
+    if (MarkedFolderDao::clearAllFolderRecords()) {
+        emit markedFoldersChanged();
+        return true;
+    }
+    return false;
+}
+
 bool MarkedFolderService::clearAll() {
     if (MarkedFolderDao::unmarkAllFolders()) {
         emit markedFoldersChanged();

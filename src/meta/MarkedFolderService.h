@@ -21,6 +21,8 @@ public:
     int markedCount() const;
     QStringList getAllMarked() const;
     QStringList getActiveMarked() const;
+    bool removeFolderRecord(const QString& path);
+    bool clearAllFolderRecords();
     bool clearAll();
 
     QAction* buildMarkAction(QMenu* parentMenu, const QString& path, QObject* receiver);

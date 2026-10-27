@@ -36,21 +36,23 @@ void MarkedPanel::initUi() {
 
 void MarkedPanel::loadMarkedFolders() {
     m_treeWidget->clear();
-    QStringList markedList = MarkedFolderService::instance().getActiveMarked();
-    for (const QString& path : markedList) {
+    QStringList allList = MarkedFolderService::instance().getAllMarked();
+    for (const QString& path : allList) {
         if (QFile::exists(path)) {
-            QTreeWidgetItem* item = createMarkedItem(path);
+            bool active = MarkedFolderService::instance().isMarked(path);
+            QTreeWidgetItem* item = createMarkedItem(path, active);
             m_treeWidget->addTopLevelItem(item);
         }
     }
 }
 
-QTreeWidgetItem* MarkedPanel::createMarkedItem(const QString& path) {
+QTreeWidgetItem* MarkedPanel::createMarkedItem(const QString& path, bool active) {
     QFileInfo fi(path);
     QTreeWidgetItem* item = new QTreeWidgetItem();
     item->setText(0, fi.fileName().isEmpty() ? path : fi.fileName());
     item->setData(0, Qt::UserRole, path);
-    item->setIcon(0, UiHelper::getIcon("Destination.svg", QColor("#ff551c"), 16));
+    item->setData(0, Qt::UserRole + 1, active);
+    item->setIcon(0, UiHelper::getIcon("Destination.svg", active ? QColor("#ff551c") : QColor("#555555"), 16));
     return item;
 }
 
@@ -70,16 +72,35 @@ void MarkedPanel::onContextMenuRequested(const QPoint& pos) {
 
     if (item) {
         QString path = item->data(0, Qt::UserRole).toString();
-        QAction* removeAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE"), 18), "从标记中移除");
+        bool active = item->data(0, Qt::UserRole + 1).toBool();
+
+        if (active) {
+            QAction* unmarkAct = menu.addAction(UiHelper::getIcon("Destination.svg", QColor("#888888"), 16), "取消标记");
+            connect(unmarkAct, &QAction::triggered, this, [path]() {
+                MarkedFolderService::instance().removeMarked(path);
+            });
+        } else {
+            QAction* markAct = menu.addAction(UiHelper::getIcon("Destination.svg", QColor("#ff551c"), 16), "标记为目的地");
+            connect(markAct, &QAction::triggered, this, [path]() {
+                MarkedFolderService::instance().addMarked(path);
+            });
+        }
+
+        QAction* removeAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE"), 16), "从标记历史中移除");
         connect(removeAct, &QAction::triggered, this, [path]() {
-            MarkedFolderService::instance().removeMarked(path);
+            MarkedFolderService::instance().removeFolderRecord(path);
         });
         menu.addSeparator();
     }
 
-    QAction* clearAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE"), 18), "取消所有标记");
-    connect(clearAct, &QAction::triggered, this, []() {
+    QAction* unmarkAllAct = menu.addAction(UiHelper::getIcon("Destination.svg", QColor("#888888"), 16), "取消所有标记");
+    connect(unmarkAllAct, &QAction::triggered, this, []() {
         MarkedFolderService::instance().clearAll();
+    });
+
+    QAction* clearHistoryAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE"), 16), "清空标记历史");
+    connect(clearHistoryAct, &QAction::triggered, this, []() {
+        MarkedFolderService::instance().clearAllFolderRecords();
     });
 
     menu.exec(m_treeWidget->mapToGlobal(pos));
