@@ -7,7 +7,7 @@
 #include "../ToolTipOverlay.h"
 #include "../../meta/MarkedFolderService.h"
 #include "../../core/DiskTrashService.h"
-#include "../../util/TaskProgressService.h"
+#include "../../core/TaskProgressService.h"
 #include "../../core/UndoManager.h"
 #include "../AppShortcutController.h"
 #include "../dialogs/FramelessConfirmDialog.h"
