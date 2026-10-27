@@ -2,8 +2,6 @@
 
 #include <QStringList>
 #include <QDateTime>
-#include <QtSql/QSqlQuery>
-#include <QtSql/QSqlError>
 
 namespace QuarkMeta {
 

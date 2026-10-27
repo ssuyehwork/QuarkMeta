@@ -1,145 +1,258 @@
 #include "MarkedFolderDao.h"
 #include "DatabaseManager.h"
-#include <QtSql/QSqlQuery>
-#include <QtSql/QSqlError>
+#include <sqlite3.h>
 #include <QDir>
-#include <QMutexLocker>
+#include <mutex>
 
 namespace QuarkMeta {
 
 bool MarkedFolderDao::initTable() {
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query(DatabaseManager::instance().getDatabase());
-    QString sql = R"(
-        CREATE TABLE IF NOT EXISTS marked_folders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            folder_path TEXT UNIQUE NOT NULL,
-            is_marked INTEGER NOT NULL DEFAULT 1,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-    )";
-    return query.exec(sql);
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    const char* sql = "CREATE TABLE IF NOT EXISTS marked_folders ("
+                      "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                      "folder_path TEXT UNIQUE NOT NULL, "
+                      "is_marked INTEGER NOT NULL DEFAULT 1, "
+                      "updated_at INTEGER);";
+
+    char* errMsgs = nullptr;
+    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &errMsgs);
+    if (rc != SQLITE_OK) {
+        if (errMsgs) sqlite3_free(errMsgs);
+        return false;
+    }
+    return true;
 }
 
 int MarkedFolderDao::getMarkedCount() {
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query("SELECT COUNT(*) FROM marked_folders;", DatabaseManager::instance().getDatabase());
-    if (query.next()) {
-        return query.value(0).toInt();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return 0;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    const char* sql = "SELECT COUNT(*) FROM marked_folders;";
+    sqlite3_stmt* stmt = nullptr;
+    int count = 0;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            count = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
     }
-    return 0;
+    return count;
 }
 
 bool MarkedFolderDao::addMarkedFolder(const QString& folderPath) {
     if (folderPath.isEmpty()) return false;
     QString cleanPath = QDir::cleanPath(folderPath);
 
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlDatabase db = DatabaseManager::instance().getDatabase();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return false;
 
-    // 检查路径是否已在表中
-    QSqlQuery checkQuery(db);
-    checkQuery.prepare("SELECT id, is_marked FROM marked_folders WHERE folder_path = :path LIMIT 1;");
-    checkQuery.bindValue(":path", cleanPath);
-    if (checkQuery.exec() && checkQuery.next()) {
-        // 已在表中，激活标记状态并更新时间
-        QSqlQuery updateQuery(db);
-        updateQuery.prepare("UPDATE marked_folders SET is_marked = 1, updated_at = CURRENT_TIMESTAMP WHERE folder_path = :path;");
-        updateQuery.bindValue(":path", cleanPath);
-        return updateQuery.exec();
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    // 1. 检查路径是否已经在表中
+    const char* checkSql = "SELECT id, is_marked FROM marked_folders WHERE folder_path = ? LIMIT 1;";
+    sqlite3_stmt* stmt = nullptr;
+    bool existsInDb = false;
+
+    if (sqlite3_prepare_v2(db, checkSql, -1, &stmt, nullptr) == SQLITE_OK) {
+        std::string pathStd = cleanPath.toStdString();
+        sqlite3_bind_text(stmt, 1, pathStd.c_str(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            existsInDb = true;
+        }
+        sqlite3_finalize(stmt);
     }
 
-    // 新添加记录，检查数量上限（50条），自动执行淘汰规则
-    QSqlQuery countQuery("SELECT COUNT(*) FROM marked_folders;", db);
+    int nowTs = static_cast<int>(QDateTime::currentSecsSinceEpoch());
+
+    if (existsInDb) {
+        // 已存在：激活标记状态并更新时间
+        const char* updateSql = "UPDATE marked_folders SET is_marked = 1, updated_at = ? WHERE folder_path = ?;";
+        if (sqlite3_prepare_v2(db, updateSql, -1, &stmt, nullptr) == SQLITE_OK) {
+            sqlite3_bind_int(stmt, 1, nowTs);
+            std::string pathStd = cleanPath.toStdString();
+            sqlite3_bind_text(stmt, 2, pathStd.c_str(), -1, SQLITE_TRANSIENT);
+            int rc = sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+            return (rc == SQLITE_DONE);
+        }
+        return false;
+    }
+
+    // 2. 新记录：检查总容量上限（50条），执行淘汰规则
+    const char* countSql = "SELECT COUNT(*) FROM marked_folders;";
     int totalCount = 0;
-    if (countQuery.next()) {
-        totalCount = countQuery.value(0).toInt();
+    if (sqlite3_prepare_v2(db, countSql, -1, &stmt, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            totalCount = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
     }
 
     if (totalCount >= 50) {
-        // 步骤 1：优先淘汰 is_marked = 0 的最旧记录
-        QSqlQuery evictUnmarkedQuery(db);
-        evictUnmarkedQuery.prepare("DELETE FROM marked_folders WHERE id = (SELECT id FROM marked_folders WHERE is_marked = 0 ORDER BY updated_at ASC LIMIT 1);");
-        if (evictUnmarkedQuery.exec() && evictUnmarkedQuery.numRowsAffected() > 0) {
-            // 成功淘汰一条未标记记录
-        } else {
-            // 步骤 2：若无未标记记录可淘汰，淘汰最旧的标记记录
-            QSqlQuery evictOldestQuery(db);
-            evictOldestQuery.prepare("DELETE FROM marked_folders WHERE id = (SELECT id FROM marked_folders ORDER BY updated_at ASC LIMIT 1);");
-            evictOldestQuery.exec();
+        // 优先淘汰 is_marked = 0 的最旧记录
+        const char* evictUnmarkedSql = "DELETE FROM marked_folders WHERE id = (SELECT id FROM marked_folders WHERE is_marked = 0 ORDER BY updated_at ASC LIMIT 1);";
+        sqlite3_exec(db, evictUnmarkedSql, nullptr, nullptr, nullptr);
+
+        int currentCountAfterEvict = 0;
+        if (sqlite3_prepare_v2(db, countSql, -1, &stmt, nullptr) == SQLITE_OK) {
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                currentCountAfterEvict = sqlite3_column_int(stmt, 0);
+            }
+            sqlite3_finalize(stmt);
+        }
+
+        if (currentCountAfterEvict >= 50) {
+            // 仍满 50 条，淘汰处于标记状态的最旧记录
+            const char* evictOldestSql = "DELETE FROM marked_folders WHERE id = (SELECT id FROM marked_folders ORDER BY updated_at ASC LIMIT 1);";
+            sqlite3_exec(db, evictOldestSql, nullptr, nullptr, nullptr);
         }
     }
 
-    QSqlQuery insertQuery(db);
-    insertQuery.prepare("INSERT INTO marked_folders (folder_path, is_marked, updated_at) VALUES (:path, 1, CURRENT_TIMESTAMP);");
-    insertQuery.bindValue(":path", cleanPath);
-    return insertQuery.exec();
+    // 3. 插入新记录
+    const char* insertSql = "INSERT INTO marked_folders (folder_path, is_marked, updated_at) VALUES (?, 1, ?);";
+    if (sqlite3_prepare_v2(db, insertSql, -1, &stmt, nullptr) == SQLITE_OK) {
+        std::string pathStd = cleanPath.toStdString();
+        sqlite3_bind_text(stmt, 1, pathStd.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 2, nowTs);
+        int rc = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        return (rc == SQLITE_DONE);
+    }
+
+    return false;
 }
 
 bool MarkedFolderDao::unmarkFolder(const QString& folderPath) {
     if (folderPath.isEmpty()) return false;
     QString cleanPath = QDir::cleanPath(folderPath);
 
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query(DatabaseManager::instance().getDatabase());
-    query.prepare("UPDATE marked_folders SET is_marked = 0, updated_at = CURRENT_TIMESTAMP WHERE folder_path = :path;");
-    query.bindValue(":path", cleanPath);
-    return query.exec();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    const char* sql = "UPDATE marked_folders SET is_marked = 0, updated_at = ? WHERE folder_path = ?;";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        int nowTs = static_cast<int>(QDateTime::currentSecsSinceEpoch());
+        sqlite3_bind_int(stmt, 1, nowTs);
+        std::string pathStd = cleanPath.toStdString();
+        sqlite3_bind_text(stmt, 2, pathStd.c_str(), -1, SQLITE_TRANSIENT);
+        int rc = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        return (rc == SQLITE_DONE);
+    }
+    return false;
 }
 
 bool MarkedFolderDao::unmarkAllFolders() {
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query(DatabaseManager::instance().getDatabase());
-    return query.exec("UPDATE marked_folders SET is_marked = 0, updated_at = CURRENT_TIMESTAMP;");
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    int nowTs = static_cast<int>(QDateTime::currentSecsSinceEpoch());
+    std::string sql = "UPDATE marked_folders SET is_marked = 0, updated_at = " + std::to_string(nowTs) + ";";
+    return (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, nullptr) == SQLITE_OK);
 }
 
 bool MarkedFolderDao::removeFolderRecord(const QString& folderPath) {
     if (folderPath.isEmpty()) return false;
     QString cleanPath = QDir::cleanPath(folderPath);
 
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query(DatabaseManager::instance().getDatabase());
-    query.prepare("DELETE FROM marked_folders WHERE folder_path = :path;");
-    query.bindValue(":path", cleanPath);
-    return query.exec();
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    const char* sql = "DELETE FROM marked_folders WHERE folder_path = ?;";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        std::string pathStd = cleanPath.toStdString();
+        sqlite3_bind_text(stmt, 1, pathStd.c_str(), -1, SQLITE_TRANSIENT);
+        int rc = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+        return (rc == SQLITE_DONE);
+    }
+    return false;
 }
 
 bool MarkedFolderDao::clearAllFolderRecords() {
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query(DatabaseManager::instance().getDatabase());
-    return query.exec("DELETE FROM marked_folders;");
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    return (sqlite3_exec(db, "DELETE FROM marked_folders;", nullptr, nullptr, nullptr) == SQLITE_OK);
 }
 
 bool MarkedFolderDao::isMarked(const QString& folderPath) {
     if (folderPath.isEmpty()) return false;
     QString cleanPath = QDir::cleanPath(folderPath);
 
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query(DatabaseManager::instance().getDatabase());
-    query.prepare("SELECT is_marked FROM marked_folders WHERE folder_path = :path LIMIT 1;");
-    query.bindValue(":path", cleanPath);
-    if (query.exec() && query.next()) {
-        return query.value(0).toInt() == 1;
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return false;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    const char* sql = "SELECT is_marked FROM marked_folders WHERE folder_path = ? LIMIT 1;";
+    sqlite3_stmt* stmt = nullptr;
+    bool marked = false;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        std::string pathStd = cleanPath.toStdString();
+        sqlite3_bind_text(stmt, 1, pathStd.c_str(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            marked = (sqlite3_column_int(stmt, 0) == 1);
+        }
+        sqlite3_finalize(stmt);
     }
-    return false;
+    return marked;
 }
 
 QStringList MarkedFolderDao::getAllMarkedFolders() {
     QStringList result;
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query("SELECT folder_path FROM marked_folders ORDER BY is_marked DESC, updated_at DESC;", DatabaseManager::instance().getDatabase());
-    while (query.next()) {
-        result.append(query.value(0).toString());
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return result;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    const char* sql = "SELECT folder_path FROM marked_folders ORDER BY is_marked DESC, updated_at DESC;";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const unsigned char* txt = sqlite3_column_text(stmt, 0);
+            if (txt) {
+                result.append(QString::fromUtf8(reinterpret_cast<const char*>(txt)));
+            }
+        }
+        sqlite3_finalize(stmt);
     }
     return result;
 }
 
 QStringList MarkedFolderDao::getActiveMarkedFolders() {
     QStringList result;
-    QMutexLocker locker(&DatabaseManager::getGlobalMutex());
-    QSqlQuery query("SELECT folder_path FROM marked_folders WHERE is_marked = 1 ORDER BY updated_at DESC;", DatabaseManager::instance().getDatabase());
-    while (query.next()) {
-        result.append(query.value(0).toString());
+    sqlite3* db = DatabaseManager::instance().getGlobalDb();
+    if (!db) return result;
+
+    std::lock_guard<std::mutex> lock(DatabaseManager::instance().getGlobalMutex());
+
+    const char* sql = "SELECT folder_path FROM marked_folders WHERE is_marked = 1 ORDER BY updated_at DESC;";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const unsigned char* txt = sqlite3_column_text(stmt, 0);
+            if (txt) {
+                result.append(QString::fromUtf8(reinterpret_cast<const char*>(txt)));
+            }
+        }
+        sqlite3_finalize(stmt);
     }
     return result;
 }
