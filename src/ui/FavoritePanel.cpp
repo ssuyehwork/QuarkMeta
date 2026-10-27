@@ -9,6 +9,7 @@
 #include "dialogs/FramelessConfirmDialog.h"
 #include "../meta/FavoriteDao.h"
 #include "../meta/FavoriteService.h"
+#include "../meta/MarkedFolderService.h"
 #include "../meta/LibraryService.h"
 #include "../meta/MetadataManager.h"
 #include "../meta/DriveMetaDao.h"
@@ -787,6 +788,7 @@ void FavoritePanel::onFavoriteContextMenu(const QPoint& pos) {
             FavoriteService::instance().removeFavoriteById(nodeId);
         });
     } else {
+        MarkedFolderService::instance().buildMarkAction(&menu, path, this);
         QAction* favAct = FavoriteService::instance().buildFavoriteAction(&menu, path, this);
         if (favAct) {
             connect(favAct, &QAction::triggered, this, [&isItemRemoved]() {
