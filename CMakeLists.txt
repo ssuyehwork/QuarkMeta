@@ -240,7 +240,6 @@ set(SOURCES
     src/ui/ThumbnailDelegate.h
     src/ui/Logger.h
     src/ui/AppShortcutController.h
-    src/ui/AppShortcutController.cpp
     src/ui/LocalShortcutInterceptor.h
     src/ui/LocalShortcutInterceptor.cpp
     src/ui/PanelMediator.h
@@ -468,6 +467,17 @@ set(LIBTIFF_SOURCES
     src/third_party/libtiff/tif_zip.c
 )
 list(APPEND SOURCES ${LIBTIFF_SOURCES})
+
+# 规范化源文件路径为绝对路径，防止 Visual Studio 在多层嵌套构建目录下找不到相对源文件
+set(ABS_SOURCES)
+foreach(src IN LISTS SOURCES)
+    if(IS_ABSOLUTE "${src}")
+        list(APPEND ABS_SOURCES "${src}")
+    else()
+        list(APPEND ABS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${src}")
+    endif()
+endforeach()
+set(SOURCES ${ABS_SOURCES})
 
 # 可执行文件 (添加 WIN32 属性以消除控制台黑框)
 # 修复：改由 QuarkMeta.rc 引入以杜绝 mt.exe 冲突

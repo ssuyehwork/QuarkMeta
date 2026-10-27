@@ -481,19 +481,19 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         // 过滤有效目标（排除移动到项目自身、其子目录或当前所在父目录）
         QStringList validTargets;
         for (const QString& target : markedFolders) {
-            bool valid = true;
+            bool validForAny = false;
             for (const QString& src : selected) {
                 QString cleanSrc = QDir::cleanPath(src);
                 QString cleanDst = QDir::cleanPath(target);
                 QString parentDir = QDir::cleanPath(QFileInfo(src).dir().absolutePath());
-                if (cleanSrc.compare(cleanDst, Qt::CaseInsensitive) == 0 ||
-                    cleanDst.startsWith(cleanSrc + "/", Qt::CaseInsensitive) ||
-                    cleanDst.compare(parentDir, Qt::CaseInsensitive) == 0) {
-                    valid = false;
+                if (cleanSrc.compare(cleanDst, Qt::CaseInsensitive) != 0 &&
+                    !cleanDst.startsWith(cleanSrc + "/", Qt::CaseInsensitive) &&
+                    cleanDst.compare(parentDir, Qt::CaseInsensitive) != 0) {
+                    validForAny = true;
                     break;
                 }
             }
-            if (valid) {
+            if (validForAny) {
                 validTargets << target;
             }
         }
