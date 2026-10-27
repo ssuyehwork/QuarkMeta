@@ -1,7 +1,7 @@
 #include "MarkedFolderDao.h"
 #include "DatabaseManager.h"
-#include <QSqlQuery>
-#include <QSqlError>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlError>
 #include <QDir>
 #include <QMutexLocker>
 

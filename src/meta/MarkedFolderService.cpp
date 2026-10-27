@@ -18,14 +18,18 @@ MarkedFolderService::MarkedFolderService(QObject* parent) : QObject(parent) {
     MarkedFolderDao::initTable();
     refreshCache();
 
-    // 监听全局事件：当文件夹被删除或重命名时自动清除标记状态 (is_marked = 0)
+    // 监听全局事件：当文件夹或其父级目录被删除/重命名时自动清除标记状态 (is_marked = 0)
     connect(&CentralEventHub::instance(), &CentralEventHub::eventOccurred, this, [this](const QuarkMeta::AppEvent& event) {
         if (event.type == AppEventType::ItemsDeleted || event.type == AppEventType::ItemsRenamed) {
             bool changed = false;
-            for (const QString& path : event.paths) {
-                if (isMarked(path)) {
-                    MarkedFolderDao::unmarkFolder(path);
-                    changed = true;
+            for (const QString& evPath : event.paths) {
+                QString cleanEvPath = QDir::cleanPath(evPath);
+                for (const QString& markedPath : m_activeMarkedCache) {
+                    if (markedPath.compare(cleanEvPath, Qt::CaseInsensitive) == 0 ||
+                        markedPath.startsWith(cleanEvPath + "/", Qt::CaseInsensitive)) {
+                        MarkedFolderDao::unmarkFolder(markedPath);
+                        changed = true;
+                    }
                 }
             }
             if (changed) {

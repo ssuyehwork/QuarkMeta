@@ -240,6 +240,7 @@ set(SOURCES
     src/ui/ThumbnailDelegate.h
     src/ui/Logger.h
     src/ui/AppShortcutController.h
+    src/ui/AppShortcutController.cpp
     src/ui/LocalShortcutInterceptor.h
     src/ui/LocalShortcutInterceptor.cpp
     src/ui/PanelMediator.h
