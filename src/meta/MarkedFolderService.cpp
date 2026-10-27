@@ -2,12 +2,12 @@
 #include "MarkedFolderDao.h"
 #include "../ui/UiHelper.h"
 #include "../ui/ToolTipOverlay.h"
-#include "../ui/dialogs/FramelessConfirmDialog.h"
+#include "../ui/dialogs/FramelessMessageBox.h"
 #include "../core/TaskProgressService.h"
 #include "../core/CentralEventHub.h"
 #include "../core/DiskTrashService.h"
+#include "../core/UndoManager.h"
 #include "../util/ShellHelper.h"
-#include "../ui/controllers/ContentChangeWatcher.h"
 #include <QFileInfo>
 #include <QDir>
 #include <QAction>
@@ -19,37 +19,33 @@
 namespace QuarkMeta {
 
 void TransferToMarkedCommand::undo() {
-    TaskProgressService::instance().createJob("撤销标记迁移", m_pairs.size());
-    ContentChangeWatcher::instance().suspendWatcher();
+    int jobId = TaskProgressService::instance().createJob("撤销标记迁移", m_pairs.size());
 
     for (const auto& pair : m_pairs) {
         if (!pair.copiedPath.isEmpty() && QFile::exists(pair.copiedPath)) {
-            DiskTrashService::instance().moveToDiskTrash({pair.copiedPath});
+            DiskTrashService::moveToDiskTrash({pair.copiedPath});
         }
         if (!pair.trashItemPath.isEmpty()) {
-            DiskTrashService::instance().restoreFromTrash(pair.trashItemPath);
+            DiskTrashService::restoreFromDiskTrash(0, pair.trashItemPath);
         }
     }
 
-    ContentChangeWatcher::instance().resumeWatcher();
-    TaskProgressService::instance().finishJob();
+    TaskProgressService::instance().finishJob(jobId);
 }
 
 void TransferToMarkedCommand::redo() {
-    TaskProgressService::instance().createJob("重做标记迁移", m_pairs.size());
-    ContentChangeWatcher::instance().suspendWatcher();
+    int jobId = TaskProgressService::instance().createJob("重做标记迁移", m_pairs.size());
 
     for (const auto& pair : m_pairs) {
         if (!pair.originalPath.isEmpty() && QFile::exists(pair.originalPath) && !pair.copiedPath.isEmpty()) {
             ShellHelper::copyOrMoveItems({pair.originalPath}, QFileInfo(pair.copiedPath).absolutePath(), false, false, false, {}, {});
         }
         if (!pair.trashItemPath.isEmpty() && !pair.originalPath.isEmpty() && QFile::exists(pair.originalPath)) {
-            DiskTrashService::instance().moveToDiskTrash({pair.originalPath});
+            DiskTrashService::moveToDiskTrash({pair.originalPath});
         }
     }
 
-    ContentChangeWatcher::instance().resumeWatcher();
-    TaskProgressService::instance().finishJob();
+    TaskProgressService::instance().finishJob(jobId);
 }
 
 MarkedFolderService& MarkedFolderService::instance() {
@@ -60,7 +56,7 @@ MarkedFolderService& MarkedFolderService::instance() {
 MarkedFolderService::MarkedFolderService(QObject* parent) : QObject(parent) {
     MarkedFolderDao::initTable();
 
-    CentralEventHub::instance().subscribe(this, [this](const CentralEvent& evt) {
+    connect(&CentralEventHub::instance(), &CentralEventHub::eventOccurred, this, [this](const QuarkMeta::AppEvent& evt) {
         if (evt.type == AppEventType::ItemsDeleted || evt.type == AppEventType::ItemsRenamed) {
             for (const QString& path : evt.paths) {
                 if (!QFile::exists(path) && isMarked(path)) {
@@ -130,13 +126,12 @@ void MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
                       .arg(validTargets.size())
                       .arg(hasSameVol ? "迁移 (同盘复制并回收原文件)" : "复制 (异盘纯复制)");
 
-    if (!FramelessConfirmDialog::showConfirm(nullptr, "确认迁移", msg, "确定", "取消")) {
+    if (!FramelessMessageBox::question(nullptr, "确认迁移", msg)) {
         return;
     }
 
     // 4. 创建进度条并执行复制/回收与撤销记单
-    ContentChangeWatcher::instance().suspendWatcher();
-    TaskProgressService::instance().createJob("迁移至标记目的地", sourcePaths.size() * validTargets.size());
+    int jobId = TaskProgressService::instance().createJob("迁移至标记目的地", sourcePaths.size() * validTargets.size());
 
     QVector<TransferPair> pairs;
     bool allSuccess = true;
@@ -156,16 +151,15 @@ void MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
 
     if (allSuccess) {
         if (hasSameVol) {
-            QStringList trashPaths = DiskTrashService::instance().moveToDiskTrash(sourcePaths);
-            for (int i = 0; i < pairs.size() && i < trashPaths.size(); ++i) {
-                pairs[i].trashItemPath = trashPaths[i];
+            DiskTrashService::moveToDiskTrash(sourcePaths);
+            for (int i = 0; i < pairs.size(); ++i) {
+                pairs[i].trashItemPath = pairs[i].originalPath;
             }
         }
         UndoManager::instance().pushCommand(std::make_unique<TransferToMarkedCommand>(pairs));
     }
 
-    ContentChangeWatcher::instance().resumeWatcher();
-    TaskProgressService::instance().finishJob();
+    TaskProgressService::instance().finishJob(jobId);
 }
 
 bool MarkedFolderService::isMarked(const QString& path) const {

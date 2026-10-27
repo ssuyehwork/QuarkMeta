@@ -54,8 +54,8 @@ void SidebarContainerWidget::initUi() {
 
     connect(m_markedPanel, &MarkedPanel::requestLocateFolder, this, [](const QString& path) {
         if (!path.isEmpty()) {
-            // 通过 CentralEventHub 广播打开/定位目录事件
-            CentralEventHub::instance().publishEvent({AppEventType::LocateFileRequested, path, {path}, {}});
+            // 通过 CentralEventHub 广播路径导航事件
+            CentralEventHub::instance().publishEvent({AppEventType::PathNavigated, path, {path}, {}});
         }
     });
 
