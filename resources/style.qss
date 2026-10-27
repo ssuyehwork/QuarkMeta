@@ -2118,7 +2118,7 @@ QTabBar#SidebarTabBar {
 QTabBar#SidebarTabBar::tab {
     background: transparent;
     color: #AAAAAA;
-    padding: 4px 12px;
+    padding: 4px 6px;
     font-size: 13px;
     font-weight: bold;
     border: none;
