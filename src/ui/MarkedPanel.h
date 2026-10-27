@@ -36,7 +36,7 @@ private slots:
 private:
     void initUi();
     QTreeWidgetItem* createMarkedItem(const QString& path, bool active);
-    void handleDropPaths(const QMimeData* mimeData);
+    void handleDropPaths(const QMimeData* mimeData, const QPoint& pos, bool isViewportPos);
 
     QVBoxLayout* m_mainLayout = nullptr;
     QTreeWidget* m_treeWidget = nullptr;

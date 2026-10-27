@@ -69,13 +69,13 @@ bool MarkedFolderService::addMarked(const QString& path) {
     return false;
 }
 
-bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths) {
+bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths, const QStringList& targetDirs) {
     if (sourcePaths.isEmpty()) {
         ToolTipOverlay::instance()->showToast("未选择任何要迁移的项目", 2000, QColor("#e81123"));
         return false;
     }
 
-    QStringList activeTargets = getActiveMarked();
+    QStringList activeTargets = targetDirs.isEmpty() ? getActiveMarked() : targetDirs;
     if (activeTargets.isEmpty()) {
         ToolTipOverlay::instance()->showToast("未激活任何标记目的地文件夹 (请先用 Alt+C 标记)", 2500, QColor("#e81123"));
         return false;

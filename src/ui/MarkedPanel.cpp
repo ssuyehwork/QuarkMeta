@@ -63,7 +63,7 @@ void MarkedPanel::dragMoveEvent(QDragMoveEvent* event) {
 void MarkedPanel::dropEvent(QDropEvent* event) {
     if (event->mimeData() && event->mimeData()->hasUrls()) {
         event->acceptProposedAction();
-        handleDropPaths(event->mimeData());
+        handleDropPaths(event->mimeData(), event->pos(), false);
         return;
     }
     QWidget::dropEvent(event);
@@ -87,7 +87,8 @@ bool MarkedPanel::eventFilter(QObject* watched, QEvent* event) {
             auto* de = static_cast<QDropEvent*>(event);
             if (de->mimeData() && de->mimeData()->hasUrls()) {
                 de->acceptProposedAction();
-                handleDropPaths(de->mimeData());
+                bool isViewport = (m_treeWidget && watched == m_treeWidget->viewport());
+                handleDropPaths(de->mimeData(), de->pos(), isViewport);
                 return true;
             }
         }
@@ -95,7 +96,7 @@ bool MarkedPanel::eventFilter(QObject* watched, QEvent* event) {
     return QWidget::eventFilter(watched, event);
 }
 
-void MarkedPanel::handleDropPaths(const QMimeData* mimeData) {
+void MarkedPanel::handleDropPaths(const QMimeData* mimeData, const QPoint& pos, bool isViewportPos) {
     if (!mimeData) return;
     QStringList sourcePaths;
     const QList<QUrl> urls = mimeData->urls();
@@ -107,6 +108,20 @@ void MarkedPanel::handleDropPaths(const QMimeData* mimeData) {
     }
 
     if (!sourcePaths.isEmpty()) {
+        QTreeWidgetItem* item = nullptr;
+        if (m_treeWidget) {
+            QPoint viewportPos = isViewportPos ? pos : (m_treeWidget->viewport() ? m_treeWidget->viewport()->mapFrom(m_treeWidget, pos) : pos);
+            item = m_treeWidget->itemAt(viewportPos);
+        }
+
+        if (item) {
+            QString targetPath = item->data(0, Qt::UserRole).toString();
+            if (!targetPath.isEmpty()) {
+                MarkedFolderService::instance().executeTransferToMarked(sourcePaths, QStringList{targetPath});
+                return;
+            }
+        }
+
         MarkedFolderService::instance().executeTransferToMarked(sourcePaths);
     }
 }
