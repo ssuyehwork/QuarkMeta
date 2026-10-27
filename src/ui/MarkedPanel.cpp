@@ -63,7 +63,7 @@ void MarkedPanel::dragMoveEvent(QDragMoveEvent* event) {
 void MarkedPanel::dropEvent(QDropEvent* event) {
     if (event->mimeData() && event->mimeData()->hasUrls()) {
         event->acceptProposedAction();
-        handleDropPaths(event->mimeData(), event->pos(), false);
+        handleDropPaths(event->mimeData(), event->position().toPoint(), false);
         return;
     }
     QWidget::dropEvent(event);
@@ -88,7 +88,7 @@ bool MarkedPanel::eventFilter(QObject* watched, QEvent* event) {
             if (de->mimeData() && de->mimeData()->hasUrls()) {
                 de->acceptProposedAction();
                 bool isViewport = (m_treeWidget && watched == m_treeWidget->viewport());
-                handleDropPaths(de->mimeData(), de->pos(), isViewport);
+                handleDropPaths(de->mimeData(), de->position().toPoint(), isViewport);
                 return true;
             }
         }
