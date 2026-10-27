@@ -167,6 +167,9 @@ QWidget* MainWindow::setupCentralPanels(QWidget* parentWidget) {
 
     m_navPanel      = new NavPanel(this);      m_navPanel->setObjectName("SidebarContainer");
     m_sidebarContainer = new SidebarContainerWidget(this); m_sidebarContainer->setObjectName("SidebarContainerWidget");
+    connect(m_sidebarContainer, &SidebarContainerWidget::requestLocateFolder, &NavigationService::instance(), [](const QString& path) {
+        NavigationService::instance().navigateTo(path);
+    });
     m_favoritePanel = m_sidebarContainer->favoritePanel();
     m_contentPanel  = new ContentPanel(this);  m_contentPanel->setObjectName("EditorContainer");
     m_metaPanel     = new MetaPanel(this);     m_metaPanel->setObjectName("MetadataContainer");

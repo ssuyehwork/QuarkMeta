@@ -11,6 +11,7 @@
 #include "../core/TrashService.h"
 #include "../meta/FavoriteDao.h"
 #include "../meta/FavoriteService.h"
+#include "../meta/MarkedFolderService.h"
 #include "../meta/LibraryService.h"
 #include "../core/ClipboardService.h"
 #include "../core/NavigationService.h"
@@ -200,6 +201,11 @@ void NavPanel::initUi() {
     connect(m_treeView, &QTreeView::expanded, this, &NavPanel::onItemExpanded);
     connect(m_treeView, &QTreeView::clicked, this, &NavPanel::onTreeClicked);
     connect(&NavigationHistoryService::instance(), &NavigationHistoryService::historyChanged, this, &NavPanel::updateRecentVisitedList);
+    connect(&MarkedFolderService::instance(), &MarkedFolderService::markedFoldersChanged, this, [this]() {
+        if (m_treeView && m_treeView->viewport()) {
+            m_treeView->viewport()->update();
+        }
+    });
 }
 
 void NavPanel::updateRecentVisitedList() {
@@ -355,6 +361,7 @@ void NavPanel::onTreeContextMenu(const QPoint& pos) {
     menu.addSeparator();
 
     // 4. 置顶 / 收藏夹 / 库
+    MarkedFolderService::instance().buildMarkAction(&menu, path, this);
     FavoriteService::instance().buildFavoriteAction(&menu, path, this);
     LibraryService::instance().buildLibraryAction(&menu, QStringList{path}, this);
 

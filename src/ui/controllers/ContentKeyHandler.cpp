@@ -2,7 +2,16 @@
 #include "../ContentPanel.h"
 #include "../CardLayoutEngine.h"
 #include "../RatingBarLayout.h"
+#include <memory>
+#include <atomic>
 #include "../ToolTipOverlay.h"
+#include "../../meta/MarkedFolderService.h"
+#include "../../core/DiskTrashService.h"
+#include "../../util/TaskProgressService.h"
+#include "../../core/UndoManager.h"
+#include "../AppShortcutController.h"
+#include "../dialogs/FramelessConfirmDialog.h"
+#include <QStorageInfo>
 #include "../ShellIconManager.h"
 #include "../UiHelper.h"
 #include "../FileCollisionDialog.h"
@@ -439,6 +448,215 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         for (const auto& idx : indexes) {
             if (idx.column() == 0 && !idx.data(SectionHeaderRole).toBool()) model->setData(idx, rating, RatingRole);
         }
+        return true;
+    }
+
+    // 1.5 Alt + C: 快捷标记/取消标记当前选中的文件夹为目的地
+    if (!AppShortcutController::isEditingFocus() && (keyEvent->modifiers() & Qt::AltModifier) && (keyEvent->key() == Qt::Key_C)) {
+        QStringList selected = m_panel->getSelectedPaths();
+        if (!selected.isEmpty()) {
+            for (const QString& p : selected) {
+                if (QFileInfo(p).isDir()) {
+                    MarkedFolderService::instance().toggleMarked(p);
+                }
+            }
+        }
+        return true;
+    }
+
+    // 1.6 Alt + V: 将当前选中的项目迁移/发送至所有标记的目的地文件夹
+    if (!AppShortcutController::isEditingFocus() && (keyEvent->modifiers() & Qt::AltModifier) && (keyEvent->key() == Qt::Key_V)) {
+        QStringList selected = m_panel->getSelectedPaths();
+        if (selected.isEmpty()) {
+            ToolTipOverlay::instance()->showToast("未选中任何要发送的项目", 2000, QColor("#e81123"));
+            return true;
+        }
+
+        QStringList markedFolders = MarkedFolderService::instance().getActiveMarkedFolders();
+        if (markedFolders.isEmpty()) {
+            ToolTipOverlay::instance()->showToast("未设置处于标记状态的目的地文件夹", 2000, QColor("#e81123"));
+            return true;
+        }
+
+        // 过滤有效目标（排除移动到项目自身、其子目录或当前所在父目录）
+        QStringList validTargets;
+        for (const QString& target : markedFolders) {
+            bool valid = true;
+            for (const QString& src : selected) {
+                QString cleanSrc = QDir::cleanPath(src);
+                QString cleanDst = QDir::cleanPath(target);
+                QString parentDir = QDir::cleanPath(QFileInfo(src).dir().absolutePath());
+                if (cleanSrc.compare(cleanDst, Qt::CaseInsensitive) == 0 ||
+                    cleanDst.startsWith(cleanSrc + "/", Qt::CaseInsensitive) ||
+                    cleanDst.compare(parentDir, Qt::CaseInsensitive) == 0) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                validTargets << target;
+            }
+        }
+
+        if (validTargets.isEmpty()) {
+            ToolTipOverlay::instance()->showToast("目标文件夹不能是选中的项目本身、其子目录或当前所在父目录", 2000, QColor("#e81123"));
+            return true;
+        }
+
+        // 同盘/跨盘检测
+        bool hasSameVolumeTarget = false;
+        for (const QString& src : selected) {
+            QStorageInfo srcStorage(src);
+            for (const QString& dst : validTargets) {
+                QStorageInfo dstStorage(dst);
+                if (srcStorage.rootPath().compare(dstStorage.rootPath(), Qt::CaseInsensitive) == 0) {
+                    hasSameVolumeTarget = true;
+                    break;
+                }
+            }
+            if (hasSameVolumeTarget) break;
+        }
+
+        QString modeStr = hasSameVolumeTarget ? "同盘迁移（全部成功后将原文件移至私有回收站）" : "跨盘复制（保留原文件）";
+        QString confirmMsg = QString("确定将选中的 %1 个项目发送至以下 %2 个目的地文件夹？\n模式：%3\n\n目的地：\n%4")
+                                .arg(selected.size())
+                                .arg(validTargets.size())
+                                .arg(modeStr)
+                                .arg(validTargets.join("\n"));
+
+        FramelessConfirmDialog dlg(m_panel);
+        dlg.setTitle("确认发送至目的地");
+        dlg.setMessage(confirmMsg);
+        dlg.setConfirmText("确定发送");
+        dlg.setCancelText("取消");
+
+        if (dlg.exec() != QDialog::Accepted) {
+            return true;
+        }
+
+        // 定义多目标异步传输共享状态
+        struct TransferState {
+            QStringList sources;
+            QStringList targets;
+            bool hasSameVolume = false;
+            int totalTargets = 0;
+            std::atomic<int> completedTargets{0};
+            std::atomic<bool> allSuccess{true};
+            int jobId = -1;
+            QPointer<ContentPanel> weakPanel;
+            QMutex mutex;
+        };
+
+        auto state = std::make_shared<TransferState>();
+        state->sources = selected;
+        state->targets = validTargets;
+        state->hasSameVolume = hasSameVolumeTarget;
+        state->totalTargets = validTargets.size();
+        state->weakPanel = m_panel;
+        state->jobId = TaskProgressService::instance().createJob("发送至目的地", validTargets.size());
+
+        m_panel->beginWatchSuppress();
+
+        // 遍历所有目的地调度 DiskIoService 异步拷贝
+        for (const QString& targetDir : validTargets) {
+            DiskIoContext ioCtx;
+            ioCtx.sources = selected;
+            ioCtx.destination = targetDir;
+            ioCtx.isMove = false; // 统一先复制
+
+            DiskIoService::instance().executeAsync(ioCtx, [state, targetDir](bool success) {
+                if (!success) {
+                    state->allSuccess = false;
+                }
+                int done = ++state->completedTargets;
+                TaskProgressService::instance().reportProgress(state->jobId, "正在发送至目的地...", done, state->totalTargets);
+
+                // 只有当所有目的地全部执行完毕后，主线程统一收口
+                if (done == state->totalTargets) {
+                    QMetaObject::invokeMethod(QCoreApplication::instance(), [state]() {
+                        bool isAllOk = state->allSuccess.load();
+                        bool movedToTrash = false;
+
+                        // 全部目标复制成功且属于同盘迁移时，统一回收源文件至私有回收站
+                        if (isAllOk && state->hasSameVolume) {
+                            DiskTrashService::moveToDiskTrash(state->sources);
+                            movedToTrash = true;
+                        }
+
+                        // 压入 UndoManager 支持 Ctrl+Z 撤销
+                        class MarkedTransferUndoCommand : public ActionCommand {
+                        public:
+                            MarkedTransferUndoCommand(QStringList srcs, QStringList dsts, bool trash)
+                                : m_srcs(srcs), m_dsts(dsts), m_trash(trash) {}
+
+                            void undo() override {
+                                for (const QString& target : m_dsts) {
+                                    for (const QString& src : m_srcs) {
+                                        QString destFile = QDir(target).filePath(QFileInfo(src).fileName());
+                                        if (QFile::exists(destFile)) {
+                                            DiskTrashService::moveToDiskTrash({destFile});
+                                        }
+                                    }
+                                }
+                                if (m_trash) {
+                                    for (const QString& src : m_srcs) {
+                                        DiskTrashService::restoreToDirectory(src, QFileInfo(src).dir().absolutePath());
+                                    }
+                                }
+                                CentralEventHub::instance().publishEvent({AppEventType::UndoRedoPerformed, "", {}, {}});
+                            }
+
+                            void redo() override {
+                                int total = m_dsts.size();
+                                auto doneCount = std::make_shared<std::atomic<int>>(0);
+                                auto srcs = m_srcs;
+                                bool trash = m_trash;
+
+                                for (const QString& target : m_dsts) {
+                                    DiskIoContext ioCtx;
+                                    ioCtx.sources = m_srcs;
+                                    ioCtx.destination = target;
+                                    ioCtx.isMove = false;
+
+                                    DiskIoService::instance().executeAsync(ioCtx, [doneCount, total, srcs, trash](bool success) {
+                                        if (++(*doneCount) == total) {
+                                            QMetaObject::invokeMethod(QCoreApplication::instance(), [srcs, trash, success]() {
+                                                if (success && trash) {
+                                                    DiskTrashService::moveToDiskTrash(srcs);
+                                                }
+                                                CentralEventHub::instance().publishEvent({AppEventType::UndoRedoPerformed, "", {}, {}});
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                            QString description() const override { return "撤销发送至目的地"; }
+
+                        private:
+                            QStringList m_srcs;
+                            QStringList m_dsts;
+                            bool m_trash;
+                        };
+
+                        UndoManager::instance().pushCommand(std::make_unique<MarkedTransferUndoCommand>(state->sources, state->targets, movedToTrash));
+
+                        if (state->weakPanel) {
+                            state->weakPanel->endWatchSuppress();
+                            state->weakPanel->refreshAll();
+                        }
+
+                        TaskProgressService::instance().finishJob(state->jobId);
+
+                        if (isAllOk) {
+                            ToolTipOverlay::instance()->showToast("已成功发送至目的地", 2000, QColor("#378ADD"));
+                        } else {
+                            ToolTipOverlay::instance()->showToast("部分目的地发送失败，原文件已保留", 2500, QColor("#e81123"));
+                        }
+                    });
+                }
+            });
+        }
+
         return true;
     }
 

@@ -123,6 +123,10 @@ set(SOURCES
     src/meta/HistoryDao.cpp
     src/meta/HistoryService.h
     src/meta/HistoryService.cpp
+    src/meta/MarkedFolderDao.h
+    src/meta/MarkedFolderDao.cpp
+    src/meta/MarkedFolderService.h
+    src/meta/MarkedFolderService.cpp
     src/meta/FavoriteService.h
     src/meta/FavoriteService.cpp
     src/meta/ItemMetaMapper.cpp
@@ -141,6 +145,8 @@ set(SOURCES
     src/meta/LibraryValidationService.h
     src/ui/LibraryPanel.h
     src/ui/LibraryPanel.cpp
+    src/ui/MarkedPanel.h
+    src/ui/MarkedPanel.cpp
     src/ui/SidebarContainerWidget.h
     src/ui/SidebarContainerWidget.cpp
     src/meta/DatabaseMigrator.h

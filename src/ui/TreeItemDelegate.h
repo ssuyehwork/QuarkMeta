@@ -20,6 +20,7 @@
 #include "UiHelper.h"
 #include "CardPainterHelper.h"
 #include "StyleLibrary.h"
+#include "../meta/MarkedFolderService.h"
 using namespace QuarkMeta::Style;
 
 namespace QuarkMeta {
@@ -234,11 +235,25 @@ public:
             painter->setPen(textColor);
             painter->setFont(option.font);
 
+            QString itemPath = index.data(PathRole).toString();
+            bool isMarkedActive = MarkedFolderService::instance().isMarked(itemPath);
+
             bool isPinned = index.data(PinnedRole).toBool();
             int pinRightX = textRect.right() - CardPainterHelper::kPinRightPadding;
+
+            int markW = 0;
+            if (isMarkedActive) {
+                int iconSize = 14;
+                QRect markRect(pinRightX - iconSize, textRect.top() + (textRect.height() - iconSize) / 2, iconSize, iconSize);
+                QIcon markIcon = UiHelper::getIcon("Destination.svg", QColor("#ff551c"), iconSize);
+                markIcon.paint(painter, markRect, Qt::AlignCenter, QIcon::Normal, QIcon::Off);
+                markW = iconSize + 4;
+                pinRightX -= markW;
+            }
+
             int pinW = CardPainterHelper::drawInlinePinIcon(painter, pinRightX, textRect.top(), textRect.height(), isPinned);
 
-            int reservedW = (pinW > 0) ? (pinW + CardPainterHelper::kPinToRatingGap) : 0;
+            int reservedW = markW + ((pinW > 0) ? (pinW + CardPainterHelper::kPinToRatingGap) : 0);
             QRect actualTextRect = textRect.adjusted(0, 0, -reservedW, 0);
             QString elidedText = option.fontMetrics.elidedText(name, Qt::ElideMiddle, actualTextRect.width() - 10);
             painter->drawText(actualTextRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);

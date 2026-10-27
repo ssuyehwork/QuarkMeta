@@ -9,6 +9,7 @@
 #include "dialogs/FramelessConfirmDialog.h"
 #include "../meta/FavoriteDao.h"
 #include "../meta/FavoriteService.h"
+#include "../meta/MarkedFolderService.h"
 #include "../meta/LibraryService.h"
 #include "../meta/MetadataManager.h"
 #include "../meta/DriveMetaDao.h"
@@ -110,15 +111,27 @@ void FavoriteItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& 
     QColor normalTextColor = (opt.state & QStyle::State_Selected) ? QColor("#FFFFFF") : QColor("#EEEEEE");
     QColor matchTextColor("#3498db");
 
+    QString itemPath = index.data(Qt::UserRole).toString();
+    bool isMarkedActive = MarkedFolderService::instance().isMarked(itemPath);
     bool isAutoRec = index.data(Qt::UserRole + 9).toBool();
-    int rightIconWidth = isAutoRec ? 22 : 0;
+    int rightIconWidth = (isAutoRec ? 22 : 0) + (isMarkedActive ? 22 : 0);
     QRect adjustedTextRect = textRect.adjusted(0, 0, -rightIconWidth, 0);
 
     paintHighlightedText(painter, adjustedTextRect, text, m_filterKeyword, opt.font, normalTextColor, matchTextColor);
 
+    int currentRightOffset = opt.rect.right() - 22;
+
+    // 绘制标记为目的地 Destination.svg 图标
+    if (isMarkedActive) {
+        QRect destRect(currentRightOffset, opt.rect.top() + (opt.rect.height() - 16) / 2, 16, 16);
+        QIcon destIcon = UiHelper::getIcon("Destination.svg", QColor("#ff551c"), 16);
+        destIcon.paint(painter, destRect, Qt::AlignCenter, QIcon::Normal, QIcon::Off);
+        currentRightOffset -= 20;
+    }
+
     // 绘制开启自动递归右侧 layers 图标
     if (isAutoRec) {
-        QRect layersRect(opt.rect.right() - 22, opt.rect.top() + (opt.rect.height() - 16) / 2, 16, 16);
+        QRect layersRect(currentRightOffset, opt.rect.top() + (opt.rect.height() - 16) / 2, 16, 16);
         QIcon layersIcon = UiHelper::getIcon("layers", QColor("#2ecc71"), 16);
         layersIcon.paint(painter, layersRect, Qt::AlignCenter, QIcon::Normal, QIcon::Off);
     }
@@ -356,6 +369,11 @@ void FavoritePanel::initUi() {
     connect(m_favoriteView, &DropTreeView::internalMoveRequested, this, &FavoritePanel::onInternalMoveRequested);
     connect(m_favoriteView, &QTreeView::clicked, this, &FavoritePanel::onFavoriteClicked);
     connect(m_favoriteView, &QWidget::customContextMenuRequested, this, &FavoritePanel::onFavoriteContextMenu);
+    connect(&MarkedFolderService::instance(), &MarkedFolderService::markedFoldersChanged, this, [this]() {
+        if (m_favoriteView && m_favoriteView->viewport()) {
+            m_favoriteView->viewport()->update();
+        }
+    });
     connect(m_favoriteView, &DropTreeView::pathsDropped, this, &FavoritePanel::onPathsDroppedToFavorite);
 
     connect(m_favoriteModel, &QStandardItemModel::rowsMoved, this, &FavoritePanel::markOrderDirty, Qt::DirectConnection);
@@ -778,6 +796,7 @@ void FavoritePanel::onFavoriteContextMenu(const QPoint& pos) {
             FavoriteService::instance().removeFavoriteById(nodeId);
         });
     } else {
+        MarkedFolderService::instance().buildMarkAction(&menu, path, this);
         QAction* favAct = FavoriteService::instance().buildFavoriteAction(&menu, path, this);
         if (favAct) {
             connect(favAct, &QAction::triggered, this, [&isItemRemoved]() {
