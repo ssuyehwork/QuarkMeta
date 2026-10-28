@@ -182,10 +182,7 @@ void MarkedPanel::onContextMenuRequested(const QPoint& pos) {
             NavigationService::instance().openInNewTab(path);
         });
 
-        QAction* showInExplorerAct = menu.addAction(UiHelper::getIcon("Search-in-library", QColor("#EEEEEE"), 16), "在“资源管理器”中显示");
-        connect(showInExplorerAct, &QAction::triggered, this, [path]() {
-            ShellHelper::openInExplorer(path);
-        });
+        ContextMenuFactory::buildShowInExplorerAction(&menu, path, this);
 
         menu.addSeparator();
 
@@ -217,7 +214,7 @@ void MarkedPanel::onContextMenuRequested(const QPoint& pos) {
         // 3. 辅助工具组
         ContextMenuFactory::buildCopyPathAction(&menu, QStringList{path}, this);
 
-        QAction* refreshAct = menu.addAction(UiHelper::getIcon("check", QColor("#EEEEEE"), 16), "刷新");
+        QAction* refreshAct = menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 16), "刷新");
         connect(refreshAct, &QAction::triggered, this, [this]() {
             loadMarkedFolders();
         });
