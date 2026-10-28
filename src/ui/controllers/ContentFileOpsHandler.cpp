@@ -12,6 +12,7 @@
 #include "../../core/NavigationHistoryService.h"
 #include "../../core/LastOperationManager.h"
 #include "../../util/DiskIoService.h"
+#include "../../meta/LibraryService.h"
 
 #include <QDir>
 #include <QFileInfo>
