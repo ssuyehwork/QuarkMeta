@@ -374,13 +374,14 @@ void PanelMediator::setupConnections() {
         }
 
         if (libraryPanel) {
-            connect(libraryPanel, &LibraryPanel::categoryPathsSelected, this, [this, contentPanel, filterPanel](const QStringList& paths) {
+            connect(libraryPanel, &LibraryPanel::categoryPathsSelected, this, [this, contentPanel, filterPanel](const QStringList& paths, const QString& name) {
                 if (filterPanel) {
                     filterPanel->clearAllFilters(false);
                 }
                 ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
                 if (target) {
                     target->setCurrentCategoryType("library");
+                    target->setCurrentCategoryTitle(name);
                     target->setLastLoadedLibraryPaths(paths);
                     target->loadLibraryPaths(paths);
                 }
@@ -391,6 +392,7 @@ void PanelMediator::setupConnections() {
                 ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
                 if (target) {
                     target->setCurrentCategoryType("smart_folder");
+                    target->setCurrentCategoryTitle(record.name);
                     target->setLastLoadedLibraryPaths(matchingPaths);
                     target->loadLibraryPaths(matchingPaths);
                 }
