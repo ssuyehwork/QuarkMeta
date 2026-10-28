@@ -396,7 +396,7 @@ void PanelMediator::setupConnections() {
         }
 
         if (libraryPanel) {
-            connect(libraryPanel, &LibraryPanel::categoryPathsSelected, this, [this, contentPanel, filterPanel, addressBar](const QStringList& paths, const QString& name, int categoryId) {
+            connect(libraryPanel, &LibraryPanel::categoryPathsSelected, this, [this, contentPanel, filterPanel, addressBar, titleBar](const QStringList& paths, const QString& name, int categoryId) {
                 if (filterPanel) {
                     filterPanel->clearAllFilters(false);
                 }
@@ -411,9 +411,12 @@ void PanelMediator::setupConnections() {
                 if (addressBar) {
                     addressBar->setPath("库 → " + name);
                 }
+                if (titleBar && titleBar->tabBar()) {
+                    titleBar->tabBar()->updateCurrentTabTitle(name, "library://" + QString::number(categoryId));
+                }
             });
 
-            connect(libraryPanel, &LibraryPanel::smartFolderSelected, this, [this, contentPanel, filterPanel, addressBar](const SmartFolderRecord& record) {
+            connect(libraryPanel, &LibraryPanel::smartFolderSelected, this, [this, contentPanel, filterPanel, addressBar, titleBar](const SmartFolderRecord& record) {
                 QStringList matchingPaths = SmartFolderDao::getMatchingPaths(record);
                 ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
                 if (target) {
@@ -428,6 +431,9 @@ void PanelMediator::setupConnections() {
                 }
                 if (filterPanel) {
                     filterPanel->clearAllFilters(false);
+                }
+                if (titleBar && titleBar->tabBar()) {
+                    titleBar->tabBar()->updateCurrentTabTitle(record.name, "smartfolder://" + QString::number(record.id));
                 }
             });
         }

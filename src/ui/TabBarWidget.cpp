@@ -35,7 +35,7 @@ TabItemButton::TabItemButton(int index, QWidget* parent)
     setObjectName("TabItem");
     setFocusPolicy(Qt::NoFocus);
     setFixedHeight(28);
-    setMaximumWidth(240);
+    setMaximumWidth(600);
     setMinimumWidth(80);
     setCursor(Qt::PointingHandCursor);
 
@@ -743,6 +743,8 @@ void TabBarWidget::updateCurrentTabTitle(const QString& title, const QString& ur
     QString folderName = title;
     if (url == "computer://" || url.isEmpty()) {
         folderName = "此电脑";
+    } else if (url.startsWith("library://") || url.startsWith("smartfolder://")) {
+        folderName = title;
     } else if (title.contains("/") || title.contains("\\")) {
         QString cleanPath = QDir::cleanPath(url);
         QFileInfo fi(cleanPath);
@@ -755,14 +757,7 @@ void TabBarWidget::updateCurrentTabTitle(const QString& title, const QString& ur
     m_tabs[m_currentIndex].title = folderName.isEmpty() ? "此电脑" : folderName;
     m_tabs[m_currentIndex].url = url;
 
-    if (m_currentIndex < m_tabWidgets.size()) {
-        auto tabBtn = m_tabWidgets[m_currentIndex];
-        tabBtn->setTabTitle(m_tabs[m_currentIndex].title);
-        QString colorHex = m_tabs[m_currentIndex].color;
-        QColor iconColor = !colorHex.isEmpty() ? QColor(colorHex) : QColor("#EEEEEE");
-        QString iconKey = !m_tabs[m_currentIndex].iconKey.isEmpty() ? m_tabs[m_currentIndex].iconKey : (url.startsWith("computer://") ? "computer" : "folder_filled");
-        tabBtn->setTabIcon(UiHelper::getIcon(iconKey, iconColor));
-    }
+    applyDiffUpdate();
     saveStateToConfig();
 }
 
@@ -969,28 +964,42 @@ void TabBarWidget::applyDiffUpdate() {
         m_tabsLayout->addWidget(tabItem);
     }
 
-    // 3. 计算紧凑靠左宽度：少标签时固定 180px，超限时才触发阶梯压缩 (80px ~ 180px)
-    constexpr int kIdealWidth = 180;
+    // 3. 内容驱动自适应宽度计算：空间充裕时完整展示名称，超限时才等比平滑阶梯压缩
     int availableWidth = m_scrollArea->viewport()->width() - 36;
     if (availableWidth <= 0) availableWidth = width() - 36;
 
-    int dynamicWidth = kIdealWidth;
-    int totalNeeded = targetCount * kIdealWidth + (targetCount - 1) * 2;
-    if (totalNeeded > availableWidth && targetCount > 0) {
-        dynamicWidth = qBound(80, (availableWidth - (targetCount - 1) * 2) / targetCount, kIdealWidth);
+    QVector<int> naturalWidths(targetCount);
+    int totalNaturalWidth = 0;
+    for (int i = 0; i < targetCount; ++i) {
+        QFontMetrics fm(m_tabWidgets[i]->font());
+        int textW = fm.horizontalAdvance(m_tabs[i].title);
+        int needed = qBound(80, textW + 48, 600);
+        naturalWidths[i] = needed;
+        totalNaturalWidth += needed;
+    }
+    if (targetCount > 1) {
+        totalNaturalWidth += (targetCount - 1) * 2;
     }
 
-    // 4. 全量刷新属性和尺寸
+    // 4. 空间充裕直接按自然宽度 100% 完整显示；空间超限启动等比压缩
+    double scale = (totalNaturalWidth > availableWidth && totalNaturalWidth > 0)
+        ? static_cast<double>(availableWidth - (targetCount - 1) * 2) / (totalNaturalWidth - (targetCount - 1) * 2)
+        : 1.0;
+
     for (int i = 0; i < targetCount; ++i) {
         auto& tab = m_tabs[i];
         TabItemButton* tabBtn = m_tabWidgets[i];
 
+        int finalWidth = (scale < 1.0)
+            ? qBound(80, static_cast<int>(naturalWidths[i] * scale), naturalWidths[i])
+            : naturalWidths[i];
+
         tabBtn->setIndex(i);
         tabBtn->setTabTitle(tab.title);
-        tabBtn->setFixedWidth(dynamicWidth);
+        tabBtn->setFixedWidth(finalWidth);
 
         QColor iconColor = !tab.color.isEmpty() ? QColor(tab.color) : (tab.active ? QColor("#EEEEEE") : QColor("#888888"));
-        QString iconKey = !tab.iconKey.isEmpty() ? tab.iconKey : (tab.url.startsWith("computer://") ? "computer" : "folder_filled");
+        QString iconKey = !tab.iconKey.isEmpty() ? tab.iconKey : (tab.url.startsWith("computer://") ? "computer" : (tab.url.startsWith("library://") ? "folder_filled" : "folder_filled"));
         tabBtn->setTabIcon(UiHelper::getIcon(iconKey, iconColor));
         tabBtn->setActive(tab.active);
     }
