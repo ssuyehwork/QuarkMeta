@@ -170,7 +170,7 @@ void PanelMediator::setupConnections() {
                 }
             });
 
-            connect(titleBar->tabBar(), &TabBarWidget::tabColorChanged, this, [titleBar](int index, const QString& url, const QString& hexColor) {
+            connect(titleBar->tabBar(), &TabBarWidget::tabColorChanged, this, [](int /*index*/, const QString& url, const QString& hexColor) {
                 if (!url.isEmpty() && !url.startsWith("computer://")) {
                     AppCommand cmd;
                     cmd.type = AppCommandType::SetColor;
@@ -180,7 +180,7 @@ void PanelMediator::setupConnections() {
                 }
             });
 
-            connect(titleBar->tabBar(), &TabBarWidget::tabIconChanged, this, [](int index, const QString& url, const QString& iconKey) {
+            connect(titleBar->tabBar(), &TabBarWidget::tabIconChanged, this, [](int /*index*/, const QString& url, const QString& iconKey) {
                 if (!url.isEmpty()) {
                     FavoriteDao::updateFavorite(url, iconKey, "");
                 }
