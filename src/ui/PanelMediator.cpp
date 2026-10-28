@@ -32,6 +32,7 @@
 #include "../core/AppConfig.h"
 #include "../util/ShellHelper.h"
 #include "../meta/MetadataManager.h"
+#include "../meta/FavoriteDao.h"
 #include "../meta/FavoriteService.h"
 #include "../meta/LibraryDao.h"
 #include "../meta/SmartFolderDao.h"
@@ -166,6 +167,22 @@ void PanelMediator::setupConnections() {
                         return;
                     }
                     root->splitPane(Qt::Horizontal, folderPath);
+                }
+            });
+
+            connect(titleBar->tabBar(), &TabBarWidget::tabColorChanged, this, [titleBar](int index, const QString& url, const QString& hexColor) {
+                if (!url.isEmpty() && !url.startsWith("computer://")) {
+                    AppCommand cmd;
+                    cmd.type = AppCommandType::SetColor;
+                    cmd.targetPaths = {url};
+                    cmd.params["color"] = hexColor;
+                    CoreEngine::instance().executeCommand(cmd);
+                }
+            });
+
+            connect(titleBar->tabBar(), &TabBarWidget::tabIconChanged, this, [](int index, const QString& url, const QString& iconKey) {
+                if (!url.isEmpty()) {
+                    FavoriteDao::updateFavorite(url, iconKey, "");
                 }
             });
 

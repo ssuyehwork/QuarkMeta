@@ -8,8 +8,22 @@ QWidget#CentralWidget { background-color: #1E1E1E; }
     border-bottom: 1px solid #333333;
 }
 
-/* 浏览器多标签页 TabBarWidget 专属精细样式 (严格消除 QWidget 级联边框) */
+/* 右侧工具栏固定容器 */
+QWidget#TitleRightToolContainer {
+    background: transparent;
+    border: none;
+}
+
+/* 浏览器多标签页 TabBarWidget 专属精细样式 (严格消除 QWidget 级联边框与 QScrollArea 框架线) */
 QWidget#TabBarWidget {
+    background: transparent;
+    border: none;
+}
+QScrollArea#TabBarScrollArea {
+    background: transparent;
+    border: none;
+}
+QWidget#TabBarContainer {
     background: transparent;
     border: none;
 }
