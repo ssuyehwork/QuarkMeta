@@ -117,8 +117,13 @@ void PanelMediator::setupConnections() {
                 NavigationService::instance().navigateTo(url);
             });
 
-            connect(titleBar->tabBar(), &TabBarWidget::refreshRequested, this, []() {
-                NavigationService::instance().refresh();
+            connect(titleBar->tabBar(), &TabBarWidget::refreshRequested, this, [this, contentPanel]() {
+                ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+                if (target && (target->getCurrentCategoryType() == "library" || target->getCurrentCategoryType() == "smart_folder")) {
+                    target->refreshAll();
+                } else {
+                    NavigationService::instance().refresh();
+                }
             });
 
             connect(titleBar->tabBar(), &TabBarWidget::mergeRequested, this, [this, titleBar, contentPanel](int sourceIndex, int targetIndex) {
@@ -1033,7 +1038,14 @@ void PanelMediator::setupConnections() {
             NavigationService::instance().navigateTo(path);
         });
 
-        connect(addressBar, &AddressBar::refreshRequested, &NavigationService::instance(), &NavigationService::refresh);
+        connect(addressBar, &AddressBar::refreshRequested, this, [this, contentPanel]() {
+            ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+            if (target && (target->getCurrentCategoryType() == "library" || target->getCurrentCategoryType() == "smart_folder")) {
+                target->refreshAll();
+            } else {
+                NavigationService::instance().refresh();
+            }
+        });
 
         if (favoritePanel) {
             connect(addressBar, &AddressBar::requestAddFavorite, favoritePanel, [favoritePanel](const QString& path) {

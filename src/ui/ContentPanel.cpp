@@ -1001,7 +1001,7 @@ void ContentPanel::updateStatusBarStats(int cachedSelectedCount) {
     int hiddenCount = fullCount - visibleCount;
     int selectedCount = (cachedSelectedCount >= 0) ? cachedSelectedCount : getSelectedIndexes().size();
 
-    QString numStyle = "color:#ff551c;";
+    QString numStyle = "color:#ff551c; font-weight:bold;";
     QString statusText = (hiddenCount > 0)
         ? QString("<html><body style=\"margin:0px; padding:0px; font-size:11px;\"><span style=\"%1\">%2</span> 个项目，<span style=\"%1\">%3</span> 个已隐藏，选中了 <span style=\"%1\">%4</span> 个</body></html>")
               .arg(numStyle).arg(visibleCount).arg(hiddenCount).arg(selectedCount)
