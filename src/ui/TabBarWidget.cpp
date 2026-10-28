@@ -186,7 +186,7 @@ TabBarWidget::TabBarWidget(QWidget* parent, HoverEventFilter* hoverFilter)
 
     m_mainLayout = new QHBoxLayout(this);
     m_mainLayout->setContentsMargins(0, 0, 0, 0);
-    m_mainLayout->setSpacing(4);
+    m_mainLayout->setSpacing(0);
 
     m_scrollArea = new QScrollArea(this);
     m_scrollArea->setObjectName("TabBarScrollArea");
@@ -198,13 +198,16 @@ TabBarWidget::TabBarWidget(QWidget* parent, HoverEventFilter* hoverFilter)
 
     m_tabsContainer = new QWidget(m_scrollArea);
     m_tabsContainer->setObjectName("TabBarContainer");
-    m_tabsLayout = new QHBoxLayout(m_tabsContainer);
+
+    m_tabsContainerLayout = new QHBoxLayout(m_tabsContainer);
+    m_tabsContainerLayout->setContentsMargins(0, 0, 0, 0);
+    m_tabsContainerLayout->setSpacing(4);
+
+    m_tabsLayout = new QHBoxLayout();
     m_tabsLayout->setContentsMargins(0, 2, 0, 0);
     m_tabsLayout->setSpacing(2);
 
-    m_scrollArea->setWidget(m_tabsContainer);
-
-    m_btnNewTab = new QPushButton(this);
+    m_btnNewTab = new QPushButton(m_tabsContainer);
     m_btnNewTab->setFocusPolicy(Qt::NoFocus);
     m_btnNewTab->setAttribute(Qt::WA_Hover, true);
     m_btnNewTab->setFixedSize(22, 22);
@@ -221,8 +224,12 @@ TabBarWidget::TabBarWidget(QWidget* parent, HoverEventFilter* hoverFilter)
         emit newTabRequested();
     });
 
+    m_tabsContainerLayout->addLayout(m_tabsLayout);
+    m_tabsContainerLayout->addWidget(m_btnNewTab, 0, Qt::AlignVCenter);
+    m_tabsContainerLayout->addStretch(1);
+
+    m_scrollArea->setWidget(m_tabsContainer);
     m_mainLayout->addWidget(m_scrollArea, 1);
-    m_mainLayout->addWidget(m_btnNewTab, 0, Qt::AlignVCenter);
 
     // 默认添加首个“此电脑”标签页
     addTab("此电脑", "computer://", true);
@@ -962,13 +969,15 @@ void TabBarWidget::applyDiffUpdate() {
         m_tabsLayout->addWidget(tabItem);
     }
 
-    // 3. 计算动态响应式宽度（80px ~ 240px）
-    int availableWidth = m_scrollArea->viewport()->width();
-    if (availableWidth <= 0) availableWidth = width() - 30; // 扣除新建按钮宽度
-    int dynamicWidth = 240;
-    if (targetCount > 0) {
-        int targetWidth = availableWidth / targetCount;
-        dynamicWidth = qBound(80, targetWidth, 240);
+    // 3. 计算紧凑靠左宽度：少标签时固定 180px，超限时才触发阶梯压缩 (80px ~ 180px)
+    constexpr int kIdealWidth = 180;
+    int availableWidth = m_scrollArea->viewport()->width() - 36;
+    if (availableWidth <= 0) availableWidth = width() - 36;
+
+    int dynamicWidth = kIdealWidth;
+    int totalNeeded = targetCount * kIdealWidth + (targetCount - 1) * 2;
+    if (totalNeeded > availableWidth && targetCount > 0) {
+        dynamicWidth = qBound(80, (availableWidth - (targetCount - 1) * 2) / targetCount, kIdealWidth);
     }
 
     // 4. 全量刷新属性和尺寸

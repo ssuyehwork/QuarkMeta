@@ -151,6 +151,7 @@ private:
     QHBoxLayout* m_mainLayout = nullptr;
     QScrollArea* m_scrollArea = nullptr;
     QWidget* m_tabsContainer = nullptr;
+    QHBoxLayout* m_tabsContainerLayout = nullptr;
     QHBoxLayout* m_tabsLayout = nullptr;
     QPushButton* m_btnNewTab = nullptr;
     HoverEventFilter* m_hoverFilter = nullptr;
