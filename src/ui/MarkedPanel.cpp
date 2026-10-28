@@ -12,6 +12,7 @@
 #include <QGuiApplication>
 #include "../util/ShellHelper.h"
 #include "../core/NavigationService.h"
+#include "controllers/ContextMenuFactory.h"
 
 namespace QuarkMeta {
 
@@ -214,12 +215,7 @@ void MarkedPanel::onContextMenuRequested(const QPoint& pos) {
         menu.addSeparator();
 
         // 3. 辅助工具组
-        QAction* copyPathAct = menu.addAction(UiHelper::getIcon("document-attach-outline", QColor("#EEEEEE"), 16), "复制完整路径");
-        connect(copyPathAct, &QAction::triggered, this, [path]() {
-            if (QClipboard* cb = QGuiApplication::clipboard()) {
-                cb->setText(QDir::toNativeSeparators(path));
-            }
-        });
+        ContextMenuFactory::buildCopyPathAction(&menu, QStringList{path}, this);
 
         QAction* refreshAct = menu.addAction(UiHelper::getIcon("check", QColor("#EEEEEE"), 16), "刷新");
         connect(refreshAct, &QAction::triggered, this, [this]() {
