@@ -1,15 +1,16 @@
 #pragma once
 
-#include <QUndoCommand>
+#include "ActionCommand.h"
 #include <QStringList>
 #include <QMap>
+#include <QVector>
 
 namespace QuarkMeta {
 
 /**
  * @brief 标记目的地分发迁移复合撤销命令
  */
-class TransferToMarkedCommand : public QUndoCommand {
+class TransferToMarkedCommand : public ActionCommand {
 public:
     struct TargetResult {
         QString targetDir;
@@ -18,11 +19,13 @@ public:
 
     TransferToMarkedCommand(const QStringList& sourcePaths,
                             const QMap<QString, QVector<TargetResult>>& copyResults,
-                            const QStringList& recycledSources,
-                            QUndoCommand* parent = nullptr);
+                            const QStringList& recycledSources);
 
+    void execute() override {}
     void undo() override;
     void redo() override;
+    QString description() const override;
+    bool affectsPath(const QString& path) const override;
 
 private:
     QStringList m_sourcePaths;

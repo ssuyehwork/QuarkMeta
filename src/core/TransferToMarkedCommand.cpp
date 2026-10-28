@@ -1,24 +1,32 @@
 #include "TransferToMarkedCommand.h"
 #include "DiskTrashService.h"
 #include "../ui/ToolTipOverlay.h"
+#include "../util/ShellHelper.h"
 #include <QFileInfo>
 #include <QDir>
 #include <QFile>
-#include "../util/ShellHelper.h"
 
 namespace QuarkMeta {
 
 TransferToMarkedCommand::TransferToMarkedCommand(
     const QStringList& sourcePaths,
     const QMap<QString, QVector<TargetResult>>& copyResults,
-    const QStringList& recycledSources,
-    QUndoCommand* parent)
-    : QUndoCommand(parent),
-      m_sourcePaths(sourcePaths),
+    const QStringList& recycledSources)
+    : m_sourcePaths(sourcePaths),
       m_copyResults(copyResults),
       m_recycledSources(recycledSources)
 {
-    setText(QString("分发迁移至标记目的地 (%1 项)").arg(sourcePaths.size()));
+}
+
+QString TransferToMarkedCommand::description() const {
+    return QString("分发迁移至标记目的地 (%1 项)").arg(m_sourcePaths.size());
+}
+
+bool TransferToMarkedCommand::affectsPath(const QString& path) const {
+    for (const QString& src : m_sourcePaths) {
+        if (src.compare(path, Qt::CaseInsensitive) == 0) return true;
+    }
+    return false;
 }
 
 void TransferToMarkedCommand::undo() {

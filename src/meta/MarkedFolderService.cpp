@@ -87,7 +87,7 @@ bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
     }
 
     int totalWorkUnits = validSources.size() * validTargets.size();
-    TaskProgressService::instance().createJob("TransferToMarked", "分发迁移至标记目的地", totalWorkUnits);
+    int jobId = TaskProgressService::instance().createJob("分发迁移至标记目的地", totalWorkUnits);
 
     int completedUnits = 0;
     QMap<QString, QVector<TransferToMarkedCommand::TargetResult>> copyResults;
@@ -105,7 +105,7 @@ bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
             // 防自身/循环嵌套保护：同路径或目标为源的子目录
             if (cleanSrc == cleanTarget || cleanTarget.startsWith(cleanSrc + "/")) {
                 completedUnits++;
-                TaskProgressService::instance().updateProgress("TransferToMarked", (int)((float)completedUnits / totalWorkUnits * 100));
+                TaskProgressService::instance().updateProgress(jobId, completedUnits, totalWorkUnits);
                 continue;
             }
 
@@ -123,7 +123,7 @@ bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
             );
 
             completedUnits++;
-            TaskProgressService::instance().updateProgress("TransferToMarked", (int)((float)completedUnits / totalWorkUnits * 100));
+            TaskProgressService::instance().updateProgress(jobId, completedUnits, totalWorkUnits);
 
             if (targetSuccess) {
                 copyResults[srcPath].append({targetDir, destPath});
@@ -161,7 +161,7 @@ bool MarkedFolderService::executeTransferToMarked(const QStringList& sourcePaths
         ));
     }
 
-    TaskProgressService::instance().finishJob("TransferToMarked");
+    TaskProgressService::instance().finishJob(jobId);
 
     if (!anyFailure) {
         QString msg = QString("已成功分发迁移至 %1 个目的地").arg(validTargets.size());
