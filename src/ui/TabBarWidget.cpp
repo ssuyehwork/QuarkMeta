@@ -1,4 +1,5 @@
 #include "TabBarWidget.h"
+#include "ContentPanel.h"
 #include "UiHelper.h"
 #include "StyleLibrary.h"
 #include "ColorPicker.h"
