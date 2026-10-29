@@ -45,11 +45,13 @@ private slots:
     void onItemExpanded(const QModelIndex& index);
     void onTreeClicked(const QModelIndex& index);
     void onTreeContextMenu(const QPoint& pos);
+    void updateTreeHeight();
     void updateRecentVisitedList();
 
 private:
     void initUi();
     void fetchChildDirs(QStandardItem* parent);
+    QStandardItem* findItemByData(QStandardItem* parent, const QString& targetData);
 
     QTreeView* m_treeView = nullptr;
     QStandardItemModel* m_model = nullptr;

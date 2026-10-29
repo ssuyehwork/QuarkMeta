@@ -272,45 +272,28 @@ void NavPanel::setRootPath(const QString& path) {
     Q_UNUSED(path);
 }
 
+QStandardItem* NavPanel::findItemByData(QStandardItem* parent, const QString& targetData) {
+    if (!parent) return nullptr;
+    for (int i = 0; i < parent->rowCount(); ++i) {
+        QStandardItem* child = parent->child(i);
+        if (!child) continue;
+        if (child->data(Qt::UserRole + 1).toString() == targetData) {
+            return child;
+        }
+        QStandardItem* subMatch = findItemByData(child, targetData);
+        if (subMatch) {
+            return subMatch;
+        }
+    }
+    return nullptr;
+}
+
 void NavPanel::selectPath(const QString& path) {
     m_currentPath = path;
-    if (!m_model) return;
-
     QString targetData = (path == "trash://" || path == "trash") ? "trash_root" : path;
-    QString cleanTarget = QDir::cleanPath(targetData);
-
-    std::function<QStandardItem*(QStandardItem*)> findItemRecursive = [&](QStandardItem* parentItem) -> QStandardItem* {
-        if (!parentItem) return nullptr;
-        int rowCount = parentItem->rowCount();
-        for (int i = 0; i < rowCount; ++i) {
-            QStandardItem* child = parentItem->child(i);
-            if (!child) continue;
-
-            QString itemPath = child->data(Qt::UserRole + 1).toString();
-            if (itemPath == targetData) {
-                return child;
-            }
-            if (!itemPath.isEmpty() && !itemPath.startsWith("computer://") && itemPath != "recent_root" && itemPath != "trash_root") {
-                if (QString::compare(QDir::cleanPath(itemPath), cleanTarget, Qt::CaseInsensitive) == 0) {
-                    return child;
-                }
-            }
-
-            QStandardItem* found = findItemRecursive(child);
-            if (found) return found;
-        }
-        return nullptr;
-    };
-
-    QStandardItem* matchedItem = findItemRecursive(m_model->invisibleRootItem());
-    if (matchedItem) {
-        QStandardItem* pItem = matchedItem->parent();
-        while (pItem) {
-            m_treeView->expand(pItem->index());
-            pItem = pItem->parent();
-        }
-
-        m_treeView->setCurrentIndex(matchedItem->index());
+    QStandardItem* foundItem = findItemByData(m_model->invisibleRootItem(), targetData);
+    if (foundItem) {
+        m_treeView->setCurrentIndex(foundItem->index());
         m_treeView->setFocus();
     }
 }
@@ -429,6 +412,9 @@ void NavPanel::onItemExpanded(const QModelIndex& index) {
     if (item->rowCount() == 1 && item->child(0)->text() == "Loading...") {
         fetchChildDirs(item);
     }
+}
+
+void NavPanel::updateTreeHeight() {
 }
 
 bool NavPanel::eventFilter(QObject* watched, QEvent* event) {
