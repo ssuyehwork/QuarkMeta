@@ -3148,6 +3148,16 @@ namespace SvgIcons {
 		c6.5,0,11.8,5.3,11.8,11.8V746H807C813.5,746,818.8,751.3,818.8,757.8z"/>
 </g>
 </svg>)svg"},
+        {"Export-1.svg", R"svg(<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg fill="currentColor" version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1000 1000" style="enable-background:new 0 0 1000 1000;" xml:space="preserve">
+<path d="M999.5,328.8v109.7h-80.1v-79.8c0-19.8-16-35.8-35.8-35.8H553.2L361.7,813h274.5v80.1H86.6c-47.6,0-86.1-38.5-86.1-86l0,0
+	V192.7c0-47.5,38.5-86,86-86l0,0h328.1c16.4,0,32.5,6.5,42.8,19.2l0.1,0.1l93.4,115.5l1.1,1.4h361.5
+	C961,242.8,999.5,281.3,999.5,328.8L999.5,328.8z"/>
+<path d="M552,242.5v0.3l-1.1-1.4C551.3,241.8,551.7,242.2,552,242.5z"/>
+<polygon points="765.6,749.5 765.6,654.7 522.2,654.7 522.2,574.1 765.6,574.1 765.6,479.4 999.5,614.4 "/>
+</svg>)svg"},
     };
 }
 
