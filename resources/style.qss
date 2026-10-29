@@ -103,6 +103,13 @@ QSplitter::handle:horizontal {
 QSplitter::handle:horizontal:hover {
     background-color: #378ADD;
 }
+QSplitter::handle:vertical {
+    background-color: #1E1E1E;
+    height: 5px;
+}
+QSplitter::handle:vertical:hover {
+    background-color: #378ADD;
+}
 
 /* 核心容器样式 - 彻底消除 margin，由 QSplitter 5px 句柄原生提供栏间 5px 物理间距，确保面板精确呈现 230px 物理满额宽度 */
 #SidebarContainer, #SidebarContainerWidget, #ListContainer, #EditorContainer, #MetadataContainer, #FilterContainer {
@@ -139,8 +146,27 @@ QLineEdit#LibraryFilterEdit:focus {
     padding: 0px;
 }
 
+/* 多窗格宿主面板：外层边框由内部 QSplitter 句柄承担，宿主自身无边框 */
 #EditorContainer[isHostPanel="true"] {
     border: none;
+}
+
+/* 多窗格模式下：非激活窗格无边框（避免与 QSplitter 5px 句柄双重叠加变粗） */
+#EditorContainer[activePane="false"] {
+    border: none;
+}
+
+/* 多窗格模式下：激活窗格显示蓝色边框高亮，帮助用户识别当前操作窗格 */
+#EditorContainer[activePane="true"] {
+    border: 1px solid #378ADD;
+}
+
+/* 主窗格包装盒：仅继承背景色，无独立边框（边框统一由内部 ContentPanel 管理） */
+#PrimaryPaneContainer {
+    background-color: #1E1E1E;
+    border: none;
+    margin: 0px;
+    padding: 0px;
 }
 
 

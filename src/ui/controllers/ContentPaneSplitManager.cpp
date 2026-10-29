@@ -433,7 +433,7 @@ ContentPaneSplitManager::PaneNode* ContentPaneSplitManager::importNodeRecursive(
             node->panel = m_panel;
             if (!m_primaryPaneContainer) {
                 m_primaryPaneContainer = new QFrame(parentWidget);
-                m_primaryPaneContainer->setObjectName("EditorContainer");
+                m_primaryPaneContainer->setObjectName("PrimaryPaneContainer");
                 m_primaryPaneContainer->setAttribute(Qt::WA_StyledBackground, true);
                 m_primaryPaneContainer->setMinimumWidth(ContentPanel::kMinPaneWidth);
                 QVBoxLayout* primLayout = new QVBoxLayout(m_primaryPaneContainer);
@@ -513,13 +513,14 @@ void ContentPaneSplitManager::splitPane(Qt::Orientation orientation, const QStri
 
     m_isSplit = true;
     m_panel->setProperty("isHostPanel", "true");
+    m_panel->setProperty("activePane", "false");
     m_panel->style()->unpolish(m_panel);
     m_panel->style()->polish(m_panel);
 
     // 如果还没有根节点，初始化主窗格 Leaf 节点
     if (!m_rootNode) {
         m_primaryPaneContainer = new QFrame(m_panel);
-        m_primaryPaneContainer->setObjectName("EditorContainer");
+        m_primaryPaneContainer->setObjectName("PrimaryPaneContainer");
         m_primaryPaneContainer->setAttribute(Qt::WA_StyledBackground, true);
         m_primaryPaneContainer->setMinimumWidth(ContentPanel::kMinPaneWidth);
         QVBoxLayout* primLayout = new QVBoxLayout(m_primaryPaneContainer);
