@@ -221,7 +221,7 @@ void LibraryItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
         dropBg.setAlphaF(0.35f);
         painter->fillRect(opt.rect, dropBg);
     } else if (opt.state & QStyle::State_Selected) {
-        painter->fillRect(opt.rect, QColor("#37373D"));
+        painter->fillRect(opt.rect, QColor("#378ADD"));
     } else if (opt.state & QStyle::State_MouseOver) {
         painter->fillRect(opt.rect, QColor("#2A2D2E"));
     } else {
