@@ -45,7 +45,6 @@ private slots:
     void onItemExpanded(const QModelIndex& index);
     void onTreeClicked(const QModelIndex& index);
     void onTreeContextMenu(const QPoint& pos);
-    void updateTreeHeight();
     void updateRecentVisitedList();
 
 private:
@@ -56,6 +55,7 @@ private:
     QStandardItemModel* m_model = nullptr;
     QVBoxLayout* m_mainLayout = nullptr;
     QStandardItem* m_recentRootItem = nullptr;
+    QString m_currentPath;
 
     QTabBar* m_tabBar = nullptr;
     QStackedWidget* m_stackedWidget = nullptr;
