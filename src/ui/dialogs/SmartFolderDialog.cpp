@@ -149,19 +149,30 @@ void SmartFolderDialog::setupUi() {
 void SmartFolderDialog::adjustAdaptiveSize() {
     layout()->activate();
 
-    int baseNonRulesH = 420 - 150; // 标题栏、顶部名称/模式、分割线、添加规则按钮、底部按钮与边距
+    int currentDialogH = height();
+    int currentScrollH = m_scrollArea->height();
+    int fixedNonScrollH = currentDialogH - currentScrollH;
+
+    QWidget* scrollContent = m_scrollArea->widget();
+    int viewportW = m_scrollArea->viewport()->width();
+    if (viewportW <= 0) viewportW = 480;
+
     int rulesContentH = 0;
-    for (SmartFolderRuleRow* row : m_ruleRows) {
-        if (row) {
-            rulesContentH += row->sizeHint().height() + m_rulesLayout->spacing();
-        }
+    if (scrollContent && scrollContent->layout()) {
+        rulesContentH = scrollContent->layout()->heightForWidth(viewportW);
     }
 
-    int totalDesiredH = baseNonRulesH + qMax(100, rulesContentH);
+    int totalDesiredH = fixedNonScrollH + rulesContentH;
 
-    QScreen* screen = QGuiApplication::screenAt(QCursor::pos());
-    if (!screen) screen = QGuiApplication::primaryScreen();
-    int maxScreenH = screen ? static_cast<int>(screen->availableGeometry().height() * 0.8) : 800;
+    QScreen* targetScreen = window()->screen();
+    if (!targetScreen && parentWidget()) {
+        targetScreen = parentWidget()->window()->screen();
+    }
+    if (!targetScreen) {
+        targetScreen = QGuiApplication::primaryScreen();
+    }
+
+    int maxScreenH = targetScreen ? static_cast<int>(targetScreen->availableGeometry().height() * 0.8) : 800;
 
     int finalH = qMin(totalDesiredH, maxScreenH);
     finalH = qMax(420, finalH);

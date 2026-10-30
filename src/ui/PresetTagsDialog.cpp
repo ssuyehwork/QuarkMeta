@@ -49,11 +49,8 @@ void PresetTagsDialog::initUi() {
     mainL->addWidget(tagLabel);
 
     m_tagContainer = new TagPillContainer(this, TagTriggerSource::PresetTagsDialog);
-    connect(m_tagContainer, &TagPillContainer::tagsChanged, this, [this](const QStringList& tags) {
-        m_presetTags = tags;
-        adjustSize();
-    });
     connect(m_tagContainer, &TagPillContainer::containerHeightChanged, this, [this]() {
+        m_presetTags = m_tagContainer->tags();
         adjustSize();
     });
 

@@ -10,6 +10,7 @@ TagPillContainer::TagPillContainer(QWidget* parent, TagTriggerSource source)
     setObjectName("PresetTagContainer");
     setFrameShape(QFrame::StyledPanel);
     setCursor(Qt::PointingHandCursor);
+    setMinimumHeight(42);
 
     m_flowLayout = new FlowLayout(this, 8, 8, 8);
     setLayout(m_flowLayout);
@@ -27,23 +28,14 @@ QStringList TagPillContainer::tags() const {
     return m_tags;
 }
 
-QSize TagPillContainer::minimumSize() const {
-    return QSize(0, 42);
+bool TagPillContainer::hasHeightForWidth() const {
+    return true;
 }
 
-QSize TagPillContainer::sizeHint() const {
-    int w = width();
-    if (w <= 0) {
-        if (QWidget* p = parentWidget()) {
-            w = p->width();
-        }
-    }
-    if (w <= 0) w = 388;
-
-    m_flowLayout->activate();
-    int flowH = m_flowLayout->heightForWidth(w);
-    int targetH = qMax(42, flowH);
-    return QSize(w, targetH);
+int TagPillContainer::heightForWidth(int width) const {
+    if (!m_flowLayout) return 42;
+    int flowH = m_flowLayout->heightForWidth(width);
+    return qMax(42, flowH);
 }
 
 void TagPillContainer::populateTagPills() {
