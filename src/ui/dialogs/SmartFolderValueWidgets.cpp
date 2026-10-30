@@ -336,9 +336,7 @@ void TagPillValueWidget::setRuleValues(const SmartFolderRule& rule) {
 DummyValueWidget::DummyValueWidget(QWidget* parent) : ISmartFolderValueWidget(parent) {
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    auto* label = new QLabel("(无需额外输入)", this);
-    label->setStyleSheet("color: #888888;");
-    layout->addWidget(label);
+    // 留空，不显示任何遮挡提示控件，由布局自动留空占位
 }
 
 void DummyValueWidget::getRuleValues(SmartFolderRule& /*rule*/) const {}

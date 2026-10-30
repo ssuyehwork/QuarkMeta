@@ -19,12 +19,12 @@ void SmartFolderRuleRow::initUi() {
 
     m_typeCombo = new QComboBox(this);
     m_typeCombo->addItem("评分", static_cast<int>(SmartRuleType::Rating));
-    m_typeCombo->addItem("颜色", static_cast<int>(SmartRuleType::Color));
-    m_typeCombo->addItem("标签", static_cast<int>(SmartRuleType::Tag));
-    m_typeCombo->addItem("扩展名", static_cast<int>(SmartRuleType::Extension));
     m_typeCombo->addItem("名称", static_cast<int>(SmartRuleType::Name));
+    m_typeCombo->addItem("扩展名", static_cast<int>(SmartRuleType::Extension));
+    m_typeCombo->addItem("标签", static_cast<int>(SmartRuleType::Tag));
     m_typeCombo->addItem("文件夹路径", static_cast<int>(SmartRuleType::Folder));
     m_typeCombo->addItem("文件夹名称", static_cast<int>(SmartRuleType::FolderName));
+    m_typeCombo->addItem("颜色", static_cast<int>(SmartRuleType::Color));
     m_typeCombo->addItem("添加日期", static_cast<int>(SmartRuleType::AddedDate));
     m_typeCombo->addItem("修改日期", static_cast<int>(SmartRuleType::ModifiedDate));
     m_typeCombo->addItem("创建日期", static_cast<int>(SmartRuleType::CreatedDate));
@@ -43,10 +43,6 @@ void SmartFolderRuleRow::initUi() {
 
     m_layout->addWidget(m_typeCombo);
     m_layout->addWidget(m_opCombo);
-
-    // Dummy placeholder for m_valueWidget index 2
-    m_valueWidget = new DummyValueWidget(this);
-    m_layout->addWidget(m_valueWidget, 1);
 
     m_layout->addWidget(m_btnDelete);
 
@@ -140,11 +136,12 @@ void SmartFolderRuleRow::updateValueWidget() {
     // Save current values if m_valueWidget is valid
     if (m_valueWidget) {
         m_valueWidget->getRuleValues(m_currentRule);
+        m_layout->removeWidget(m_valueWidget);
+        m_valueWidget->hide();
+        m_valueWidget->setParent(nullptr);
+        m_valueWidget->deleteLater();
+        m_valueWidget = nullptr;
     }
-
-    m_layout->removeWidget(m_valueWidget);
-    m_valueWidget->deleteLater();
-    m_valueWidget = nullptr;
 
     ISmartFolderValueWidget* newWidget = nullptr;
 
