@@ -920,42 +920,6 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
         return;
     }
 
-        menu.addSeparator();
-
-        ContextMenuFactory::buildIconPickerMenu(&menu, curIconKey, curColorHex,
-            [this, smartFolderId](const QString& iconKey) {
-                SmartFolderRecord rec = SmartFolderDao::getSmartFolderById(smartFolderId);
-                if (rec.id > 0) {
-                    rec.iconKey = iconKey;
-                    if (SmartFolderDao::updateSmartFolder(rec)) {
-                        loadLibrary();
-                    }
-                }
-            },
-            [this, smartFolderId](const QString& hexColor) {
-                SmartFolderRecord rec = SmartFolderDao::getSmartFolderById(smartFolderId);
-                if (rec.id > 0) {
-                    rec.colorHex = hexColor.isEmpty() ? "#888888" : hexColor.toUpper();
-                    if (SmartFolderDao::updateSmartFolder(rec)) {
-                        loadLibrary();
-                    }
-                }
-            }
-        );
-
-        menu.addSeparator();
-
-        QAction* deleteSmartAct = menu.addAction(UiHelper::getIcon("close", QColor("#EEEEEE")), "删除智能文件夹");
-        connect(deleteSmartAct, &QAction::triggered, this, [this, smartFolderId]() {
-            if (SmartFolderDao::removeSmartFolderById(smartFolderId)) {
-                loadLibrary();
-            }
-        });
-
-        menu.exec(m_treeView->viewport()->mapToGlobal(pos));
-        return;
-    }
-
     int nodeId = index.data(Qt::UserRole + 1).toInt();
     if (nodeId == -1 || nodeId == -2) {
         // 固定系统分类禁止弹出修改菜单
