@@ -1296,7 +1296,7 @@ void LibraryPanel::invalidateSmartFolderCache(int smartFolderId) {
 void LibraryPanel::updateSmartFolderCountsAsync(uint64_t reqId, const QList<SmartFolderRecord>& smartFolders) {
     QString dbPath = DatabaseManager::getGlobalDbPath();
 
-    QtConcurrent::run([this, reqId, smartFolders, dbPath]() {
+    (void)QtConcurrent::run([this, reqId, smartFolders, dbPath]() {
         QMap<int, int> results;
         for (const auto& sfRec : smartFolders) {
             int c = SmartFolderDao::countMatchingItemsReadOnly(dbPath, sfRec);
