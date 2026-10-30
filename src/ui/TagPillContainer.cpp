@@ -28,20 +28,13 @@ QStringList TagPillContainer::tags() const {
     return m_tags;
 }
 
-bool TagPillContainer::hasHeightForWidth() const {
-    return true;
-}
-
-int TagPillContainer::heightForWidth(int width) const {
-    if (!m_flowLayout) return 42;
-    int flowH = m_flowLayout->heightForWidth(width);
-    return qMax(42, flowH);
-}
-
 void TagPillContainer::populateTagPills() {
     QLayoutItem* item;
     while ((item = m_flowLayout->takeAt(0)) != nullptr) {
-        delete item->widget();
+        if (QWidget* w = item->widget()) {
+            w->hide();
+            w->deleteLater();
+        }
         delete item;
     }
 

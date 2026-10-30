@@ -36,6 +36,7 @@ void PresetTagsDialog::initUi() {
 
     QLabel* folderNameLabel = new QLabel("分类/文件夹名", this);
     folderNameLabel->setObjectName("PresetFolderLabel");
+    folderNameLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     mainL->addWidget(folderNameLabel);
 
     m_folderNameEdit = new QLineEdit(this);
@@ -46,12 +47,12 @@ void PresetTagsDialog::initUi() {
 
     QLabel* tagLabel = new QLabel("自动添加标签", this);
     tagLabel->setObjectName("PresetTagLabel");
+    tagLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     mainL->addWidget(tagLabel);
 
     m_tagContainer = new TagPillContainer(this, TagTriggerSource::PresetTagsDialog);
-    connect(m_tagContainer, &TagPillContainer::containerHeightChanged, this, [this]() {
-        m_presetTags = m_tagContainer->tags();
-        adjustSize();
+    connect(m_tagContainer, &TagPillContainer::tagsChanged, this, [this](const QStringList& tags) {
+        m_presetTags = tags;
     });
 
     mainL->addWidget(m_tagContainer);
@@ -98,7 +99,20 @@ void PresetTagsDialog::loadTags() {
     }
     m_folderNameEdit->setText(m_categoryName);
     m_tagContainer->setTags(m_presetTags);
-    adjustSize();
+}
+
+bool PresetTagsDialog::event(QEvent* event) {
+    bool result = FramelessDialog::event(event);
+    if (event->type() == QEvent::LayoutRequest) {
+        if (layout()) {
+            layout()->activate();
+            int h = layout()->heightForWidth(420);
+            if (h > 0) {
+                resize(420, h);
+            }
+        }
+    }
+    return result;
 }
 
 void PresetTagsDialog::onSaveClicked() {
