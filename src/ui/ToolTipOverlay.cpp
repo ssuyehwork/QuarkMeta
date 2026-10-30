@@ -73,6 +73,40 @@ void ToolTipOverlay::hideOverlay() {
     hide();
 }
 
+void ToolTipOverlay::showColorToast(const QString& colorHex, QWidget* targetWidget) {
+    if (thread() != QThread::currentThread()) {
+        QMetaObject::invokeMethod(this, [this, colorHex, targetWidget]() {
+            showColorToast(colorHex, targetWidget);
+        });
+        return;
+    }
+
+    QPixmap colorPix(16, 16);
+    colorPix.fill(Qt::transparent);
+
+    if (colorHex.isEmpty() || colorHex == "transparent" || colorHex == "none") {
+        colorPix = UiHelper::getPixmap("no_color", QSize(16, 16), QColor("#AAAAAA"));
+    } else {
+        QPainter painter(&colorPix);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(Qt::NoPen);
+        QColor drawColor(colorHex);
+        if (!drawColor.isValid()) {
+            drawColor = QColor("#2ecc71");
+        }
+        painter.setBrush(drawColor);
+        painter.drawEllipse(0, 0, 16, 16);
+    }
+
+    m_doc.addResource(QTextDocument::ImageResource, QUrl("color_dot.png"), colorPix);
+
+    QString html = "<div style='line-height:16px; text-align:center;'>"
+                   "<img src='color_dot.png' style='vertical-align:middle;' />"
+                   "</div>";
+
+    showToast(html, 1500, QColor("#444444"), targetWidget);
+}
+
 void ToolTipOverlay::showRatingToast(int rating, QWidget* targetWidget) {
     if (thread() != QThread::currentThread()) {
         QMetaObject::invokeMethod(this, [this, rating, targetWidget]() {

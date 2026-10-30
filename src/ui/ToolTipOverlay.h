@@ -55,6 +55,11 @@ public:
      */
     void showRatingToast(int rating, QWidget* targetWidget = nullptr);
 
+    /**
+     * @brief 显示符合 Color Display SSOT 契约的图形化颜色标记 Toast 气泡 (深灰背景 + 实心颜色圆点)
+     */
+    void showColorToast(const QString& colorHex, QWidget* targetWidget = nullptr);
+
     // 兼容旧接口
     void showTip(const QString& text, const QPoint& pos, int timeout = 700) {
         showText(pos, text, timeout);
