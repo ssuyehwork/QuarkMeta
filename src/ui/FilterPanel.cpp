@@ -891,6 +891,7 @@ void FilterPanel::updateHeaderStatus() {
 }
 
 void FilterPanel::showDragOverlay(int activeCount) {
+    Q_UNUSED(activeCount);
     if (!m_dragOverlayWidget) {
         m_dragOverlayWidget = new QWidget(this);
         m_dragOverlayWidget->setObjectName("DragOverlayWidget");

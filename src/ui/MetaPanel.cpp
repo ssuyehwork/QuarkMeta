@@ -756,6 +756,7 @@ void MetaPanel::flushPendingTagDeletions() {
 }
 
 void MetaPanel::showDragOverlay(int activeCount) {
+    Q_UNUSED(activeCount);
     if (!m_dragOverlayWidget) {
         m_dragOverlayWidget = new QWidget(this);
         m_dragOverlayWidget->setObjectName("DragOverlayWidget");
