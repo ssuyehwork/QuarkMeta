@@ -50,6 +50,11 @@ public:
      */
     void showToast(const QString& text, int timeout = 1500, const QColor& borderColor = QColor("#2ecc71"), QWidget* targetWidget = nullptr);
 
+    /**
+     * @brief 显示符合 Rating Display SSOT 契约的 1~5 矢量星级 Toast 气泡 (深灰背景 + 灰色 SVG 星级)
+     */
+    void showRatingToast(int rating, QWidget* targetWidget = nullptr);
+
     // 兼容旧接口
     void showTip(const QString& text, const QPoint& pos, int timeout = 700) {
         showText(pos, text, timeout);

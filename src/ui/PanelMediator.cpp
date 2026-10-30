@@ -946,9 +946,8 @@ void PanelMediator::setupConnections() {
 
         if (metaPanel) metaPanel->setRating(rating, false);
 
-        ToolTipOverlay::instance()->showToast(
-            QString("已设为 %1 星").arg(rating),
-            1500, QColor("#3498db"), &QuickLookWindow::instance()
+        ToolTipOverlay::instance()->showRatingToast(
+            rating, &QuickLookWindow::instance()
         );
     });
 
