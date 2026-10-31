@@ -150,15 +150,24 @@ void ToolTipOverlay::showToast(const QString& text, int timeout, const QColor& b
     if (!anchor) {
         QWidget* activeWin = QApplication::activeWindow();
         if (activeWin) {
-            anchor = activeWin->findChild<QWidget*>("ContentPanel");
-            if (!anchor) {
-                QList<QWidget*> panels = activeWin->findChildren<QWidget*>();
-                for (QWidget* w : panels) {
-                    if (w->inherits("QuarkMeta::ContentPanel")) {
+            QList<QWidget*> allWidgets = activeWin->findChildren<QWidget*>();
+            QWidget* fallbackPanel = nullptr;
+            for (QWidget* w : allWidgets) {
+                if (w->inherits("QuarkMeta::ContentPanel") || w->inherits("ContentPanel") || w->objectName() == "EditorContainer") {
+                    if (w->property("activePane").toString() == "true") {
                         anchor = w;
                         break;
                     }
+                    if (!fallbackPanel) {
+                        fallbackPanel = w;
+                    }
                 }
+            }
+            if (!anchor) {
+                anchor = fallbackPanel;
+            }
+            if (!anchor) {
+                anchor = activeWin->findChild<QWidget*>("ContentPanel");
             }
         }
     }
@@ -182,7 +191,20 @@ void ToolTipOverlay::showToast(const QString& text, int timeout, const QColor& b
 
         targetPos = QPoint(centerX, topY);
     } else {
-        targetPos = QCursor::pos();
+        // 彻底禁止跟随鼠标 QCursor::pos()，自动回退到当前活动窗口或主屏幕顶部水平居中固定位置
+        m_pendingText = text;
+        triggerPendingShow();
+        int tipWidth = width();
+
+        QWidget* activeWin = QApplication::activeWindow();
+        if (activeWin && activeWin->isVisible()) {
+            QPoint winTopLeft = activeWin->mapToGlobal(QPoint(0, 0));
+            targetPos = QPoint(winTopLeft.x() + (activeWin->width() - tipWidth) / 2, winTopLeft.y() + 10);
+        } else {
+            QScreen* screen = QGuiApplication::primaryScreen();
+            QRect geom = screen ? screen->availableGeometry() : QRect(0, 0, 1920, 1080);
+            targetPos = QPoint(geom.x() + (geom.width() - tipWidth) / 2, geom.y() + 50);
+        }
     }
 
     showText(targetPos, text, timeout, borderColor, true);

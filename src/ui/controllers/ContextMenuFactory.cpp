@@ -187,7 +187,7 @@ bool ContextMenuFactory::copyPathsToClipboard(const QStringList& paths, bool sho
 
     QApplication::clipboard()->setText(cleanPaths.join("\r\n"));
     if (showOverlay) {
-        ToolTipOverlay::instance()->showText(QCursor::pos(), "已复制路径至剪贴板", 1500, Style::SuccessGreen);
+        ToolTipOverlay::instance()->showToast("已复制路径至剪贴板", 1500, Style::SuccessGreen);
     }
     return true;
 }
@@ -221,7 +221,7 @@ bool ContextMenuFactory::copyNamesToClipboard(const QStringList& paths, NameDeli
 
     QApplication::clipboard()->setText(names.join(sep));
     if (showOverlay) {
-        ToolTipOverlay::instance()->showText(QCursor::pos(), "已复制名称至剪贴板", 1500, Style::SuccessGreen);
+        ToolTipOverlay::instance()->showToast("已复制名称至剪贴板", 1500, Style::SuccessGreen);
     }
     return true;
 }
