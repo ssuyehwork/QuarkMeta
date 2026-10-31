@@ -282,6 +282,16 @@ void PanelMediator::setupConnections() {
         connect(shortcutController, &AppShortcutController::transferToMarkedRequested, this, []() {
             QuarkMeta::MarkedFolderService::instance().executeTransferToMarked({});
         });
+
+        connect(shortcutController, &AppShortcutController::copyNamesEnumeratedRequested, this, [this, contentPanel]() {
+            ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+            if (target) {
+                QStringList sel = target->getSelectedPaths();
+                if (!sel.isEmpty()) {
+                    ContextMenuFactory::copyNamesToClipboard(sel, ContextMenuFactory::NameDelimiter::Enumeration, true);
+                }
+            }
+        });
     }
 
     // 搜索控制器与 ContentPanel 绑定及状态更新
