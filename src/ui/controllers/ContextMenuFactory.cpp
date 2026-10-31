@@ -62,7 +62,7 @@ QAction* ContextMenuFactory::buildExtractContentAction(QMenu* menu, const QStrin
     bool canExtract = !isFolder && UiHelper::isTextFile(fileExt);
 
     if (canExtract) {
-        QAction* actExtract = menu->addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "支持提取内容");
+        QAction* actExtract = menu->addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "支持提取内容（Ctrl+Shift+E）");
         QObject::connect(actExtract, &QAction::triggered, receiver ? receiver : menu, [path]() {
             extractContentToClipboard(path);
         });
@@ -187,7 +187,7 @@ bool ContextMenuFactory::copyPathsToClipboard(const QStringList& paths, bool sho
 
     QApplication::clipboard()->setText(cleanPaths.join("\r\n"));
     if (showOverlay) {
-        ToolTipOverlay::instance()->showText(QCursor::pos(), "已复制路径至剪贴板", 1500, Style::SuccessGreen);
+        ToolTipOverlay::instance()->showToast("已复制路径至剪贴板", 1500, Style::SuccessGreen);
     }
     return true;
 }
@@ -221,7 +221,7 @@ bool ContextMenuFactory::copyNamesToClipboard(const QStringList& paths, NameDeli
 
     QApplication::clipboard()->setText(names.join(sep));
     if (showOverlay) {
-        ToolTipOverlay::instance()->showText(QCursor::pos(), "已复制名称至剪贴板", 1500, Style::SuccessGreen);
+        ToolTipOverlay::instance()->showToast("已复制名称至剪贴板", 1500, Style::SuccessGreen);
     }
     return true;
 }
@@ -358,7 +358,7 @@ QAction* ContextMenuFactory::buildPinToggleAction(QMenu* menu, bool isPinned, st
     if (!menu) return nullptr;
 
     QIcon icon = UiHelper::getIcon(isPinned ? "pin_tilted" : "pin_vertical", QColor("#EEEEEE"), 18);
-    QString text = isPinned ? "取消置顶" : "置顶";
+    QString text = isPinned ? "取消置顶（Alt+D）" : "置顶（Alt+D）";
 
     QAction* action = menu->addAction(icon, text);
     QObject::connect(action, &QAction::triggered, receiver ? receiver : menu, [isPinned, onToggle]() {

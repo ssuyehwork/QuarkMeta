@@ -269,6 +269,16 @@ void PanelMediator::setupConnections() {
             });
         }
 
+        connect(shortcutController, &AppShortcutController::moveToTrashRequested, this, [this, contentPanel]() {
+            ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+            if (target) {
+                QStringList sel = target->getSelectedPaths();
+                if (!sel.isEmpty()) {
+                    TrashService::instance().moveToTrash(sel, target);
+                }
+            }
+        });
+
         connect(shortcutController, &AppShortcutController::toggleMarkedRequested, this, [this, contentPanel]() {
             ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
             if (target) {
@@ -281,6 +291,16 @@ void PanelMediator::setupConnections() {
 
         connect(shortcutController, &AppShortcutController::transferToMarkedRequested, this, []() {
             QuarkMeta::MarkedFolderService::instance().executeTransferToMarked({});
+        });
+
+        connect(shortcutController, &AppShortcutController::copyNamesEnumeratedRequested, this, [this, contentPanel]() {
+            ContentPanel* target = m_activeContentPanel ? m_activeContentPanel.data() : contentPanel;
+            if (target) {
+                QStringList sel = target->getSelectedPaths();
+                if (!sel.isEmpty()) {
+                    ContextMenuFactory::copyNamesToClipboard(sel, ContextMenuFactory::NameDelimiter::Enumeration, true);
+                }
+            }
         });
     }
 

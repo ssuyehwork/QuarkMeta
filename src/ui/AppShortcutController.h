@@ -51,9 +51,14 @@ signals:
     void toggleRecursiveRequested();
 
     /**
-     * @brief Ctrl+Space 触发重置所有筛选条件
+     * @brief Ctrl+D 触发重置所有筛选条件
      */
     void resetFilterRequested();
+
+    /**
+     * @brief Ctrl+Space 触发移入回收站
+     */
+    void moveToTrashRequested();
 
     /**
      * @brief Alt+B 触发标记/取消标记当前选中的文件夹
@@ -64,6 +69,11 @@ signals:
      * @brief Alt+V 触发迁移选中项目到已标记的目的地文件夹
      */
     void transferToMarkedRequested();
+
+    /**
+     * @brief Alt+C 触发复制所选项目名称（顿号分割）
+     */
+    void copyNamesEnumeratedRequested();
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;

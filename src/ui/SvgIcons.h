@@ -3196,6 +3196,22 @@ namespace SvgIcons {
 	c0-89.4,72.4-161.8,161.8-161.8h312.1c2.2,0,4.4,0,6.6,0.1c35.3,1.4,67.7,14.2,93.7,34.7c24.3,19.3,43,45.3,53.1,75.4
 	C997.6,399.4,1000.5,416.7,1000.5,434.8z"/>
 </svg>)svg"},
+        {"Compare.svg", R"svg(<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg fill="currentColor" version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1000 1000" style="enable-background:new 0 0 1000 1000;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#FFFFFF;}
+</style>
+<g>
+	<polygon points="79,776.5 79,223.5 387,223.5 387,144.5 0,144.5 0,855.5 387,855.5 387,776.5 	"/>
+	<polygon points="1000,144.5 1000,855.5 613,855.5 613,540 781.9,540 781.9,613.1 895,500 781.9,386.9 781.9,460 613,460 613,144.5 
+			"/>
+	<rect x="460.5" width="79" height="1000"/>
+	<polygon points="387,460 387,540 218.1,540 218.1,613.1 105,500 218.1,386.9 218.1,460 	"/>
+	<polyline class="st0" points="613,460 781.9,460 781.9,386.9 895,500 781.9,613.1 781.9,540 613,540 	"/>
+</g>
+</svg>)svg"},
     };
 }
 

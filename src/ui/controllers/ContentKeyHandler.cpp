@@ -564,7 +564,7 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         }
         return true;
     }
-    if (keyEvent->key() == Qt::Key_Delete) {
+    if (keyEvent->key() == Qt::Key_Delete || ((keyEvent->modifiers() & Qt::ControlModifier) && keyEvent->key() == Qt::Key_Space)) {
         if (keyEvent->modifiers() & Qt::ShiftModifier) {
             PermanentDeleteService::instance().execute(m_panel->getSelectedPaths(), m_panel);
         } else {
@@ -590,7 +590,7 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
     }
 
     // 7. 空格键与回车键: 统一激活当前项（QuickLook 预览或打开文件夹）
-    if (keyEvent->key() == Qt::Key_Space || keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
+    if ((keyEvent->key() == Qt::Key_Space && !(keyEvent->modifiers() & Qt::ControlModifier)) || keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
         QModelIndex idx = view->currentIndex();
         if (!idx.isValid() && view->selectionModel()) {
             auto selected = view->selectionModel()->selectedIndexes();

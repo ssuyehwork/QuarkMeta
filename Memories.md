@@ -610,3 +610,22 @@ QuarkMeta 采用“侧车文件持久化 + 中心数据库索引”的读写分�
    - 单项接口仅作为边界兼容或委托重载，其内部实现统一收敛转发至批量接口处理，杜绝单项与多项逻辑分裂与重复造轮子。
 
 
+## 21. 全局悬浮反馈组件 (ToolTipOverlay) 位置呈现规范与铁律
+
+> 本章节整理自用户的核心设计理念指导与明确共识，作为 QuarkMeta 全局悬浮反馈组件（ToolTipOverlay）位置呈现的唯一真理源 (SSOT)。
+
+### 21.1 核心铁律：禁止跟随鼠标光标移动显示
+1. **绝对固定锚定原则**：
+   - 全软件内所有通过 `ToolTipOverlay` 触发的浮层反馈、操作提示（包括但不限于：复制名称/路径反馈、粘贴成功提示、移入回收站 Toast、快捷键操作通知等），**严禁跟随鼠标光标位置（`QCursor::pos()`）进行漂移动态渲染**；
+   - 彻底杜绝提示框在屏幕中乱窜遮挡鼠标指针视线与操作焦点的交互混乱，建立全局统一、视觉稳定、符合人体工程学的反馈锚点。
+2. **唯一物理位置计算公式 (SSOT)**：
+   - **目标锚定控件**：自动锚定当前活跃窗口内的内容面板 `ContentPanel`（或显式传入的 `targetWidget`）；
+   - **水平坐标（X）—— 面板正中水平居中**：
+     $$\text{X} = \text{PanelGlobalTopLeft.x}() + \frac{\text{PanelWidth} - \text{ToastWidth}}{2}$$
+   - **垂直坐标（Y）—— 内容标题栏下方 10 像素**：
+     - 若内容面板内存在标题栏 `ContentHeaderWidget` 且处于可见状态：
+       $$\text{Y} = \text{HeaderGlobalBottomY} + 10\text{px}$$
+     - 若内容面板无标题栏或标题栏不可见：
+       $$\text{Y} = \text{PanelGlobalTopLeft.y}() + 10\text{px}$$
+
+
