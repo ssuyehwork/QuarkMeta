@@ -21,6 +21,9 @@
 #include <algorithm>
 
 class QLineEdit;
+#include <QProxyStyle>
+#include <QStyleOptionTab>
+#include <QPainter>
 
 #include "SvgIconRenderer.h"
 #include "ThemeManager.h"
@@ -43,6 +46,60 @@ public:
     static inline QString normalizeColorHex(const QString& colorStr) {
         return ColorPaletteEngine::normalizeColorHex(colorStr);
     }
+
+    /**
+     * @brief 侧边栏/导航栏专用紧凑型选项卡样式代理
+     * 锁定图标与文本间距为 4px（<= 5px），并确保图标与文字在垂直方向上绝对几何居中，消除一上一下视差
+     */
+    class SidebarTabStyle : public QProxyStyle {
+    public:
+        using QProxyStyle::QProxyStyle;
+
+        int pixelMetric(PixelMetric metric, const QStyleOption* option = nullptr, const QWidget* widget = nullptr) const override {
+            if (metric == PM_TabBarIconSpacing) {
+                return 4;
+            }
+            return QProxyStyle::pixelMetric(metric, option, widget);
+        }
+
+        void drawControl(ControlElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget = nullptr) const override {
+            if (element == CE_TabBarTabLabel) {
+                if (const QStyleOptionTab* tab = qstyleoption_cast<const QStyleOptionTab*>(option)) {
+                    QStyleOptionTab opt = *tab;
+                    QRect tabRect = opt.rect;
+
+                    QFontMetrics fm(opt.font);
+                    int textW = fm.horizontalAdvance(opt.text);
+                    int iconW = opt.icon.isNull() ? 0 : opt.iconSize.width();
+                    int iconH = opt.icon.isNull() ? 0 : opt.iconSize.height();
+                    int spacing = (iconW > 0 && !opt.text.isEmpty()) ? 4 : 0;
+                    int totalContentW = iconW + spacing + textW;
+
+                    int startX = tabRect.left() + std::max(0, (tabRect.width() - totalContentW) / 2);
+
+                    if (iconW > 0) {
+                        int iconY = tabRect.top() + (tabRect.height() - iconH) / 2;
+                        QRect iconRect(startX, iconY, iconW, iconH);
+                        QIcon::Mode mode = (opt.state & State_Enabled) ? QIcon::Normal : QIcon::Disabled;
+                        QIcon::State state = (opt.state & State_Selected) ? QIcon::On : QIcon::Off;
+                        QPixmap pix = opt.icon.pixmap(opt.iconSize, mode, state);
+                        painter->drawPixmap(iconRect, pix);
+                    }
+
+                    QRect textRect(startX + iconW + spacing, tabRect.top(), textW + 4, tabRect.height());
+                    QColor textColor = (opt.state & State_Selected) ? QColor("#FFFFFF") : ((opt.state & State_MouseOver) ? QColor("#CCCCCC") : QColor("#AAAAAA"));
+
+                    painter->save();
+                    painter->setFont(opt.font);
+                    painter->setPen(textColor);
+                    painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, opt.text);
+                    painter->restore();
+                    return;
+                }
+            }
+            QProxyStyle::drawControl(element, option, painter, widget);
+        }
+    };
 
     static inline QPixmap renderIcon(const QString& key, const QSize& size, const QColor& color) {
         return SvgIconRenderer::renderIcon(key, size, color);
