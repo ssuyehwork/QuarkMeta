@@ -71,8 +71,6 @@ QVariant FileCompareModel::data(const QModelIndex& index, int role) const {
             case ColIndex:
                 // 序号：展示为 1-based 序号
                 return index.row() + 1;
-            case ColPath:
-                return item.folderPath;
             case ColName:
                 return item.name;
             case ColHash:
@@ -91,6 +89,8 @@ QVariant FileCompareModel::data(const QModelIndex& index, int role) const {
                 if (!item.isLoaded || item.hasError || item.mtime <= 0) return "-";
                 return QDateTime::fromMSecsSinceEpoch(item.mtime).toString("yyyy-MM-dd HH:mm:ss");
             }
+            case ColPath:
+                return item.folderPath;
             default:
                 break;
         }
@@ -107,8 +107,6 @@ QVariant FileCompareModel::data(const QModelIndex& index, int role) const {
         switch (col) {
             case ColIndex:
                 return index.row() + 1;
-            case ColPath:
-                return item.folderPath;
             case ColName:
                 return item.name;
             case ColHash:
@@ -119,6 +117,8 @@ QVariant FileCompareModel::data(const QModelIndex& index, int role) const {
                 return static_cast<qint64>(item.ctime);
             case ColModifiedDate:
                 return static_cast<qint64>(item.mtime);
+            case ColPath:
+                return item.folderPath;
             default:
                 break;
         }
@@ -131,12 +131,12 @@ QVariant FileCompareModel::headerData(int section, Qt::Orientation orientation, 
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch (section) {
             case ColIndex: return "序号";
-            case ColPath: return "路径";
             case ColName: return "名称";
             case ColHash: return "哈希值 (SHA-256)";
             case ColSize: return "大小";
             case ColCreatedDate: return "创建日期";
             case ColModifiedDate: return "修改日期";
+            case ColPath: return "路径";
             default: break;
         }
     }
@@ -323,24 +323,24 @@ void FileCompareDialog::initUi() {
     QHeaderView* header = m_tableView->horizontalHeader();
     header->setObjectName("FileCompareHeaderView");
     header->setSortIndicatorShown(true);
-    header->setStretchLastSection(false);
+    header->setStretchLastSection(true);
 
     // 列宽自适应策略
     header->setSectionResizeMode(FileCompareModel::ColIndex, QHeaderView::Fixed);
-    header->setSectionResizeMode(FileCompareModel::ColPath, QHeaderView::Interactive);
     header->setSectionResizeMode(FileCompareModel::ColName, QHeaderView::Interactive);
     header->setSectionResizeMode(FileCompareModel::ColHash, QHeaderView::Interactive);
     header->setSectionResizeMode(FileCompareModel::ColSize, QHeaderView::Interactive);
     header->setSectionResizeMode(FileCompareModel::ColCreatedDate, QHeaderView::Interactive);
     header->setSectionResizeMode(FileCompareModel::ColModifiedDate, QHeaderView::Interactive);
+    header->setSectionResizeMode(FileCompareModel::ColPath, QHeaderView::Interactive);
 
     m_tableView->setColumnWidth(FileCompareModel::ColIndex, 50);
-    m_tableView->setColumnWidth(FileCompareModel::ColPath, 180);
     m_tableView->setColumnWidth(FileCompareModel::ColName, 160);
     m_tableView->setColumnWidth(FileCompareModel::ColHash, 470); // 确保可完整容纳 64 个等宽字符
     m_tableView->setColumnWidth(FileCompareModel::ColSize, 110);
     m_tableView->setColumnWidth(FileCompareModel::ColCreatedDate, 150);
     m_tableView->setColumnWidth(FileCompareModel::ColModifiedDate, 150);
+    m_tableView->setColumnWidth(FileCompareModel::ColPath, 260);
 
     // 为表格视口安装事件过滤器，统一通过全局 ToolTipOverlay 渲染悬浮提示，杜绝原生 Tooltip
     m_tableView->viewport()->installEventFilter(this);

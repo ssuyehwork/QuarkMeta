@@ -35,12 +35,12 @@ class FileCompareModel : public QAbstractTableModel {
 public:
     enum Column {
         ColIndex = 0,
-        ColPath,
         ColName,
         ColHash,
         ColSize,
         ColCreatedDate,
         ColModifiedDate,
+        ColPath,
         ColumnCount
     };
 
