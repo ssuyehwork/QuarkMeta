@@ -134,12 +134,6 @@ void NavPanel::initUi() {
     class SidebarTabStyle : public QProxyStyle {
     public:
         using QProxyStyle::QProxyStyle;
-        int pixelMetric(PixelMetric metric, const QStyleOption* option = nullptr, const QWidget* widget = nullptr) const override {
-            if (metric == PM_TabBarIconSpacing) {
-                return 7;
-            }
-            return QProxyStyle::pixelMetric(metric, option, widget);
-        }
         void drawControl(ControlElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget = nullptr) const override {
             if (element == CE_TabBarTabLabel) {
                 if (const QStyleOptionTab* tab = qstyleoption_cast<const QStyleOptionTab*>(option)) {
@@ -157,9 +151,13 @@ void NavPanel::initUi() {
                         QRect textRect(startX + iconSize.width() + spacing, tr.top(), textWidth + 2, tr.height());
 
                         opt.icon.paint(painter, iconRect, Qt::AlignCenter);
-                        painter->setFont(opt.font);
+                        painter->save();
+                        if (widget) {
+                            painter->setFont(widget->font());
+                        }
                         painter->setPen(opt.palette.color(QPalette::WindowText));
                         painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, opt.text);
+                        painter->restore();
                         return;
                     }
                 }
