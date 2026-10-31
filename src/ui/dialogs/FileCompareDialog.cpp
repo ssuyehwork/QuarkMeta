@@ -20,6 +20,7 @@
 #include <QLocale>
 #include <QTextLayout>
 #include <QMouseEvent>
+#include <QApplication>
 #include <QtConcurrent>
 
 namespace QuarkMeta {
