@@ -29,6 +29,7 @@ void SidebarContainerWidget::initUi() {
 
     m_tabBar = new QTabBar(header);
     m_tabBar->setObjectName("SidebarTabBar");
+    m_tabBar->setStyle(new UiHelper::SidebarTabStyle(m_tabBar->style()));
     m_tabBar->setDrawBase(false);
     m_tabBar->setUsesScrollButtons(false);
     m_tabBar->setIconSize(QSize(16, 16));

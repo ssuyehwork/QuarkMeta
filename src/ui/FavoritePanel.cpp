@@ -73,7 +73,7 @@ void FavoriteItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& 
 
     int leftMargin = 10 + depth * 14;
     int iconSize = 18;
-    int spacing = 8;
+    int spacing = 4;
 
     QRect iconRect(opt.rect.left() + leftMargin, opt.rect.top() + (opt.rect.height() - iconSize) / 2, iconSize, iconSize);
     QRect textRect(iconRect.right() + spacing, opt.rect.top(), opt.rect.width() - leftMargin - iconSize - spacing, opt.rect.height());
@@ -207,7 +207,7 @@ void FavoriteItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOpt
 
     int leftMargin = 10 + depth * 14;
     int iconSize = 18;
-    int spacing = 8;
+    int spacing = 4;
 
     int textLeft = option.rect.left() + leftMargin + iconSize + spacing;
     
