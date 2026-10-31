@@ -433,7 +433,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                 }
             }
             if (compareFiles.size() >= 2) {
-                menu.addAction(UiHelper::getIcon("files_multiple", QColor("#EEEEEE"), 18), "文件对比")->setData(ContentPanel::ActionFileCompare);
+                menu.addAction(UiHelper::getIcon("Compare.svg", QColor("#EEEEEE"), 18), "文件对比")->setData(ContentPanel::ActionFileCompare);
             }
 
             QMenu* moreMenu = menu.addMenu(UiHelper::getIcon("more_horizontal", QColor("#EEEEEE"), 18), "更多");
