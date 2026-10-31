@@ -3,6 +3,9 @@
 #include "../core/AppConfig.h"
 #include "../core/SearchHistoryService.h"
 #include <QMouseEvent>
+#include <QProxyStyle>
+#include <QStyleOptionTab>
+#include <QPainter>
 
 namespace QuarkMeta {
 
@@ -27,7 +30,45 @@ void SidebarContainerWidget::initUi() {
     headerLayout->setContentsMargins(5, 0, 5, 0);
     headerLayout->setSpacing(0);
 
+    // 侧边栏选项卡专用代理样式：硬锁图标与文本间距为 7 像素
+    class SidebarTabStyle : public QProxyStyle {
+    public:
+        using QProxyStyle::QProxyStyle;
+        int pixelMetric(PixelMetric metric, const QStyleOption* option = nullptr, const QWidget* widget = nullptr) const override {
+            if (metric == PM_TabBarIconSpacing) {
+                return 7;
+            }
+            return QProxyStyle::pixelMetric(metric, option, widget);
+        }
+        void drawControl(ControlElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget = nullptr) const override {
+            if (element == CE_TabBarTabLabel) {
+                if (const QStyleOptionTab* tab = qstyleoption_cast<const QStyleOptionTab*>(option)) {
+                    QStyleOptionTab opt = *tab;
+                    if (!opt.icon.isNull()) {
+                        QSize iconSize = opt.iconSize.isValid() ? opt.iconSize : QSize(16, 16);
+                        QRect tr = opt.rect;
+                        int textWidth = opt.fontMetrics.horizontalAdvance(opt.text);
+                        int spacing = 7;
+                        int totalContentWidth = iconSize.width() + spacing + textWidth;
+                        int startX = tr.left() + (tr.width() - totalContentWidth) / 2;
+
+                        QRect iconRect(startX, tr.top() + (tr.height() - iconSize.height()) / 2, iconSize.width(), iconSize.height());
+                        QRect textRect(startX + iconSize.width() + spacing, tr.top(), textWidth + 2, tr.height());
+
+                        opt.icon.paint(painter, iconRect, Qt::AlignCenter);
+                        painter->setFont(opt.font);
+                        painter->setPen(opt.palette.color(QPalette::WindowText));
+                        painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, opt.text);
+                        return;
+                    }
+                }
+            }
+            QProxyStyle::drawControl(element, option, painter, widget);
+        }
+    };
+
     m_tabBar = new QTabBar(header);
+    m_tabBar->setStyle(new SidebarTabStyle(m_tabBar->style()));
     m_tabBar->setObjectName("SidebarTabBar");
     m_tabBar->setDrawBase(false);
     m_tabBar->setUsesScrollButtons(false);
