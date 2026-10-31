@@ -15,7 +15,7 @@ class RowLayoutEngine {
 public:
     static constexpr int kLeftMargin = 6;      // 左外边距 6px
     static constexpr int kVerticalPadding = 3; // 上下边距 3px
-    static constexpr int kSpacing = 5;         // 卡片与文字间距 5px (<= 5px 紧凑工整标准)
+    static constexpr int kSpacing = 8;         // 卡片与文字间距 8px
     static constexpr int kMinRowHeight = 30;   // 最小行高 30px
     static constexpr int kMaxRowHeight = 230;  // 最大行高 230px
 
