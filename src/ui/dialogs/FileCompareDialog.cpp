@@ -89,8 +89,6 @@ QVariant FileCompareModel::data(const QModelIndex& index, int role) const {
                 if (!item.isLoaded || item.hasError || item.mtime <= 0) return "-";
                 return QDateTime::fromMSecsSinceEpoch(item.mtime).toString("yyyy-MM-dd HH:mm:ss");
             }
-            case ColPath:
-                return item.folderPath;
             default:
                 break;
         }
@@ -117,8 +115,6 @@ QVariant FileCompareModel::data(const QModelIndex& index, int role) const {
                 return static_cast<qint64>(item.ctime);
             case ColModifiedDate:
                 return static_cast<qint64>(item.mtime);
-            case ColPath:
-                return item.folderPath;
             default:
                 break;
         }
@@ -136,7 +132,6 @@ QVariant FileCompareModel::headerData(int section, Qt::Orientation orientation, 
             case ColSize: return "大小";
             case ColCreatedDate: return "创建日期";
             case ColModifiedDate: return "修改日期";
-            case ColPath: return "路径";
             default: break;
         }
     }
@@ -266,8 +261,8 @@ FileCompareDialog::FileCompareDialog(const QStringList& filePaths, QWidget* pare
       m_filePaths(filePaths),
       m_cancelToken(std::make_shared<std::atomic<bool>>(false)) {
 
-    // 仅保留关闭与最大化按钮
-    setVisibleButtons(Close | Max);
+    // 仅保留关闭按钮
+    setVisibleButtons(Close);
 
     initUi();
 
@@ -332,7 +327,6 @@ void FileCompareDialog::initUi() {
     header->setSectionResizeMode(FileCompareModel::ColSize, QHeaderView::Interactive);
     header->setSectionResizeMode(FileCompareModel::ColCreatedDate, QHeaderView::Interactive);
     header->setSectionResizeMode(FileCompareModel::ColModifiedDate, QHeaderView::Interactive);
-    header->setSectionResizeMode(FileCompareModel::ColPath, QHeaderView::Interactive);
 
     m_tableView->setColumnWidth(FileCompareModel::ColIndex, 50);
     m_tableView->setColumnWidth(FileCompareModel::ColName, 160);
@@ -340,7 +334,6 @@ void FileCompareDialog::initUi() {
     m_tableView->setColumnWidth(FileCompareModel::ColSize, 110);
     m_tableView->setColumnWidth(FileCompareModel::ColCreatedDate, 150);
     m_tableView->setColumnWidth(FileCompareModel::ColModifiedDate, 150);
-    m_tableView->setColumnWidth(FileCompareModel::ColPath, 260);
 
     // 为表格视口安装事件过滤器，屏蔽所有 Tooltip 显示
     m_tableView->viewport()->installEventFilter(this);

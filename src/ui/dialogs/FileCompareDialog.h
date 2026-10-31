@@ -40,7 +40,6 @@ public:
         ColSize,
         ColCreatedDate,
         ColModifiedDate,
-        ColPath,
         ColumnCount
     };
 
