@@ -197,14 +197,14 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             int driveItemCount = selPathsDrive.size() > 0 ? static_cast<int>(selPathsDrive.size()) : 1;
             QMenu* newMenuDrive = menu.addMenu(UiHelper::getIcon("add", QColor("#EEEEEE"), 18), "新建...");
             UiHelper::applyMenuStyle(newMenuDrive);
-            newMenuDrive->addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "创建文件夹")->setData(ContentPanel::ActionNewFolder);
-            newMenuDrive->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建 Markdown")->setData(ContentPanel::ActionNewMd);
+            newMenuDrive->addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "创建文件夹（Ctrl+Shift+N）")->setData(ContentPanel::ActionNewFolder);
+            newMenuDrive->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建 Markdown（Ctrl+N）")->setData(ContentPanel::ActionNewMd);
             newMenuDrive->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建纯文本文件 (txt)")->setData(ContentPanel::ActionNewTxt);
             newMenuDrive->addAction(UiHelper::getIcon("folder", QColor("#EEEEEE")), QString("用所选项目新建文件夹(%1)").arg(driveItemCount))->setData(ContentPanel::ActionCreateFolderWithSelectedItems);
 
             menu.addSeparator();
 
-            QAction* actItemPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴");
+            QAction* actItemPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴（Ctrl+V）");
             actItemPaste->setData(ContentPanel::ActionPaste);
             actItemPaste->setEnabled(m_panel->canPaste(path));
 
@@ -244,7 +244,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             actRepeat->setEnabled(LastOperationManager::instance().hasOperation());
 
             menu.addSeparator();
-            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新")->setData(ContentPanel::ActionRefresh);
+            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新（F5）")->setData(ContentPanel::ActionRefresh);
         } else {
             menu.addAction(UiHelper::getIcon(isFolder ? "folder" : "open", QColor("#EEEEEE"), 18), isFolder ? "打开文件夹" : "打开")->setData(ContentPanel::ActionOpen);
             if (isFolder) {
@@ -320,15 +320,15 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             int selItemCount = selPathsItem.size() > 0 ? static_cast<int>(selPathsItem.size()) : 1;
             QMenu* newMenuItem = menu.addMenu(UiHelper::getIcon("add", QColor("#EEEEEE"), 18), "新建...");
             UiHelper::applyMenuStyle(newMenuItem);
-            newMenuItem->addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "创建文件夹")->setData(ContentPanel::ActionNewFolder);
-            newMenuItem->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建 Markdown")->setData(ContentPanel::ActionNewMd);
+            newMenuItem->addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "创建文件夹（Ctrl+Shift+N）")->setData(ContentPanel::ActionNewFolder);
+            newMenuItem->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建 Markdown（Ctrl+N）")->setData(ContentPanel::ActionNewMd);
             newMenuItem->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建纯文本文件 (txt)")->setData(ContentPanel::ActionNewTxt);
             newMenuItem->addAction(UiHelper::getIcon("folder", QColor("#EEEEEE")), QString("用所选项目新建文件夹(%1)").arg(selItemCount))->setData(ContentPanel::ActionCreateFolderWithSelectedItems);
 
             menu.addSeparator();
 
-            menu.addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "复制")->setData(ContentPanel::ActionCopy);
-            menu.addAction(UiHelper::getIcon("cut", QColor("#EEEEEE"), 18), "剪切")->setData(ContentPanel::ActionCut);
+            menu.addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "复制（Ctrl+C）")->setData(ContentPanel::ActionCopy);
+            menu.addAction(UiHelper::getIcon("cut", QColor("#EEEEEE"), 18), "剪切（Ctrl+X）")->setData(ContentPanel::ActionCut);
             menu.addAction(UiHelper::getIcon("copy", QColor("#EEEEEE"), 18), "创建副本")->setData(ContentPanel::ActionDuplicate);
 
             if (!isComputerRoot && !currentPath.isEmpty()) {
@@ -414,7 +414,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                 });
             }
 
-            QAction* actItemPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴");
+            QAction* actItemPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴（Ctrl+V）");
             actItemPaste->setData(ContentPanel::ActionPaste);
             actItemPaste->setEnabled(m_panel->canPaste(isFolder ? path : currentPath));
 
@@ -477,10 +477,10 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
             actRepeat->setData(ContentPanel::ActionRepeatLastOp);
             actRepeat->setEnabled(LastOperationManager::instance().hasOperation());
 
-            menu.addAction(UiHelper::getIcon("rename-1.svg", QColor("#EEEEEE"), 18), "重命名")->setData(ContentPanel::ActionRename);
+            menu.addAction(UiHelper::getIcon("rename-1.svg", QColor("#EEEEEE"), 18), "重命名（F2）")->setData(ContentPanel::ActionRename);
 
             menu.addSeparator();
-            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新")->setData(ContentPanel::ActionRefresh);
+            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新（F5）")->setData(ContentPanel::ActionRefresh);
         }
     }
     // =========================================================================
@@ -489,14 +489,14 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
     else {
         if (isComputerRoot) {
             ContextMenuFactory::buildShowInExplorerAction(&menu, "computer://", m_panel);
-            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新")->setData(ContentPanel::ActionRefresh);
+            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新（F5）")->setData(ContentPanel::ActionRefresh);
         } else {
             bool isWritablePhysical = m_panel && m_panel->isWritablePhysicalDirectoryView();
             if (isWritablePhysical) {
                 QMenu* newMenu = menu.addMenu(UiHelper::getIcon("add", QColor("#EEEEEE"), 18), "新建...");
                 UiHelper::applyMenuStyle(newMenu);
-                newMenu->addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "创建文件夹")->setData(ContentPanel::ActionNewFolder);
-                newMenu->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建 Markdown")->setData(ContentPanel::ActionNewMd);
+                newMenu->addAction(UiHelper::getIcon("folder_filled", QColor("#EEEEEE")), "创建文件夹（Ctrl+Shift+N）")->setData(ContentPanel::ActionNewFolder);
+                newMenu->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建 Markdown（Ctrl+N）")->setData(ContentPanel::ActionNewMd);
                 newMenu->addAction(UiHelper::getIcon("text", QColor("#EEEEEE")), "创建纯文本文件 (txt)")->setData(ContentPanel::ActionNewTxt);
 
                 menu.addSeparator();
@@ -504,7 +504,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                 menu.addSeparator();
             }
 
-            QAction* actPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴");
+            QAction* actPaste = menu.addAction(UiHelper::getIcon("paste", QColor("#EEEEEE"), 18), "粘贴（Ctrl+V）");
             actPaste->setData(ContentPanel::ActionPaste);
             actPaste->setEnabled(m_panel->canPaste(currentPath));
 
@@ -515,7 +515,7 @@ void ContentContextMenu::showMenu(QAbstractItemView* view, const QPoint& pos) {
                 actShowInExp->setEnabled(isPhysicalPath);
             }
 
-            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新")->setData(ContentPanel::ActionRefresh);
+            menu.addAction(UiHelper::getIcon("refresh", QColor("#EEEEEE"), 18), "刷新（F5）")->setData(ContentPanel::ActionRefresh);
         }
     }
 

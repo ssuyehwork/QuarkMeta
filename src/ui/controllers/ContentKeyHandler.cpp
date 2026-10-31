@@ -611,6 +611,44 @@ bool ContentKeyHandler::handleKeyPress(QObject* obj, QEvent* event) {
         return true;
     }
 
+    // 8. Ctrl + Home / Ctrl + End: 快速定位首项与尾项
+    if (keyEvent->modifiers() & Qt::ControlModifier) {
+        if (keyEvent->key() == Qt::Key_Home) {
+            QAbstractItemModel* model = view->model();
+            if (model && model->rowCount() > 0) {
+                for (int r = 0; r < model->rowCount(); ++r) {
+                    QModelIndex idx = model->index(r, 0);
+                    if (!idx.data(SectionHeaderRole).toBool()) {
+                        view->setCurrentIndex(idx);
+                        view->scrollTo(idx, QAbstractItemView::EnsureVisible);
+                        if (view->selectionModel()) {
+                            view->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                        }
+                        return true;
+                    }
+                }
+            }
+            return true;
+        }
+        if (keyEvent->key() == Qt::Key_End) {
+            QAbstractItemModel* model = view->model();
+            if (model && model->rowCount() > 0) {
+                for (int r = model->rowCount() - 1; r >= 0; --r) {
+                    QModelIndex idx = model->index(r, 0);
+                    if (!idx.data(SectionHeaderRole).toBool()) {
+                        view->setCurrentIndex(idx);
+                        view->scrollTo(idx, QAbstractItemView::EnsureVisible);
+                        if (view->selectionModel()) {
+                            view->selectionModel()->select(idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                        }
+                        return true;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
     return false;
 }
 

@@ -46,6 +46,9 @@ public:
     void saveFavorites();
     void filterTreeNodes(const QString& keyword);
 
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 signals:
     void directorySelected(const QString& path, bool recursive = false);
     void requestLocateFile(const QString& path);

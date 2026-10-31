@@ -61,6 +61,14 @@ ShortcutKeyCombo LocalShortcutInterceptor::parseQtKey(int key, Qt::KeyboardModif
 #ifdef Q_OS_WIN
         combo.vkCode = VK_DELETE;
 #endif
+    } else if (cleanKey == Qt::Key_Home) {
+#ifdef Q_OS_WIN
+        combo.vkCode = VK_HOME;
+#endif
+    } else if (cleanKey == Qt::Key_End) {
+#ifdef Q_OS_WIN
+        combo.vkCode = VK_END;
+#endif
     } else if (cleanKey == Qt::Key_Left) {
 #ifdef Q_OS_WIN
         combo.vkCode = VK_LEFT;
