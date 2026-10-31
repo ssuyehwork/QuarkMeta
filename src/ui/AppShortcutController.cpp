@@ -249,6 +249,13 @@ void AppShortcutController::initShortcuts() {
             emit transferToMarkedRequested();
         }
     });
+
+    // 15. Alt+C: 复制所选项目名称（顿号分割）
+    registerShortcut(QKeySequence(Qt::ALT | Qt::Key_C), [this]() {
+        if (!isEditingFocus()) {
+            emit copyNamesEnumeratedRequested();
+        }
+    });
 }
 
 } // namespace QuarkMeta

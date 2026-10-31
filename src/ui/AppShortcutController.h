@@ -65,6 +65,11 @@ signals:
      */
     void transferToMarkedRequested();
 
+    /**
+     * @brief Alt+C 触发复制所选项目名称（顿号分割）
+     */
+    void copyNamesEnumeratedRequested();
+
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
