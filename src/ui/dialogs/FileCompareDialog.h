@@ -110,7 +110,6 @@ private:
     QLabel* m_progressLabel = nullptr;
     QPushButton* m_closeButton = nullptr;
     FramelessWindowHelper* m_framelessHelper = nullptr;
-    QModelIndex m_lastHoveredIndex;
 };
 
 } // namespace QuarkMeta

@@ -1,6 +1,5 @@
 #include "FileCompareDialog.h"
 #include "../FramelessWindowHelper.h"
-#include "../ToolTipOverlay.h"
 #include "../../core/ItemRecord.h"
 #include "../../core/TaskProgressService.h"
 #include "../../meta/DuplicateDetectorService.h"
@@ -342,7 +341,7 @@ void FileCompareDialog::initUi() {
     m_tableView->setColumnWidth(FileCompareModel::ColModifiedDate, 150);
     m_tableView->setColumnWidth(FileCompareModel::ColPath, 260);
 
-    // 为表格视口安装事件过滤器，统一通过全局 ToolTipOverlay 渲染悬浮提示，杜绝原生 Tooltip
+    // 为表格视口安装事件过滤器，屏蔽所有 Tooltip 显示
     m_tableView->viewport()->installEventFilter(this);
 
     layout->addWidget(m_tableView, 1);
@@ -479,66 +478,8 @@ bool FileCompareDialog::nativeEvent(const QByteArray& eventType, void* message, 
 
 bool FileCompareDialog::eventFilter(QObject* watched, QEvent* event) {
     if (m_tableView && watched == m_tableView->viewport()) {
-        if (event->type() == QEvent::MouseMove) {
-            auto* mouseEvent = static_cast<QMouseEvent*>(event);
-            QModelIndex index = m_tableView->indexAt(mouseEvent->pos());
-            if (index.isValid()) {
-                if (index != m_lastHoveredIndex) {
-                    m_lastHoveredIndex = index;
-                    QString tip;
-                    int col = index.column();
-                    int row = index.row();
-                    if (m_proxyModel) {
-                        QModelIndex srcIndex = m_proxyModel->mapToSource(index);
-                        row = srcIndex.row();
-                    }
-                    if (row >= 0 && row < m_model->rowCount()) {
-                        const auto& item = m_model->itemAt(row);
-                        switch (col) {
-                            case FileCompareModel::ColPath:
-                                tip = item.folderPath;
-                                break;
-                            case FileCompareModel::ColName:
-                                tip = item.name;
-                                break;
-                            case FileCompareModel::ColHash:
-                                tip = item.hash;
-                                break;
-                            case FileCompareModel::ColSize:
-                                if (item.isLoaded && !item.hasError && item.size >= 0) {
-                                    tip = QString("%L1 字节").arg(item.size);
-                                }
-                                break;
-                            case FileCompareModel::ColCreatedDate:
-                                if (item.isLoaded && !item.hasError && item.ctime > 0) {
-                                    tip = QDateTime::fromMSecsSinceEpoch(item.ctime).toString("yyyy-MM-dd HH:mm:ss");
-                                }
-                                break;
-                            case FileCompareModel::ColModifiedDate:
-                                if (item.isLoaded && !item.hasError && item.mtime > 0) {
-                                    tip = QDateTime::fromMSecsSinceEpoch(item.mtime).toString("yyyy-MM-dd HH:mm:ss");
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    if (!tip.isEmpty()) {
-                        ToolTipOverlay::instance()->showText(QCursor::pos(), tip, 0);
-                    } else {
-                        ToolTipOverlay::hideTip();
-                    }
-                }
-            } else {
-                m_lastHoveredIndex = QModelIndex();
-                ToolTipOverlay::hideTip();
-            }
-        } else if (event->type() == QEvent::Leave) {
-            m_lastHoveredIndex = QModelIndex();
-            ToolTipOverlay::hideTip();
-        } else if (event->type() == QEvent::ToolTip) {
-            // 屏蔽原生 QToolTip 事件
+        if (event->type() == QEvent::ToolTip) {
+            // 屏蔽所有 Tooltip 显示
             return true;
         }
     }
