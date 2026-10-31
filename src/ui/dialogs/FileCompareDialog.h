@@ -66,6 +66,20 @@ public:
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 };
 
+class RowIndexDelegate : public QStyledItemDelegate {
+    Q_OBJECT
+public:
+    explicit RowIndexDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+
+    void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+        QStyleOptionViewItem opt = option;
+        initStyleOption(&opt, index);
+        opt.text = QString::number(index.row() + 1);
+        opt.displayAlignment = Qt::AlignCenter;
+        QStyledItemDelegate::paint(painter, opt, index);
+    }
+};
+
 class FileCompareDialog : public FramelessDialog {
     Q_OBJECT
 public:
@@ -76,6 +90,7 @@ protected:
     void closeEvent(QCloseEvent* event) override;
     void reject() override;
     bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     void initUi();
@@ -91,9 +106,11 @@ private:
     FileCompareModel* m_model = nullptr;
     QSortFilterProxyModel* m_proxyModel = nullptr;
     HashCompareDelegate* m_hashDelegate = nullptr;
+    RowIndexDelegate* m_indexDelegate = nullptr;
     QLabel* m_progressLabel = nullptr;
     QPushButton* m_closeButton = nullptr;
     FramelessWindowHelper* m_framelessHelper = nullptr;
+    QModelIndex m_lastHoveredIndex;
 };
 
 } // namespace QuarkMeta

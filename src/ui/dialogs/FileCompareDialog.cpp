@@ -1,5 +1,6 @@
 #include "FileCompareDialog.h"
 #include "../FramelessWindowHelper.h"
+#include "../ToolTipOverlay.h"
 #include "../../core/ItemRecord.h"
 #include "../../core/TaskProgressService.h"
 #include "../../meta/DuplicateDetectorService.h"
@@ -18,6 +19,8 @@
 #include <QPainter>
 #include <QFontDatabase>
 #include <QLocale>
+#include <QTextLayout>
+#include <QMouseEvent>
 #include <QtConcurrent>
 
 namespace QuarkMeta {
@@ -87,35 +90,6 @@ QVariant FileCompareModel::data(const QModelIndex& index, int role) const {
             case ColModifiedDate: {
                 if (!item.isLoaded || item.hasError || item.mtime <= 0) return "-";
                 return QDateTime::fromMSecsSinceEpoch(item.mtime).toString("yyyy-MM-dd HH:mm:ss");
-            }
-            default:
-                break;
-        }
-    } else if (role == Qt::ToolTipRole) {
-        switch (col) {
-            case ColPath:
-                return item.folderPath;
-            case ColName:
-                return item.name;
-            case ColHash:
-                return item.hash;
-            case ColSize: {
-                if (item.isLoaded && !item.hasError && item.size >= 0) {
-                    return QString("%L1 字节").arg(item.size);
-                }
-                break;
-            }
-            case ColCreatedDate: {
-                if (item.isLoaded && !item.hasError && item.ctime > 0) {
-                    return QDateTime::fromMSecsSinceEpoch(item.ctime).toString("yyyy-MM-dd HH:mm:ss");
-                }
-                break;
-            }
-            case ColModifiedDate: {
-                if (item.isLoaded && !item.hasError && item.mtime > 0) {
-                    return QDateTime::fromMSecsSinceEpoch(item.mtime).toString("yyyy-MM-dd HH:mm:ss");
-                }
-                break;
             }
             default:
                 break;
@@ -191,30 +165,30 @@ HashCompareDelegate::HashCompareDelegate(QObject* parent)
 }
 
 void HashCompareDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
+    QStyleOptionViewItem opt = option;
+    initStyleOption(&opt, index);
+
+    // 绘制单元格背景与选中高亮，彻底清除文本防止原生委托多重绘制
+    opt.text.clear();
+    const QWidget* widget = opt.widget;
+    QStyle* style = widget ? widget->style() : QApplication::style();
+    style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, widget);
+
     QString currentHash = index.data(Qt::DisplayRole).toString();
 
     // 状态文本（如"计算中…"、"文件不存在"、"无法读取"）
     if (currentHash.length() != 64) {
-        QStyleOptionViewItem opt = option;
-        initStyleOption(&opt, index);
         painter->save();
-        if (currentHash == "文件不存在" || currentHash == "无法读取") {
-            opt.palette.setColor(QPalette::Text, QColor("#888888"));
-            opt.palette.setColor(QPalette::WindowText, QColor("#888888"));
-        } else {
-            opt.palette.setColor(QPalette::Text, QColor("#AAAAAA"));
-            opt.palette.setColor(QPalette::WindowText, QColor("#AAAAAA"));
-        }
-        QStyledItemDelegate::paint(painter, opt, index);
+        QColor statusColor = (currentHash == "文件不存在" || currentHash == "无法读取")
+                                 ? QColor("#888888")
+                                 : QColor("#AAAAAA");
+        painter->setPen(statusColor);
+        painter->setFont(opt.font);
+        QRect textRect = opt.rect.adjusted(8, 0, -8, 0);
+        painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, currentHash);
         painter->restore();
         return;
     }
-
-    // 绘制基础单元格背景及选中态高亮
-    QStyleOptionViewItem opt = option;
-    initStyleOption(&opt, index);
-    opt.text.clear();
-    QStyledItemDelegate::paint(painter, opt, index);
 
     // 获取当前视图显示的第一行的哈希值作为基准
     QString baseHash;
@@ -228,26 +202,23 @@ void HashCompareDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
     monoFont.setStyleHint(QFont::Monospace);
     monoFont.setPointSize(opt.font.pointSize() > 0 ? opt.font.pointSize() : 9);
 
-    painter->save();
-    painter->setFont(monoFont);
-    QFontMetrics fm(monoFont);
-    int charWidth = fm.horizontalAdvance('0');
-
-    QRect textRect = opt.rect.adjusted(8, 0, -8, 0);
-    int xPos = textRect.left();
-    int yPos = textRect.top() + (textRect.height() - fm.height()) / 2 + fm.ascent();
-
     QColor normalColor = (opt.state & QStyle::State_Selected) ? QColor("#FFFFFF") : QColor("#EEEEEE");
     QColor diffColor("#ff551c");
 
-    // 若当前为第一行，或基准哈希尚未算好/格式不符合，则全串使用普通文字色
-    bool canCompare = (index.row() > 0) && (baseHash.length() == 64);
+    // 使用 QTextLayout 进行精准排版与差异高亮，彻底杜绝字符重叠
+    QTextLayout layout(currentHash, monoFont);
+    QList<QTextLayout::FormatRange> formats;
 
+    bool canCompare = (index.row() > 0) && (baseHash.length() == 64);
     if (!canCompare) {
-        painter->setPen(normalColor);
-        painter->drawText(xPos, yPos, currentHash);
+        QTextCharFormat fmt;
+        fmt.setForeground(normalColor);
+        QTextLayout::FormatRange range;
+        range.start = 0;
+        range.length = currentHash.length();
+        range.format = fmt;
+        formats.append(range);
     } else {
-        // 逐字符比较并按连续相同/不同片段合并渲染
         int len = currentHash.length();
         int segStart = 0;
         bool segIsDiff = (currentHash[0] != baseHash[0]);
@@ -255,10 +226,14 @@ void HashCompareDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
         for (int i = 1; i <= len; ++i) {
             bool isDiff = (i < len) ? (currentHash[i] != baseHash[i]) : !segIsDiff;
             if (isDiff != segIsDiff || i == len) {
-                QString segText = currentHash.mid(segStart, i - segStart);
-                painter->setPen(segIsDiff ? diffColor : normalColor);
-                painter->drawText(xPos, yPos, segText);
-                xPos += charWidth * segText.length();
+                QTextCharFormat fmt;
+                fmt.setForeground(segIsDiff ? diffColor : normalColor);
+
+                QTextLayout::FormatRange range;
+                range.start = segStart;
+                range.length = i - segStart;
+                range.format = fmt;
+                formats.append(range);
 
                 segStart = i;
                 segIsDiff = isDiff;
@@ -266,6 +241,19 @@ void HashCompareDelegate::paint(QPainter* painter, const QStyleOptionViewItem& o
         }
     }
 
+    layout.setFormats(formats);
+    layout.beginLayout();
+    QTextLine line = layout.createLine();
+    if (line.isValid()) {
+        line.setLineWidth(opt.rect.width());
+    }
+    layout.endLayout();
+
+    painter->save();
+    QRect textRect = opt.rect.adjusted(8, 0, -8, 0);
+    QFontMetrics fm(monoFont);
+    int yPos = textRect.top() + (textRect.height() - fm.height()) / 2;
+    layout.draw(painter, QPoint(textRect.left(), yPos));
     painter->restore();
 }
 
@@ -319,6 +307,10 @@ void FileCompareDialog::initUi() {
     m_proxyModel->setSortRole(Qt::UserRole);
 
     m_tableView->setModel(m_proxyModel);
+    m_tableView->setSortingEnabled(true);
+
+    m_indexDelegate = new RowIndexDelegate(this);
+    m_tableView->setItemDelegateForColumn(FileCompareModel::ColIndex, m_indexDelegate);
 
     // 点击表头重新排序时，刷新视图重新计算与第一行对比的标色
     connect(m_tableView->horizontalHeader(), &QHeaderView::sortIndicatorChanged, this, [this]() {
@@ -349,6 +341,9 @@ void FileCompareDialog::initUi() {
     m_tableView->setColumnWidth(FileCompareModel::ColSize, 110);
     m_tableView->setColumnWidth(FileCompareModel::ColCreatedDate, 150);
     m_tableView->setColumnWidth(FileCompareModel::ColModifiedDate, 150);
+
+    // 为表格视口安装事件过滤器，统一通过全局 ToolTipOverlay 渲染悬浮提示，杜绝原生 Tooltip
+    m_tableView->viewport()->installEventFilter(this);
 
     layout->addWidget(m_tableView, 1);
 
@@ -480,6 +475,74 @@ bool FileCompareDialog::nativeEvent(const QByteArray& eventType, void* message, 
         return true;
     }
     return FramelessDialog::nativeEvent(eventType, message, result);
+}
+
+bool FileCompareDialog::eventFilter(QObject* watched, QEvent* event) {
+    if (m_tableView && watched == m_tableView->viewport()) {
+        if (event->type() == QEvent::MouseMove) {
+            auto* mouseEvent = static_cast<QMouseEvent*>(event);
+            QModelIndex index = m_tableView->indexAt(mouseEvent->pos());
+            if (index.isValid()) {
+                if (index != m_lastHoveredIndex) {
+                    m_lastHoveredIndex = index;
+                    QString tip;
+                    int col = index.column();
+                    int row = index.row();
+                    if (m_proxyModel) {
+                        QModelIndex srcIndex = m_proxyModel->mapToSource(index);
+                        row = srcIndex.row();
+                    }
+                    if (row >= 0 && row < m_model->rowCount()) {
+                        const auto& item = m_model->itemAt(row);
+                        switch (col) {
+                            case FileCompareModel::ColPath:
+                                tip = item.folderPath;
+                                break;
+                            case FileCompareModel::ColName:
+                                tip = item.name;
+                                break;
+                            case FileCompareModel::ColHash:
+                                tip = item.hash;
+                                break;
+                            case FileCompareModel::ColSize:
+                                if (item.isLoaded && !item.hasError && item.size >= 0) {
+                                    tip = QString("%L1 字节").arg(item.size);
+                                }
+                                break;
+                            case FileCompareModel::ColCreatedDate:
+                                if (item.isLoaded && !item.hasError && item.ctime > 0) {
+                                    tip = QDateTime::fromMSecsSinceEpoch(item.ctime).toString("yyyy-MM-dd HH:mm:ss");
+                                }
+                                break;
+                            case FileCompareModel::ColModifiedDate:
+                                if (item.isLoaded && !item.hasError && item.mtime > 0) {
+                                    tip = QDateTime::fromMSecsSinceEpoch(item.mtime).toString("yyyy-MM-dd HH:mm:ss");
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if (!tip.isEmpty()) {
+                        ToolTipOverlay::instance()->showText(QCursor::pos(), tip, 0);
+                    } else {
+                        ToolTipOverlay::hideTip();
+                    }
+                }
+            } else {
+                m_lastHoveredIndex = QModelIndex();
+                ToolTipOverlay::hideTip();
+            }
+        } else if (event->type() == QEvent::Leave) {
+            m_lastHoveredIndex = QModelIndex();
+            ToolTipOverlay::hideTip();
+        } else if (event->type() == QEvent::ToolTip) {
+            // 屏蔽原生 QToolTip 事件
+            return true;
+        }
+    }
+    return FramelessDialog::eventFilter(watched, event);
 }
 
 } // namespace QuarkMeta
