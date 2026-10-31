@@ -229,10 +229,17 @@ void AppShortcutController::initShortcuts() {
         }
     });
 
-    // 12. Ctrl+Space: 局内重置所有筛选条件
-    registerShortcut(QKeySequence(Qt::CTRL | Qt::Key_Space), [this]() {
+    // 12. Ctrl+D: 局内重置所有筛选条件
+    registerShortcut(QKeySequence(Qt::CTRL | Qt::Key_D), [this]() {
         if (!isEditingFocus()) {
             emit resetFilterRequested();
+        }
+    });
+
+    // Ctrl+Space: 移入回收站
+    registerShortcut(QKeySequence(Qt::CTRL | Qt::Key_Space), [this]() {
+        if (!isEditingFocus()) {
+            emit moveToTrashRequested();
         }
     });
 

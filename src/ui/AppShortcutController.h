@@ -51,9 +51,14 @@ signals:
     void toggleRecursiveRequested();
 
     /**
-     * @brief Ctrl+Space 触发重置所有筛选条件
+     * @brief Ctrl+D 触发重置所有筛选条件
      */
     void resetFilterRequested();
+
+    /**
+     * @brief Ctrl+Space 触发移入回收站
+     */
+    void moveToTrashRequested();
 
     /**
      * @brief Alt+B 触发标记/取消标记当前选中的文件夹
