@@ -69,9 +69,6 @@ public:
 
     void invalidateSmartFolderCache(int smartFolderId = 0);
 
-protected:
-    bool eventFilter(QObject* watched, QEvent* event) override;
-
 signals:
     void categoryPathsSelected(const QStringList& paths, const QString& name = QString(), int categoryId = 0);
     void smartFolderSelected(const SmartFolderRecord& record);
