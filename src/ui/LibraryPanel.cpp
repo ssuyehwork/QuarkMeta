@@ -377,6 +377,7 @@ void LibraryPanel::initUi() {
     }
     m_treeView->setIndentation(0);
     m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_treeView->installEventFilter(this);
     m_treeView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_treeView->setDragEnabled(true);
     m_treeView->setAcceptDrops(true);
@@ -527,7 +528,14 @@ void LibraryPanel::initUi() {
     connect(m_model, &QStandardItemModel::itemChanged, this, [this](QStandardItem* item) {
         if (!item || m_isLoading) return;
         int nodeId = item->data(Qt::UserRole + 1).toInt();
-        if (nodeId > 0) {
+        QString type = item->data(TypeRole).toString();
+        if (type == "smart_folder" && nodeId > 0) {
+            SmartFolderRecord rec = SmartFolderDao::getSmartFolderById(nodeId);
+            if (rec.id > 0 && rec.name != item->text()) {
+                rec.name = item->text();
+                SmartFolderDao::updateSmartFolder(rec);
+            }
+        } else if (nodeId > 0) {
             QString name = item->text();
             QString iconKey = item->data(Qt::UserRole + 2).toString();
             QString colorHex = item->data(Qt::UserRole + 3).toString();
@@ -883,6 +891,11 @@ void LibraryPanel::onCategoryContextMenu(const QPoint& pos) {
                 }
             }
         });
+
+        QAction* renameSmartAct = menu.addAction(UiHelper::getIcon("rename-1.svg", QColor("#EEEEEE")), "重命名");
+        connect(renameSmartAct, &QAction::triggered, this, [this, index]() {
+            if (m_treeView) m_treeView->edit(index);
+        });
         menu.addSeparator();
 
         ContextMenuFactory::buildIconPickerMenu(&menu, curIconKey, curColorHex,
@@ -1170,7 +1183,6 @@ void LibraryPanel::loadLibrary() {
         sfItem->setData(sfIconKey, Qt::UserRole + 2);
         sfItem->setData(sfRec.colorHex, Qt::UserRole + 3);
         sfItem->setData(countVal, Qt::UserRole + 9);
-        sfItem->setEditable(false);
         smartFolderHeader->appendRow(sfItem);
     }
 
@@ -1351,6 +1363,25 @@ void LibraryPanel::createAndEditCategory(int parentId) {
         m_pendingEditNodeId = newId;
         loadLibrary();
     }
+}
+
+bool LibraryPanel::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_treeView && event->type() == QEvent::KeyPress) {
+        QKeyEvent* ke = static_cast<QKeyEvent*>(event);
+        if (ke->key() == Qt::Key_F2) {
+            QModelIndex idx = m_treeView->currentIndex();
+            if (idx.isValid()) {
+                QString type = idx.data(TypeRole).toString();
+                int nodeId = idx.data(Qt::UserRole + 1).toInt();
+                // 仅允许用户自定义分类（nodeId > 0）或智能文件夹进入行内编辑，屏蔽系统固定项和分组标头
+                if (type == "smart_folder" || (type == "category" && nodeId > 0)) {
+                    m_treeView->edit(idx);
+                    return true;
+                }
+            }
+        }
+    }
+    return QFrame::eventFilter(watched, event);
 }
 
 } // namespace QuarkMeta

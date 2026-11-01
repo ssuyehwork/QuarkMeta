@@ -251,6 +251,7 @@ void FavoritePanel::initUi() {
     }
     m_favoriteView->setIndentation(0);
     m_favoriteView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_favoriteView->installEventFilter(this);
     m_favoriteView->setContextMenuPolicy(Qt::CustomContextMenu);
     m_favoriteView->setDragEnabled(true);
     m_favoriteView->setAcceptDrops(true);
@@ -1108,6 +1109,20 @@ void FavoritePanel::sortItemsByName(bool ascending) {
     sortChildren(nullptr);
     saveFavorites();
     m_orderDirty = false;
+}
+
+bool FavoritePanel::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_favoriteView && event->type() == QEvent::KeyPress) {
+        QKeyEvent* ke = static_cast<QKeyEvent*>(event);
+        if (ke->key() == Qt::Key_F2) {
+            QModelIndex idx = m_favoriteView->currentIndex();
+            if (idx.isValid()) {
+                m_favoriteView->edit(idx);
+                return true;
+            }
+        }
+    }
+    return QFrame::eventFilter(watched, event);
 }
 
 } // namespace QuarkMeta
